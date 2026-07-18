@@ -9,24 +9,25 @@ import kotlin.math.pow
 
 enum class SkillGroup { GATHERING, PRODUCTION, COMBAT }
 
-enum class SkillType(val group: SkillGroup) {
-    MINING(SkillGroup.GATHERING),
-    WOODCUTTING(SkillGroup.GATHERING),
-    FISHING(SkillGroup.GATHERING),
-    FARMING(SkillGroup.GATHERING),
-    THIEVING(SkillGroup.GATHERING),
+enum class SkillType(val groups: Set<SkillGroup>) {
+    MINING(setOf(SkillGroup.GATHERING)),
+    WOODCUTTING(setOf(SkillGroup.GATHERING)),
+    FISHING(setOf(SkillGroup.GATHERING)),
+    FARMING(setOf(SkillGroup.GATHERING)),
+    THIEVING(setOf(SkillGroup.GATHERING)),
 
-    SMITHING(SkillGroup.PRODUCTION),
-    COOKING(SkillGroup.PRODUCTION),
-    CRAFTING(SkillGroup.PRODUCTION),
-    FLETCHING(SkillGroup.PRODUCTION),
-    ALCHEMY(SkillGroup.PRODUCTION),
+    SMITHING(setOf(SkillGroup.PRODUCTION)),
+    COOKING(setOf(SkillGroup.PRODUCTION)),
+    CRAFTING(setOf(SkillGroup.PRODUCTION)),
+    FLETCHING(setOf(SkillGroup.PRODUCTION)),
+    ALCHEMY(setOf(SkillGroup.PRODUCTION)),
+    MAGIC(setOf(SkillGroup.PRODUCTION, SkillGroup.COMBAT)), // dual-grouped per your revision
 
-    ATTACK(SkillGroup.COMBAT),
-    STRENGTH(SkillGroup.COMBAT),
-    DEFENSE(SkillGroup.COMBAT),
-    PRAYER(SkillGroup.COMBAT),
-    MAGIC(SkillGroup.COMBAT)
+    ATTACK(setOf(SkillGroup.COMBAT)),
+    STRENGTH(setOf(SkillGroup.COMBAT)),
+    DEFENSE(setOf(SkillGroup.COMBAT)),
+    PRAYER(setOf(SkillGroup.COMBAT)),
+    ARCHERY(setOf(SkillGroup.COMBAT))
 }
 
 data class Skill(
@@ -43,18 +44,13 @@ class SkillBook {
 
     fun all(): List<Skill> = skills.values.toList()
 
-    fun inGroup(group: SkillGroup): List<Skill> = skills.values.filter { it.type.group == group }
+    fun inGroup(group: SkillGroup): List<Skill> = skills.values.filter { group in it.type.groups }
 }
 
 // =========================================================
 // XP CURVE
 // =========================================================
 
-/**
- * Level is always derived from XP, never stored. 99 is a SOFT cap --
- * a milestone marker for UI/unlock purposes only. The formula keeps
- * producing valid results indefinitely past 99; there is no hard ceiling.
- */
 object LevelCurve {
     private const val BASE = 100.0
     private const val EXPONENT = 2.1
@@ -65,7 +61,6 @@ object LevelCurve {
         return floor(BASE * (level - 1).toDouble().pow(EXPONENT)).toLong()
     }
 
-    /** No upper bound -- keeps climbing past the soft cap indefinitely. */
     fun levelForXp(xp: Long): Int {
         var level = 1
         while (xpRequiredForLevel(level + 1) <= xp) {
@@ -82,15 +77,8 @@ object LevelCurve {
 
 // =========================================================
 // SHARED EFFECT SYSTEM
-// (Used by skill unlocks now; reused as-is by Potions and Items later --
-//  anything that "grants effects" produces a List<Effect> in this same shape.)
 // =========================================================
 
-/**
- * A single effect target: either one specific skill, or an entire group
- * (e.g. "all Combat skills"). Kept generic so effects don't need separate
- * single-skill vs. group-skill variants.
- */
 sealed class EffectScope {
     data class SingleSkill(val skill: SkillType) : EffectScope()
     data class Group(val group: SkillGroup) : EffectScope()
@@ -105,17 +93,11 @@ sealed class Effect {
     data class TimerReduction(val scope: EffectScope, val percent: Double) : Effect()
 }
 
-/**
- * Combines a list of active effects (from unlocks, potions, items --
- * doesn't matter which) into single additive totals per skill, for the
- * numeric effect types. AccessUnlock and FlatStatBonus aren't "stacked"
- * numerically -- they're collected as-is since they aren't percentages.
- */
 object EffectStacker {
 
     private fun appliesTo(scope: EffectScope, skill: SkillType): Boolean = when (scope) {
         is EffectScope.SingleSkill -> scope.skill == skill
-        is EffectScope.Group -> scope.group == skill.group
+        is EffectScope.Group -> scope.group in skill.groups
     }
 
     fun totalXpBoostPercent(effects: List<Effect>, skill: SkillType): Double =
@@ -146,7 +128,7 @@ object EffectStacker {
 }
 
 // =========================================================
-// SKILL UNLOCKS (single-skill-triggered, per confirmed design)
+// SKILL UNLOCKS
 // =========================================================
 
 data class SkillUnlock(
@@ -194,7 +176,6 @@ object UnlockTable {
     fun newlyEarnedUnlocks(skill: SkillType, levelBefore: Int, levelAfter: Int): List<SkillUnlock> =
         unlocks.filter { it.skill == skill && it.levelRequired in (levelBefore + 1)..levelAfter }
 
-    /** All effects a character currently has active from every unlock they've earned, across all skills. */
     fun allActiveEffects(skillBook: SkillBook): List<Effect> =
         skillBook.all().flatMap { skill ->
             val level = LevelCurve.levelForXp(skill.xp)
@@ -204,6 +185,7 @@ object UnlockTable {
 
 // =========================================================
 // RESULT TYPES
+// (ServiceResult now comes from SharedTypes.kt.)
 // =========================================================
 
 data class XpGrantResult(
@@ -217,17 +199,12 @@ data class XpGrantResult(
     val levelsGained: Int get() = levelAfter - levelBefore
 }
 
-sealed class ServiceResult<out T> {
-    data class Success<T>(val value: T) : ServiceResult<T>()
-    data class Failure(val reason: String) : ServiceResult<Nothing>()
-}
-
 // =========================================================
-// RESET COOLDOWN TRACKING (per character)
+// RESET COOLDOWN TRACKING
 // =========================================================
 
 class CharacterResetState {
-    var lastSingleSkillResetAt: Instant? = null // shared across ALL skills for this character
+    var lastSingleSkillResetAt: Instant? = null
     var lastFullCharacterResetAt: Instant? = null
 }
 
@@ -252,7 +229,7 @@ class ProgressionService {
         characterId: String,
         skillType: SkillType,
         baseXp: Long,
-        extraEffects: List<Effect> = emptyList() // e.g. an active potion buff, passed in by whatever calls this
+        extraEffects: List<Effect> = emptyList()
     ): ServiceResult<XpGrantResult> {
         if (baseXp < 0) {
             return ServiceResult.Failure("XP amount cannot be negative.")
@@ -317,91 +294,5 @@ class ProgressionService {
         book.all().forEach { it.xp = 0 }
         state.lastFullCharacterResetAt = now
         return ServiceResult.Success(book)
-    }
-}
-
-// =========================================================
-// DEMO
-// =========================================================
-
-fun main() {
-    val progression = ProgressionService()
-    val characterId = "lyra-character-id"
-
-    println("=== Starting state ===")
-    printSkillSummary(progression, characterId, SkillType.MINING)
-
-    println("")
-    println("=== Granting XP to reach Mining level 25 (unlocks a Smithing discount) ===")
-    val bigGrant = progression.grantXp(characterId, SkillType.MINING, baseXp = 20000)
-    printGrantResult(bigGrant)
-
-    println("")
-    println("=== Checking active effects across the whole skill book now ===")
-    val book = progression.skillBookFor(characterId)
-    val effects = UnlockTable.allActiveEffects(book)
-    effects.forEach { println("- " + it) }
-
-    println("")
-    println("=== Granting Smithing XP -- should reflect no direct XP boost (discount != XP boost) ===")
-    printGrantResult(progression.grantXp(characterId, SkillType.SMITHING, baseXp = 100))
-
-    println("")
-    println("=== Granting Mining XP again -- no further boost active, gain should equal base ===")
-    printGrantResult(progression.grantXp(characterId, SkillType.MINING, baseXp = 100))
-
-    println("")
-    println("=== Attempting single-skill reset on Mining ===")
-    printResetResult(progression.resetSkill(characterId, SkillType.MINING))
-
-    println("")
-    println("=== Attempting single-skill reset on a DIFFERENT skill immediately after (should fail: shared cooldown) ===")
-    printResetResult(progression.resetSkill(characterId, SkillType.FISHING))
-
-    println("")
-    println("=== Attempting single-skill reset again after simulating 25 hours ===")
-    val future25h = Instant.now().plus(Duration.ofHours(25))
-    printResetResult(progression.resetSkill(characterId, SkillType.FISHING, now = future25h))
-
-    println("")
-    println("=== Attempting full character reset (should succeed, independent cooldown) ===")
-    when (val result = progression.resetCharacter(characterId)) {
-        is ServiceResult.Success -> println("[OK] Character fully reset. Mining XP now: " + result.value.get(SkillType.MINING).xp)
-        is ServiceResult.Failure -> println("[FAIL] " + result.reason)
-    }
-
-    println("")
-    println("=== Attempting full character reset again immediately (should fail: 30-day cooldown) ===")
-    when (val result = progression.resetCharacter(characterId)) {
-        is ServiceResult.Success -> println("[OK] Character fully reset.")
-        is ServiceResult.Failure -> println("[FAIL] " + result.reason)
-    }
-}
-
-fun printSkillSummary(progression: ProgressionService, characterId: String, skillType: SkillType) {
-    val skill = progression.skillBookFor(characterId).get(skillType)
-    val level = LevelCurve.levelForXp(skill.xp)
-    val toNext = LevelCurve.xpToNextLevel(skill.xp)
-    println(skillType.name + " -> Level " + level + ", XP " + skill.xp + ", XP to next level: " + toNext)
-}
-
-fun printGrantResult(result: ServiceResult<XpGrantResult>) {
-    when (result) {
-        is ServiceResult.Success -> {
-            val r = result.value
-            var line = "[OK] Granted " + r.xpGained + " XP to " + r.skillType.name + " (total: " + r.newTotalXp + ")"
-            if (r.didLevelUp) {
-                line += " -- LEVEL UP! " + r.levelBefore + " -> " + r.levelAfter + " (+" + r.levelsGained + ")"
-            }
-            println(line)
-        }
-        is ServiceResult.Failure -> println("[FAIL] " + result.reason)
-    }
-}
-
-fun printResetResult(result: ServiceResult<Skill>) {
-    when (result) {
-        is ServiceResult.Success -> println("[OK] Reset " + result.value.type.name + " to 0 XP.")
-        is ServiceResult.Failure -> println("[FAIL] " + result.reason)
     }
 }
