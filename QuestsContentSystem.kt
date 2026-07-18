@@ -12,7 +12,7 @@ data class ItemReward(val itemId: String, val quantity: Int, val isTradeable: Bo
 
 data class QuestReward(
     val currency: Long = 0,
-    val xp: Map<String, Long> = emptyMap(), // skillId -> xp amount
+    val xp: Map<String, Long> = emptyMap(),
     val items: List<ItemReward> = emptyList()
 )
 
@@ -72,7 +72,7 @@ object QuestCatalog {
         QuestDefinition(
             id = "silent_arrival",
             name = "Silent Arrival",
-            requiresNpcInteraction = false, // auto-appears once eligible, no NPC step
+            requiresNpcInteraction = false,
             objectives = listOf(
                 QuestObjective.ReachSkillLevel(id = "obj-1", skillId = "THIEVING", targetAmount = 10)
             ),
@@ -108,15 +108,11 @@ class PlayerQuest(
 }
 
 // =========================================================
-// DAILY TASKS (separate, simpler, level-scaled, random)
-// Two possible task shapes: GATHER_CRAFT (gathering/production skills)
-// or KILL_MONSTER (combat skills) -- same board, same skill pool, the
-// task TYPE just depends on which kind of skill got rolled.
+// DAILY TASKS
 // =========================================================
 
 enum class DailyTaskType { GATHER_CRAFT, KILL_MONSTER }
 
-/** What a gathering/production skill can currently produce at a given level. */
 data class SkillActionOption(val skillId: String, val itemId: String, val levelRequired: Int)
 
 object SkillActionCatalog {
@@ -139,7 +135,6 @@ object SkillActionCatalog {
         options.filter { it.skillId == skillId && it.levelRequired <= playerLevel }
 }
 
-/** What a combat skill can currently fight at a given level -- monster pool shared across all combat skills. */
 data class CombatTaskOption(val monsterId: String, val levelRequired: Int)
 
 object CombatTaskCatalog {
@@ -159,7 +154,7 @@ data class DailyTask(
     val id: String = UUID.randomUUID().toString(),
     val skillId: String,
     val type: DailyTaskType,
-    val targetId: String, // itemId if GATHER_CRAFT, monsterId if KILL_MONSTER
+    val targetId: String,
     val targetAmount: Int,
     var currentAmount: Int = 0,
     val reward: QuestReward
@@ -173,16 +168,8 @@ class DailyTaskBoard(
 )
 
 // =========================================================
-// RESULT TYPE
-// =========================================================
-
-sealed class ServiceResult<out T> {
-    data class Success<T>(val value: T) : ServiceResult<T>()
-    data class Failure(val reason: String) : ServiceResult<Nothing>()
-}
-
-// =========================================================
 // QUEST SERVICE
+// (ServiceResult now comes from SharedTypes.kt.)
 // =========================================================
 
 class QuestService {
@@ -281,7 +268,7 @@ class DailyTaskService {
                 val options = CombatTaskCatalog.availableFor(level)
                 if (options.isEmpty()) continue
                 val chosen = options.random()
-                val targetAmount = (level * 3).coerceAtLeast(5) // level-scaled placeholder, tuning-level
+                val targetAmount = (level * 3).coerceAtLeast(5)
                 board.tasks.add(
                     DailyTask(
                         skillId = skillId,
@@ -295,7 +282,7 @@ class DailyTaskService {
                 val options = SkillActionCatalog.availableFor(skillId, level)
                 if (options.isEmpty()) continue
                 val chosen = options.random()
-                val targetAmount = (level * 2).coerceAtLeast(5) // level-scaled placeholder, tuning-level
+                val targetAmount = (level * 2).coerceAtLeast(5)
                 board.tasks.add(
                     DailyTask(
                         skillId = skillId,
@@ -325,79 +312,4 @@ class DailyTaskService {
     }
 
     fun boardFor(characterId: String): DailyTaskBoard? = boards[characterId]
-}
-
-// =========================================================
-// DEMO
-// =========================================================
-
-fun main() {
-    val quests = QuestService()
-    val dailies = DailyTaskService()
-    val characterId = "lyra-character-id"
-
-    println("=== Checking auto-available quests (no NPC step needed) ===")
-    quests.autoAvailableQuests(characterId).forEach { println("- " + it.name) }
-
-    println("")
-    println("=== Starting 'Goblin Trouble' ===")
-    printResult(quests.startQuest(characterId, "goblin_trouble"))
-
-    println("")
-    println("=== Attempting to start 'The Smith's Request' before prerequisite is done (should fail) ===")
-    printResult(quests.startQuest(characterId, "smiths_request"))
-
-    println("")
-    println("=== Reporting 5 goblin kills to complete the objective ===")
-    repeat(5) {
-        quests.reportProgress(characterId, { obj -> obj is QuestObjective.KillMonsters && obj.monsterId == "goblin_grunt" })
-    }
-    println("Completed quests: " + quests.completedQuests(characterId).map { it.definition.name })
-
-    println("")
-    println("=== Now starting 'The Smith's Request' (prerequisite met) ===")
-    printResult(quests.startQuest(characterId, "smiths_request"))
-
-    println("")
-    println("=== Reporting partial progress on gathering iron ore (6 of 10) ===")
-    quests.reportProgress(characterId, { obj -> obj is QuestObjective.GatherItems && obj.itemId == "iron_ore" }, amount = 6)
-    val smithQuest = quests.activeQuests(characterId).find { it.definition.id == "smiths_request" }
-    println("Iron ore progress: " + smithQuest?.objectiveProgress?.get("obj-1")?.currentAmount + "/10")
-
-    println("")
-    println("=== Abandoning 'The Smith's Request' ===")
-    printResult(quests.abandonQuest(characterId, "smiths_request"))
-    println("Active quests remaining: " + quests.activeQuests(characterId).map { it.definition.name })
-
-    println("")
-    println("=== Generating today's Daily Task board (all 16 skills eligible; combat skills produce KILL tasks) ===")
-    val skillLevels = mapOf(
-        "MINING" to 15, "WOODCUTTING" to 5, "FISHING" to 8, "FARMING" to 3, "THIEVING" to 12,
-        "SMITHING" to 22, "COOKING" to 4, "CRAFTING" to 6, "FLETCHING" to 2, "ALCHEMY" to 9, "MAGIC" to 7,
-        "ATTACK" to 30, "STRENGTH" to 28, "DEFENSE" to 25, "PRAYER" to 10, "ARCHERY" to 18
-    )
-    val board = dailies.generateBoardForToday(characterId, skillLevels)
-    board.tasks.forEach {
-        val verb = if (it.type == DailyTaskType.KILL_MONSTER) "kill" else "gather/craft"
-        println("- " + it.skillId + " (" + it.type + "): " + verb + " " + it.targetId + " x" + it.targetAmount + " (reward: " + it.reward.currency + " currency)")
-    }
-    println("Total tasks generated: " + board.tasks.size + " (should always be 5)")
-    println("Unique skills used: " + board.tasks.map { it.skillId }.distinct().size + " (should equal task count -- no repeats)")
-
-    println("")
-    println("=== Reporting progress on whichever task type came up first ===")
-    val firstTask = board.tasks.first()
-    if (firstTask.type == DailyTaskType.KILL_MONSTER) {
-        dailies.reportKillProgress(characterId, firstTask.targetId, amount = firstTask.targetAmount)
-    } else {
-        dailies.reportGatherCraftProgress(characterId, firstTask.targetId, amount = firstTask.targetAmount)
-    }
-    println(firstTask.targetId + " task complete: " + firstTask.isComplete())
-}
-
-fun <T> printResult(result: ServiceResult<T>) {
-    when (result) {
-        is ServiceResult.Success -> println("[OK] " + result.value)
-        is ServiceResult.Failure -> println("[FAIL] " + result.reason)
-    }
 }
