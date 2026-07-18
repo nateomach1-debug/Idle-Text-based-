@@ -1,33 +1,8 @@
 import java.time.Instant
 import java.util.UUID
-import kotlin.random.Random
-
-// =========================================================
-// MARKET ITEM CATALOG
-// (Minimal stand-in until the real Items module exists --
-//  baseValue drives the NPC vendor's fixed-percentage payout.)
-// =========================================================
-
-data class MarketItem(
-    val id: String,
-    val name: String,
-    val baseValue: Long // reference value used by the NPC vendor calculation
-)
-
-object ItemCatalog {
-    val items = listOf(
-        MarketItem("iron_ore", "Iron Ore", baseValue = 10),
-        MarketItem("oak_log", "Oak Log", baseValue = 8),
-        MarketItem("steel_bar", "Steel Bar", baseValue = 45)
-    )
-
-    fun find(itemId: String): MarketItem? = items.find { it.id == itemId }
-}
 
 // =========================================================
 // PLAYER ECONOMY ACCOUNT
-// (Minimal stand-in for currency + inventory until Account/Character
-//  and Items modules are wired together with this one.)
 // =========================================================
 
 class PlayerEconomyAccount(
@@ -35,7 +10,7 @@ class PlayerEconomyAccount(
     val accountId: String,
     var isMainCharacter: Boolean,
     var currencyBalance: Long,
-    val inventory: MutableMap<String, Int> = mutableMapOf() // itemId -> quantity
+    val inventory: MutableMap<String, Int> = mutableMapOf()
 ) {
     fun addItem(itemId: String, qty: Int) {
         inventory[itemId] = (inventory[itemId] ?: 0) + qty
@@ -72,7 +47,6 @@ data class MarketOrder(
 // TRADE RECORDS
 // =========================================================
 
-/** Public-safe record -- what a price history graph would display to players. */
 data class PriceHistoryEntry(
     val itemId: String,
     val pricePerUnit: Long,
@@ -80,10 +54,6 @@ data class PriceHistoryEntry(
     val executedAt: Instant
 )
 
-/**
- * Developer-only record. Full buyer/seller account linkage for
- * collusion/pattern detection. Never exposed through any player-facing method.
- */
 data class DevTradeRecord(
     val tradeId: String = UUID.randomUUID().toString(),
     val itemId: String,
@@ -98,17 +68,7 @@ data class DevTradeRecord(
 )
 
 // =========================================================
-// RESULT TYPE
-// =========================================================
-
-sealed class ServiceResult<out T> {
-    data class Success<T>(val value: T) : ServiceResult<T>()
-    data class Failure(val reason: String) : ServiceResult<Nothing>()
-}
-
-// =========================================================
 // DEVELOPER-ONLY ECONOMY MONITORING
-// (No player-facing methods anywhere in this class, by design.)
 // =========================================================
 
 class EconomyMonitoringService {
@@ -124,8 +84,6 @@ class EconomyMonitoringService {
     internal fun recordVendorPayout(amount: Long) {
         totalVendorPayoutFaucet += amount
     }
-
-    // ---- Developer-only query methods ----
 
     fun allTradesForCharacter(characterId: String): List<DevTradeRecord> =
         devTradeLog.filter { it.buyerCharacterId == characterId || it.sellerCharacterId == characterId }
@@ -146,6 +104,8 @@ class EconomyMonitoringService {
 
 // =========================================================
 // MARKET SERVICE
+// (ServiceResult now comes from SharedTypes.kt. Item validation
+//  now uses the shared ItemCatalog instead of a separate MarketItem list.)
 // =========================================================
 
 class MarketService(private val monitoring: EconomyMonitoringService) {
@@ -156,7 +116,7 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
     private val priceHistory: MutableList<PriceHistoryEntry> = mutableListOf()
 
     private val taxRatePercent: Double = 10.0
-    private val vendorPayoutPercent: Double = 40.0 // fixed % of baseValue
+    private val vendorPayoutPercent: Double = 40.0
 
     fun registerAccount(account: PlayerEconomyAccount) {
         accounts[account.characterId] = account
@@ -169,7 +129,7 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
         if (!account.isMainCharacter) {
             return ServiceResult.Failure("Only the account's Main character can access the market.")
         }
-        return null // null means "passed the check" -- caller continues
+        return null
     }
 
     // ---------------- Placing orders ----------------
@@ -187,7 +147,6 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
             return ServiceResult.Failure("Insufficient currency to escrow this order.")
         }
 
-        // Escrow on placement: currency locked immediately.
         account.currencyBalance -= totalCost
 
         val order = MarketOrder(
@@ -211,7 +170,6 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
         if (pricePerUnit <= 0) return ServiceResult.Failure("Price must be positive.")
         if (ItemCatalog.find(itemId) == null) return ServiceResult.Failure("Unknown item.")
 
-        // Escrow on placement: item removed from inventory immediately.
         if (!account.removeItem(itemId, quantity)) {
             return ServiceResult.Failure("Insufficient item quantity to escrow this order.")
         }
@@ -231,12 +189,6 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
 
     // ---------------- Matching engine ----------------
 
-    /**
-     * Price-time priority: sell orders sorted cheapest-first, buy orders sorted
-     * highest-price-first, ties broken by earliest createdAt. A match executes
-     * whenever the best buy price >= the best sell price, at the RESTING
-     * (already-in-book) order's price. Supports partial fills on both sides.
-     */
     private fun matchOrders(itemId: String) {
         var matchFound = true
         while (matchFound) {
@@ -252,9 +204,8 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
                 .sortedWith(compareBy<MarketOrder> { it.pricePerUnit }.thenBy { it.createdAt })
                 .firstOrNull() ?: break
 
-            if (bestBuy.pricePerUnit < bestSell.pricePerUnit) break // no crossing price -- no trade possible
+            if (bestBuy.pricePerUnit < bestSell.pricePerUnit) break
 
-            // Whichever order was resting first sets the execution price.
             val executionPrice = if (bestSell.createdAt.isBefore(bestBuy.createdAt)) bestSell.pricePerUnit else bestBuy.pricePerUnit
             val tradedQuantity = minOf(bestBuy.remainingQuantity, bestSell.remainingQuantity)
 
@@ -271,9 +222,6 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
         val tax = ((grossAmount * taxRatePercent) / 100.0).toLong()
         val sellerProceeds = grossAmount - tax
 
-        // Buyer already escrowed at THEIR order's price, which may be higher than
-        // the execution price -- refund the difference if the buyer overpaid relative
-        // to the actual matched price.
         val buyerEscrowedAtOriginalPrice = buyOrder.pricePerUnit * quantity
         val refundToBuyer = buyerEscrowedAtOriginalPrice - grossAmount
         if (refundToBuyer > 0) {
@@ -339,7 +287,8 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
             return ServiceResult.Failure("Insufficient item quantity to sell.")
         }
 
-        val payout = ((item.baseValue * vendorPayoutPercent) / 100.0).toLong() * quantity
+        val baseValue = ItemCatalog.baseValueFor(item.id)
+        val payout = ((baseValue * vendorPayoutPercent) / 100.0).toLong() * quantity
         account.currencyBalance += payout
         monitoring.recordVendorPayout(payout)
 
@@ -352,84 +301,4 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
 
     fun openOrdersFor(characterId: String): List<MarketOrder> =
         (buyOrders + sellOrders).filter { it.characterId == characterId && it.status != OrderStatus.CANCELLED }
-}
-
-// =========================================================
-// DEMO
-// =========================================================
-
-fun main() {
-    val monitoring = EconomyMonitoringService()
-    val market = MarketService(monitoring)
-
-    val alice = PlayerEconomyAccount("alice-char", "alice-account", isMainCharacter = true, currencyBalance = 1000)
-    val bob = PlayerEconomyAccount("bob-char", "bob-account", isMainCharacter = true, currencyBalance = 1000)
-    bob.addItem("iron_ore", 50)
-
-    val notMain = PlayerEconomyAccount("alice-alt-char", "alice-account", isMainCharacter = false, currencyBalance = 500)
-
-    market.registerAccount(alice)
-    market.registerAccount(bob)
-    market.registerAccount(notMain)
-
-    println("=== Non-main character attempts to place an order (should fail) ===")
-    printResult(market.placeBuyOrder("alice-alt-char", "iron_ore", 5, 12))
-
-    println("")
-    println("=== Bob places a sell order: 30 Iron Ore @ 10 each ===")
-    val sellOrderResult = market.placeSellOrder("bob-char", "iron_ore", 30, 10)
-    printResult(sellOrderResult)
-    println("Bob's inventory after escrow: " + bob.inventory)
-
-    println("")
-    println("=== Alice places a buy order: 20 Iron Ore @ 12 each (crosses Bob's price) ===")
-    val buyOrderResult = market.placeBuyOrder("alice-char", "iron_ore", 20, 12)
-    printResult(buyOrderResult)
-
-    println("")
-    println("=== Post-trade balances ===")
-    println("Alice currency: " + alice.currencyBalance + " | inventory: " + alice.inventory)
-    println("Bob currency: " + bob.currencyBalance + " | inventory: " + bob.inventory)
-
-    println("")
-    println("=== Bob's remaining sell order (should be partially filled, 10 left) ===")
-    val bobOpenOrders = market.openOrdersFor("bob-char")
-    bobOpenOrders.forEach { println("Order " + it.id + " status=" + it.status + " remaining=" + it.remainingQuantity) }
-
-    println("")
-    println("=== Cancelling Bob's remaining order ===")
-    val bobRemainingOrder = bobOpenOrders.first { it.status == OrderStatus.PARTIALLY_FILLED }
-    printResult(market.cancelOrder(bobRemainingOrder.id))
-    println("Bob's inventory after cancellation refund: " + bob.inventory)
-
-    println("")
-    println("=== Alice sells 5 Iron Ore to the NPC vendor ===")
-    printResult(market.sellToVendor("alice-char", "iron_ore", 5))
-    println("Alice currency after vendor sale: " + alice.currencyBalance + " | inventory: " + alice.inventory)
-
-    println("")
-    println("=== Price history for Iron Ore ===")
-    market.priceHistoryFor("iron_ore").forEach {
-        println("- qty=" + it.quantity + " price=" + it.pricePerUnit + " at " + it.executedAt)
-    }
-
-    println("")
-    println("=== Developer-only: economy health snapshot ===")
-    println(monitoring.economyHealthSnapshot())
-
-    println("")
-    println("=== Developer-only: full trade log with account-level detail ===")
-    monitoring.fullTradeLog().forEach {
-        println("- " + it.quantity + "x " + it.itemId + " @ " + it.pricePerUnit +
-            " | buyer=" + it.buyerCharacterId + "(" + it.buyerAccountId + ")" +
-            " seller=" + it.sellerCharacterId + "(" + it.sellerAccountId + ")" +
-            " tax=" + it.taxCollected)
-    }
-}
-
-fun <T> printResult(result: ServiceResult<T>) {
-    when (result) {
-        is ServiceResult.Success -> println("[OK] " + result.value)
-        is ServiceResult.Failure -> println("[FAIL] " + result.reason)
-    }
 }
