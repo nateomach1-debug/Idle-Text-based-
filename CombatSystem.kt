@@ -3,29 +3,26 @@ import java.time.Instant
 import kotlin.random.Random
 
 // =========================================================
-// COMBAT STYLE & SKILLS
-// (References SkillType from the Skill & Progression module --
-//  assumed available in the same project once combined.)
+// COMBAT STYLE & EQUIPMENT SLOT
+// (CombatStyle and EquipmentSlot now come from SharedTypes.kt --
+//  no longer defined here.)
 // =========================================================
 
-enum class CombatStyle { MELEE, RANGED, MAGIC }
-
-enum class EquipmentSlot { WEAPON, ARMOR, ACCESSORY }
-
 // =========================================================
-// EQUIPMENT (minimal stand-in until the real Items module exists)
+// EQUIPMENT (minimal stand-in until Items module's ItemDefinition
+// is fully wired in for weapon lookups)
 // =========================================================
 
 data class Weapon(
     val name: String,
     val style: CombatStyle,
-    val attackSpeedSeconds: Double, // time between attacks -- varies per weapon/spell
+    val attackSpeedSeconds: Double,
     val baseAccuracy: Int,
     val baseMaxHit: Int
 )
 
 // =========================================================
-// SPELLS (Magic-specific, level-gated, lower damage ceiling)
+// SPELLS
 // =========================================================
 
 data class Spell(
@@ -33,7 +30,7 @@ data class Spell(
     val levelRequired: Int,
     val attackSpeedSeconds: Double,
     val baseAccuracy: Int,
-    val baseMaxHit: Int // intentionally scaled lower than equivalent-level Melee/Ranged weapons
+    val baseMaxHit: Int
 )
 
 object SpellBook {
@@ -43,7 +40,6 @@ object SpellBook {
         Spell("Frost Spike", levelRequired = 30, attackSpeedSeconds = 3.0, baseAccuracy = 35, baseMaxHit = 12)
     )
 
-    /** Only spells the character's Magic level actually qualifies for. */
     fun availableSpells(magicLevel: Int): List<Spell> = spells.filter { it.levelRequired <= magicLevel }
 }
 
@@ -60,7 +56,7 @@ data class Monster(
     val maxHealth: Int,
     val defenseRating: Int,
     val mainLootTable: List<LootEntry>,
-    val rareLootTable: List<LootEntry> // separate, typically very low dropChancePercent
+    val rareLootTable: List<LootEntry>
 )
 
 data class Zone(
@@ -119,19 +115,19 @@ object ZoneCatalog {
 }
 
 // =========================================================
-// LOADOUT CONFIG (set before entering combat)
+// LOADOUT CONFIG
 // =========================================================
 
 data class CombatLoadout(
     val style: CombatStyle,
-    val equippedWeapon: Weapon?,       // required if style is MELEE or RANGED
-    val equippedSpell: Spell?,         // required if style is MAGIC
-    val autoHealThresholdPercent: Int, // e.g. 30 = heal when HP drops to 30%
-    val autoFleeThresholdPercent: Int  // e.g. 10 = flee when HP drops to 10%
+    val equippedWeapon: Weapon?,
+    val equippedSpell: Spell?,
+    val autoHealThresholdPercent: Int,
+    val autoFleeThresholdPercent: Int
 )
 
 // =========================================================
-// COMBAT SESSION STATE (per character, only while in a zone)
+// COMBAT SESSION STATE
 // =========================================================
 
 enum class SessionState { SEARCHING, PAUSED, IN_COMBAT }
@@ -145,7 +141,7 @@ class CombatSession(
 )
 
 // =========================================================
-// RECOVERY STATUS (independent, global, blocks WEAPON changes only)
+// RECOVERY STATUS
 // =========================================================
 
 class RecoveryStatus {
@@ -158,7 +154,7 @@ class RecoveryStatus {
 }
 
 // =========================================================
-// CHARACTER COMBAT STATE (aggregates everything above per character)
+// CHARACTER COMBAT STATE
 // =========================================================
 
 class CharacterCombatState(
@@ -166,17 +162,13 @@ class CharacterCombatState(
     var maxHp: Int,
     val recovery: RecoveryStatus = RecoveryStatus(),
     var session: CombatSession? = null,
-    val lootPool: MutableList<LootEntry> = mutableListOf() // accumulated, uncollected drops
+    val lootPool: MutableList<LootEntry> = mutableListOf()
 )
 
 // =========================================================
 // RESULT TYPES
+// (ServiceResult now comes from SharedTypes.kt.)
 // =========================================================
-
-sealed class ServiceResult<out T> {
-    data class Success<T>(val value: T) : ServiceResult<T>()
-    data class Failure(val reason: String) : ServiceResult<Nothing>()
-}
 
 data class AttackResult(
     val didHit: Boolean,
@@ -221,7 +213,7 @@ class CombatService {
             return ServiceResult.Failure("Cannot search while recovering.")
         }
 
-        val searchSeconds = Random.nextInt(3, 11) // 3-10 seconds inclusive
+        val searchSeconds = Random.nextInt(3, 11)
         session.state = SessionState.SEARCHING
         session.searchEndsAt = now.plusSeconds(searchSeconds.toLong())
         session.currentMonster = null
@@ -238,7 +230,6 @@ class CombatService {
         return ServiceResult.Success(session)
     }
 
-    /** Call periodically (e.g. by a game loop) to check if the search timer has elapsed. */
     fun resolveSearchIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<Monster> {
         val state = stateFor(characterId)
         val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
@@ -265,20 +256,16 @@ class CombatService {
 
     // ---------------- Equipment (slot-aware locking) ----------------
 
-    /**
-     * Recovery locks ONLY the WEAPON slot -- armor/accessories remain changeable
-     * even while recovering. IN_COMBAT still locks every slot, regardless of type.
-     */
     fun canChangeEquipment(characterId: String, slot: EquipmentSlot, now: Instant = Instant.now()): Boolean {
         val state = stateFor(characterId)
 
         if (state.recovery.isRecovering(now) && slot == EquipmentSlot.WEAPON) return false
 
-        val session = state.session ?: return true // not in a zone at all -- always changeable
+        val session = state.session ?: return true
         return session.state != SessionState.IN_COMBAT
     }
 
-    // ---------------- Attack resolution (two-step: hit chance, then damage) ----------------
+    // ---------------- Attack resolution ----------------
 
     fun resolveAttack(
         characterId: String,
@@ -293,7 +280,6 @@ class CombatService {
         }
         val monster = session.currentMonster ?: return ServiceResult.Failure("No active target.")
 
-        // Step 1: hit chance vs. monster defense
         val hitChancePercent = (attackerAccuracy.toDouble() / (attackerAccuracy + monster.defenseRating)) * 100.0
         val didHit = Random.nextDouble(0.0, 100.0) < hitChancePercent
 
@@ -303,7 +289,6 @@ class CombatService {
             )
         }
 
-        // Step 2: damage roll, only if the hit landed
         val damage = Random.nextInt(0, attackerMaxHit + 1)
         session.currentMonsterHealth = (session.currentMonsterHealth - damage).coerceAtLeast(0)
         val defeated = session.currentMonsterHealth <= 0
@@ -343,12 +328,11 @@ class CombatService {
 
         if (state.currentHp <= 0) {
             state.recovery.recoveringUntil = now.plus(recoveryDuration)
-            state.session = null // knocked out of whatever zone/fight they were in
+            state.session = null
         }
         return ServiceResult.Success(state)
     }
 
-    /** Call periodically to check if a recovering character should be restored. */
     fun resolveRecoveryIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
         val state = stateFor(characterId)
         val until = state.recovery.recoveringUntil
@@ -359,102 +343,5 @@ class CombatService {
         state.currentHp = (state.maxHp * 0.5).toInt()
         state.recovery.recoveringUntil = null
         return ServiceResult.Success(state)
-    }
-}
-
-// =========================================================
-// DEMO
-// =========================================================
-
-fun main() {
-    val combat = CombatService()
-    val characterId = "lyra-character-id"
-    combat.stateFor(characterId, maxHp = 100)
-
-    println("=== Entering Goblin Camp at level 1 ===")
-    printResult(combat.enterZone(characterId, "goblin_camp", characterLevel = 1))
-
-    println("")
-    println("=== Equipment check while SEARCHING (all slots should be changeable) ===")
-    println("Can change weapon: " + combat.canChangeEquipment(characterId, EquipmentSlot.WEAPON))
-    println("Can change armor: " + combat.canChangeEquipment(characterId, EquipmentSlot.ARMOR))
-    println("Can change accessory: " + combat.canChangeEquipment(characterId, EquipmentSlot.ACCESSORY))
-
-    println("")
-    println("=== Forcing search resolution (simulating time passing) ===")
-    val state = combat.stateFor(characterId)
-    state.session?.searchEndsAt = Instant.now().minusSeconds(1) // force it to be "ready"
-    printResult(combat.resolveSearchIfReady(characterId))
-
-    println("")
-    println("=== Equipment check during IN_COMBAT (all slots should be locked) ===")
-    println("Can change weapon: " + combat.canChangeEquipment(characterId, EquipmentSlot.WEAPON))
-    println("Can change armor: " + combat.canChangeEquipment(characterId, EquipmentSlot.ARMOR))
-    println("Can change accessory: " + combat.canChangeEquipment(characterId, EquipmentSlot.ACCESSORY))
-
-    val loadout = CombatLoadout(
-        style = CombatStyle.MELEE,
-        equippedWeapon = Weapon("Bronze Sword", CombatStyle.MELEE, attackSpeedSeconds = 2.4, baseAccuracy = 40, baseMaxHit = 6),
-        equippedSpell = null,
-        autoHealThresholdPercent = 30,
-        autoFleeThresholdPercent = 10
-    )
-
-    println("")
-    println("=== Fighting until the monster is defeated ===")
-    var defeated = false
-    var rounds = 0
-    while (!defeated && rounds < 50) {
-        val result = combat.resolveAttack(characterId, loadout, attackerAccuracy = 40, attackerMaxHit = 6)
-        if (result is ServiceResult.Success) {
-            val r = result.value
-            println("Round " + (rounds + 1) + ": hit=" + r.didHit + " dmg=" + r.damageDealt + " monsterHp=" + r.monsterHpRemaining)
-            defeated = r.monsterDefeated
-        }
-        rounds++
-    }
-
-    println("")
-    println("=== Collecting loot pool ===")
-    val loot = combat.collectLoot(characterId)
-    if (loot is ServiceResult.Success) {
-        if (loot.value.isEmpty()) println("No loot dropped this run.")
-        loot.value.forEach { println("- " + it.itemId + " x" + it.minQty) }
-    }
-
-    println("")
-    println("=== Simulating character death and recovery ===")
-    combat.applyDamageToCharacter(characterId, damage = 500) // guaranteed lethal
-    val postDeath = combat.stateFor(characterId)
-    println("HP after lethal damage: " + postDeath.currentHp + " | Recovering: " + postDeath.recovery.isRecovering())
-
-    println("")
-    println("=== Equipment check while RECOVERING (weapon locked, armor/accessory free) ===")
-    println("Can change weapon: " + combat.canChangeEquipment(characterId, EquipmentSlot.WEAPON))
-    println("Can change armor: " + combat.canChangeEquipment(characterId, EquipmentSlot.ARMOR))
-    println("Can change accessory: " + combat.canChangeEquipment(characterId, EquipmentSlot.ACCESSORY))
-
-    println("")
-    println("=== Attempting recovery resolution too early (should fail) ===")
-    printResult(combat.resolveRecoveryIfReady(characterId))
-
-    println("")
-    println("=== Attempting recovery resolution after simulating 601 seconds ===")
-    val future = Instant.now().plusSeconds(601)
-    printResult(combat.resolveRecoveryIfReady(characterId, now = future))
-    val postRecovery = combat.stateFor(characterId)
-    println("HP after recovery: " + postRecovery.currentHp + " / " + postRecovery.maxHp)
-
-    println("")
-    println("=== Equipment check after recovery ends (all slots free again) ===")
-    println("Can change weapon: " + combat.canChangeEquipment(characterId, EquipmentSlot.WEAPON))
-    println("Can change armor: " + combat.canChangeEquipment(characterId, EquipmentSlot.ARMOR))
-    println("Can change accessory: " + combat.canChangeEquipment(characterId, EquipmentSlot.ACCESSORY))
-}
-
-fun <T> printResult(result: ServiceResult<T>) {
-    when (result) {
-        is ServiceResult.Success -> println("[OK] " + result.value)
-        is ServiceResult.Failure -> println("[FAIL] " + result.reason)
     }
 }
