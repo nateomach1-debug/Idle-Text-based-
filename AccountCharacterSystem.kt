@@ -36,7 +36,7 @@ data class Character(
     var avatarId: String,
     val createdAt: Instant,
     var displayNameLastChangedAt: Instant,
-    var isMarketActive: Boolean = false
+    var isMainCharacter: Boolean = false // renamed from isMarketActive per Economy & Market module
 )
 
 object AvatarCatalog {
@@ -45,16 +45,8 @@ object AvatarCatalog {
 }
 
 // =========================================================
-// RESULT TYPE
-// =========================================================
-
-sealed class ServiceResult<out T> {
-    data class Success<T>(val value: T) : ServiceResult<T>()
-    data class Failure(val reason: String) : ServiceResult<Nothing>()
-}
-
-// =========================================================
 // SERVICE LAYER
+// (ServiceResult now comes from SharedTypes.kt -- no longer defined here.)
 // =========================================================
 
 class AccountService {
@@ -169,11 +161,12 @@ class AccountService {
         return ServiceResult.Success(character)
     }
 
-    fun setMarketActive(characterId: String): ServiceResult<Character> {
+    /** Enforces the "one Main character per account" rule used by Economy & Market. */
+    fun setMainCharacter(characterId: String): ServiceResult<Character> {
         val character = charactersById[characterId] ?: return ServiceResult.Failure("Character not found.")
         val siblings = charactersByAccountId[character.accountId].orEmpty().mapNotNull { charactersById[it] }
-        siblings.forEach { it.isMarketActive = false }
-        character.isMarketActive = true
+        siblings.forEach { it.isMainCharacter = false }
+        character.isMainCharacter = true
         return ServiceResult.Success(character)
     }
 
@@ -210,82 +203,7 @@ class AccountService {
     private fun containsBannedWord(text: String): Boolean = bannedWords.any { text.contains(it) }
 
     private fun hashPassword(password: String): String {
+        // STUB ONLY -- a real backend must use bcrypt/argon2 with a per-user salt.
         return "hashed:" + password
-    }
-}
-
-// =========================================================
-// DEMO
-// =========================================================
-
-fun main() {
-    val service = AccountService()
-
-    println("=== Creating accounts ===")
-    val alice = service.createAccount(
-        email = "alice@example.com",
-        username = "AliceAdventurer",
-        password = "hunter22bunny",
-        ageBracket = AgeBracket.ADULT_18_PLUS,
-        region = "US"
-    )
-    printResult("Create Alice", alice)
-
-    val duplicate = service.createAccount(
-        email = "alice2@example.com",
-        username = "aliceadventurer",
-        password = "anotherpassword",
-        ageBracket = AgeBracket.ADULT_18_PLUS,
-        region = "US"
-    )
-    printResult("Create duplicate username", duplicate)
-
-    println("")
-    println("=== Creating a character ===")
-    val aliceAccount = (alice as ServiceResult.Success).value
-    val charResult = service.createCharacter(aliceAccount.id, "Lyra", "mage")
-    printResult("Create character Lyra", charResult)
-
-    println("")
-    println("=== Invalid avatar ===")
-    printResult("Invalid avatar attempt", service.createCharacter(aliceAccount.id, "Thorne", "dragon-rider"))
-
-    println("")
-    println("=== Display name change, immediate (should fail: cooldown) ===")
-    val lyra = (charResult as ServiceResult.Success).value
-    printResult("Immediate rename attempt", service.changeDisplayName(lyra.id, "Starfall"))
-
-    println("")
-    println("=== Display name change, after 31 simulated days ===")
-    val futureTime = lyra.displayNameLastChangedAt.plus(Duration.ofDays(31))
-    printResult("Rename after cooldown", service.changeDisplayName(lyra.id, "Starfall", now = futureTime))
-
-    println("")
-    println("=== Adding currency ===")
-    printResult("Add currency", service.addCurrency(aliceAccount.id, soft = 500, premium = 10))
-
-    println("")
-    println("=== Marking Lyra as the market-active character ===")
-    printResult("Set market-active", service.setMarketActive(lyra.id))
-
-    println("")
-    println("=== Listing Alice's characters ===")
-    service.charactersFor(aliceAccount.id).forEach {
-        println("- " + it.displayName + " (" + it.avatarId + ") marketActive=" + it.isMarketActive)
-    }
-
-    println("")
-    println("=== Banning the account ===")
-    printResult("Ban Alice", service.banAccount(aliceAccount.id, "Testing ban flow"))
-    printResult(
-        "Create character on banned account (should fail)",
-        service.createCharacter(aliceAccount.id, "SecondChar", "rogue")
-    )
-}
-
-fun <T> printResult(label: String, result: ServiceResult<T>) {
-    when (result) {
-        is ServiceResult.Success -> println("[OK] " + label + " -> " + result.value)
-        is ServiceResult.Failure -> println("[FAIL] " + label + " -> " + result.reason)
     }
 }
