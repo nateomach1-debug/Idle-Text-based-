@@ -9,7 +9,7 @@ import java.util.UUID
 enum class GuildRole { LEADER, OFFICER, MEMBER }
 
 object Permissions {
-    fun canInvite(role: GuildRole): Boolean = true // any member
+    fun canInvite(role: GuildRole): Boolean = true
     fun canApproveApplications(role: GuildRole): Boolean = role == GuildRole.OFFICER || role == GuildRole.LEADER
     fun canStartEvents(role: GuildRole): Boolean = role == GuildRole.OFFICER || role == GuildRole.LEADER
     fun canKick(role: GuildRole): Boolean = role == GuildRole.LEADER
@@ -43,7 +43,7 @@ class GuildMember(
 // =========================================================
 
 data class BonusTier(
-    val thresholdMultiplier: Double, // 1.0 = exactly meets scaled target, 2.0 = double, etc.
+    val thresholdMultiplier: Double,
     val bonusPercent: Double,
     val durationHours: Long
 )
@@ -51,10 +51,10 @@ data class BonusTier(
 data class GuildEventDefinition(
     val id: String,
     val name: String,
-    val eligibleItemIds: List<String>, // only these items count toward this event's pool
-    val perMemberThreshold: Int,       // scaled by member count to get the guild's real target
-    val minimumTierRequired: Int,      // guild tier gate to even start this event
-    val bonusTiers: List<BonusTier>    // sorted ascending by thresholdMultiplier
+    val eligibleItemIds: List<String>,
+    val perMemberThreshold: Int,
+    val minimumTierRequired: Int,
+    val bonusTiers: List<BonusTier>
 )
 
 object GuildEventCatalog {
@@ -90,15 +90,14 @@ enum class GuildEventStatus { ACTIVE, COMPLETED, EXPIRED }
 
 class GuildEventInstance(
     val definition: GuildEventDefinition,
-    val scaledTarget: Int, // perMemberThreshold * member count at time of start
+    val scaledTarget: Int,
     val startedAt: Instant = Instant.now(),
     var status: GuildEventStatus = GuildEventStatus.ACTIVE,
-    val contributedItems: MutableMap<String, Int> = mutableMapOf() // itemId -> qty
+    val contributedItems: MutableMap<String, Int> = mutableMapOf()
 ) {
     fun totalContributed(): Int = contributedItems.values.sum()
 }
 
-/** An earned, time-limited bonus -- expires automatically, never permanent. */
 data class ActiveGuildBonus(
     val bonusPercent: Double,
     val grantedAt: Instant,
@@ -119,7 +118,6 @@ class GuildTierState(
 ) {
     companion object {
         val ROLLING_WINDOW: Duration = Duration.ofDays(7)
-        // Required cumulative contribution within the rolling window to HOLD each tier.
         val TIER_MAINTENANCE_REQUIREMENT: Map<Int, Long> = mapOf(
             1 to 0L,
             2 to 5000L,
@@ -138,7 +136,6 @@ class GuildTierState(
         return rollingContributions.filter { it.at.isAfter(cutoff) }.sumOf { it.amount }
     }
 
-    /** Call periodically (or on relevant events) to re-evaluate whether the tier should decay. */
     fun evaluateDecay(now: Instant = Instant.now()) {
         val requirement = TIER_MAINTENANCE_REQUIREMENT[currentTier] ?: return
         val windowTotal = contributionWithinWindow(now)
@@ -163,7 +160,7 @@ class LeaderRemovalVote(
     val initiatedBy: String,
     val createdAt: Instant = Instant.now(),
     val closesAt: Instant = createdAt.plus(Duration.ofHours(24)),
-    val votes: MutableMap<String, VoteChoice> = mutableMapOf(), // voterCharacterId -> choice
+    val votes: MutableMap<String, VoteChoice> = mutableMapOf(),
     var status: VoteStatus = VoteStatus.OPEN
 )
 
@@ -175,14 +172,14 @@ class Guild(
     val id: String = UUID.randomUUID().toString(),
     var name: String,
     val createdAt: Instant = Instant.now(),
-    val members: MutableMap<String, GuildMember> = mutableMapOf(), // characterId -> member
+    val members: MutableMap<String, GuildMember> = mutableMapOf(),
     val tierState: GuildTierState = GuildTierState(),
-    val itemPool: MutableMap<String, Int> = mutableMapOf(), // itemId -> qty (general pool, pre-event)
+    val itemPool: MutableMap<String, Int> = mutableMapOf(),
     var activeEvent: GuildEventInstance? = null,
     val activeBonuses: MutableList<ActiveGuildBonus> = mutableListOf(),
     val voteHistory: MutableList<LeaderRemovalVote> = mutableListOf(),
-    var lastFailedVoteAt: Instant? = null, // 7-day general cooldown
-    val lastVoteAgainstTarget: MutableMap<String, Instant> = mutableMapOf() // 14-day per-target cooldown
+    var lastFailedVoteAt: Instant? = null,
+    val lastVoteAgainstTarget: MutableMap<String, Instant> = mutableMapOf()
 ) {
     companion object {
         const val MAX_MEMBERS = 20
@@ -192,20 +189,12 @@ class Guild(
     fun leaderCount(): Int = members.values.count { it.role == GuildRole.LEADER }
 
     fun currentActiveBonusPercent(now: Instant = Instant.now()): Double =
-        activeBonuses.filter { it.isActive(now) }.sumOf { it.bonusPercent } // additive, consistent with the effect system elsewhere
-}
-
-// =========================================================
-// RESULT TYPE
-// =========================================================
-
-sealed class ServiceResult<out T> {
-    data class Success<T>(val value: T) : ServiceResult<T>()
-    data class Failure(val reason: String) : ServiceResult<Nothing>()
+        activeBonuses.filter { it.isActive(now) }.sumOf { it.bonusPercent }
 }
 
 // =========================================================
 // GUILD SERVICE
+// (ServiceResult now comes from SharedTypes.kt.)
 // =========================================================
 
 class GuildService {
@@ -215,8 +204,6 @@ class GuildService {
 
     private val failedVoteCooldown: Duration = Duration.ofDays(7)
     private val sameTargetVoteCooldown: Duration = Duration.ofDays(14)
-
-    // ---------------- Creation ----------------
 
     fun createGuild(accountId: String, founderCharacterId: String, name: String, currencyBalance: Long): ServiceResult<Guild> {
         val isFree = !accountsWithFreeCreationUsed.contains(accountId)
@@ -236,8 +223,6 @@ class GuildService {
     }
 
     fun guild(guildId: String): Guild? = guilds[guildId]
-
-    // ---------------- Membership ----------------
 
     fun inviteMember(guildId: String, invitingCharacterId: String, invitedCharacterId: String): ServiceResult<Unit> {
         val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
@@ -293,8 +278,6 @@ class GuildService {
         return ServiceResult.Success(Unit)
     }
 
-    // ---------------- Leader removal voting ----------------
-
     fun initiateLeaderRemovalVote(guildId: String, initiatorCharacterId: String, targetLeaderCharacterId: String, now: Instant = Instant.now()): ServiceResult<LeaderRemovalVote> {
         val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
         val initiator = guild.members[initiatorCharacterId] ?: return ServiceResult.Failure("Initiator is not a guild member.")
@@ -333,7 +316,6 @@ class GuildService {
         return ServiceResult.Success(Unit)
     }
 
-    /** Call once the voting window has closed to finalize the outcome. */
     fun resolveVote(guildId: String, voteId: String, now: Instant = Instant.now()): ServiceResult<VoteStatus> {
         val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
         val vote = guild.voteHistory.find { it.id == voteId } ?: return ServiceResult.Failure("Vote not found.")
@@ -347,7 +329,6 @@ class GuildService {
             vote.status = VoteStatus.PASSED
             guild.members[vote.targetLeaderCharacterId]?.role = GuildRole.OFFICER
         } else {
-            // Tie or KEEP majority both default to no change.
             vote.status = VoteStatus.FAILED
             guild.lastFailedVoteAt = now
         }
@@ -355,8 +336,6 @@ class GuildService {
 
         return ServiceResult.Success(vote.status)
     }
-
-    // ---------------- Events & contribution ----------------
 
     fun startEvent(guildId: String, actingCharacterId: String, eventId: String): ServiceResult<GuildEventInstance> {
         val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
@@ -405,4 +384,49 @@ class GuildService {
         if (earnedTier != null) {
             guild.activeBonuses.add(
                 ActiveGuildBonus(
-                    bonusPercent = earnedTier.bonusPerce
+                    bonusPercent = earnedTier.bonusPercent,
+                    grantedAt = now,
+                    expiresAt = now.plus(Duration.ofHours(earnedTier.durationHours))
+                )
+            )
+        }
+
+        guild.tierState.recordContribution(event.totalContributed().toLong(), now)
+    }
+
+    fun evaluateTierDecay(guildId: String, now: Instant = Instant.now()): ServiceResult<Int> {
+        val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
+        guild.tierState.evaluateDecay(now)
+        return ServiceResult.Success(guild.tierState.currentTier)
+    }
+
+    fun recordXpContribution(guildId: String, characterId: String, amount: Long): ServiceResult<Unit> {
+        val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
+        val member = guild.members[characterId] ?: return ServiceResult.Failure("Not a guild member.")
+        member.contributions.xpAllTime += amount
+        member.contributions.xpDaily += amount
+        return ServiceResult.Success(Unit)
+    }
+
+    fun recordCurrencyContribution(guildId: String, characterId: String, amount: Long): ServiceResult<Unit> {
+        val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
+        val member = guild.members[characterId] ?: return ServiceResult.Failure("Not a guild member.")
+        member.contributions.currencyAllTime += amount
+        member.contributions.currencyDaily += amount
+        return ServiceResult.Success(Unit)
+    }
+
+    fun internalLeaderboardByXp(guildId: String, dailyOnly: Boolean = false): List<GuildMember> {
+        val guild = guilds[guildId] ?: return emptyList()
+        return guild.members.values.sortedByDescending { if (dailyOnly) it.contributions.xpDaily else it.contributions.xpAllTime }
+    }
+
+    fun disbandGuild(guildId: String, actingCharacterId: String): ServiceResult<Unit> {
+        val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
+        val actor = guild.members[actingCharacterId] ?: return ServiceResult.Failure("Actor is not a guild member.")
+        if (!Permissions.canDisband(actor.role)) return ServiceResult.Failure("Only Leaders can disband the guild.")
+
+        guilds.remove(guildId)
+        return ServiceResult.Success(Unit)
+    }
+}
