@@ -259,13 +259,15 @@ class CombatService {
     // ---------------- Equipment (slot-aware locking) ----------------
 
     fun canChangeEquipment(characterId: String, slot: EquipmentSlot, now: Instant = Instant.now()): Boolean {
-        val state = stateFor(characterId)
+    if (slot == EquipmentSlot.TOOL) return true // tools are gathering gear, never locked by combat/recovery
 
-        if (state.recovery.isRecovering(now) && slot == EquipmentSlot.WEAPON) return false
+    val state = stateFor(characterId)
 
-        val session = state.session ?: return true
-        return session.state != SessionState.IN_COMBAT
-    }
+    if (state.recovery.isRecovering(now) && slot == EquipmentSlot.WEAPON) return false
+
+    val session = state.session ?: return true
+    return session.state != SessionState.IN_COMBAT
+}
 
     // ---------------- Attack resolution ----------------
 
