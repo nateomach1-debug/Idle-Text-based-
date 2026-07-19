@@ -6,3 +6,7 @@ build
 
 # Ignore Kotlin plugin data
 .kotlin
+
+# Ignore heap dump artifacts and local Android properties
+*.hprof
+local.properties

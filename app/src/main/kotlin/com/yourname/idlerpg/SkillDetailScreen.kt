@@ -121,6 +121,7 @@ fun SkillDetailScreen(
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun ActionPickerSheet(
     actions: List<SkillActionSummary>,
