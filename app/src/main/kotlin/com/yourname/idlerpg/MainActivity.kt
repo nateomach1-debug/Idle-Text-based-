@@ -196,10 +196,13 @@ fun AppRoot() {
                 )
 
                 when (currentDestination) {
-                    AppDestination.HOME -> HomeScreen(homeState) { }
+                    AppDestination.HOME -> HomeScreen(state = homeState, onCollectLoot = { })
 
                     AppDestination.SKILLS -> when (val screen = skillsScreenState) {
-                        is SkillsScreenState.List -> SkillsScreen(allSkills) { skillsScreenState = SkillsScreenState.Detail(it) }
+                        is SkillsScreenState.List -> SkillsScreen(
+    allSkills = allSkills,
+    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) }
+)
                         is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
                             SkillDetailScreen(demoDetailFor(screen.skillId, it), { skillsScreenState = SkillsScreenState.List }, { })
                         }
@@ -211,7 +214,10 @@ fun AppRoot() {
                             onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
                             onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
                         )
-                        CombatScreenState.InZone -> CombatViewScreen(combatViewData) { combatScreenState = CombatScreenState.ZoneSelect }
+                        CombatScreenState.InZone -> CombatViewScreen(
+    data = combatViewData,
+    onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect }
+)
                         CombatScreenState.Loadout -> LoadoutScreen(
                             state = LoadoutState(
                                 loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
