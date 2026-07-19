@@ -44,6 +44,7 @@ object SlotLockMapping {
         EquipSlot.WEAPON -> EquipmentSlot.WEAPON
         EquipSlot.HELMET, EquipSlot.CHESTPLATE, EquipSlot.GLOVES, EquipSlot.BOOTS -> EquipmentSlot.ARMOR
         EquipSlot.NECKLACE, EquipSlot.RING_1, EquipSlot.RING_2 -> EquipmentSlot.ACCESSORY
+        EquipSlot.TOOL -> EquipmentSlot.TOOL
     }
 }
 
