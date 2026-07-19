@@ -3,11 +3,13 @@ package com.yourname.idlerpg
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.yourname.idlerpg.ui.components.RecoveryBar
 import com.yourname.idlerpg.ui.navigation.AppDestination
 import com.yourname.idlerpg.ui.navigation.SideRail
 import com.yourname.idlerpg.ui.screens.*
@@ -24,13 +26,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-// =========================================================
-// PLACEHOLDER DEMO DATA
-// Stand-ins until real backend wiring replaces these. Levels
-// are varied on purpose so the XP bars actually show something
-// other than 0% across the list/grid/detail screens.
-// =========================================================
 
 private fun demoSkills(): Map<String, SkillSummary> {
     val raw = listOf(
@@ -53,8 +48,6 @@ private fun demoSkills(): Map<String, SkillSummary> {
     )
 
     return raw.associate { (id, name, level) ->
-        // Rough placeholder XP math -- not the real curve, just enough
-        // to populate a believable-looking progress bar per skill.
         val currentXp = (level * 120L)
         val xpToNext = ((level + 1) * 130L) - currentXp
         id to SkillSummary(
@@ -86,10 +79,6 @@ private fun demoDetailFor(skillId: String, summary: SkillSummary): SkillDetailSt
     )
 }
 
-// =========================================================
-// APP ROOT
-// =========================================================
-
 private sealed class ScreenState {
     object SkillsList : ScreenState()
     data class SkillDetail(val skillId: String) : ScreenState()
@@ -116,46 +105,54 @@ fun AppRoot() {
         )
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            SideRail(
-                currentDestination = currentDestination,
-                onDestinationSelected = {
-                    currentDestination = it
-                    skillsScreenState = ScreenState.SkillsList // reset skill navigation when leaving the tab
-                },
-                badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
-            )
+    // Placeholder -- null means not recovering. Set to a future Instant to test the bar,
+    // e.g. Instant.now().plusSeconds(600). Will be replaced by real CombatService state later.
+    val recoveringUntil = remember { mutableStateOf<Instant?>(null) }
 
-            when (currentDestination) {
-                AppDestination.HOME -> HomeScreen(
-                    state = homeState,
-                    onCollectLoot = { /* wire to CombatService.collectLoot later */ }
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            RecoveryBar(recoveringUntil = recoveringUntil.value)
+
+            Row(modifier = Modifier.fillMaxSize()) {
+                SideRail(
+                    currentDestination = currentDestination,
+                    onDestinationSelected = {
+                        currentDestination = it
+                        skillsScreenState = ScreenState.SkillsList
+                    },
+                    badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
                 )
 
-                AppDestination.SKILLS -> {
-                    when (val screen = skillsScreenState) {
-                        is ScreenState.SkillsList -> SkillsScreen(
-                            allSkills = allSkills,
-                            onSkillSelected = { skillsScreenState = ScreenState.SkillDetail(it) }
-                        )
-                        is ScreenState.SkillDetail -> {
-                            val summary = allSkills[screen.skillId]
-                            if (summary != null) {
-                                SkillDetailScreen(
-                                    state = demoDetailFor(screen.skillId, summary),
-                                    onBack = { skillsScreenState = ScreenState.SkillsList },
-                                    onStartAction = { /* wire to OfflineIdleService.startSkillingQueue later */ }
-                                )
+                when (currentDestination) {
+                    AppDestination.HOME -> HomeScreen(
+                        state = homeState,
+                        onCollectLoot = { /* wire to CombatService.collectLoot later */ }
+                    )
+
+                    AppDestination.SKILLS -> {
+                        when (val screen = skillsScreenState) {
+                            is ScreenState.SkillsList -> SkillsScreen(
+                                allSkills = allSkills,
+                                onSkillSelected = { skillsScreenState = ScreenState.SkillDetail(it) }
+                            )
+                            is ScreenState.SkillDetail -> {
+                                val summary = allSkills[screen.skillId]
+                                if (summary != null) {
+                                    SkillDetailScreen(
+                                        state = demoDetailFor(screen.skillId, summary),
+                                        onBack = { skillsScreenState = ScreenState.SkillsList },
+                                        onStartAction = { /* wire to OfflineIdleService.startSkillingQueue later */ }
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                else -> androidx.compose.material3.Text(
-                    text = currentDestination.label + " screen coming soon",
-                    modifier = Modifier.fillMaxSize()
-                )
+                    else -> androidx.compose.material3.Text(
+                        text = currentDestination.label + " screen coming soon",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }
