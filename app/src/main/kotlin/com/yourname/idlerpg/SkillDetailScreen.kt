@@ -128,32 +128,38 @@ private fun ActionPickerSheet(
     onActionSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(text = "Choose an action", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(12.dp))
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Choose an action", style = MaterialTheme.typography.titleMedium) },
+        text = {
+            Column {
+                if (actions.isEmpty()) {
+                    Text(text = "No actions available at your current level.", style = MaterialTheme.typography.bodyMedium)
+                }
 
-            if (actions.isEmpty()) {
-                Text(text = "No actions available at your current level.", style = MaterialTheme.typography.bodyMedium)
-            }
-
-            LazyColumn {
-                items(actions) { action ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable { onActionSelected(action.actionId) }
-                            .padding(vertical = 12.dp, horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium)
-                        Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall)
+                LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                    items(actions) { action ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { onActionSelected(action.actionId) }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancel")
+            }
         }
-    }
+    )
 }
 
 @Composable
