@@ -27,6 +27,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// =========================================================
+// PLACEHOLDER DEMO DATA
+// =========================================================
+
 private fun demoSkills(): Map<String, SkillSummary> {
     val raw = listOf(
         Triple("MINING", "Mining", 24),
@@ -79,17 +83,52 @@ private fun demoDetailFor(skillId: String, summary: SkillSummary): SkillDetailSt
     )
 }
 
-private sealed class ScreenState {
-    object SkillsList : ScreenState()
-    data class SkillDetail(val skillId: String) : ScreenState()
+private fun demoZones(): List<ZoneSummary> {
+    return listOf(
+        ZoneSummary("goblin_camp", "Goblin Camp", levelRequirement = 1, monsterNames = listOf("Goblin Grunt")),
+        ZoneSummary("shadow_ruins", "Shadow Ruins", levelRequirement = 20, monsterNames = listOf("Wraith")),
+        ZoneSummary("frost_peak", "Frost Peak", levelRequirement = 40, monsterNames = listOf("Ice Troll", "Frost Wolf"))
+    )
+}
+
+private fun demoWeapons(style: CombatStyleOption): List<WeaponOption> {
+    return when (style) {
+        CombatStyleOption.MELEE -> listOf(
+            WeaponOption("bronze_sword", "Bronze Sword", CombatStyleOption.MELEE),
+            WeaponOption("iron_sword_common", "Iron Sword", CombatStyleOption.MELEE)
+        )
+        CombatStyleOption.RANGED -> listOf(
+            WeaponOption("shortbow", "Shortbow", CombatStyleOption.RANGED)
+        )
+        CombatStyleOption.MAGIC -> listOf(
+            WeaponOption("spark_bolt", "Spark Bolt Staff", CombatStyleOption.MAGIC)
+        )
+    }
+}
+
+// =========================================================
+// APP ROOT
+// =========================================================
+
+private sealed class SkillsScreenState {
+    object List : SkillsScreenState()
+    data class Detail(val skillId: String) : SkillsScreenState()
+}
+
+private sealed class CombatScreenState {
+    object ZoneSelect : CombatScreenState()
+    object InZone : CombatScreenState()
+    object Loadout : CombatScreenState()
 }
 
 @Composable
 fun AppRoot() {
     var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
-    var skillsScreenState by remember { mutableStateOf<ScreenState>(ScreenState.SkillsList) }
+    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
+    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
 
     val allSkills = remember { demoSkills() }
+    val zones = remember { demoZones() }
 
     val homeState = remember {
         HomeScreenState(
@@ -105,9 +144,38 @@ fun AppRoot() {
         )
     }
 
-    // Placeholder -- null means not recovering. Set to a future Instant to test the bar,
-    // e.g. Instant.now().plusSeconds(600). Will be replaced by real CombatService state later.
+    // Set to a future Instant (e.g. Instant.now().plusSeconds(600)) to test the recovery bar.
     val recoveringUntil = remember { mutableStateOf<Instant?>(null) }
+
+    // Loadout state, shared across Combat and (later) Inventory.
+    var loadoutStyle by remember { mutableStateOf(CombatStyleOption.MELEE) }
+    var loadoutWeaponId by remember { mutableStateOf<String?>("bronze_sword") }
+    var autoHeal by remember { mutableStateOf(30) }
+    var autoFlee by remember { mutableStateOf(10) }
+
+    // Toggle between SEARCHING and IN_COMBAT to test both simple views. In real wiring,
+    // this comes from CombatService's session state instead of a manual toggle.
+    var combatViewState by remember { mutableStateOf(CombatViewState.SEARCHING) }
+    val demoCombatLog = remember {
+        mutableStateListOf(
+            CombatLogEntry("You entered Goblin Camp."),
+            CombatLogEntry("Searching for an enemy...")
+        )
+    }
+
+    val combatViewData = CombatViewData(
+        zoneName = "Goblin Camp",
+        viewState = combatViewState,
+        searchEndsAt = if (combatViewState == CombatViewState.SEARCHING) Instant.now().plusSeconds(7) else null,
+        monsterName = if (combatViewState == CombatViewState.IN_COMBAT) "Goblin Grunt" else null,
+        monsterCurrentHp = if (combatViewState == CombatViewState.IN_COMBAT) 15 else null,
+        monsterMaxHp = if (combatViewState == CombatViewState.IN_COMBAT) 25 else null,
+        playerCurrentHp = 80,
+        playerMaxHp = 100,
+        lastHitChancePercent = if (combatViewState == CombatViewState.IN_COMBAT) 62.5 else null,
+        lastDamageDealt = if (combatViewState == CombatViewState.IN_COMBAT) 4 else null,
+        combatLog = demoCombatLog
+    )
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -118,7 +186,8 @@ fun AppRoot() {
                     currentDestination = currentDestination,
                     onDestinationSelected = {
                         currentDestination = it
-                        skillsScreenState = ScreenState.SkillsList
+                        skillsScreenState = SkillsScreenState.List
+                        combatScreenState = CombatScreenState.ZoneSelect
                     },
                     badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
                 )
@@ -131,20 +200,59 @@ fun AppRoot() {
 
                     AppDestination.SKILLS -> {
                         when (val screen = skillsScreenState) {
-                            is ScreenState.SkillsList -> SkillsScreen(
+                            is SkillsScreenState.List -> SkillsScreen(
                                 allSkills = allSkills,
-                                onSkillSelected = { skillsScreenState = ScreenState.SkillDetail(it) }
+                                onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) }
                             )
-                            is ScreenState.SkillDetail -> {
+                            is SkillsScreenState.Detail -> {
                                 val summary = allSkills[screen.skillId]
                                 if (summary != null) {
                                     SkillDetailScreen(
                                         state = demoDetailFor(screen.skillId, summary),
-                                        onBack = { skillsScreenState = ScreenState.SkillsList },
+                                        onBack = { skillsScreenState = SkillsScreenState.List },
                                         onStartAction = { /* wire to OfflineIdleService.startSkillingQueue later */ }
                                     )
                                 }
                             }
+                        }
+                    }
+
+                    AppDestination.COMBAT -> {
+                        when (combatScreenState) {
+                            CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+                                zones = zones,
+                                playerLevel = 24, // demo player level -- matches Mining level for now
+                                onZoneSelected = {
+                                    combatScreenState = CombatScreenState.InZone
+                                    combatViewState = CombatViewState.SEARCHING
+                                },
+                                onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+                            )
+
+                            CombatScreenState.InZone -> CombatViewScreen(
+                                data = combatViewData,
+                                onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect }
+                            )
+
+                            CombatScreenState.Loadout -> LoadoutScreen(
+                                state = LoadoutState(
+                                    selectedStyle = loadoutStyle,
+                                    availableWeapons = demoWeapons(loadoutStyle),
+                                    selectedWeaponId = loadoutWeaponId,
+                                    autoHealThresholdPercent = autoHeal,
+                                    autoFleeThresholdPercent = autoFlee,
+                                    isLocked = combatViewState == CombatViewState.IN_COMBAT,
+                                    lockReason = "Locked during combat"
+                                ),
+                                onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+                                onStyleSelected = {
+                                    loadoutStyle = it
+                                    loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId
+                                },
+                                onWeaponSelected = { loadoutWeaponId = it },
+                                onAutoHealChanged = { autoHeal = it },
+                                onAutoFleeChanged = { autoFlee = it }
+                            )
                         }
                     }
 
