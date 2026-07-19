@@ -227,61 +227,67 @@ private fun ItemActionSheet(
     onEquip: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(text = item.displayName, style = MaterialTheme.typography.headlineMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Quantity: " + item.quantity, style = MaterialTheme.typography.bodyMedium)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = item.displayName, style = MaterialTheme.typography.headlineMedium) },
+        text = {
+            Column {
+                Text(text = "Quantity: " + item.quantity, style = MaterialTheme.typography.bodyMedium)
 
-            val stackValue = item.npcValuePerUnit * item.quantity
-            Text(
-                text = "NPC value: " + item.npcValuePerUnit + " each (" + stackValue + " for full stack)",
-                style = MaterialTheme.typography.bodyMedium
-            )
+                val stackValue = item.npcValuePerUnit * item.quantity
+                Text(
+                    text = "NPC value: " + item.npcValuePerUnit + " each (" + stackValue + " for full stack)",
+                    style = MaterialTheme.typography.bodyMedium
+                )
 
-            item.statsDescription?.let {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Stats: " + it, style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (item.isConsumable) {
-                Button(onClick = onUse, modifier = Modifier.fillMaxWidth()) {
-                    Text(text = "Use")
+                item.statsDescription?.let {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "Stats: " + it, style = MaterialTheme.typography.bodyMedium)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
 
-            if (item.isEquippable) {
-                val (canEquipNow, lockReason) = canEquip
-                Button(
-                    onClick = onEquip,
-                    enabled = canEquipNow,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(text = "Equip")
-                }
-                if (!canEquipNow && lockReason != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.Lock,
-                            contentDescription = "Locked",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = lockReason, style = MaterialTheme.typography.labelSmall)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (item.isConsumable) {
+                    Button(onClick = onUse, modifier = Modifier.fillMaxWidth()) {
+                        Text(text = "Use")
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
 
-            OutlinedButton(onClick = onSell, modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Sell on Market")
+                if (item.isEquippable) {
+                    val (canEquipNow, lockReason) = canEquip
+                    Button(
+                        onClick = onEquip,
+                        enabled = canEquipNow,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = "Equip")
+                    }
+                    if (!canEquipNow && lockReason != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Lock,
+                                contentDescription = "Locked",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = lockReason, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                OutlinedButton(onClick = onSell, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Sell on Market")
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Close")
             }
         }
-    }
+    )
 }
