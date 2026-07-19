@@ -27,7 +27,7 @@ enum class CombatStyle { MELEE, RANGED, MAGIC }
 //  Remove from Items & Equipment, use this.)
 // =========================================================
 
-enum class EquipmentSlot { WEAPON, ARMOR, ACCESSORY }
+enum class EquipmentSlot { WEAPON, ARMOR, ACCESSORY, TOOL }
 
 // =========================================================
 // SHARED ITEM DEFINITION
@@ -38,8 +38,7 @@ enum class EquipmentSlot { WEAPON, ARMOR, ACCESSORY }
 
 enum class ItemCategory { WEAPON, ARMOR, ACCESSORY, MATERIAL, CONSUMABLE, COSMETIC }
 enum class Rarity { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
-enum class EquipSlot { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2 }
-
+enum class EquipSlot { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL }
 object SlotLockMapping {
     fun lockCategoryFor(slot: EquipSlot): EquipmentSlot = when (slot) {
         EquipSlot.WEAPON -> EquipmentSlot.WEAPON
