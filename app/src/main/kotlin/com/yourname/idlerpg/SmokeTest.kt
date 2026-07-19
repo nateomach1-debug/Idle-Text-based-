@@ -1,3 +1,5 @@
+package com.yourname.idlerpg
+
 import java.time.Instant
 
 fun main() {

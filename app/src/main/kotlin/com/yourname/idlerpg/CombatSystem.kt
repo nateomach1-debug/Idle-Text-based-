@@ -1,3 +1,5 @@
+package com.yourname.idlerpg
+
 import java.time.Duration
 import java.time.Instant
 import kotlin.random.Random

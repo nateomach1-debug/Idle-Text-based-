@@ -1,3 +1,5 @@
+package com.yourname.idlerpg
+
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -266,11 +268,6 @@ class PatchNoteService {
 // =========================================================
 // RESULT TYPE
 // =========================================================
-
-sealed class ServiceResult<out T> {
-    data class Success<T>(val value: T) : ServiceResult<T>()
-    data class Failure(val reason: String) : ServiceResult<Nothing>()
-}
 
 // =========================================================
 // DEMO
