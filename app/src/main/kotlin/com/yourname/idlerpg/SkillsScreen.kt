@@ -1,9 +1,11 @@
 package com.yourname.idlerpg.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,18 +19,37 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 // =========================================================
 // SKILLS LIST SCREEN
 // Grouped in gathering-to-production pairs, combat skills last.
 // Toggle between grid (compact) and list (more detail per row).
+// The chosen view mode PERSISTS across app sessions via
+// SharedPreferences -- a deliberate player preference, not a
+// temporary UI state.
 // =========================================================
 
 enum class SkillsViewMode { LIST, GRID }
 
+private const val PREFS_NAME = "idlerpg_prefs"
+private const val KEY_SKILLS_VIEW_MODE = "skills_view_mode"
+
+private fun loadSavedViewMode(context: Context): SkillsViewMode {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val saved = prefs.getString(KEY_SKILLS_VIEW_MODE, SkillsViewMode.LIST.name)
+    return runCatching { SkillsViewMode.valueOf(saved ?: SkillsViewMode.LIST.name) }
+        .getOrDefault(SkillsViewMode.LIST)
+}
+
+private fun saveViewMode(context: Context, mode: SkillsViewMode) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_SKILLS_VIEW_MODE, mode.name).apply()
+}
+
 data class SkillSummary(
-    val skillId: String,       // matches SkillType.name from the backend
+    val skillId: String,
     val displayName: String,
     val level: Int,
     val currentXp: Long,
@@ -40,10 +61,6 @@ data class SkillGroupSection(
     val skills: List<SkillSummary>
 )
 
-/**
- * Builds the paired grouping: gathering skill immediately followed by its
- * primary production partner, then all combat skills together at the bottom.
- */
 fun buildSkillGroupSections(allSkills: Map<String, SkillSummary>): List<SkillGroupSection> {
     fun skill(id: String): SkillSummary? = allSkills[id]
 
@@ -71,7 +88,8 @@ fun SkillsScreen(
     onSkillSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var viewMode by remember { mutableStateOf(SkillsViewMode.LIST) }
+    val context = LocalContext.current
+    var viewMode by remember { mutableStateOf(loadSavedViewMode(context)) }
     val sections = remember(allSkills) { buildSkillGroupSections(allSkills) }
 
     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
@@ -81,7 +99,13 @@ fun SkillsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "Skills", style = MaterialTheme.typography.headlineMedium)
-            ViewModeToggle(current = viewMode, onChange = { viewMode = it })
+            ViewModeToggle(
+                current = viewMode,
+                onChange = {
+                    viewMode = it
+                    saveViewMode(context, it)
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
