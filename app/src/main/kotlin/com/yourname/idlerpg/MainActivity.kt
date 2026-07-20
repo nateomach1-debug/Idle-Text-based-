@@ -48,7 +48,16 @@ private fun demoSkills(): Map<String, SkillSummary> {
         id to SkillSummary(id, name, level, currentXp, xpToNext.coerceAtLeast(50L))
     }
 }
+private fun demoChatMessages(): List<ChatMessageUi> = listOf(
+    ChatMessageUi("m1", "Bram", "anyone selling steel bars?", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m2", "Sable", "check the market, saw some at 48 each", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m3", "Quinn", "gl on the hunt everyone", ChatChannelUi.GLOBAL)
+)
 
+private fun demoDmConversations(): List<DmConversationSummary> = listOf(
+    DmConversationSummary("char2", "Bram", "hey, got a minute?"),
+    DmConversationSummary("char3", "Sable", "thanks for the help earlier!")
+)
 private fun demoDetailFor(skillId: String, summary: SkillSummary): SkillDetailState {
     return SkillDetailState(
         skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
@@ -181,6 +190,10 @@ fun AppRoot() {
     var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
     var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
+    var selectedChatChannel by remember { mutableStateOf(ChatChannelUi.GLOBAL) }
+var selectedDmCharacterId by remember { mutableStateOf<String?>(null) }
+var chatMessageInput by remember { mutableStateOf("") }
+val chatMessages = remember { mutableStateListOf(*demoChatMessages().toTypedArray()) }
 var leaderboardShowingDaily by remember { mutableStateOf(false) }
 var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) }
     val allSkills = remember { demoSkills() }
@@ -238,10 +251,10 @@ var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            RecoveryBar(recoveringUntil = recoveringUntil.value)
+    Column(modifier = Modifier.fillMaxSize()) {
+        RecoveryBar(recoveringUntil = recoveringUntil.value)
 
-            Row(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxSize().weight(1f)) {
                 SideRail(
                     currentDestination = currentDestination,
                     onDestinationSelected = {
@@ -376,6 +389,28 @@ AppDestination.GUILD -> {
                     )
                 }
             }
+
+            ChatBanner(
+                selectedChannel = selectedChatChannel,
+                onChannelSelected = {
+                    selectedChatChannel = it
+                    if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
+                },
+                messages = chatMessages.filter { it.channel == selectedChatChannel },
+                dmConversations = demoDmConversations(),
+                selectedDmCharacterId = selectedDmCharacterId,
+                onDmSelected = { selectedDmCharacterId = it },
+                hasUnread = true,
+                messageInput = chatMessageInput,
+                onMessageInputChanged = { chatMessageInput = it },
+                onSendMessage = {
+                    if (chatMessageInput.isNotBlank()) {
+                        chatMessages.add(ChatMessageUi("m" + (chatMessages.size + 1), "You", chatMessageInput, selectedChatChannel))
+                        chatMessageInput = ""
+                    }
+                },
+                onMessageAction = { _, _ -> }
+            )
         }
     }
 }
