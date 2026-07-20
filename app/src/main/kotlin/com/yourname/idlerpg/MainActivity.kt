@@ -10,6 +10,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.yourname.idlerpg.ui.components.RecoveryBar
+import com.yourname.idlerpg.ui.components.ChatBanner
+import com.yourname.idlerpg.ui.components.ChatChannelUi
+import com.yourname.idlerpg.ui.components.ChatMessageUi
+import com.yourname.idlerpg.ui.components.DmConversationSummary
+import com.yourname.idlerpg.ui.components.ChatMessageAction
 import com.yourname.idlerpg.ui.navigation.AppDestination
 import com.yourname.idlerpg.ui.navigation.SideRail
 import com.yourname.idlerpg.ui.screens.*
