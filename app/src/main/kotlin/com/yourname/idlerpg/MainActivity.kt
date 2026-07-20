@@ -100,6 +100,34 @@ private fun demoEquipped(): Map<EquipSlotUi, EquippedItemInfo?> = mapOf(
     EquipSlotUi.RING_2 to null,
     EquipSlotUi.TOOL to EquippedItemInfo("pickaxe_bronze", "Bronze Pickaxe")
 )
+private fun demoMarketListings(): List<MarketListingSummary> = listOf(
+    MarketListingSummary("iron_ore", "Iron Ore", bestBuyPrice = 9, bestSellPrice = 11),
+    MarketListingSummary("steel_bar", "Steel Bar", bestBuyPrice = 40, bestSellPrice = 48),
+    MarketListingSummary("minor_healing_potion", "Minor Healing Potion", bestBuyPrice = 4, bestSellPrice = 6)
+)
+
+private fun demoOrderBook(itemId: String): ItemOrderBookDetail {
+    val listing = demoMarketListings().find { it.itemId == itemId }
+    return ItemOrderBookDetail(
+        itemId = itemId,
+        displayName = listing?.displayName ?: itemId,
+        bestBuyPrice = listing?.bestBuyPrice,
+        bestSellPrice = listing?.bestSellPrice,
+        recentTrades = listOf(
+            PriceHistoryRow(11, 20, "5m ago"),
+            PriceHistoryRow(10, 15, "22m ago"),
+            PriceHistoryRow(12, 5, "1h ago")
+        )
+    )
+}
+
+private fun demoMyBuyOrders(): List<MarketOrderSummary> = listOf(
+    MarketOrderSummary("order1", "iron_ore", "Iron Ore", 9, 30)
+)
+
+private fun demoMySellOrders(): List<MarketOrderSummary> = listOf(
+    MarketOrderSummary("order2", "steel_bar", "Steel Bar", 48, 8)
+)
 
 // =========================================================
 // APP ROOT
@@ -144,6 +172,9 @@ fun AppRoot() {
     var loadoutWeaponId by remember { mutableStateOf<String?>("bronze_sword") }
     var autoHeal by remember { mutableStateOf(30) }
     var autoFlee by remember { mutableStateOf(10) }
+    var marketTab by remember { mutableStateOf(MarketTab.BROWSE) }
+var showingBuyOrders by remember { mutableStateOf(false) }
+var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
 
     var combatViewState by remember { mutableStateOf(CombatViewState.SEARCHING) }
     val demoCombatLog = remember {
@@ -231,6 +262,30 @@ fun AppRoot() {
                         )
                     }
 
+                   AppDestination.MARKET -> {
+    val itemId = selectedMarketItemId
+    if (itemId != null) {
+        OrderBookScreen(
+            detail = demoOrderBook(itemId),
+            onBack = { selectedMarketItemId = null },
+            onPlaceOrder = { _, _, _ -> selectedMarketItemId = null }
+        )
+    } else {
+        MarketScreen(
+            currentTab = marketTab,
+            onTabSelected = { marketTab = it },
+            listings = demoMarketListings(),
+            showingBuyOrders = showingBuyOrders,
+            onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+            onItemSelected = { selectedMarketItemId = it },
+            myBuyOrders = demoMyBuyOrders(),
+            mySellOrders = demoMySellOrders(),
+            onCancelOrder = { },
+            vendorSellableItems = inventoryItems,
+            onSellToVendor = { _, _ -> }
+        )
+    }
+                   }
                     AppDestination.INVENTORY -> when (inventoryScreenState) {
                         InventoryScreenState.Items -> InventoryScreen(
                             items = inventoryItems,
@@ -243,7 +298,8 @@ fun AppRoot() {
                         )
                         InventoryScreenState.Equipment -> EquipmentScreen(
                             state = EquipmentScreenState(equipped, lockedEquipSlots),
-                            onBack = { inventoryScreenState = InventoryScreenState.Items },
+                            onBack = { inventoryScreenState = InventoryScreenState.Items 
+                            marketTab = MarketTab.BROWSE; selectedMarketItemId = null},
                             onSlotTapped = { }
                         )
                         InventoryScreenState.Loadout -> LoadoutScreen(
