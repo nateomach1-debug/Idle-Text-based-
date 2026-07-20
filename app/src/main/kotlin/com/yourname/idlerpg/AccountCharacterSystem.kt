@@ -29,6 +29,7 @@ data class Account(
     var premiumCurrency: Long = 0
 ) {
     fun isMuted(now: Instant = Instant.now()): Boolean = mutedUntil?.isAfter(now) == true
+    internal fun exposePasswordHashForExport(): String = passwordHash
 }
 
 data class Character(
