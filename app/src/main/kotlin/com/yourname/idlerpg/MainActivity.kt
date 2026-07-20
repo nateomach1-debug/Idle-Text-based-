@@ -64,7 +64,32 @@ private fun demoDetailFor(skillId: String, summary: SkillSummary): SkillDetailSt
         ).filter { it.levelRequired <= summary.level }
     )
 }
+private fun demoGuildMembers(): List<GuildMemberSummary> = listOf(
+    GuildMemberSummary("char1", "Lyra", GuildMemberRole.LEADER),
+    GuildMemberSummary("char2", "Bram", GuildMemberRole.OFFICER),
+    GuildMemberSummary("char3", "Sable", GuildMemberRole.MEMBER),
+    GuildMemberSummary("char4", "Quinn", GuildMemberRole.MEMBER)
+)
 
+private fun demoGuildState(): GuildHomeState = GuildHomeState(
+    guildName = "Iron Wolves",
+    activeEvent = GuildEventSummary("Beast Hunt", progressCurrent = 78, progressTarget = 120),
+    activeVote = null,
+    tier = 2,
+    activeBonusPercent = 5.0,
+    members = demoGuildMembers(),
+    quests = listOf(
+        GuildQuestSummary("Weekly Contribution", "Donate items toward this week's guild goal.")
+    ),
+    viewerRole = GuildMemberRole.LEADER
+)
+
+private fun demoLeaderboard(): List<GuildLeaderboardEntry> = listOf(
+    GuildLeaderboardEntry("Lyra", 15200),
+    GuildLeaderboardEntry("Bram", 9800),
+    GuildLeaderboardEntry("Sable", 6100),
+    GuildLeaderboardEntry("Quinn", 4200)
+)
 private fun demoZones(): List<ZoneSummary> = listOf(
     ZoneSummary("goblin_camp", "Goblin Camp", 1, listOf("Goblin Grunt")),
     ZoneSummary("shadow_ruins", "Shadow Ruins", 20, listOf("Wraith")),
@@ -156,7 +181,8 @@ fun AppRoot() {
     var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
     var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
-
+var leaderboardShowingDaily by remember { mutableStateOf(false) }
+var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) }
     val allSkills = remember { demoSkills() }
     val zones = remember { demoZones() }
     val inventoryItems = remember { demoInventoryItems() }
@@ -262,7 +288,29 @@ var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
                             onAutoFleeChanged = { autoFlee = it }
                         )
                     }
+AppDestination.GUILD -> {
+    GuildHomeScreen(
+        state = demoGuildState(),
+        leaderboardEntries = demoLeaderboard(),
+        leaderboardShowingDaily = leaderboardShowingDaily,
+        onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+        onMemberTapped = { selectedGuildMember = it },
+        onContributeToEvent = { },
+        onCastVote = { }
+    )
 
+    selectedGuildMember?.let { member ->
+        MemberActionPopup(
+            member = member,
+            viewerRole = GuildMemberRole.LEADER,
+            onDismiss = { selectedGuildMember = null },
+            onKick = { selectedGuildMember = null },
+            onPromote = { selectedGuildMember = null },
+            onDemote = { selectedGuildMember = null },
+            onInitiateVote = { selectedGuildMember = null }
+        )
+    }
+}
                    AppDestination.MARKET -> {
     val itemId = selectedMarketItemId
     if (itemId != null) {
