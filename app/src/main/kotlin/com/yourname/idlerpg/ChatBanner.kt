@@ -208,6 +208,7 @@ private fun DmConversationList(conversations: List<DmConversationSummary>, onSel
 
 enum class ChatMessageAction { REPORT, BLOCK, SELF_MUTE, MESSAGE_PLAYER }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun ChatMessageRow(message: ChatMessageUi, onAction: (ChatMessageUi, ChatMessageAction) -> Unit) {
     var showActionMenu by remember { mutableStateOf(false) }
