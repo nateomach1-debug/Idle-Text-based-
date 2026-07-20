@@ -175,6 +175,7 @@ fun AppRoot() {
     var marketTab by remember { mutableStateOf(MarketTab.BROWSE) }
 var showingBuyOrders by remember { mutableStateOf(false) }
 var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
+var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
 
     var combatViewState by remember { mutableStateOf(CombatViewState.SEARCHING) }
     val demoCombatLog = remember {
@@ -265,12 +266,13 @@ var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
                    AppDestination.MARKET -> {
     val itemId = selectedMarketItemId
     if (itemId != null) {
-        OrderBookScreen(
-            detail = demoOrderBook(itemId),
-            onBack = { selectedMarketItemId = null },
-            onPlaceOrder = { _, _, _ -> selectedMarketItemId = null }
-        )
-    } else {
+    OrderBookScreen(
+        detail = demoOrderBook(itemId),
+        prefilledQuantity = prefilledSellQuantity,
+        onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+        onPlaceOrder = { _, _, _ -> selectedMarketItemId = null; prefilledSellQuantity = null }
+    )
+} else {
         MarketScreen(
             currentTab = marketTab,
             onTabSelected = { marketTab = it },
@@ -292,7 +294,12 @@ var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
                             onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
                             onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
                             onUseItem = { },
-                            onSellOnMarket = { },
+                            onSellOnMarket = { itemId ->
+    val item = inventoryItems.find { it.itemId == itemId }
+    selectedMarketItemId = itemId
+    prefilledSellQuantity = item?.quantity
+    currentDestination = AppDestination.MARKET
+},
                             onEquipItem = { },
                             canEquip = ::canEquip
                         )
