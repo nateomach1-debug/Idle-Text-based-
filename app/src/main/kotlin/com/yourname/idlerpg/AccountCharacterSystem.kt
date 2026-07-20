@@ -211,17 +211,6 @@ class AccountService {
     }
     // ---------------- Persistence support ----------------
 
-data class AccountExport(
-    val id: String, val email: String, val username: String, val passwordHash: String,
-    val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
-    val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
-    val subscriptionTier: String, val softCurrency: Long, val premiumCurrency: Long
-)
-
-data class CharacterExport(
-    val id: String, val accountId: String, val displayName: String, val avatarId: String,
-    val createdAt: String, val displayNameLastChangedAt: String, val isMainCharacter: Boolean
-)
 
 fun exportAllAccounts(): List<AccountExport> = accountsById.values.map {
     AccountExport(
@@ -264,5 +253,16 @@ fun restoreCharacter(export: CharacterExport) {
     )
     charactersById[character.id] = character
     charactersByAccountId.getOrPut(character.accountId) { mutableListOf() }.add(character.id)
-}
+}data class AccountExport(
+    val id: String, val email: String, val username: String, val passwordHash: String,
+    val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
+    val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
+    val subscriptionTier: String, val softCurrency: Long, val premiumCurrency: Long
+)
+
+data class CharacterExport(
+    val id: String, val accountId: String, val displayName: String, val avatarId: String,
+    val createdAt: String, val displayNameLastChangedAt: String, val isMainCharacter: Boolean
+
+)
 }
