@@ -135,7 +135,7 @@ private fun PriceBlock(label: String, price: Long?) {
 }
 
 @Composable
-private fun SideToggle(label: String, isSelected: Boolean, onClick: () -> Unit) {
+private fun RowScope.SideToggle(label: String, isSelected: Boolean, onClick: () -> Unit) {
     if (isSelected) {
         Button(onClick = onClick, modifier = Modifier.weight(1f)) { Text(text = label) }
     } else {
