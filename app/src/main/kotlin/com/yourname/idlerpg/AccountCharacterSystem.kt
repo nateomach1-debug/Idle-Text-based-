@@ -209,109 +209,60 @@ class AccountService {
         // STUB ONLY -- a real backend must use bcrypt/argon2 with a per-user salt.
         return "hashed:" + password
     }
-    package com.yourname.idlerpg.data
+    // ---------------- Persistence support ----------------
 
-import android.content.Context
-import org.json.JSONArray
-import org.json.JSONObject
-import java.io.File
+data class AccountExport(
+    val id: String, val email: String, val username: String, val passwordHash: String,
+    val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
+    val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
+    val subscriptionTier: String, val softCurrency: Long, val premiumCurrency: Long
+)
 
-// =========================================================
-// GAME STATE REPOSITORY
-// Saves/loads the whole game's state as one JSON file in the
-// app's private internal storage. Survives full app closure --
-// this is what makes offline progress calculation possible.
-// =========================================================
+data class CharacterExport(
+    val id: String, val accountId: String, val displayName: String, val avatarId: String,
+    val createdAt: String, val displayNameLastChangedAt: String, val isMainCharacter: Boolean
+)
 
-class GameStateRepository(private val context: Context) {
-    private val saveFile: File get() = File(context.filesDir, "game_state.json")
-
-    fun save(accounts: List<AccountExport>, characters: List<CharacterExport>) {
-        val root = JSONObject()
-
-        val accountsArray = JSONArray()
-        accounts.forEach { acc ->
-            val obj = JSONObject()
-            obj.put("id", acc.id)
-            obj.put("email", acc.email)
-            obj.put("username", acc.username)
-            obj.put("passwordHash", acc.passwordHash)
-            obj.put("createdAt", acc.createdAt)
-            obj.put("lastLoginAt", acc.lastLoginAt)
-            obj.put("ageBracket", acc.ageBracket)
-            obj.put("region", acc.region)
-            obj.put("isBanned", acc.isBanned)
-            obj.put("banReason", acc.banReason)
-            obj.put("mutedUntil", acc.mutedUntil)
-            obj.put("subscriptionTier", acc.subscriptionTier)
-            obj.put("softCurrency", acc.softCurrency)
-            obj.put("premiumCurrency", acc.premiumCurrency)
-            accountsArray.put(obj)
-        }
-        root.put("accounts", accountsArray)
-
-        val charactersArray = JSONArray()
-        characters.forEach { char ->
-            val obj = JSONObject()
-            obj.put("id", char.id)
-            obj.put("accountId", char.accountId)
-            obj.put("displayName", char.displayName)
-            obj.put("avatarId", char.avatarId)
-            obj.put("createdAt", char.createdAt)
-            obj.put("displayNameLastChangedAt", char.displayNameLastChangedAt)
-            obj.put("isMainCharacter", char.isMainCharacter)
-            charactersArray.put(obj)
-        }
-        root.put("characters", charactersArray)
-
-        saveFile.writeText(root.toString())
-    }
-
-    fun load(): SavedGameState? {
-        if (!saveFile.exists()) return null
-
-        val root = JSONObject(saveFile.readText())
-
-        val accounts = mutableListOf<AccountExport>()
-        val accountsArray = root.optJSONArray("accounts") ?: JSONArray()
-        for (i in 0 until accountsArray.length()) {
-            val obj = accountsArray.getJSONObject(i)
-            accounts.add(
-                AccountExport(
-                    id = obj.getString("id"), email = obj.getString("email"),
-                    username = obj.getString("username"), passwordHash = obj.getString("passwordHash"),
-                    createdAt = obj.getString("createdAt"), lastLoginAt = obj.getString("lastLoginAt"),
-                    ageBracket = obj.getString("ageBracket"), region = obj.getString("region"),
-                    isBanned = obj.getBoolean("isBanned"),
-                    banReason = if (obj.isNull("banReason")) null else obj.getString("banReason"),
-                    mutedUntil = if (obj.isNull("mutedUntil")) null else obj.getString("mutedUntil"),
-                    subscriptionTier = obj.getString("subscriptionTier"),
-                    softCurrency = obj.getLong("softCurrency"), premiumCurrency = obj.getLong("premiumCurrency")
-                )
-            )
-        }
-
-        val characters = mutableListOf<CharacterExport>()
-        val charactersArray = root.optJSONArray("characters") ?: JSONArray()
-        for (i in 0 until charactersArray.length()) {
-            val obj = charactersArray.getJSONObject(i)
-            characters.add(
-                CharacterExport(
-                    id = obj.getString("id"), accountId = obj.getString("accountId"),
-                    displayName = obj.getString("displayName"), avatarId = obj.getString("avatarId"),
-                    createdAt = obj.getString("createdAt"),
-                    displayNameLastChangedAt = obj.getString("displayNameLastChangedAt"),
-                    isMainCharacter = obj.getBoolean("isMainCharacter")
-                )
-            )
-        }
-
-        return SavedGameState(accounts, characters)
-    }
+fun exportAllAccounts(): List<AccountExport> = accountsById.values.map {
+    AccountExport(
+        it.id, it.email, it.username, it.exposePasswordHashForExport(),
+        it.createdAt.toString(), it.lastLoginAt.toString(), it.ageBracket.name, it.region,
+        it.isBanned, it.banReason, it.mutedUntil?.toString(),
+        it.subscriptionTier.name, it.softCurrency, it.premiumCurrency
+    )
 }
 
-data class SavedGameState(
-    val accounts: List<AccountExport>,
-    val characters: List<CharacterExport>
-)
+fun exportAllCharacters(): List<CharacterExport> = charactersById.values.map {
+    CharacterExport(
+        it.id, it.accountId, it.displayName, it.avatarId,
+        it.createdAt.toString(), it.displayNameLastChangedAt.toString(), it.isMainCharacter
+    )
+}
+
+fun restoreAccount(export: AccountExport) {
+    val account = Account(
+        id = export.id, email = export.email, username = export.username,
+        passwordHash = export.passwordHash,
+        createdAt = Instant.parse(export.createdAt), lastLoginAt = Instant.parse(export.lastLoginAt),
+        ageBracket = AgeBracket.valueOf(export.ageBracket), region = export.region,
+        isBanned = export.isBanned, banReason = export.banReason,
+        mutedUntil = export.mutedUntil?.let { Instant.parse(it) },
+        subscriptionTier = SubscriptionTier.valueOf(export.subscriptionTier),
+        softCurrency = export.softCurrency, premiumCurrency = export.premiumCurrency
+    )
+    accountsById[account.id] = account
+    accountsByUsername[account.username.lowercase()] = account.id
+    accountsByEmail[account.email.lowercase()] = account.id
+}
+
+fun restoreCharacter(export: CharacterExport) {
+    val character = Character(
+        id = export.id, accountId = export.accountId, displayName = export.displayName,
+        avatarId = export.avatarId, createdAt = Instant.parse(export.createdAt),
+        displayNameLastChangedAt = Instant.parse(export.displayNameLastChangedAt),
+        isMainCharacter = export.isMainCharacter
+    )
+    charactersById[character.id] = character
+    charactersByAccountId.getOrPut(character.accountId) { mutableListOf() }.add(character.id)
+}
 }
