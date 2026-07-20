@@ -3,6 +3,7 @@ package com.yourname.idlerpg.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -73,7 +74,7 @@ fun GuildHomeScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(20.dp)
-            .then(Modifier)
+            .verticalScroll(scrollState)
     ) {
         Text(
             text = state.guildName,
