@@ -1,8 +1,8 @@
 package com.yourname.idlerpg.data
 
+import com.yourname.idlerpg.*
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-
 // =========================================================
 // GAME VIEWMODEL
 // Single shared holder for every backend service. Survives
