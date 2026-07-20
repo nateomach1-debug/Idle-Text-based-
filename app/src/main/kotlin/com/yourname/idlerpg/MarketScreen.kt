@@ -72,7 +72,7 @@ fun MarketScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MarketTabButton("Browse", currentTab == MarketTab.BROWSE) { onTabSelected(MarketTab.BROWSE) }
             MarketTabButton("My Orders", currentTab == MarketTab.MY_ORDERS) { onTabSelected(MarketTab.MY_ORDERS) }
-            MarketTabButton("Sell to Vendor", currentTab == MarketTab.SELL_TO_VENDOR) { onTabSelected(MarketTab.SELL_TO_VENDOR) }
+            MarketTabButton("Vendor", currentTab == MarketTab.SELL_TO_VENDOR) { onTabSelected(MarketTab.SELL_TO_VENDOR) }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
