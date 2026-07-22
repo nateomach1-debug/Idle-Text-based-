@@ -206,7 +206,9 @@ data class PlayerGameState(
 // =========================================================
 
 data class CharacterExport(
-    val characterId: String,
+    val id: String,
+    val accountId: String,
+    val displayName: String,
     val avatarId: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val displayNameLastChangedAt: Long? = null,
@@ -215,10 +217,19 @@ data class CharacterExport(
 )
 
 data class AccountExport(
-    val accountId: String,
+    val id: String,
+    val email: String,
+    val username: String,
+    val passwordHash: String,
+    val createdAt: Long = System.currentTimeMillis(),
+    val lastLoginAt: Long = System.currentTimeMillis(),
+    val ageBracket: String = "UNKNOWN",
+    val region: String = "UNKNOWN",
+    val isBanned: Boolean = false,
     val banReason: String? = null,
     val mutedUntil: Long? = null,
-    val subscriptionTier: String? = null,
+    val subscriptionTier: String = "FREE",
     val softCurrency: Long = 0L,
+    val premiumCurrency: Long = 0L,
     val characters: List<CharacterExport> = emptyList()
 )
