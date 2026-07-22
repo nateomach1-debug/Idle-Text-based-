@@ -167,8 +167,9 @@ fun baseValueFor(itemId: String): Long = when (itemId) {
 "oak_log" -> 8L
 "steel_bar" -> 45L
 else -> 5L // fallback placeholder for anything not explicitly priced yet
-  // ==========================================
-// NEW: Tick Loop & Combat Engine Data Models
+}
+// ==========================================
+// NEW DATA MODELS (Paste at bottom of file)
 // ==========================================
 
 data class Enemy(
@@ -199,5 +200,3 @@ data class PlayerGameState(
       
     )
 )
-}
-}
