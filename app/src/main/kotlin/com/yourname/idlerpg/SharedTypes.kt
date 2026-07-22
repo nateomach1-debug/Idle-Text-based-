@@ -167,5 +167,37 @@ fun baseValueFor(itemId: String): Long = when (itemId) {
 "oak_log" -> 8L
 "steel_bar" -> 45L
 else -> 5L // fallback placeholder for anything not explicitly priced yet
+  // ==========================================
+// NEW: Tick Loop & Combat Engine Data Models
+// ==========================================
+
+data class Enemy(
+    val id: String,
+    val name: String,
+    val maxHp: Int,
+    var currentHp: Int,
+    val attackPower: Int,
+    val xpReward: Long,
+    val goldReward: Long
+)
+
+data class PlayerStats(
+    var hp: Int = 100,
+    var maxHp: Int = 100,
+    var attackPower: Int = 10,
+    var gold: Long = 0L,
+    var activeSkill: SkillType? = null,
+    var activeEnemy: Enemy? = null
+)
+
+data class PlayerGameState(
+    val characterId: String = java.util.UUID.randomUUID().toString(),
+    val stats: PlayerStats = PlayerStats(),
+    val skills: MutableMap<SkillType, SkillState> = SkillType.values().associateWith { SkillState() }.toMutableMap(),
+    val inventory: MutableMap<String, Int> = mutableMapOf(),
+    var lastSavedTimestamp: Long = System.currentTimeMillis(
+      
+    )
+)
 }
 }
