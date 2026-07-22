@@ -161,30 +161,18 @@ items.find { it.name == name && it.rarity == rarity }
 // Economy & Market's NPC vendor calc needs a reference "base value" per item --
 // folded in here as a simple lookup rather than a separate duplicate catalog.
 fun baseValueFor(itemId: String): Long = when (itemId) {
-"iron_ore" -> 10L
-"oak_log" -> 8L
-"steel_bar" -> 45L
-else -> 5L
+    "iron_ore" -> 10L
+    "oak_log" -> 8L
+    "steel_bar" -> 45L
+    else -> 5L
 }
-// ==========================================
-// NEW DATA MODELS (Paste at bottom of file)
-// ==========================================
-
-data class Enemy(
-    val id: String,
-    val name: String,
-    val maxHp: Int,
-    var currentHp: Int,
-    val attackPower: Int,
-    val xpReward: Long,
-    val goldReward: Long
-)
 
 enum class SkillType {
     WOODCUTTING,
     MINING,
     FISHING,
     COMBAT
+}
 
 data class SkillState(
     var level: Int = 1,
