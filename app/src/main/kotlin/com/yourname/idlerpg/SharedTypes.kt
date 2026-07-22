@@ -182,6 +182,28 @@ data class Enemy(
     val goldReward: Long
 )
 
+enum class SkillType {
+    WOODCUTTING,
+    MINING,
+    FISHING,
+    COMBAT
+}
+
+data class SkillState(
+    var level: Int = 1,
+    var xp: Long = 0L
+)
+
+data class Enemy(
+    val id: String,
+    val name: String,
+    val maxHp: Int,
+    var currentHp: Int,
+    val attackPower: Int,
+    val xpReward: Long,
+    val goldReward: Long
+)
+
 data class PlayerStats(
     var hp: Int = 100,
     var maxHp: Int = 100,
@@ -196,7 +218,5 @@ data class PlayerGameState(
     val stats: PlayerStats = PlayerStats(),
     val skills: MutableMap<SkillType, SkillState> = SkillType.values().associateWith { SkillState() }.toMutableMap(),
     val inventory: MutableMap<String, Int> = mutableMapOf(),
-    var lastSavedTimestamp: Long = System.currentTimeMillis(
-      
-    )
+    var lastSavedTimestamp: Long = System.currentTimeMillis()
 )
