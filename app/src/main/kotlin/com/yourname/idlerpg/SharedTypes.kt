@@ -7,10 +7,10 @@ import java.time.Instant
 // (Used across every module. This is now the ONLY definition --
 // remove it from every other file.)
 // =========================================================
-
 sealed class ServiceResult<out T> {
 data class Success<T>(val value: T) : ServiceResult<T>()
 data class Failure(val reason: String) : ServiceResult<Nothing>()
+}
 
 // =========================================================
 // SHARED COMBAT STYLE
@@ -56,8 +56,10 @@ val maxHitBonus: Int = 0
 ) {
 fun isAllZero(): Boolean =
 attackBonus == 0 && strengthBonus == 0 && defenseBonus == 0 && accuracyBonus == 0 && maxHitBonus == 0
+}
 
 data class ItemDefinition(
+
 val id: String,
 val name: String,
 val category: ItemCategory,
@@ -166,8 +168,10 @@ fun baseValueFor(itemId: String): Long = when (itemId) {
     "steel_bar" -> 45L
     else -> 5L
 }
+}
 
 enum class SkillType {
+
     WOODCUTTING,
     MINING,
     FISHING,
