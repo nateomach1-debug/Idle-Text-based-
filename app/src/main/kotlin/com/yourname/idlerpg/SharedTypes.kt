@@ -201,7 +201,7 @@ data class PlayerStats(
 data class PlayerGameState(
     val characterId: String = java.util.UUID.randomUUID().toString(),
     val stats: PlayerStats = PlayerStats(),
-    val skills: MutableMap<SkillType, SkillState> = SkillType.values().associateWith { SkillState() }.toMutableMap(),
+    val skills: MutableMap<SkillType, SkillState> = SkillType.entries.associateWith { SkillState() }.toMutableMap(),
     val inventory: MutableMap<String, Int> = mutableMapOf(),
     var lastSavedTimestamp: Long = System.currentTimeMillis()
 )
