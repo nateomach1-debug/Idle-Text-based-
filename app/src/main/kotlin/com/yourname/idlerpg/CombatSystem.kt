@@ -1,351 +1,42 @@
 package com.yourname.idlerpg
 
-import java.time.Duration
-import java.time.Instant
-import kotlin.random.Random
+class CombatSystem {
 
-// =========================================================
-// COMBAT STYLE & EQUIPMENT SLOT
-// (CombatStyle and EquipmentSlot now come from SharedTypes.kt --
-//  no longer defined here.)
-// =========================================================
+    fun processCombatTick(state: PlayerGameState, enemy: Enemy): PlayerGameState {
+        val playerStats = state.stats
+        val currentEnemyHp = enemy.currentHp - playerStats.attackPower
+        val playerHp = playerStats.hp - enemy.attackPower
 
-// =========================================================
-// EQUIPMENT (minimal stand-in until Items module's ItemDefinition
-// is fully wired in for weapon lookups)
-// =========================================================
-
-data class Weapon(
-    val name: String,
-    val style: CombatStyle,
-    val attackSpeedSeconds: Double,
-    val baseAccuracy: Int,
-    val baseMaxHit: Int
-)
-
-// =========================================================
-// SPELLS
-// =========================================================
-
-data class Spell(
-    val name: String,
-    val levelRequired: Int,
-    val attackSpeedSeconds: Double,
-    val baseAccuracy: Int,
-    val baseMaxHit: Int
-)
-
-object SpellBook {
-    private val spells = listOf(
-        Spell("Spark Bolt", levelRequired = 1, attackSpeedSeconds = 2.4, baseAccuracy = 20, baseMaxHit = 4),
-        Spell("Flame Lance", levelRequired = 15, attackSpeedSeconds = 2.8, baseAccuracy = 28, baseMaxHit = 8),
-        Spell("Frost Spike", levelRequired = 30, attackSpeedSeconds = 3.0, baseAccuracy = 35, baseMaxHit = 12)
-    )
-
-    fun availableSpells(magicLevel: Int): List<Spell> = spells.filter { it.levelRequired <= magicLevel }
-}
-
-// =========================================================
-// MONSTERS & ZONES
-// =========================================================
-
-data class LootEntry(val itemId: String, val minQty: Int, val maxQty: Int, val dropChancePercent: Double)
-
-data class Monster(
-    val id: String,
-    val name: String,
-    val levelRequirement: Int,
-    val maxHealth: Int,
-    val defenseRating: Int,
-    val mainLootTable: List<LootEntry>,
-    val rareLootTable: List<LootEntry>
-)
-
-data class Zone(
-    val id: String,
-    val name: String,
-    val levelRequirement: Int,
-    val monsters: List<Monster>
-)
-
-object ZoneCatalog {
-    val zones = listOf(
-        Zone(
-            id = "goblin_camp",
-            name = "Goblin Camp",
-            levelRequirement = 1,
-            monsters = listOf(
-                Monster(
-                    id = "goblin_grunt",
-                    name = "Goblin Grunt",
-                    levelRequirement = 1,
-                    maxHealth = 25,
-                    defenseRating = 5,
-                    mainLootTable = listOf(
-                        LootEntry("bone", 1, 1, 60.0),
-                        LootEntry("goblin_ear", 1, 2, 40.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("rusty_dagger", 1, 1, 2.0)
-                    )
-                )
+        // Case A: Player defeated enemy
+        if (currentEnemyHp <= 0) {
+            val updatedGold = playerStats.gold + enemy.goldReward
+            
+            // Instantly respawn enemy for endless idle fighting
+            val respawnedEnemy = enemy.copy(currentHp = enemy.maxHp)
+            
+            val updatedStats = playerStats.copy(
+                hp = if (playerHp <= 0) playerStats.maxHp else playerHp,
+                gold = updatedGold,
+                activeEnemy = respawnedEnemy
             )
-        ),
-        Zone(
-            id = "shadow_ruins",
-            name = "Shadow Ruins",
-            levelRequirement = 20,
-            monsters = listOf(
-                Monster(
-                    id = "wraith",
-                    name = "Wraith",
-                    levelRequirement = 20,
-                    maxHealth = 80,
-                    defenseRating = 25,
-                    mainLootTable = listOf(
-                        LootEntry("ectoplasm", 1, 3, 55.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("wraith_essence", 1, 1, 0.5)
-                    )
-                )
-            )
-        )
-    )
 
-    fun zonesAvailableAt(level: Int): List<Zone> = zones.filter { it.levelRequirement <= level }
-}
-
-// =========================================================
-// LOADOUT CONFIG
-// =========================================================
-
-data class CombatLoadout(
-    val style: CombatStyle,
-    val equippedWeapon: Weapon?,
-    val equippedSpell: Spell?,
-    val autoHealThresholdPercent: Int,
-    val autoFleeThresholdPercent: Int
-)
-
-// =========================================================
-// COMBAT SESSION STATE
-// =========================================================
-
-enum class SessionState { SEARCHING, PAUSED, IN_COMBAT }
-
-class CombatSession(
-    val zone: Zone,
-    var state: SessionState = SessionState.SEARCHING,
-    var searchEndsAt: Instant? = null,
-    var currentMonster: Monster? = null,
-    var currentMonsterHealth: Int = 0
-)
-
-// =========================================================
-// RECOVERY STATUS
-// =========================================================
-
-class RecoveryStatus {
-    var recoveringUntil: Instant? = null
-
-    fun isRecovering(now: Instant = Instant.now()): Boolean {
-        val until = recoveringUntil ?: return false
-        return now.isBefore(until)
-    }
-}
-
-// =========================================================
-// CHARACTER COMBAT STATE
-// =========================================================
-
-class CharacterCombatState(
-    var currentHp: Int,
-    var maxHp: Int,
-    val recovery: RecoveryStatus = RecoveryStatus(),
-    var session: CombatSession? = null,
-    val lootPool: MutableList<LootEntry> = mutableListOf()
-)
-
-// =========================================================
-// RESULT TYPES
-// (ServiceResult now comes from SharedTypes.kt.)
-// =========================================================
-
-data class AttackResult(
-    val didHit: Boolean,
-    val damageDealt: Int,
-    val monsterHpRemaining: Int,
-    val monsterDefeated: Boolean
-)
-
-// =========================================================
-// COMBAT SERVICE
-// =========================================================
-
-class CombatService {
-    private val recoveryDuration: Duration = Duration.ofSeconds(600)
-    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()
-
-    fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
-        states.getOrPut(characterId) { CharacterCombatState(currentHp = maxHp, maxHp = maxHp) }
-
-    // ---------------- Zone / searching ----------------
-
-    fun enterZone(characterId: String, zoneId: String, characterLevel: Int): ServiceResult<CombatSession> {
-        val state = stateFor(characterId)
-        if (state.recovery.isRecovering()) {
-            return ServiceResult.Failure("Cannot enter combat while recovering.")
-        }
-        val zone = ZoneCatalog.zones.find { it.id == zoneId }
-            ?: return ServiceResult.Failure("Zone not found.")
-        if (zone.levelRequirement > characterLevel) {
-            return ServiceResult.Failure("Requires level " + zone.levelRequirement + " to enter " + zone.name + ".")
-        }
-
-        val session = CombatSession(zone = zone)
-        state.session = session
-        return startSearching(characterId)
-    }
-
-    fun startSearching(characterId: String, now: Instant = Instant.now()): ServiceResult<CombatSession> {
-        val state = stateFor(characterId)
-        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
-        if (state.recovery.isRecovering(now)) {
-            return ServiceResult.Failure("Cannot search while recovering.")
-        }
-
-        val searchSeconds = Random.nextInt(3, 11)
-        session.state = SessionState.SEARCHING
-        session.searchEndsAt = now.plusSeconds(searchSeconds.toLong())
-        session.currentMonster = null
-        return ServiceResult.Success(session)
-    }
-
-    fun pauseSearching(characterId: String): ServiceResult<CombatSession> {
-        val state = stateFor(characterId)
-        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
-        if (session.state != SessionState.SEARCHING) {
-            return ServiceResult.Failure("Can only pause while searching.")
-        }
-        session.state = SessionState.PAUSED
-        return ServiceResult.Success(session)
-    }
-
-    fun resolveSearchIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<Monster> {
-        val state = stateFor(characterId)
-        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
-        if (session.state != SessionState.SEARCHING) {
-            return ServiceResult.Failure("Not currently searching.")
-        }
-        val endsAt = session.searchEndsAt ?: return ServiceResult.Failure("No active search timer.")
-        if (now.isBefore(endsAt)) {
-            return ServiceResult.Failure("Search still in progress.")
-        }
-
-        val monster = session.zone.monsters.random()
-        session.currentMonster = monster
-        session.currentMonsterHealth = monster.maxHealth
-        session.state = SessionState.IN_COMBAT
-        return ServiceResult.Success(monster)
-    }
-
-    fun leaveZone(characterId: String): ServiceResult<Unit> {
-        val state = stateFor(characterId)
-        state.session = null
-        return ServiceResult.Success(Unit)
-    }
-
-    // ---------------- Equipment (slot-aware locking) ----------------
-
-    fun canChangeEquipment(characterId: String, slot: EquipmentSlot, now: Instant = Instant.now()): Boolean {
-    if (slot == EquipmentSlot.TOOL) return true // tools are gathering gear, never locked by combat/recovery
-
-    val state = stateFor(characterId)
-
-    if (state.recovery.isRecovering(now) && slot == EquipmentSlot.WEAPON) return false
-
-    val session = state.session ?: return true
-    return session.state != SessionState.IN_COMBAT
-}
-
-    // ---------------- Attack resolution ----------------
-
-    fun resolveAttack(
-        characterId: String,
-        loadout: CombatLoadout,
-        attackerAccuracy: Int,
-        attackerMaxHit: Int
-    ): ServiceResult<AttackResult> {
-        val state = stateFor(characterId)
-        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
-        if (session.state != SessionState.IN_COMBAT) {
-            return ServiceResult.Failure("Not currently in combat.")
-        }
-        val monster = session.currentMonster ?: return ServiceResult.Failure("No active target.")
-
-        val hitChancePercent = (attackerAccuracy.toDouble() / (attackerAccuracy + monster.defenseRating)) * 100.0
-        val didHit = Random.nextDouble(0.0, 100.0) < hitChancePercent
-
-        if (!didHit) {
-            return ServiceResult.Success(
-                AttackResult(didHit = false, damageDealt = 0, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = false)
-            )
-        }
-
-        val damage = Random.nextInt(0, attackerMaxHit + 1)
-        session.currentMonsterHealth = (session.currentMonsterHealth - damage).coerceAtLeast(0)
-        val defeated = session.currentMonsterHealth <= 0
-
-        if (defeated) {
-            rollLoot(state, monster)
-            session.currentMonster = null
-            startSearching(characterId)
-        }
-
-        return ServiceResult.Success(
-            AttackResult(didHit = true, damageDealt = damage, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = defeated)
-        )
-    }
-
-    private fun rollLoot(state: CharacterCombatState, monster: Monster) {
-        (monster.mainLootTable + monster.rareLootTable).forEach { entry ->
-            if (Random.nextDouble(0.0, 100.0) < entry.dropChancePercent) {
-                val qty = Random.nextInt(entry.minQty, entry.maxQty + 1)
-                state.lootPool.add(entry.copy(minQty = qty, maxQty = qty))
+            // Award Combat XP to the Attack Skill
+            val attackSkill = state.skills[SkillType.ATTACK] ?: SkillState()
+            val newAttackXp = attackSkill.currentXp + enemy.xpReward
+            val updatedSkills = state.skills.toMutableMap().apply {
+                put(SkillType.ATTACK, attackSkill.copy(currentXp = newAttackXp))
             }
+
+            return state.copy(stats = updatedStats, skills = updatedSkills)
         }
-    }
 
-    fun collectLoot(characterId: String): ServiceResult<List<LootEntry>> {
-        val state = stateFor(characterId)
-        val collected = state.lootPool.toList()
-        state.lootPool.clear()
-        return ServiceResult.Success(collected)
-    }
+        // Case B: Battle ongoing
+        val updatedEnemy = enemy.copy(currentHp = currentEnemyHp)
+        val updatedStats = playerStats.copy(
+            hp = playerHp.coerceAtLeast(1),
+            activeEnemy = updatedEnemy
+        )
 
-    // ---------------- Death & recovery ----------------
-
-    fun applyDamageToCharacter(characterId: String, damage: Int, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
-        val state = stateFor(characterId)
-        state.currentHp = (state.currentHp - damage).coerceAtLeast(0)
-
-        if (state.currentHp <= 0) {
-            state.recovery.recoveringUntil = now.plus(recoveryDuration)
-            state.session = null
-        }
-        return ServiceResult.Success(state)
-    }
-
-    fun resolveRecoveryIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
-        val state = stateFor(characterId)
-        val until = state.recovery.recoveringUntil
-            ?: return ServiceResult.Failure("Character is not recovering.")
-        if (now.isBefore(until)) {
-            return ServiceResult.Failure("Recovery still in progress.")
-        }
-        state.currentHp = (state.maxHp * 0.5).toInt()
-        state.recovery.recoveringUntil = null
-        return ServiceResult.Success(state)
+        return state.copy(stats = updatedStats)
     }
 }
