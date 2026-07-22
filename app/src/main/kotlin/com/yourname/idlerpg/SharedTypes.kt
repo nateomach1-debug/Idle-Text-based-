@@ -2,6 +2,15 @@ package com.yourname.idlerpg
 
 import java.util.UUID
 
+// --- Generic System Wrapper Types ---
+
+sealed class ServiceResult<out T> {
+    data class Success<out T>(val data: T) : ServiceResult<T>()
+    data class Error(val message: String, val cause: Throwable? = null) : ServiceResult<Nothing>()
+}
+
+// --- Core Game Loop Enums & Data Classes ---
+
 enum class SkillType {
     WOODCUTTING,
     MINING,
