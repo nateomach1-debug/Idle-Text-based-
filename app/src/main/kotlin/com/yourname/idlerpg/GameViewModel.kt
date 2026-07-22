@@ -51,12 +51,12 @@ class GameViewModel(
             var updatedState = currentState.copy(lastSavedTimestamp = System.currentTimeMillis())
 
             // 1. Tick Active Skill (if performing one)
-            currentState.stats.activeSkill?.let { activeSkill ->
+            updatedState.stats.activeSkill?.let { activeSkill ->
                 updatedState = skillSystem.processSkillTick(updatedState, activeSkill)
             }
 
             // 2. Tick Active Combat (if fighting an enemy)
-            currentState.stats.activeEnemy?.let { enemy ->
+            updatedState.stats.activeEnemy?.let { enemy ->
                 updatedState = combatSystem.processCombatTick(updatedState, enemy)
             }
 
@@ -69,25 +69,35 @@ class GameViewModel(
 
     fun startSkillAction(skill: SkillType) {
         _uiState.update { state ->
-            state.stats.activeEnemy = null // Stop combat if starting a skill
-            state.stats.activeSkill = skill
-            state
+            // Using .copy() creates a new instance so StateFlow properly triggers a UI refresh
+            state.copy(
+                stats = state.stats.copy(
+                    activeEnemy = null, // Stop combat if starting a skill
+                    activeSkill = skill
+                )
+            )
         }
     }
 
     fun startCombat(targetEnemy: Enemy) {
         _uiState.update { state ->
-            state.stats.activeSkill = null // Stop skill if starting combat
-            state.stats.activeEnemy = targetEnemy.copy(currentHp = targetEnemy.maxHp)
-            state
+            state.copy(
+                stats = state.stats.copy(
+                    activeSkill = null, // Stop skill if starting combat
+                    activeEnemy = targetEnemy.copy(currentHp = targetEnemy.maxHp)
+                )
+            )
         }
     }
 
     fun stopAllActions() {
         _uiState.update { state ->
-            state.stats.activeSkill = null
-            state.stats.activeEnemy = null
-            state
+            state.copy(
+                stats = state.stats.copy(
+                    activeSkill = null,
+                    activeEnemy = null
+                )
+            )
         }
     }
 }
