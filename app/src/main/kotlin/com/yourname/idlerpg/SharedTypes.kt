@@ -2,14 +2,71 @@ package com.yourname.idlerpg
 
 import java.util.UUID
 
-// --- Generic System Wrapper Types ---
+// ==========================================
+// 1. Generic Result & Service Wrapper Types
+// ==========================================
 
 sealed class ServiceResult<out T> {
     data class Success<out T>(val data: T) : ServiceResult<T>()
     data class Error(val message: String, val cause: Throwable? = null) : ServiceResult<Nothing>()
 }
 
-// --- Core Game Loop Enums & Data Classes ---
+// Convenient aliases expected across system classes
+typealias Failure = ServiceResult.Error
+
+// ==========================================
+// 2. Equipment, Items & Catalog Definitions
+// ==========================================
+
+enum class EquipSlot {
+    HEAD,
+    CHEST,
+    LEGS,
+    FEET,
+    MAIN_HAND,
+    OFF_HAND,
+    RING,
+    AMULET
+}
+
+enum class ItemCategory {
+    WEAPON,
+    ARMOR,
+    CONSUMABLE,
+    MATERIAL,
+    CURRENCY
+}
+
+data class ItemStats(
+    val attackBonus: Int = 0,
+    val defenseBonus: Int = 0,
+    val hpBonus: Int = 0
+)
+
+data class ItemDefinition(
+    val id: String,
+    val name: String,
+    val description: String = "",
+    val category: ItemCategory = ItemCategory.MATERIAL,
+    val equipSlot: EquipSlot? = null,
+    val stats: ItemStats = ItemStats(),
+    val isStackable: Boolean = true,
+    val levelRequired: Int = 1,
+    val skillRequired: SkillType? = null
+)
+
+object ItemCatalog {
+    val items = mutableMapOf<String, ItemDefinition>()
+    fun getItem(id: String): ItemDefinition? = items[id]
+}
+
+object SlotLockMapping {
+    val lockedSlots = mutableMapOf<EquipSlot, Boolean>()
+}
+
+// ==========================================
+// 3. Core Game Loop, Player & Skill Types
+// ==========================================
 
 enum class SkillType {
     WOODCUTTING,
