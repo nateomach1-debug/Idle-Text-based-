@@ -171,17 +171,21 @@ fun baseValueFor(itemId: String): Long = when (itemId) {
 }
 
 enum class SkillType {
-
     WOODCUTTING,
     MINING,
     FISHING,
-    COMBAT
+    COMBAT,
+    ATTACK
+}
+
 }
 
 data class SkillState(
     var level: Int = 1,
-    var xp: Long = 0L
+    var currentXp: Long = 0L,
+    var xpToNextLevel: Long = 100L
 )
+
 
 data class Enemy(
     val id: String,
@@ -208,4 +212,14 @@ data class PlayerGameState(
     val skills: MutableMap<SkillType, SkillState> = SkillType.entries.associateWith { SkillState() }.toMutableMap(),
     val inventory: MutableMap<String, Int> = mutableMapOf(),
     var lastSavedTimestamp: Long = System.currentTimeMillis()
+)
+data class CharacterExport(
+    val characterId: String,
+    val gameState: PlayerGameState
+)
+
+data class AccountExport(
+    val accountId: String = "local_account",
+    val characters: List<CharacterExport> = emptyList()
+
 )
