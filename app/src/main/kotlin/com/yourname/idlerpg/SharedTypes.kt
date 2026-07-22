@@ -11,7 +11,6 @@ import java.time.Instant
 sealed class ServiceResult<out T> {
 data class Success<T>(val value: T) : ServiceResult<T>()
 data class Failure(val reason: String) : ServiceResult<Nothing>()
-}
 
 // =========================================================
 // SHARED COMBAT STYLE
@@ -45,8 +44,6 @@ EquipSlot.WEAPON -> EquipmentSlot.WEAPON
 EquipSlot.HELMET, EquipSlot.CHESTPLATE, EquipSlot.GLOVES, EquipSlot.BOOTS -> EquipmentSlot.ARMOR
 EquipSlot.NECKLACE, EquipSlot.RING_1, EquipSlot.RING_2 -> EquipmentSlot.ACCESSORY
 EquipSlot.TOOL -> EquipmentSlot.TOOL
-}
-}
 
 data class ItemStats(
 val attackBonus: Int = 0,
@@ -57,7 +54,6 @@ val maxHitBonus: Int = 0
 ) {
 fun isAllZero(): Boolean =
 attackBonus == 0 && strengthBonus == 0 && defenseBonus == 0 && accuracyBonus == 0 && maxHitBonus == 0
-}
 
 data class ItemDefinition(
 val id: String,
@@ -167,7 +163,6 @@ fun baseValueFor(itemId: String): Long = when (itemId) {
 "oak_log" -> 8L
 "steel_bar" -> 45L
 else -> 5L // fallback placeholder for anything not explicitly priced yet
-}
 // ==========================================
 // NEW DATA MODELS (Paste at bottom of file)
 // ==========================================
@@ -187,7 +182,6 @@ enum class SkillType {
     MINING,
     FISHING,
     COMBAT
-}
 
 data class SkillState(
     var level: Int = 1,
