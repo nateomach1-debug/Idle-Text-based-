@@ -164,7 +164,8 @@ fun baseValueFor(itemId: String): Long = when (itemId) {
 "iron_ore" -> 10L
 "oak_log" -> 8L
 "steel_bar" -> 45L
-else -> 5L // fallback placeholder for anything not explicitly priced yet
+else -> 5L
+}
 // ==========================================
 // NEW DATA MODELS (Paste at bottom of file)
 // ==========================================
