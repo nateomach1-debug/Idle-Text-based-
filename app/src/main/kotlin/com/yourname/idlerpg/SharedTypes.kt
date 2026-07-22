@@ -210,10 +210,10 @@ data class CharacterExport(
     val accountId: String,
     val displayName: String,
     val avatarId: String? = null,
-    val createdAt: Long = System.currentTimeMillis(),
-    val displayNameLastChangedAt: Long? = null,
+    val createdAt: String = Instant.now().toString(),
+    val displayNameLastChangedAt: String? = null,
     val isMainCharacter: Boolean = false,
-    val gameState: PlayerGameState
+    val gameState: PlayerGameState = PlayerGameState()
 )
 
 data class AccountExport(
@@ -221,13 +221,13 @@ data class AccountExport(
     val email: String,
     val username: String,
     val passwordHash: String,
-    val createdAt: Long = System.currentTimeMillis(),
-    val lastLoginAt: Long = System.currentTimeMillis(),
+    val createdAt: String = Instant.now().toString(),
+    val lastLoginAt: String = Instant.now().toString(),
     val ageBracket: String = "UNKNOWN",
     val region: String = "UNKNOWN",
     val isBanned: Boolean = false,
     val banReason: String? = null,
-    val mutedUntil: Long? = null,
+    val mutedUntil: String? = null,
     val subscriptionTier: String = "FREE",
     val softCurrency: Long = 0L,
     val premiumCurrency: Long = 0L,
