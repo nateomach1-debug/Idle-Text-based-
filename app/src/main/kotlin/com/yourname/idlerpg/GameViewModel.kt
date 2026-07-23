@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.yourname.idlerpg.model.GameUiState
 import com.yourname.idlerpg.model.Skill      
+import com.yourname.idlerpg.model.GameUiState
+import com.yourname.idlerpg.model.Skill
+import com.yourname.idlerpg.data.GameStateRepository
+import com.yourname.idlerpg.system.OfflineIdleMechanicsSystem
 
 class GameViewModel(
     private val repository: GameStateRepository = GameStateRepository(),
