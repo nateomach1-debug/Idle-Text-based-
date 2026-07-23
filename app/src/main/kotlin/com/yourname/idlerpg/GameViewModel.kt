@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.yourname.idlerpg.model.GameUiState
+import com.yourname.idlerpg.model.Skill      
 
 class GameViewModel(
     private val repository: GameStateRepository = GameStateRepository(),
@@ -28,7 +30,7 @@ class GameViewModel(
     private fun processOfflineProgress() {
         val currentTime = System.currentTimeMillis()
         val lastSaved = _uiState.value.lastSavedTimestamp
-        val elapsedSeconds = (currentTime - lastSaved) / 1000
+            val elapsedSeconds = (currentTime - lastSaved) / 1000L
 
         if (elapsedSeconds > 5) {
                 _uiState.update { currentState: GameUiState ->
