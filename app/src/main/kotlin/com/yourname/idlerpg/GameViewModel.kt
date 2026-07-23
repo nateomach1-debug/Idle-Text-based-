@@ -31,7 +31,7 @@ class GameViewModel(
         val elapsedSeconds = (currentTime - lastSaved) / 1000
 
         if (elapsedSeconds > 5) {
-            _uiState.update { currentState ->
+                _uiState.update { currentState: GameUiState ->
                 offlineSystem.calculateOfflineGains(currentState, elapsedSeconds)
             }
         }
@@ -47,16 +47,16 @@ class GameViewModel(
     }
 
     private fun tick() {
-        _uiState.update { currentState ->
+          _uiState.update { currentState: GameUiState ->
             var updatedState = currentState.copy(lastSavedTimestamp = System.currentTimeMillis())
 
             // 1. Tick Active Skill (if performing one)
-            updatedState.stats.activeSkill?.let { activeSkill ->
+                updatedState.stats.activeSkill?.let { activeSkill: Skill ->
                 updatedState = skillSystem.processSkillTick(updatedState, activeSkill)
             }
 
             // 2. Tick Active Combat (if fighting an enemy)
-            updatedState.stats.activeEnemy?.let { enemy ->
+               updatedState.stats.activeEnemy?.let { enemy: Enemy ->
                 updatedState = combatSystem.processCombatTick(updatedState, enemy)
             }
 
@@ -68,7 +68,7 @@ class GameViewModel(
     // --- Actions called by UI screens ---
 
     fun startSkillAction(skill: SkillType) {
-        _uiState.update { state ->
+            _uiState.update { state: GameUiState ->
             // Using .copy() creates a new instance so StateFlow properly triggers a UI refresh
             state.copy(
                 stats = state.stats.copy(
@@ -80,7 +80,7 @@ class GameViewModel(
     }
 
     fun startCombat(targetEnemy: Enemy) {
-        _uiState.update { state ->
+            _uiState.update { state: GameUiState ->
             state.copy(
                 stats = state.stats.copy(
                     activeSkill = null, // Stop skill if starting combat
@@ -91,7 +91,7 @@ class GameViewModel(
     }
 
     fun stopAllActions() {
-        _uiState.update { state ->
+            _uiState.update { state: GameUiState ->
             state.copy(
                 stats = state.stats.copy(
                     activeSkill = null,
