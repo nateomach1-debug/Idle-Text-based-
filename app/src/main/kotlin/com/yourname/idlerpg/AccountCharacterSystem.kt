@@ -4,10 +4,6 @@ import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
-// =========================================================
-// DOMAIN MODELS
-// =========================================================
-
 enum class AgeBracket { UNDER_13, TEEN_13_17, ADULT_18_PLUS }
 
 enum class SubscriptionTier { NONE, QOL_SUBSCRIBER }
@@ -39,7 +35,7 @@ data class Character(
     var avatarId: String,
     val createdAt: Instant,
     var displayNameLastChangedAt: Instant,
-    var isMainCharacter: Boolean = false // renamed from isMarketActive per Economy & Market module
+    var isMainCharacter: Boolean = false
 )
 
 object AvatarCatalog {
@@ -47,10 +43,17 @@ object AvatarCatalog {
     fun isValid(avatarId: String) = presets.contains(avatarId)
 }
 
-// =========================================================
-// SERVICE LAYER
-// (ServiceResult now comes from SharedTypes.kt -- no longer defined here.)
-// =========================================================
+data class AccountExport(
+    val id: String, val email: String, val username: String, val passwordHash: String,
+    val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
+    val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
+    val subscriptionTier: String, val softCurrency: Long, val premiumCurrency: Long
+)
+
+data class CharacterExport(
+    val id: String, val accountId: String, val displayName: String, val avatarId: String,
+    val createdAt: String, val displayNameLastChangedAt: String, val isMainCharacter: Boolean
+)
 
 class AccountService {
     private val accountsById = mutableMapOf<String, Account>()
@@ -164,7 +167,6 @@ class AccountService {
         return ServiceResult.Success(character)
     }
 
-    /** Enforces the "one Main character per account" rule used by Economy & Market. */
     fun setMainCharacter(characterId: String): ServiceResult<Character> {
         val character = charactersById[characterId] ?: return ServiceResult.Failure("Character not found.")
         val siblings = charactersByAccountId[character.accountId].orEmpty().mapNotNull { charactersById[it] }
@@ -203,66 +205,54 @@ class AccountService {
     fun charactersFor(accountId: String): List<Character> =
         charactersByAccountId[accountId]?.mapNotNull { charactersById[it] } ?: emptyList()
 
+    fun accountById(accountId: String): Account? = accountsById[accountId]
+
     private fun containsBannedWord(text: String): Boolean = bannedWords.any { text.contains(it) }
 
     private fun hashPassword(password: String): String {
-        // STUB ONLY -- a real backend must use bcrypt/argon2 with a per-user salt.
         return "hashed:" + password
     }
-    // ---------------- Persistence support ----------------
 
+    fun exportAllAccounts(): List<AccountExport> = accountsById.values.map {
+        AccountExport(
+            it.id, it.email, it.username, it.exposePasswordHashForExport(),
+            it.createdAt.toString(), it.lastLoginAt.toString(), it.ageBracket.name, it.region,
+            it.isBanned, it.banReason, it.mutedUntil?.toString(),
+            it.subscriptionTier.name, it.softCurrency, it.premiumCurrency
+        )
+    }
 
-fun exportAllAccounts(): List<AccountExport> = accountsById.values.map {
-    AccountExport(
-        it.id, it.email, it.username, it.exposePasswordHashForExport(),
-        it.createdAt.toString(), it.lastLoginAt.toString(), it.ageBracket.name, it.region,
-        it.isBanned, it.banReason, it.mutedUntil?.toString(),
-        it.subscriptionTier.name, it.softCurrency, it.premiumCurrency
-    )
-}
+    fun exportAllCharacters(): List<CharacterExport> = charactersById.values.map {
+        CharacterExport(
+            it.id, it.accountId, it.displayName, it.avatarId,
+            it.createdAt.toString(), it.displayNameLastChangedAt.toString(), it.isMainCharacter
+        )
+    }
 
-fun exportAllCharacters(): List<CharacterExport> = charactersById.values.map {
-    CharacterExport(
-        it.id, it.accountId, it.displayName, it.avatarId,
-        it.createdAt.toString(), it.displayNameLastChangedAt.toString(), it.isMainCharacter
-    )
-}
+    fun restoreAccount(export: AccountExport) {
+        val account = Account(
+            id = export.id, email = export.email, username = export.username,
+            passwordHash = export.passwordHash,
+            createdAt = Instant.parse(export.createdAt), lastLoginAt = Instant.parse(export.lastLoginAt),
+            ageBracket = AgeBracket.valueOf(export.ageBracket), region = export.region,
+            isBanned = export.isBanned, banReason = export.banReason,
+            mutedUntil = export.mutedUntil?.let { Instant.parse(it) },
+            subscriptionTier = SubscriptionTier.valueOf(export.subscriptionTier),
+            softCurrency = export.softCurrency, premiumCurrency = export.premiumCurrency
+        )
+        accountsById[account.id] = account
+        accountsByUsername[account.username.lowercase()] = account.id
+        accountsByEmail[account.email.lowercase()] = account.id
+    }
 
-fun restoreAccount(export: AccountExport) {
-    val account = Account(
-        id = export.id, email = export.email, username = export.username,
-        passwordHash = export.passwordHash,
-        createdAt = Instant.parse(export.createdAt), lastLoginAt = Instant.parse(export.lastLoginAt),
-        ageBracket = AgeBracket.valueOf(export.ageBracket), region = export.region,
-        isBanned = export.isBanned, banReason = export.banReason,
-        mutedUntil = export.mutedUntil?.let { Instant.parse(it) },
-        subscriptionTier = SubscriptionTier.valueOf(export.subscriptionTier),
-        softCurrency = export.softCurrency, premiumCurrency = export.premiumCurrency
-    )
-    accountsById[account.id] = account
-    accountsByUsername[account.username.lowercase()] = account.id
-    accountsByEmail[account.email.lowercase()] = account.id
-}
-
-fun restoreCharacter(export: CharacterExport) {
-    val character = Character(
-        id = export.id, accountId = export.accountId, displayName = export.displayName,
-        avatarId = export.avatarId, createdAt = Instant.parse(export.createdAt),
-        displayNameLastChangedAt = Instant.parse(export.displayNameLastChangedAt),
-        isMainCharacter = export.isMainCharacter
-    )
-    charactersById[character.id] = character
-    charactersByAccountId.getOrPut(character.accountId) { mutableListOf() }.add(character.id)
-}data class AccountExport(
-    val id: String, val email: String, val username: String, val passwordHash: String,
-    val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
-    val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
-    val subscriptionTier: String, val softCurrency: Long, val premiumCurrency: Long
-)
-
-data class CharacterExport(
-    val id: String, val accountId: String, val displayName: String, val avatarId: String,
-    val createdAt: String, val displayNameLastChangedAt: String, val isMainCharacter: Boolean
-
-)
+    fun restoreCharacter(export: CharacterExport) {
+        val character = Character(
+            id = export.id, accountId = export.accountId, displayName = export.displayName,
+            avatarId = export.avatarId, createdAt = Instant.parse(export.createdAt),
+            displayNameLastChangedAt = Instant.parse(export.displayNameLastChangedAt),
+            isMainCharacter = export.isMainCharacter
+        )
+        charactersById[character.id] = character
+        charactersByAccountId.getOrPut(character.accountId) { mutableListOf() }.add(character.id)
+    }
 }
