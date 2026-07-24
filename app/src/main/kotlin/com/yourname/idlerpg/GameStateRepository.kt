@@ -1,22 +1,19 @@
 package com.yourname.idlerpg.data
 
-import com.yourname.idlerpg.*
 import android.content.Context
+import com.yourname.idlerpg.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
-// =========================================================
-// GAME STATE REPOSITORY
-// Saves/loads the whole game's state as one JSON file in the
-// app's private internal storage. Survives full app closure --
-// this is what makes offline progress calculation possible.
-// =========================================================
-
 class GameStateRepository(private val context: Context) {
     private val saveFile: File get() = File(context.filesDir, "game_state.json")
 
-    fun save(accounts: List<AccountExport>, characters: List<CharacterExport>) {
+    fun save(
+        accounts: List<AccountExport>,
+        characters: List<CharacterExport>,
+        skills: List<SkillExport>
+    ) {
         val root = JSONObject()
 
         val accountsArray = JSONArray()
@@ -53,6 +50,16 @@ class GameStateRepository(private val context: Context) {
             charactersArray.put(obj)
         }
         root.put("characters", charactersArray)
+
+        val skillsArray = JSONArray()
+        skills.forEach { skill ->
+            val obj = JSONObject()
+            obj.put("characterId", skill.characterId)
+            obj.put("skillId", skill.skillId)
+            obj.put("xp", skill.xp)
+            skillsArray.put(obj)
+        }
+        root.put("skills", skillsArray)
 
         saveFile.writeText(root.toString())
     }
@@ -96,11 +103,25 @@ class GameStateRepository(private val context: Context) {
             )
         }
 
-        return SavedGameState(accounts, characters)
+        val skills = mutableListOf<SkillExport>()
+        val skillsArray = root.optJSONArray("skills") ?: JSONArray()
+        for (i in 0 until skillsArray.length()) {
+            val obj = skillsArray.getJSONObject(i)
+            skills.add(
+                SkillExport(
+                    characterId = obj.getString("characterId"),
+                    skillId = obj.getString("skillId"),
+                    xp = obj.getLong("xp")
+                )
+            )
+        }
+
+        return SavedGameState(accounts, characters, skills)
     }
 }
 
 data class SavedGameState(
     val accounts: List<AccountExport>,
-    val characters: List<CharacterExport>
+    val characters: List<CharacterExport>,
+    val skills: List<SkillExport>
 )
