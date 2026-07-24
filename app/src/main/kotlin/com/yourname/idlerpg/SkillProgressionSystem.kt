@@ -216,8 +216,6 @@ class ProgressionService {
         return ServiceResult.Success(book)
     }
 
-    // ---------------- Persistence support ----------------
-
     fun exportAllSkills(): List<SkillExport> = skillBooks.flatMap { (characterId, book) ->
         book.all().map { skill -> SkillExport(characterId, skill.type.name, skill.xp) }
     }
