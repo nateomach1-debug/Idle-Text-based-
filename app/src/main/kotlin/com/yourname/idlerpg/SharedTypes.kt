@@ -1,4 +1,3 @@
-cat > app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt << 'EOF'
 package com.yourname.idlerpg
 
 sealed class ServiceResult<out T> {
