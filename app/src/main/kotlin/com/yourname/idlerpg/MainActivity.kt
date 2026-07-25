@@ -35,21 +35,19 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun demoSkills(): Map<String, SkillSummary> {
-    val raw = listOf(
-        Triple("MINING", "Mining", 24), Triple("SMITHING", "Smithing", 18),
-        Triple("FISHING", "Fishing", 30), Triple("COOKING", "Cooking", 22),
-        Triple("WOODCUTTING", "Woodcutting", 15), Triple("FLETCHING", "Fletching", 9),
-        Triple("FARMING", "Farming", 12), Triple("ALCHEMY", "Alchemy", 7),
-        Triple("THIEVING", "Thieving", 20), Triple("CRAFTING", "Crafting", 16),
-        Triple("ATTACK", "Attack", 28), Triple("STRENGTH", "Strength", 26),
-        Triple("DEFENSE", "Defense", 25), Triple("ARCHERY", "Archery", 19),
-        Triple("PRAYER", "Prayer", 11), Triple("MAGIC", "Magic", 14)
-    )
-    return raw.associate { (id, name, level) ->
-        val currentXp = (level * 120L)
-        val xpToNext = ((level + 1) * 130L) - currentXp
-        id to SkillSummary(id, name, level, currentXp, xpToNext.coerceAtLeast(50L))
+private fun buildSkillSummaries(book: SkillBook): Map<String, SkillSummary> {
+    return book.all().associate { skill ->
+        val level = LevelCurve.levelForXp(skill.xp)
+        val xpAtLevelStart = LevelCurve.xpRequiredForLevel(level)
+        val xpAtNextLevel = LevelCurve.xpRequiredForLevel(level + 1)
+        val displayName = skill.type.name.lowercase().replaceFirstChar { it.uppercase() }
+        skill.type.name to SkillSummary(
+            skillId = skill.type.name,
+            displayName = displayName,
+            level = level,
+            currentXp = skill.xp - xpAtLevelStart,
+            xpToNextLevel = xpAtNextLevel - skill.xp
+        )
     }
 }
 
@@ -213,7 +211,11 @@ fun AppRoot(gameViewModel: GameViewModel) {
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
     var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
 
-    val allSkills = remember { demoSkills() }
+    val allSkills = remember(currentCharacterId) {
+    currentCharacterId?.let { id ->
+        buildSkillSummaries(gameViewModel.progressionService.skillBookFor(id))
+    } ?: emptyMap()
+}
     val zones = remember { demoZones() }
     val inventoryItems = remember { demoInventoryItems() }
     val equipped = remember { demoEquipped() }
