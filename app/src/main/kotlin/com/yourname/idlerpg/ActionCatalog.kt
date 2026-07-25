@@ -35,6 +35,5 @@ object ActionCatalog {
         actions.find { it.skillType == skillType && it.itemId == itemId }
 
     fun allFor(skillType: SkillType): List<SkillActionDefinition> =
-        actions.filter { it.skillType == skill
-Type }
+        actions.filter { it.skillType == skillType }
 }

@@ -141,7 +141,6 @@ class CharacterResetState {
 }
 
 data class SkillExport(val characterId: String, val skillId: String, val xp: Long)
-data class SkillExport(val characterId: String, val skillId: String, val xp: Long)
 
 class ProgressionService {
     private val skillBooks: MutableMap<String, SkillBook> = mutableMapOf()
