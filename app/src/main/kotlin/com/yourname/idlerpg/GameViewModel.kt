@@ -36,7 +36,25 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+init {
+    viewModelScope.launch(Dispatchers.Default) {
+        while (true) {
+            delay(1000L)
+            tickSkilling()
+        }
+    }
+    viewModelScope.launch(Dispatchers.Default) {
+        while (true) {
+            delay(30_000L)
+            saveGame()
+        }
+    }
+}
 
+override fun onCleared() {
+    super.onCleared()
+    saveGame()
+}
     fun loadGame() {
         val saved = repository.load() ?: return
         saved.accounts.forEach { accountService.restoreAccount(it) }
