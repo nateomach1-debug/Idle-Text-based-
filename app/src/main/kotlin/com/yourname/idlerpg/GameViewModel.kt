@@ -18,6 +18,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     val accountService = AccountService()
     val progressionService = ProgressionService()
+    val sessionManager = SessionManager(application)
     // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
     // Skilling queues don't consume materials, only crafting does, so this is unused for now.
     val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
@@ -61,7 +62,28 @@ override fun onCleared() {
         saved.characters.forEach { accountService.restoreCharacter(it) }
         saved.skills.forEach { progressionService.restoreSkill(it) }
     }
+fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+    }
+    return result
+}
+  fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
+    val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+    }
+    return result
+  }
+  fun tryAutoLogin(): Account? {
+    val accountId = sessionManager.getSavedAccountId() ?: return null
+    return accountService.accountById(accountId)
+}
 
+fun logout() {
+    sessionManager.clearSession()
+}
     fun saveGame() {
         repository.save(
             accountService.exportAllAccounts(),
