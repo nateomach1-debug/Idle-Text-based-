@@ -24,14 +24,18 @@ import com.yourname.idlerpg.ui.theme.IdleRpgTheme
 import java.time.Instant
 
 class MainActivity : ComponentActivity() {
+    private val gameViewModel: GameViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             IdleRpgTheme {
-                val gameViewModel: GameViewModel = viewModel()
                 AppRoot(gameViewModel)
             }
         }
+    }
+override fun onPause() {
+        super.onPause()
+        gameViewModel.saveGame()
     }
 }
 
