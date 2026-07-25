@@ -92,5 +92,3 @@ object ItemCatalog {
         else -> 5L
     }
 }
-EOF
-echo "SharedTypes.kt restored"
