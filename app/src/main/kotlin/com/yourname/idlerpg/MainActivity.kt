@@ -200,8 +200,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
     var isCreatingAccount by remember { mutableStateOf(false) }
     var loginError by remember { mutableStateOf<String?>(null) }
     var currentAccountId by remember { mutableStateOf<String?>(null) }
-    var currentCharacterId by remember { mutableStateOf<String?>(null) }
-
+val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
     LaunchedEffect(Unit) {
         gameViewModel.loadGame()
     }
@@ -211,11 +210,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
     var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
 
-    val allSkills = remember(currentCharacterId) {
-    currentCharacterId?.let { id ->
-        buildSkillSummaries(gameViewModel.progressionService.skillBookFor(id))
-    } ?: emptyMap()
-}
+    val allSkills by gameViewModel.skills.collectAsState()
     val zones = remember { demoZones() }
     val inventoryItems = remember { demoInventoryItems() }
     val equipped = remember { demoEquipped() }
@@ -318,12 +313,12 @@ fun AppRoot(gameViewModel: GameViewModel) {
                         val result = gameViewModel.accountService.createCharacter(accountId, displayName, avatarId)
                         when (result) {
                             is ServiceResult.Success -> {
-                                gameViewModel.accountService.setMainCharacter(result.value.id)
-                                currentCharacterId = result.value.id
-                                gameViewModel.saveGame()
-                                loginError = null
-                                flowState = AppFlowState.InGame
-                            }
+    gameViewModel.accountService.setMainCharacter(result.value.id)
+    gameViewModel.selectCharacter(result.value.id)
+    gameViewModel.saveGame()
+    loginError = null
+    flowState = AppFlowState.InGame
+}
                             is ServiceResult.Failure -> loginError = result.reason
                         }
                     }
@@ -340,9 +335,9 @@ fun AppRoot(gameViewModel: GameViewModel) {
                 CharacterSelectScreen(
                     characters = chars,
                     onCharacterSelected = {
-                        currentCharacterId = it
-                        flowState = AppFlowState.InGame
-                    },
+    gameViewModel.selectCharacter(it)
+    flowState = AppFlowState.InGame
+},
                     onCreateNew = { flowState = AppFlowState.CharacterCreate }
                 )
             }
