@@ -141,3 +141,89 @@ class CharacterResetState {
 }
 
 data class SkillExport(val characterId: String, val skillId: String, val xp: Long)
+data class SkillExport(val characterId: String, val skillId: String, val xp: Long)
+
+class ProgressionService {
+    private val skillBooks: MutableMap<String, SkillBook> = mutableMapOf()
+    private val resetStates: MutableMap<String, CharacterResetState> = mutableMapOf()
+
+    private val singleSkillResetCooldown: Duration = Duration.ofHours(24)
+    private val fullCharacterResetCooldown: Duration = Duration.ofDays(30)
+
+    fun skillBookFor(characterId: String): SkillBook =
+        skillBooks.getOrPut(characterId) { SkillBook() }
+
+    private fun resetStateFor(characterId: String): CharacterResetState =
+        resetStates.getOrPut(characterId) { CharacterResetState() }
+
+    fun grantXp(
+        characterId: String,
+        skillType: SkillType,
+        baseXp: Long,
+        extraEffects: List<Effect> = emptyList()
+    ): ServiceResult<XpGrantResult> {
+        if (baseXp < 0) {
+            return ServiceResult.Failure("XP amount cannot be negative.")
+        }
+
+        val book = skillBookFor(characterId)
+        val skill = book.get(skillType)
+        val levelBefore = LevelCurve.levelForXp(skill.xp)
+
+        val activeEffects = UnlockTable.allActiveEffects(book) + extraEffects
+        val boostPercent = EffectStacker.totalXpBoostPercent(activeEffects, skillType)
+        val multiplier = 1.0 + (boostPercent / 100.0)
+
+        val xpGained = floor(baseXp * multiplier).toLong()
+        skill.xp += xpGained
+        val levelAfter = LevelCurve.levelForXp(skill.xp)
+
+        return ServiceResult.Success(
+            XpGrantResult(skillType, xpGained, skill.xp, levelBefore, levelAfter)
+        )
+    }
+
+    fun resetSkill(characterId: String, skillType: SkillType, now: Instant = Instant.now()): ServiceResult<Skill> {
+        val state = resetStateFor(characterId)
+        val lastReset = state.lastSingleSkillResetAt
+        if (lastReset != null) {
+            val elapsed = Duration.between(lastReset, now)
+            if (elapsed < singleSkillResetCooldown) {
+                val hoursRemaining = (singleSkillResetCooldown - elapsed).toHours() + 1
+                return ServiceResult.Failure("Skill reset is on cooldown. Try again in " + hoursRemaining + " hour(s).")
+            }
+        }
+
+        val skill = skillBookFor(characterId).get(skillType)
+        skill.xp = 0
+        state.lastSingleSkillResetAt = now
+        return ServiceResult.Success(skill)
+    }
+
+    fun resetCharacter(characterId: String, now: Instant = Instant.now()): ServiceResult<SkillBook> {
+        val state = resetStateFor(characterId)
+        val lastReset = state.lastFullCharacterResetAt
+        if (lastReset != null) {
+            val elapsed = Duration.between(lastReset, now)
+            if (elapsed < fullCharacterResetCooldown) {
+                val daysRemaining = (fullCharacterResetCooldown - elapsed).toDays() + 1
+                return ServiceResult.Failure("Full character reset is on cooldown. Try again in " + daysRemaining + " day(s).")
+            }
+        }
+
+        val book = skillBookFor(characterId)
+        book.all().forEach { it.xp = 0 }
+        state.lastFullCharacterResetAt = now
+        return ServiceResult.Success(book)
+    }
+
+    fun exportAllSkills(): List<SkillExport> = skillBooks.flatMap { (characterId, book) ->
+        book.all().map { skill -> SkillExport(characterId, skill.type.name, skill.xp) }
+    }
+
+    fun restoreSkill(export: SkillExport) {
+        val book = skillBookFor(export.characterId)
+        val skillType = SkillType.valueOf(export.skillId)
+        book.get(skillType).xp = export.xp
+    }
+}
