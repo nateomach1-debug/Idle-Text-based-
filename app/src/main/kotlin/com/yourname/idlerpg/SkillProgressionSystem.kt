@@ -1,4 +1,3 @@
-cat > app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt << 'EOF'
 package com.yourname.idlerpg
 
 import java.time.Duration
