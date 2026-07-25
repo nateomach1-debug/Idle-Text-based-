@@ -16,12 +16,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val saved = repository.load() ?: return
         saved.accounts.forEach { accountService.restoreAccount(it) }
         saved.characters.forEach { accountService.restoreCharacter(it) }
+        saved.skills.forEach { progressionService.restoreSkill(it) }
     }
 
     fun saveGame() {
         repository.save(
             accountService.exportAllAccounts(),
-            accountService.exportAllCharacters()
+            accountService.exportAllCharacters(),
+            progressionService.exportAllSkills()
         )
     }
 }
