@@ -3,6 +3,11 @@ package com.yourname.idlerpg
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import java.security.SecureRandom
+import java.security.spec.KeySpec
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
+import java.util.Base64
 
 enum class AgeBracket { UNDER_13, TEEN_13_17, ADULT_18_PLUS }
 
@@ -13,6 +18,7 @@ data class Account(
     val email: String,
     val username: String,
     private var passwordHash: String,
+private var passwordSalt: String, // Base64-encoded
     val createdAt: Instant,
     var lastLoginAt: Instant,
     var ageBracket: AgeBracket,
@@ -44,7 +50,7 @@ object AvatarCatalog {
 }
 
 data class AccountExport(
-    val id: String, val email: String, val username: String, val passwordHash: String,
+    val id: String, val email: String, val username: String, val passwordHash: String, val passwordSalt: String,
     val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
     val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
     val subscriptionTier: String, val softCurrency: Long, val premiumCurrency: Long
@@ -209,9 +215,22 @@ class AccountService {
 
     private fun containsBannedWord(text: String): Boolean = bannedWords.any { text.contains(it) }
 
-    private fun hashPassword(password: String): String {
-        return "hashed:" + password
-    }
+    private fun hashPassword(password: String, salt: ByteArray): String {
+    val spec: KeySpec = PBEKeySpec(password.toCharArray(), salt, 120_000, 256)
+    val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+    val hash = factory.generateSecret(spec).encoded
+    return Base64.getEncoder().encodeToString(hash)
+}
+
+private fun generateSalt(): ByteArray {
+    val salt = ByteArray(16)
+    SecureRandom().nextBytes(salt)
+    return salt
+}
+
+private fun verifyPassword(password: String, salt: ByteArray, expectedHash: String): Boolean {
+    return hashPassword(password, salt) == expectedHash
+}
 
     fun exportAllAccounts(): List<AccountExport> = accountsById.values.map {
         AccountExport(
