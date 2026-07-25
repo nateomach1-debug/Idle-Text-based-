@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yourname.idlerpg.data.GameViewModel
 import com.yourname.idlerpg.ui.components.RecoveryBar
 import com.yourname.idlerpg.ui.components.ChatBanner
 import com.yourname.idlerpg.ui.components.ChatChannelUi
@@ -26,15 +28,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             IdleRpgTheme {
-                AppRoot()
+                val gameViewModel: GameViewModel = viewModel()
+                AppRoot(gameViewModel)
             }
         }
     }
 }
-
-// =========================================================
-// PLACEHOLDER DEMO DATA
-// =========================================================
 
 private fun demoSkills(): Map<String, SkillSummary> {
     val raw = listOf(
@@ -53,16 +52,7 @@ private fun demoSkills(): Map<String, SkillSummary> {
         id to SkillSummary(id, name, level, currentXp, xpToNext.coerceAtLeast(50L))
     }
 }
-private fun demoChatMessages(): List<ChatMessageUi> = listOf(
-    ChatMessageUi("m1", "Bram", "anyone selling steel bars?", ChatChannelUi.GLOBAL),
-    ChatMessageUi("m2", "Sable", "check the market, saw some at 48 each", ChatChannelUi.GLOBAL),
-    ChatMessageUi("m3", "Quinn", "gl on the hunt everyone", ChatChannelUi.GLOBAL)
-)
 
-private fun demoDmConversations(): List<DmConversationSummary> = listOf(
-    DmConversationSummary("char2", "Bram", "hey, got a minute?"),
-    DmConversationSummary("char3", "Sable", "thanks for the help earlier!")
-)
 private fun demoDetailFor(skillId: String, summary: SkillSummary): SkillDetailState {
     return SkillDetailState(
         skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
@@ -78,32 +68,7 @@ private fun demoDetailFor(skillId: String, summary: SkillSummary): SkillDetailSt
         ).filter { it.levelRequired <= summary.level }
     )
 }
-private fun demoGuildMembers(): List<GuildMemberSummary> = listOf(
-    GuildMemberSummary("char1", "Lyra", GuildMemberRole.LEADER),
-    GuildMemberSummary("char2", "Bram", GuildMemberRole.OFFICER),
-    GuildMemberSummary("char3", "Sable", GuildMemberRole.MEMBER),
-    GuildMemberSummary("char4", "Quinn", GuildMemberRole.MEMBER)
-)
 
-private fun demoGuildState(): GuildHomeState = GuildHomeState(
-    guildName = "Iron Wolves",
-    activeEvent = GuildEventSummary("Beast Hunt", progressCurrent = 78, progressTarget = 120),
-    activeVote = null,
-    tier = 2,
-    activeBonusPercent = 5.0,
-    members = demoGuildMembers(),
-    quests = listOf(
-        GuildQuestSummary("Weekly Contribution", "Donate items toward this week's guild goal.")
-    ),
-    viewerRole = GuildMemberRole.LEADER
-)
-
-private fun demoLeaderboard(): List<GuildLeaderboardEntry> = listOf(
-    GuildLeaderboardEntry("Lyra", 15200),
-    GuildLeaderboardEntry("Bram", 9800),
-    GuildLeaderboardEntry("Sable", 6100),
-    GuildLeaderboardEntry("Quinn", 4200)
-)
 private fun demoZones(): List<ZoneSummary> = listOf(
     ZoneSummary("goblin_camp", "Goblin Camp", 1, listOf("Goblin Grunt")),
     ZoneSummary("shadow_ruins", "Shadow Ruins", 20, listOf("Wraith")),
@@ -139,6 +104,7 @@ private fun demoEquipped(): Map<EquipSlotUi, EquippedItemInfo?> = mapOf(
     EquipSlotUi.RING_2 to null,
     EquipSlotUi.TOOL to EquippedItemInfo("pickaxe_bronze", "Bronze Pickaxe")
 )
+
 private fun demoMarketListings(): List<MarketListingSummary> = listOf(
     MarketListingSummary("iron_ore", "Iron Ore", bestBuyPrice = 9, bestSellPrice = 11),
     MarketListingSummary("steel_bar", "Steel Bar", bestBuyPrice = 40, bestSellPrice = 48),
@@ -168,9 +134,50 @@ private fun demoMySellOrders(): List<MarketOrderSummary> = listOf(
     MarketOrderSummary("order2", "steel_bar", "Steel Bar", 48, 8)
 )
 
-// =========================================================
-// APP ROOT
-// =========================================================
+private fun demoGuildMembers(): List<GuildMemberSummary> = listOf(
+    GuildMemberSummary("char1", "Lyra", GuildMemberRole.LEADER),
+    GuildMemberSummary("char2", "Bram", GuildMemberRole.OFFICER),
+    GuildMemberSummary("char3", "Sable", GuildMemberRole.MEMBER),
+    GuildMemberSummary("char4", "Quinn", GuildMemberRole.MEMBER)
+)
+
+private fun demoGuildState(): GuildHomeState = GuildHomeState(
+    guildName = "Iron Wolves",
+    activeEvent = GuildEventSummary("Beast Hunt", progressCurrent = 78, progressTarget = 120),
+    activeVote = null,
+    tier = 2,
+    activeBonusPercent = 5.0,
+    members = demoGuildMembers(),
+    quests = listOf(
+        GuildQuestSummary("Weekly Contribution", "Donate items toward this week's guild goal.")
+    ),
+    viewerRole = GuildMemberRole.LEADER
+)
+
+private fun demoLeaderboard(): List<GuildLeaderboardEntry> = listOf(
+    GuildLeaderboardEntry("Lyra", 15200),
+    GuildLeaderboardEntry("Bram", 9800),
+    GuildLeaderboardEntry("Sable", 6100),
+    GuildLeaderboardEntry("Quinn", 4200)
+)
+
+private fun demoChatMessages(): List<ChatMessageUi> = listOf(
+    ChatMessageUi("m1", "Bram", "anyone selling steel bars?", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m2", "Sable", "check the market, saw some at 48 each", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m3", "Quinn", "gl on the hunt everyone", ChatChannelUi.GLOBAL)
+)
+
+private fun demoDmConversations(): List<DmConversationSummary> = listOf(
+    DmConversationSummary("char2", "Bram", "hey, got a minute?"),
+    DmConversationSummary("char3", "Sable", "thanks for the help earlier!")
+)
+
+private sealed class AppFlowState {
+    object Login : AppFlowState()
+    object CharacterSelect : AppFlowState()
+    object CharacterCreate : AppFlowState()
+    object InGame : AppFlowState()
+}
 
 private sealed class SkillsScreenState {
     object List : SkillsScreenState()
@@ -190,17 +197,22 @@ private sealed class InventoryScreenState {
 }
 
 @Composable
-fun AppRoot() {
+fun AppRoot(gameViewModel: GameViewModel) {
+    var flowState by remember { mutableStateOf<AppFlowState>(AppFlowState.Login) }
+    var isCreatingAccount by remember { mutableStateOf(false) }
+    var loginError by remember { mutableStateOf<String?>(null) }
+    var currentAccountId by remember { mutableStateOf<String?>(null) }
+    var currentCharacterId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        gameViewModel.loadGame()
+    }
+
     var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
     var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
     var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
-    var selectedChatChannel by remember { mutableStateOf(ChatChannelUi.GLOBAL) }
-var selectedDmCharacterId by remember { mutableStateOf<String?>(null) }
-var chatMessageInput by remember { mutableStateOf("") }
-val chatMessages = remember { mutableStateListOf(*demoChatMessages().toTypedArray()) }
-var leaderboardShowingDaily by remember { mutableStateOf(false) }
-var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) }
+
     val allSkills = remember { demoSkills() }
     val zones = remember { demoZones() }
     val inventoryItems = remember { demoInventoryItems() }
@@ -216,10 +228,6 @@ var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) 
     var loadoutWeaponId by remember { mutableStateOf<String?>("bronze_sword") }
     var autoHeal by remember { mutableStateOf(30) }
     var autoFlee by remember { mutableStateOf(10) }
-    var marketTab by remember { mutableStateOf(MarketTab.BROWSE) }
-var showingBuyOrders by remember { mutableStateOf(false) }
-var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
-var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
 
     var combatViewState by remember { mutableStateOf(CombatViewState.SEARCHING) }
     val demoCombatLog = remember {
@@ -238,8 +246,6 @@ var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
         combatLog = demoCombatLog
     )
 
-    // Equipment lock check -- mirrors CombatService.canChangeEquipment logic for the demo.
-    // TOOL is never locked; WEAPON/ARMOR/ACCESSORY locked during IN_COMBAT.
     fun canEquip(item: InventoryItemSummary): Pair<Boolean, String?> {
         if (item.category == InventoryCategory.TOOL) return true to null
         val locked = combatViewState == CombatViewState.IN_COMBAT
@@ -255,167 +261,256 @@ var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
         } else emptySet()
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        RecoveryBar(recoveringUntil = recoveringUntil.value)
+    var marketTab by remember { mutableStateOf(MarketTab.BROWSE) }
+    var showingBuyOrders by remember { mutableStateOf(false) }
+    var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
+    var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
 
-        Row(modifier = Modifier.fillMaxSize().weight(1f)) {
-                SideRail(
-                    currentDestination = currentDestination,
-                    onDestinationSelected = {
-                        currentDestination = it
-                        skillsScreenState = SkillsScreenState.List
-                        combatScreenState = CombatScreenState.ZoneSelect
-                        inventoryScreenState = InventoryScreenState.Items
+    var leaderboardShowingDaily by remember { mutableStateOf(false) }
+    var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) }
+
+    var selectedChatChannel by remember { mutableStateOf(ChatChannelUi.GLOBAL) }
+    var selectedDmCharacterId by remember { mutableStateOf<String?>(null) }
+    var chatMessageInput by remember { mutableStateOf("") }
+    val chatMessages = remember { mutableStateListOf(*demoChatMessages().toTypedArray()) }
+
+    when (flowState) {
+        AppFlowState.Login -> {
+            LoginScreen(
+                isCreatingAccount = isCreatingAccount,
+                onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
+                errorMessage = loginError,
+                onLogin = { email, _ ->
+                    val account = gameViewModel.accountService.exportAllAccounts().find { it.email == email }
+                    if (account == null) {
+                        loginError = "No account found with that email."
+                    } else {
+                        currentAccountId = account.id
+                        val chars = gameViewModel.accountService.charactersFor(account.id)
+                        flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                    }
+                },
+                onCreateAccount = { email, username, password ->
+                    val result = gameViewModel.accountService.createAccount(
+                        email, username, password, AgeBracket.ADULT_18_PLUS, "US"
+                    )
+                    when (result) {
+                        is ServiceResult.Success -> {
+                            currentAccountId = result.value.id
+                            gameViewModel.saveGame()
+                            loginError = null
+                            flowState = AppFlowState.CharacterCreate
+                        }
+                        is ServiceResult.Failure -> loginError = result.reason
+                    }
+                }
+            )
+        }
+
+        AppFlowState.CharacterCreate -> {
+            CharacterCreateScreen(
+                errorMessage = loginError,
+                onCreate = { displayName, avatarId ->
+                    val accountId = currentAccountId
+                    if (accountId != null) {
+                        val result = gameViewModel.accountService.createCharacter(accountId, displayName, avatarId)
+                        when (result) {
+                            is ServiceResult.Success -> {
+                                gameViewModel.accountService.setMainCharacter(result.value.id)
+                                currentCharacterId = result.value.id
+                                gameViewModel.saveGame()
+                                loginError = null
+                                flowState = AppFlowState.InGame
+                            }
+                            is ServiceResult.Failure -> loginError = result.reason
+                        }
+                    }
+                }
+            )
+        }
+
+        AppFlowState.CharacterSelect -> {
+            val accountId = currentAccountId
+            if (accountId != null) {
+                val chars = gameViewModel.accountService.charactersFor(accountId).map {
+                    CharacterSummaryUi(it.id, it.displayName, it.avatarId)
+                }
+                CharacterSelectScreen(
+                    characters = chars,
+                    onCharacterSelected = {
+                        currentCharacterId = it
+                        flowState = AppFlowState.InGame
                     },
-                    badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
+                    onCreateNew = { flowState = AppFlowState.CharacterCreate }
                 )
+            }
+        }
 
-                when (currentDestination) {
-                    AppDestination.HOME -> HomeScreen(state = homeState, onCollectLoot = { })
+        AppFlowState.InGame -> {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    RecoveryBar(recoveringUntil = recoveringUntil.value)
 
-                    AppDestination.SKILLS -> when (val screen = skillsScreenState) {
-                        is SkillsScreenState.List -> SkillsScreen(
-    allSkills = allSkills,
-    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) }
-)
-                        is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-                            SkillDetailScreen(demoDetailFor(screen.skillId, it), { skillsScreenState = SkillsScreenState.List }, { })
+                    Row(modifier = Modifier.fillMaxSize().weight(1f)) {
+                        SideRail(
+                            currentDestination = currentDestination,
+                            onDestinationSelected = {
+                                currentDestination = it
+                                skillsScreenState = SkillsScreenState.List
+                                combatScreenState = CombatScreenState.ZoneSelect
+                                inventoryScreenState = InventoryScreenState.Items
+                                marketTab = MarketTab.BROWSE
+                                selectedMarketItemId = null
+                            },
+                            badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
+                        )
+
+                        when (currentDestination) {
+                            AppDestination.HOME -> HomeScreen(state = homeState, onCollectLoot = { })
+
+                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+                                is SkillsScreenState.List -> SkillsScreen(
+                                    allSkills = allSkills,
+                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) }
+                                )
+                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+                                    SkillDetailScreen(demoDetailFor(screen.skillId, it), { skillsScreenState = SkillsScreenState.List }, { })
+                                }
+                            }
+
+                            AppDestination.COMBAT -> when (combatScreenState) {
+                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+                                    zones = zones, playerLevel = 24,
+                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
+                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+                                )
+                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
+                                CombatScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
+                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+                                    ),
+                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
+                                    onWeaponSelected = { loadoutWeaponId = it },
+                                    onAutoHealChanged = { autoHeal = it },
+                                    onAutoFleeChanged = { autoFlee = it }
+                                )
+                            }
+
+                            AppDestination.INVENTORY -> when (inventoryScreenState) {
+                                InventoryScreenState.Items -> InventoryScreen(
+                                    items = inventoryItems,
+                                    onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
+                                    onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
+                                    onUseItem = { },
+                                    onSellOnMarket = { itemId ->
+                                        val item = inventoryItems.find { it.itemId == itemId }
+                                        selectedMarketItemId = itemId
+                                        prefilledSellQuantity = item?.quantity
+                                        currentDestination = AppDestination.MARKET
+                                    },
+                                    onEquipItem = { },
+                                    canEquip = ::canEquip
+                                )
+                                InventoryScreenState.Equipment -> EquipmentScreen(
+                                    state = EquipmentScreenState(equipped, lockedEquipSlots),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onSlotTapped = { }
+                                )
+                                InventoryScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
+                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+                                    ),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
+                                    onWeaponSelected = { loadoutWeaponId = it },
+                                    onAutoHealChanged = { autoHeal = it },
+                                    onAutoFleeChanged = { autoFlee = it }
+                                )
+                            }
+
+                            AppDestination.MARKET -> {
+                                val itemId = selectedMarketItemId
+                                if (itemId != null) {
+                                    OrderBookScreen(
+                                        detail = demoOrderBook(itemId),
+                                        prefilledQuantity = prefilledSellQuantity,
+                                        onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+                                        onPlaceOrder = { _, _, _ -> selectedMarketItemId = null; prefilledSellQuantity = null }
+                                    )
+                                } else {
+                                    MarketScreen(
+                                        currentTab = marketTab,
+                                        onTabSelected = { marketTab = it },
+                                        listings = demoMarketListings(),
+                                        showingBuyOrders = showingBuyOrders,
+                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+                                        onItemSelected = { selectedMarketItemId = it },
+                                        myBuyOrders = demoMyBuyOrders(),
+                                        mySellOrders = demoMySellOrders(),
+                                        onCancelOrder = { },
+                                        vendorSellableItems = inventoryItems,
+                                        onSellToVendor = { _, _ -> }
+                                    )
+                                }
+                            }
+
+                            AppDestination.GUILD -> {
+                                GuildHomeScreen(
+                                    state = demoGuildState(),
+                                    leaderboardEntries = demoLeaderboard(),
+                                    leaderboardShowingDaily = leaderboardShowingDaily,
+                                    onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+                                    onMemberTapped = { selectedGuildMember = it },
+                                    onContributeToEvent = { },
+                                    onCastVote = { }
+                                )
+
+                                selectedGuildMember?.let { member ->
+                                    MemberActionPopup(
+                                        member = member,
+                                        viewerRole = GuildMemberRole.LEADER,
+                                        onDismiss = { selectedGuildMember = null },
+                                        onKick = { selectedGuildMember = null },
+                                        onPromote = { selectedGuildMember = null },
+                                        onDemote = { selectedGuildMember = null },
+                                        onInitiateVote = { selectedGuildMember = null }
+                                    )
+                                }
+                            }
+
+                            else -> androidx.compose.material3.Text(
+                                text = currentDestination.label + " screen coming soon",
+                                modifier = Modifier.fillMaxSize()
+                            )
                         }
                     }
 
-                    AppDestination.COMBAT -> when (combatScreenState) {
-                        CombatScreenState.ZoneSelect -> ZoneSelectScreen(
-                            zones = zones, playerLevel = 24,
-                            onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
-                            onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
-                        )
-                        CombatScreenState.InZone -> CombatViewScreen(
-    data = combatViewData,
-    onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect }
-)
-                        CombatScreenState.Loadout -> LoadoutScreen(
-                            state = LoadoutState(
-                                loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
-                                combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
-                            ),
-                            onBack = { combatScreenState = CombatScreenState.ZoneSelect },
-                            onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
-                            onWeaponSelected = { loadoutWeaponId = it },
-                            onAutoHealChanged = { autoHeal = it },
-                            onAutoFleeChanged = { autoFlee = it }
-                        )
-                    }
-AppDestination.GUILD -> {
-    GuildHomeScreen(
-        state = demoGuildState(),
-        leaderboardEntries = demoLeaderboard(),
-        leaderboardShowingDaily = leaderboardShowingDaily,
-        onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
-        onMemberTapped = { selectedGuildMember = it },
-        onContributeToEvent = { },
-        onCastVote = { }
-    )
-
-    selectedGuildMember?.let { member ->
-        MemberActionPopup(
-            member = member,
-            viewerRole = GuildMemberRole.LEADER,
-            onDismiss = { selectedGuildMember = null },
-            onKick = { selectedGuildMember = null },
-            onPromote = { selectedGuildMember = null },
-            onDemote = { selectedGuildMember = null },
-            onInitiateVote = { selectedGuildMember = null }
-        )
-    }
-}
-                   AppDestination.MARKET -> {
-    val itemId = selectedMarketItemId
-    if (itemId != null) {
-    OrderBookScreen(
-        detail = demoOrderBook(itemId),
-        prefilledQuantity = prefilledSellQuantity,
-        onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
-        onPlaceOrder = { _, _, _ -> selectedMarketItemId = null; prefilledSellQuantity = null }
-    )
-} else {
-        MarketScreen(
-            currentTab = marketTab,
-            onTabSelected = { marketTab = it },
-            listings = demoMarketListings(),
-            showingBuyOrders = showingBuyOrders,
-            onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
-            onItemSelected = { selectedMarketItemId = it },
-            myBuyOrders = demoMyBuyOrders(),
-            mySellOrders = demoMySellOrders(),
-            onCancelOrder = { },
-            vendorSellableItems = inventoryItems,
-            onSellToVendor = { _, _ -> }
-        )
-    }
-                   }
-                    AppDestination.INVENTORY -> when (inventoryScreenState) {
-                        InventoryScreenState.Items -> InventoryScreen(
-                            items = inventoryItems,
-                            onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
-                            onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
-                            onUseItem = { },
-                            onSellOnMarket = { itemId ->
-    val item = inventoryItems.find { it.itemId == itemId }
-    selectedMarketItemId = itemId
-    prefilledSellQuantity = item?.quantity
-    currentDestination = AppDestination.MARKET
-},
-                            onEquipItem = { },
-                            canEquip = ::canEquip
-                        )
-                        InventoryScreenState.Equipment -> EquipmentScreen(
-                            state = EquipmentScreenState(equipped, lockedEquipSlots),
-                            onBack = { inventoryScreenState = InventoryScreenState.Items 
-                            marketTab = MarketTab.BROWSE; selectedMarketItemId = null},
-                            onSlotTapped = { }
-                        )
-                        InventoryScreenState.Loadout -> LoadoutScreen(
-                            state = LoadoutState(
-                                loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
-                                combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
-                            ),
-                            onBack = { inventoryScreenState = InventoryScreenState.Items },
-                            onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
-                            onWeaponSelected = { loadoutWeaponId = it },
-                            onAutoHealChanged = { autoHeal = it },
-                            onAutoFleeChanged = { autoFlee = it }
-                        )
-                    }
-
-                    else -> androidx.compose.material3.Text(
-                        text = currentDestination.label + " screen coming soon",
-                        modifier = Modifier.fillMaxSize()
+                    ChatBanner(
+                        selectedChannel = selectedChatChannel,
+                        onChannelSelected = {
+                            selectedChatChannel = it
+                            if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
+                        },
+                        messages = chatMessages.filter { it.channel == selectedChatChannel },
+                        dmConversations = demoDmConversations(),
+                        selectedDmCharacterId = selectedDmCharacterId,
+                        onDmSelected = { selectedDmCharacterId = it },
+                        hasUnread = true,
+                        messageInput = chatMessageInput,
+                        onMessageInputChanged = { chatMessageInput = it },
+                        onSendMessage = {
+                            if (chatMessageInput.isNotBlank()) {
+                                chatMessages.add(ChatMessageUi("m" + (chatMessages.size + 1), "You", chatMessageInput, selectedChatChannel))
+                                chatMessageInput = ""
+                            }
+                        },
+                        onMessageAction = { _, _ -> }
                     )
                 }
             }
-
-            ChatBanner(
-                selectedChannel = selectedChatChannel,
-                onChannelSelected = {
-                    selectedChatChannel = it
-                    if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
-                },
-                messages = chatMessages.filter { it.channel == selectedChatChannel },
-                dmConversations = demoDmConversations(),
-                selectedDmCharacterId = selectedDmCharacterId,
-                onDmSelected = { selectedDmCharacterId = it },
-                hasUnread = true,
-                messageInput = chatMessageInput,
-                onMessageInputChanged = { chatMessageInput = it },
-                onSendMessage = {
-                    if (chatMessageInput.isNotBlank()) {
-                        chatMessages.add(ChatMessageUi("m" + (chatMessages.size + 1), "You", chatMessageInput, selectedChatChannel))
-                        chatMessageInput = ""
-                    }
-                },
-                onMessageAction = { _, _ -> }
-            )
         }
     }
 }
