@@ -35,21 +35,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun buildSkillSummaries(book: SkillBook): Map<String, SkillSummary> {
-    return book.all().associate { skill ->
-        val level = LevelCurve.levelForXp(skill.xp)
-        val xpAtLevelStart = LevelCurve.xpRequiredForLevel(level)
-        val xpAtNextLevel = LevelCurve.xpRequiredForLevel(level + 1)
-        val displayName = skill.type.name.lowercase().replaceFirstChar { it.uppercase() }
-        skill.type.name to SkillSummary(
-            skillId = skill.type.name,
-            displayName = displayName,
-            level = level,
-            currentXp = skill.xp - xpAtLevelStart,
-            xpToNextLevel = xpAtNextLevel - skill.xp
-        )
-    }
-}
+
 
 private fun demoDetailFor(skillId: String, summary: SkillSummary): SkillDetailState {
     return SkillDetailState(
