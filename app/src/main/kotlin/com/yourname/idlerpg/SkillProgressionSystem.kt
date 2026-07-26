@@ -118,6 +118,9 @@ object UnlockTable {
     fun unlocksEarnedAt(skill: SkillType, level: Int): List<SkillUnlock> =
         unlocks.filter { it.skill == skill && it.levelRequired <= level }
 
+    fun allUnlocksFor(skill: SkillType): List<SkillUnlock> =
+        unlocks.filter { it.skill == skill }
+
     fun newlyEarnedUnlocks(skill: SkillType, levelBefore: Int, levelAfter: Int): List<SkillUnlock> =
         unlocks.filter { it.skill == skill && it.levelRequired in (levelBefore + 1)..levelAfter }
 

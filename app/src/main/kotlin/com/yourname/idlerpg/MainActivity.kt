@@ -45,19 +45,45 @@ override fun onPause() {
 
 
 
-private fun demoDetailFor(skillId: String, summary: SkillSummary): SkillDetailState {
+private fun effectSummaryText(effect: Effect): String = when (effect) {
+    is Effect.AccessUnlock -> effect.description
+    is Effect.XpBoost -> "+" + effect.percent + "% XP"
+    is Effect.DropRateBoost -> "+" + effect.percent + "% drop rate"
+    is Effect.CostDiscount -> "-" + effect.percent + "% cost"
+    is Effect.FlatStatBonus -> "+" + effect.amount + " " + effect.statName
+    is Effect.TimerReduction -> "-" + effect.percent + "% action time"
+}
+
+private fun buildSkillDetailState(skillId: String, summary: SkillSummary): SkillDetailState {
+    val skillType = SkillType.valueOf(skillId)
+
+    val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
+        SkillUnlockSummary(
+            description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+            levelRequired = unlock.levelRequired
+        )
+    }
+
+    val next = UnlockTable.allUnlocksFor(skillType)
+        .filter { it.levelRequired > summary.level }
+        .minByOrNull { it.levelRequired }
+        ?.let { unlock ->
+            SkillUnlockSummary(
+                description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+                levelRequired = unlock.levelRequired
+            )
+        }
+
+    val actions = ActionCatalog.allFor(skillType)
+        .filter { it.levelRequired <= summary.level }
+        .map { SkillActionSummary(it.itemId, it.displayName, it.levelRequired) }
+
     return SkillDetailState(
         skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
         currentXp = summary.currentXp, xpToNextLevel = summary.xpToNextLevel,
-        earnedUnlocks = listOf(
-            SkillUnlockSummary("Basic access unlocked", 1),
-            SkillUnlockSummary("Improved yield", 10)
-        ).filter { it.levelRequired <= summary.level },
-        nextUnlock = SkillUnlockSummary("Advanced technique", summary.level + 5),
-        availableActions = listOf(
-            SkillActionSummary("action_basic", "Basic " + summary.displayName + " Action", 1),
-            SkillActionSummary("action_advanced", "Advanced " + summary.displayName + " Action", 15)
-        ).filter { it.levelRequired <= summary.level }
+        earnedUnlocks = earned,
+        nextUnlock = next,
+        availableActions = actions
     )
 }
 
@@ -383,7 +409,11 @@ val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
                                     onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) }
                                 )
                                 is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-                                    SkillDetailScreen(demoDetailFor(screen.skillId, it), { skillsScreenState = SkillsScreenState.List }, { })
+                                    SkillDetailScreen(
+                                    buildSkillDetailState(screen.skillId, it),
+                                    { skillsScreenState = SkillsScreenState.List },
+                                    { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+                                )
                                 }
                             }
 
