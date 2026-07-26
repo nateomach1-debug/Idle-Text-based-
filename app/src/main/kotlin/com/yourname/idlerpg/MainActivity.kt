@@ -216,18 +216,31 @@ private sealed class InventoryScreenState {
 
 @Composable
 fun AppRoot(gameViewModel: GameViewModel) {
-    var flowState by remember { mutableStateOf<AppFlowState>(AppFlowState.Login) }
+    val currentAccountId by gameViewModel.currentAccountId.collectAsState()
+    val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
     var isCreatingAccount by remember { mutableStateOf(false) }
     var loginError by remember { mutableStateOf<String?>(null) }
-    var currentAccountId by remember { mutableStateOf<String?>(null) }
-val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
+    var flowState by remember {
+        val accountIdSnapshot = currentAccountId
+        mutableStateOf(
+            when {
+                currentCharacterId != null -> AppFlowState.InGame
+                accountIdSnapshot != null -> {
+                    val chars = gameViewModel.accountService.charactersFor(accountIdSnapshot)
+                    if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                }
+                else -> AppFlowState.Login
+            }
+        )
+    }
     LaunchedEffect(Unit) {
         gameViewModel.loadGame()
-        val autoAccount = gameViewModel.tryAutoLogin()
-        if (autoAccount != null) {
-            currentAccountId = autoAccount.id
-            val chars = gameViewModel.accountService.charactersFor(autoAccount.id)
-            flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+        if (flowState == AppFlowState.Login) {
+            val autoAccount = gameViewModel.tryAutoLogin()
+            if (autoAccount != null) {
+                val chars = gameViewModel.accountService.charactersFor(autoAccount.id)
+                flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+            }
         }
     }
 
@@ -307,7 +320,6 @@ val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
                     val result = gameViewModel.login(email, password)
                     when (result) {
                         is ServiceResult.Success -> {
-                            currentAccountId = result.value.id
                             val chars = gameViewModel.accountService.charactersFor(result.value.id)
                             flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
                             loginError = null
@@ -319,7 +331,6 @@ val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
                     val result = gameViewModel.createAccount(email, username, password)
                     when (result) {
                         is ServiceResult.Success -> {
-                            currentAccountId = result.value.id
                             gameViewModel.saveGame()
                             loginError = null
                             flowState = AppFlowState.CharacterCreate
@@ -378,7 +389,6 @@ val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
                     ) {
                         androidx.compose.material3.TextButton(onClick = {
                             gameViewModel.logout()
-                            currentAccountId = null
                             flowState = AppFlowState.Login
                         }) {
                             androidx.compose.material3.Text("Log Out")

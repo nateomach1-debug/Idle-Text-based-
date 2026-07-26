@@ -25,6 +25,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private var skillActionProgressSeconds: Long = 0
 
+    private val _currentAccountId = MutableStateFlow<String?>(null)
+    val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
+
     private val _currentCharacterId = MutableStateFlow<String?>(null)
     val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
 
@@ -52,7 +55,11 @@ override fun onCleared() {
     super.onCleared()
     saveGame()
 }
+    private var hasLoaded = false
+
     fun loadGame() {
+        if (hasLoaded) return
+        hasLoaded = true
         val saved = repository.load() ?: return
         saved.accounts.forEach { accountService.restoreAccount(it) }
         saved.characters.forEach { accountService.restoreCharacter(it) }
@@ -62,6 +69,7 @@ fun login(email: String, password: String): ServiceResult<Account> {
     val result = accountService.login(email, password)
     if (result is ServiceResult.Success) {
         sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
     }
     return result
 }
@@ -69,16 +77,21 @@ fun login(email: String, password: String): ServiceResult<Account> {
     val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
     if (result is ServiceResult.Success) {
         sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
     }
     return result
   }
   fun tryAutoLogin(): Account? {
     val accountId = sessionManager.getSavedAccountId() ?: return null
-    return accountService.accountById(accountId)
+    val account = accountService.accountById(accountId) ?: return null
+    _currentAccountId.value = account.id
+    return account
 }
 
 fun logout() {
     sessionManager.clearSession()
+    _currentAccountId.value = null
+    _currentCharacterId.value = null
 }
     fun saveGame() {
         repository.save(
