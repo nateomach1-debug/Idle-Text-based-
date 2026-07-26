@@ -23,6 +23,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     // Skilling queues don't consume materials, only crafting does, so this is unused for now.
     val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
 
+    private var skillActionProgressSeconds: Long = 0
+
     private val _currentCharacterId = MutableStateFlow<String?>(null)
     val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
 
@@ -98,27 +100,30 @@ fun logout() {
         offlineIdleService.stopQueue(characterId)
         offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
         offlineIdleService.recordLastSeen(characterId)
+        skillActionProgressSeconds = 0
     }
 
     fun stopSkillAction() {
         val characterId = _currentCharacterId.value ?: return
         offlineIdleService.stopQueue(characterId)
+        skillActionProgressSeconds = 0
     }
 
     private fun tickSkilling() {
         val characterId = _currentCharacterId.value ?: return
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
 
-        val result = offlineIdleService.resolveOfflineProgress(characterId)
-        offlineIdleService.recordLastSeen(characterId)
+        skillActionProgressSeconds += 1
+        if (skillActionProgressSeconds < queue.secondsPerAction) return
 
-        if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
-            val skillType = SkillType.valueOf(queue.skillId)
-            val action = ActionCatalog.find(skillType, queue.itemId)
-            if (action != null) {
-                progressionService.grantXp(characterId, skillType, action.xpPerAction * result.value.actionsCompleted)
-                refreshSkills()
-            }
+        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+        skillActionProgressSeconds %= queue.secondsPerAction
+
+        val skillType = SkillType.valueOf(queue.skillId)
+        val action = ActionCatalog.find(skillType, queue.itemId)
+        if (action != null) {
+            progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+            refreshSkills()
         }
     }
 
