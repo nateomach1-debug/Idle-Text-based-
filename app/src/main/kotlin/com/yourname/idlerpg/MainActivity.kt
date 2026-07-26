@@ -194,6 +194,12 @@ fun AppRoot(gameViewModel: GameViewModel) {
 val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
     LaunchedEffect(Unit) {
         gameViewModel.loadGame()
+        val autoAccount = gameViewModel.tryAutoLogin()
+        if (autoAccount != null) {
+            currentAccountId = autoAccount.id
+            val chars = gameViewModel.accountService.charactersFor(autoAccount.id)
+            flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+        }
     }
 
     var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
@@ -268,20 +274,20 @@ val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
                 isCreatingAccount = isCreatingAccount,
                 onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
                 errorMessage = loginError,
-                onLogin = { email, _ ->
-                    val account = gameViewModel.accountService.exportAllAccounts().find { it.email == email }
-                    if (account == null) {
-                        loginError = "No account found with that email."
-                    } else {
-                        currentAccountId = account.id
-                        val chars = gameViewModel.accountService.charactersFor(account.id)
-                        flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                onLogin = { email, password ->
+                    val result = gameViewModel.login(email, password)
+                    when (result) {
+                        is ServiceResult.Success -> {
+                            currentAccountId = result.value.id
+                            val chars = gameViewModel.accountService.charactersFor(result.value.id)
+                            flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                            loginError = null
+                        }
+                        is ServiceResult.Failure -> loginError = result.reason
                     }
                 },
                 onCreateAccount = { email, username, password ->
-                    val result = gameViewModel.accountService.createAccount(
-                        email, username, password, AgeBracket.ADULT_18_PLUS, "US"
-                    )
+                    val result = gameViewModel.createAccount(email, username, password)
                     when (result) {
                         is ServiceResult.Success -> {
                             currentAccountId = result.value.id
