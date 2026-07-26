@@ -29,6 +29,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     val accountService = AccountService()
     val progressionService = ProgressionService()
+    val inventoryService = InventoryService()
     val sessionManager = SessionManager(application)
     // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
     // Skilling queues don't consume materials, only crafting does, so this is unused for now.
@@ -47,6 +48,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
     val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+
+    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+
+    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -80,6 +87,8 @@ override fun onCleared() {
         saved.skills.forEach { progressionService.restoreSkill(it) }
         saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
     }
 fun login(email: String, password: String): ServiceResult<Account> {
     val result = accountService.login(email, password)
@@ -119,7 +128,9 @@ fun logout() {
             accountService.exportAllCharacters(),
             progressionService.exportAllSkills(),
             offlineIdleService.exportSkillingQueues(),
-            offlineIdleService.exportLastSeen()
+            offlineIdleService.exportLastSeen(),
+            inventoryService.exportAllItems(),
+            inventoryService.exportAllEquipped()
         )
     }
 
@@ -135,6 +146,7 @@ fun logout() {
                 if (action != null) {
                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
                     progressionService.grantXp(characterId, skillType, xpEarned)
+                    inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
                     _offlineSummary.value = OfflineSummary(
                         awaySeconds = result.value.claimedElapsed.seconds,
                         skillActionName = action.displayName,
@@ -149,6 +161,7 @@ fun logout() {
         offlineIdleService.recordLastSeen(characterId)
         skillActionProgressSeconds = 0
         refreshSkills()
+        refreshInventory()
     }
 
     fun startSkillAction(skillType: SkillType, itemId: String) {
@@ -180,7 +193,9 @@ fun logout() {
         val action = ActionCatalog.find(skillType, queue.itemId)
         if (action != null) {
             progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+            inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
             refreshSkills()
+            refreshInventory()
         }
     }
 
@@ -200,5 +215,12 @@ fun logout() {
                 xpToNextLevel = xpAtNextLevel - skill.xp
             )
         }
+    }
+
+    fun refreshInventory() {
+        val characterId = _currentCharacterId.value ?: return
+        val inv = inventoryService.inventoryFor(characterId)
+        _inventoryItems.value = inv.allItems()
+        _equippedItems.value = inv.allEquipped()
     }
 }

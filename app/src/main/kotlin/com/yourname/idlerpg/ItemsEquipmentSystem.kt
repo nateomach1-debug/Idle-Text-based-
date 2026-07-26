@@ -154,6 +154,16 @@ class Inventory(
     }
 
     fun allEquipped(): Map<EquipSlot, String> = equipped.toMap()
+
+    fun allItems(): List<InventorySlotEntry> = entries.values.toList()
+
+    fun restoreItem(itemId: String, quantity: Int) {
+        entries[itemId] = InventorySlotEntry(itemId, quantity)
+    }
+
+    fun restoreEquipped(slot: EquipSlot, itemId: String) {
+        equipped[slot] = itemId
+    }
 }
 
 // =========================================================
@@ -186,5 +196,35 @@ class CraftingService {
         // Materials are consumed even on failure, per your confirmed design decision.
 
         return ServiceResult.Success(CraftingResult(succeeded, itemId, if (succeeded) recipe.outputQuantity else 0))
+    }
+}
+
+// =========================================================
+// INVENTORY SERVICE
+// =========================================================
+
+data class InventorySlotExport(val characterId: String, val itemId: String, val quantity: Int)
+data class EquippedSlotExport(val characterId: String, val slot: String, val itemId: String)
+
+class InventoryService {
+    private val inventories: MutableMap<String, Inventory> = mutableMapOf()
+
+    fun inventoryFor(characterId: String): Inventory =
+        inventories.getOrPut(characterId) { Inventory() }
+
+    fun exportAllItems(): List<InventorySlotExport> = inventories.flatMap { (characterId, inv) ->
+        inv.allItems().map { InventorySlotExport(characterId, it.itemId, it.quantity) }
+    }
+
+    fun exportAllEquipped(): List<EquippedSlotExport> = inventories.flatMap { (characterId, inv) ->
+        inv.allEquipped().map { (slot, itemId) -> EquippedSlotExport(characterId, slot.name, itemId) }
+    }
+
+    fun restoreItem(export: InventorySlotExport) {
+        inventoryFor(export.characterId).restoreItem(export.itemId, export.quantity)
+    }
+
+    fun restoreEquipped(export: EquippedSlotExport) {
+        inventoryFor(export.characterId).restoreEquipped(EquipSlot.valueOf(export.slot), export.itemId)
     }
 }
