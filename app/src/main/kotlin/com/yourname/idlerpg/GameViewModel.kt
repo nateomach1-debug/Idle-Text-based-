@@ -12,6 +12,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+data class OfflineSummary(
+    val awaySeconds: Long,
+    val skillActionName: String,
+    val itemName: String,
+    val quantity: Int,
+    val xpEarned: Long
+)
+
+private fun formatItemName(itemId: String): String =
+    itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = GameStateRepository(application)
@@ -27,6 +38,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _currentAccountId = MutableStateFlow<String?>(null)
     val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
+
+    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
 
     private val _currentCharacterId = MutableStateFlow<String?>(null)
     val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
@@ -95,6 +109,10 @@ fun logout() {
     _currentAccountId.value = null
     _currentCharacterId.value = null
 }
+
+    fun clearOfflineSummary() {
+        _offlineSummary.value = null
+    }
     fun saveGame() {
         repository.save(
             accountService.exportAllAccounts(),
@@ -115,7 +133,15 @@ fun logout() {
                 val skillType = SkillType.valueOf(queue.skillId)
                 val action = ActionCatalog.find(skillType, queue.itemId)
                 if (action != null) {
-                    progressionService.grantXp(characterId, skillType, action.xpPerAction * result.value.actionsCompleted)
+                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+                    progressionService.grantXp(characterId, skillType, xpEarned)
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = result.value.claimedElapsed.seconds,
+                        skillActionName = action.displayName,
+                        itemName = formatItemName(queue.itemId),
+                        quantity = result.value.actionsCompleted,
+                        xpEarned = xpEarned
+                    )
                 }
             }
         }
