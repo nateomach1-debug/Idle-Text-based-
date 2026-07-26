@@ -12,7 +12,9 @@ class GameStateRepository(private val context: Context) {
     fun save(
         accounts: List<AccountExport>,
         characters: List<CharacterExport>,
-        skills: List<SkillExport>
+        skills: List<SkillExport>,
+        skillingQueues: List<SkillingQueueExport>,
+        lastSeen: List<LastSeenExport>
     ) {
         val root = JSONObject()
 
@@ -61,6 +63,27 @@ class GameStateRepository(private val context: Context) {
             skillsArray.put(obj)
         }
         root.put("skills", skillsArray)
+
+        val queuesArray = JSONArray()
+        skillingQueues.forEach { queue ->
+            val obj = JSONObject()
+            obj.put("characterId", queue.characterId)
+            obj.put("skillId", queue.skillId)
+            obj.put("itemId", queue.itemId)
+            obj.put("secondsPerAction", queue.secondsPerAction)
+            obj.put("startedAt", queue.startedAt)
+            queuesArray.put(obj)
+        }
+        root.put("skillingQueues", queuesArray)
+
+        val lastSeenArray = JSONArray()
+        lastSeen.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
 
         saveFile.writeText(root.toString())
     }
@@ -118,12 +141,36 @@ class GameStateRepository(private val context: Context) {
             )
         }
 
-        return SavedGameState(accounts, characters, skills)
+        val skillingQueues = mutableListOf<SkillingQueueExport>()
+        val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+        for (i in 0 until queuesArray.length()) {
+            val obj = queuesArray.getJSONObject(i)
+            skillingQueues.add(
+                SkillingQueueExport(
+                    characterId = obj.getString("characterId"),
+                    skillId = obj.getString("skillId"),
+                    itemId = obj.getString("itemId"),
+                    secondsPerAction = obj.getLong("secondsPerAction"),
+                    startedAt = obj.getString("startedAt")
+                )
+            )
+        }
+
+        val lastSeen = mutableListOf<LastSeenExport>()
+        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        return SavedGameState(accounts, characters, skills, skillingQueues, lastSeen)
     }
 }
 
 data class SavedGameState(
     val accounts: List<AccountExport>,
     val characters: List<CharacterExport>,
-    val skills: List<SkillExport>
+    val skills: List<SkillExport>,
+    val skillingQueues: List<SkillingQueueExport>,
+    val lastSeen: List<LastSeenExport>
 )

@@ -131,6 +131,16 @@ data class OfflineResolution(
     val queueExhausted: Boolean
 )
 
+data class SkillingQueueExport(
+    val characterId: String,
+    val skillId: String,
+    val itemId: String,
+    val secondsPerAction: Long,
+    val startedAt: String
+)
+
+data class LastSeenExport(val characterId: String, val lastSeenAt: String)
+
 // =========================================================
 // OFFLINE/IDLE SERVICE
 // =========================================================
@@ -260,4 +270,26 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
     }
 
     fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
+
+    fun exportSkillingQueues(): List<SkillingQueueExport> =
+        activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
+            SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
+        }
+
+    fun exportLastSeen(): List<LastSeenExport> =
+        lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
+
+    fun restoreSkillingQueue(export: SkillingQueueExport) {
+        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+            characterId = export.characterId,
+            skillId = export.skillId,
+            itemId = export.itemId,
+            secondsPerAction = export.secondsPerAction,
+            startedAt = Instant.parse(export.startedAt)
+        )
+    }
+
+    fun restoreLastSeen(export: LastSeenExport) {
+        lastSeenAt[export.characterId] = Instant.parse(export.lastSeenAt)
+    }
 }

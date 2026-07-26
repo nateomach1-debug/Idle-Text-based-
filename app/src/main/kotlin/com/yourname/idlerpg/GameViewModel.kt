@@ -64,6 +64,8 @@ override fun onCleared() {
         saved.accounts.forEach { accountService.restoreAccount(it) }
         saved.characters.forEach { accountService.restoreCharacter(it) }
         saved.skills.forEach { progressionService.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
     }
 fun login(email: String, password: String): ServiceResult<Account> {
     val result = accountService.login(email, password)
@@ -97,13 +99,29 @@ fun logout() {
         repository.save(
             accountService.exportAllAccounts(),
             accountService.exportAllCharacters(),
-            progressionService.exportAllSkills()
+            progressionService.exportAllSkills(),
+            offlineIdleService.exportSkillingQueues(),
+            offlineIdleService.exportLastSeen()
         )
     }
 
     fun selectCharacter(characterId: String) {
         _currentCharacterId.value = characterId
+
+        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+        if (queue != null) {
+            val result = offlineIdleService.resolveOfflineProgress(characterId)
+            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+                val skillType = SkillType.valueOf(queue.skillId)
+                val action = ActionCatalog.find(skillType, queue.itemId)
+                if (action != null) {
+                    progressionService.grantXp(characterId, skillType, action.xpPerAction * result.value.actionsCompleted)
+                }
+            }
+        }
+
         offlineIdleService.recordLastSeen(characterId)
+        skillActionProgressSeconds = 0
         refreshSkills()
     }
 
