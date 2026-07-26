@@ -102,14 +102,53 @@ private fun demoWeapons(style: CombatStyleOption): List<WeaponOption> = when (st
     CombatStyleOption.MAGIC -> listOf(WeaponOption("spark_bolt", "Spark Bolt Staff", CombatStyleOption.MAGIC))
 }
 
-private fun demoInventoryItems(): List<InventoryItemSummary> = listOf(
-    InventoryItemSummary("iron_sword_common", "Iron Sword", InventoryCategory.WEAPON, 1, true, false, 25, "ATK +5, ACC +10, Max Hit +6"),
-    InventoryItemSummary("leather_boots_common", "Leather Boots", InventoryCategory.ARMOR, 1, true, false, 8, "DEF +3"),
-    InventoryItemSummary("pickaxe_bronze", "Bronze Pickaxe", InventoryCategory.TOOL, 1, true, false, 12, "Mining Tool"),
-    InventoryItemSummary("iron_ore", "Iron Ore", InventoryCategory.MATERIAL, 47, false, false, 4),
-    InventoryItemSummary("steel_bar", "Steel Bar", InventoryCategory.MATERIAL, 12, false, false, 18),
-    InventoryItemSummary("minor_healing_potion", "Minor Healing Potion", InventoryCategory.CONSUMABLE, 6, false, true, 5)
-)
+private fun mapItemCategory(category: ItemCategory): InventoryCategory = when (category) {
+    ItemCategory.WEAPON -> InventoryCategory.WEAPON
+    ItemCategory.ARMOR -> InventoryCategory.ARMOR
+    ItemCategory.ACCESSORY -> InventoryCategory.ACCESSORY
+    ItemCategory.MATERIAL -> InventoryCategory.MATERIAL
+    ItemCategory.CONSUMABLE -> InventoryCategory.CONSUMABLE
+    ItemCategory.COSMETIC -> InventoryCategory.MATERIAL
+}
+
+private fun buildInventoryItemSummaries(entries: List<InventorySlotEntry>): List<InventoryItemSummary> {
+    return entries.map { entry ->
+        val definition = ItemCatalog.find(entry.itemId)
+        if (definition != null) {
+            val statsText = if (!definition.stats.isAllZero()) {
+                listOfNotNull(
+                    definition.stats.attackBonus.takeIf { it != 0 }?.let { "ATK +" + it },
+                    definition.stats.accuracyBonus.takeIf { it != 0 }?.let { "ACC +" + it },
+                    definition.stats.maxHitBonus.takeIf { it != 0 }?.let { "Max Hit +" + it },
+                    definition.stats.defenseBonus.takeIf { it != 0 }?.let { "DEF +" + it },
+                    definition.stats.strengthBonus.takeIf { it != 0 }?.let { "STR +" + it }
+                ).joinToString(", ")
+            } else null
+
+            InventoryItemSummary(
+                itemId = entry.itemId,
+                displayName = definition.name,
+                category = mapItemCategory(definition.category),
+                quantity = entry.quantity,
+                isEquippable = definition.equipSlot != null,
+                isConsumable = definition.category == ItemCategory.CONSUMABLE,
+                npcValuePerUnit = ItemCatalog.baseValueFor(entry.itemId),
+                statsDescription = statsText
+            )
+        } else {
+            // Not yet defined in ItemCatalog (e.g. some gathered materials) -- graceful fallback.
+            InventoryItemSummary(
+                itemId = entry.itemId,
+                displayName = entry.itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } },
+                category = InventoryCategory.MATERIAL,
+                quantity = entry.quantity,
+                isEquippable = false,
+                isConsumable = false,
+                npcValuePerUnit = ItemCatalog.baseValueFor(entry.itemId)
+            )
+        }
+    }
+}
 
 private fun demoEquipped(): Map<EquipSlotUi, EquippedItemInfo?> = mapOf(
     EquipSlotUi.WEAPON to EquippedItemInfo("bronze_sword", "Bronze Sword"),
@@ -274,7 +313,8 @@ fun AppRoot(gameViewModel: GameViewModel) {
 
     val allSkills by gameViewModel.skills.collectAsState()
     val zones = remember { demoZones() }
-    val inventoryItems = remember { demoInventoryItems() }
+    val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
+    val inventoryItems = remember(inventoryItemEntries) { buildInventoryItemSummaries(inventoryItemEntries) }
     val equipped = remember { demoEquipped() }
 
     val homeState = remember {
