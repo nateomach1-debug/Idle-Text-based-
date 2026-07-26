@@ -23,6 +23,7 @@ class GameStateRepository(private val context: Context) {
             obj.put("email", acc.email)
             obj.put("username", acc.username)
             obj.put("passwordHash", acc.passwordHash)
+            obj.put("passwordSalt", acc.passwordSalt)
             obj.put("createdAt", acc.createdAt)
             obj.put("lastLoginAt", acc.lastLoginAt)
             obj.put("ageBracket", acc.ageBracket)
@@ -77,6 +78,7 @@ class GameStateRepository(private val context: Context) {
                 AccountExport(
                     id = obj.getString("id"), email = obj.getString("email"),
                     username = obj.getString("username"), passwordHash = obj.getString("passwordHash"),
+                    passwordSalt = obj.getString("passwordSalt"),
                     createdAt = obj.getString("createdAt"), lastLoginAt = obj.getString("lastLoginAt"),
                     ageBracket = obj.getString("ageBracket"), region = obj.getString("region"),
                     isBanned = obj.getBoolean("isBanned"),

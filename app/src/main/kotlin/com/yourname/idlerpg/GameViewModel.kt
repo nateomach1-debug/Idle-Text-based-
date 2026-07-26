@@ -37,13 +37,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-init {
-    viewModelScope.launch(Dispatchers.Default) {
-        while (true) {
-            delay(1000L)
-            tickSkilling()
-        }
-    }
+    init {
     viewModelScope.launch(Dispatchers.Default) {
         while (true) {
             delay(30_000L)

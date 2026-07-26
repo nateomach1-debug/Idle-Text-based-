@@ -32,6 +32,7 @@ private var passwordSalt: String, // Base64-encoded
 ) {
     fun isMuted(now: Instant = Instant.now()): Boolean = mutedUntil?.isAfter(now) == true
     internal fun exposePasswordHashForExport(): String = passwordHash
+    internal fun exposePasswordSaltForExport(): String = passwordSalt
 }
 
 data class Character(
@@ -99,11 +100,13 @@ class AccountService {
         }
 
         val now = Instant.now()
+        val salt = generateSalt()
         val account = Account(
             id = UUID.randomUUID().toString(),
             email = email,
             username = username,
-            passwordHash = hashPassword(password),
+            passwordHash = hashPassword(password, salt),
+            passwordSalt = Base64.getEncoder().encodeToString(salt),
             createdAt = now,
             lastLoginAt = now,
             ageBracket = ageBracket,
@@ -211,6 +214,22 @@ class AccountService {
     fun charactersFor(accountId: String): List<Character> =
         charactersByAccountId[accountId]?.mapNotNull { charactersById[it] } ?: emptyList()
 
+    fun login(email: String, password: String): ServiceResult<Account> {
+        val normalizedEmail = email.trim().lowercase()
+        val accountId = accountsByEmail[normalizedEmail]
+            ?: return ServiceResult.Failure("No account found with that email.")
+        val account = accountsById.getValue(accountId)
+        if (account.isBanned) {
+            return ServiceResult.Failure("This account is banned.")
+        }
+        val salt = Base64.getDecoder().decode(account.exposePasswordSaltForExport())
+        if (!verifyPassword(password, salt, account.exposePasswordHashForExport())) {
+            return ServiceResult.Failure("Incorrect password.")
+        }
+        account.lastLoginAt = Instant.now()
+        return ServiceResult.Success(account)
+    }
+
     fun accountById(accountId: String): Account? = accountsById[accountId]
 
     private fun containsBannedWord(text: String): Boolean = bannedWords.any { text.contains(it) }
@@ -234,7 +253,7 @@ private fun verifyPassword(password: String, salt: ByteArray, expectedHash: Stri
 
     fun exportAllAccounts(): List<AccountExport> = accountsById.values.map {
         AccountExport(
-            it.id, it.email, it.username, it.exposePasswordHashForExport(),
+            it.id, it.email, it.username, it.exposePasswordHashForExport(), it.exposePasswordSaltForExport(),
             it.createdAt.toString(), it.lastLoginAt.toString(), it.ageBracket.name, it.region,
             it.isBanned, it.banReason, it.mutedUntil?.toString(),
             it.subscriptionTier.name, it.softCurrency, it.premiumCurrency
@@ -251,7 +270,7 @@ private fun verifyPassword(password: String, salt: ByteArray, expectedHash: Stri
     fun restoreAccount(export: AccountExport) {
         val account = Account(
             id = export.id, email = export.email, username = export.username,
-            passwordHash = export.passwordHash,
+            passwordHash = export.passwordHash, passwordSalt = export.passwordSalt,
             createdAt = Instant.parse(export.createdAt), lastLoginAt = Instant.parse(export.lastLoginAt),
             ageBracket = AgeBracket.valueOf(export.ageBracket), region = export.region,
             isBanned = export.isBanned, banReason = export.banReason,
