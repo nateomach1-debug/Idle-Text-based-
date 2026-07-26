@@ -7,6 +7,9 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -343,6 +346,18 @@ val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
         AppFlowState.InGame -> {
             Surface(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.fillMaxSize()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = {
+                            gameViewModel.logout()
+                            currentAccountId = null
+                            flowState = AppFlowState.Login
+                        }) {
+                            androidx.compose.material3.Text("Log Out")
+                        }
+                    }
                     RecoveryBar(recoveringUntil = recoveringUntil.value)
 
                     Row(modifier = Modifier.fillMaxSize().weight(1f)) {
