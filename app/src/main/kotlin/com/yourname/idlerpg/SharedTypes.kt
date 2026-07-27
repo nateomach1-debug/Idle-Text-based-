@@ -11,12 +11,13 @@ enum class EquipmentSlot { WEAPON, ARMOR, ACCESSORY, TOOL }
 
 enum class ItemCategory { WEAPON, ARMOR, ACCESSORY, MATERIAL, CONSUMABLE, COSMETIC }
 enum class Rarity { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
-enum class EquipSlot { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL }
+enum class EquipSlot { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL, LEGS, SHIELD, CAPE, AMMO }
 
 object SlotLockMapping {
     fun lockCategoryFor(slot: EquipSlot): EquipmentSlot = when (slot) {
-        EquipSlot.WEAPON -> EquipmentSlot.WEAPON
-        EquipSlot.HELMET, EquipSlot.CHESTPLATE, EquipSlot.GLOVES, EquipSlot.BOOTS -> EquipmentSlot.ARMOR
+        EquipSlot.WEAPON, EquipSlot.AMMO -> EquipmentSlot.WEAPON
+        EquipSlot.HELMET, EquipSlot.CHESTPLATE, EquipSlot.GLOVES, EquipSlot.BOOTS,
+        EquipSlot.LEGS, EquipSlot.SHIELD, EquipSlot.CAPE -> EquipmentSlot.ARMOR
         EquipSlot.NECKLACE, EquipSlot.RING_1, EquipSlot.RING_2 -> EquipmentSlot.ACCESSORY
         EquipSlot.TOOL -> EquipmentSlot.TOOL
     }

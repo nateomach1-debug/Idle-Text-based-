@@ -355,7 +355,8 @@ fun AppRoot(gameViewModel: GameViewModel) {
         if (combatViewState == CombatViewState.IN_COMBAT) {
             setOf(
                 EquipSlotUi.WEAPON, EquipSlotUi.HELMET, EquipSlotUi.CHESTPLATE, EquipSlotUi.GLOVES,
-                EquipSlotUi.BOOTS, EquipSlotUi.NECKLACE, EquipSlotUi.RING_1, EquipSlotUi.RING_2
+                EquipSlotUi.BOOTS, EquipSlotUi.NECKLACE, EquipSlotUi.RING_1, EquipSlotUi.RING_2,
+                EquipSlotUi.LEGS, EquipSlotUi.SHIELD, EquipSlotUi.CAPE, EquipSlotUi.AMMO
             )
         } else emptySet()
     }

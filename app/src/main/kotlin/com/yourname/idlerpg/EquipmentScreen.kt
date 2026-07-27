@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 // visual language as Zone Select's locked zones.
 // =========================================================
 
-enum class EquipSlotUi { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL }
+enum class EquipSlotUi { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL, LEGS, SHIELD, CAPE, AMMO }
 
 data class EquippedItemInfo(val itemId: String, val displayName: String)
 
