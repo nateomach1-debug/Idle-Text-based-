@@ -71,8 +71,6 @@ object ItemCatalog {
             equipSlot = EquipSlot.BOOTS, levelRequired = 1,
             stats = ItemStats(defenseBonus = 3)
         ),
-        ItemDefinition(id = "iron_ore", name = "Iron Ore", category = ItemCategory.MATERIAL, isTradeable = true, isStackable = true),
-        ItemDefinition(id = "steel_bar", name = "Steel Bar", category = ItemCategory.MATERIAL, isTradeable = true, isStackable = true),
         ItemDefinition(id = "minor_healing_potion", name = "Minor Healing Potion", category = ItemCategory.CONSUMABLE, isTradeable = true, isStackable = true),
         ItemDefinition(
             id = "smiths_hammer", name = "Smith's Hammer", category = ItemCategory.WEAPON,
@@ -80,16 +78,14 @@ object ItemCatalog {
             equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE, levelRequired = 1,
             stats = ItemStats(attackBonus = 2, maxHitBonus = 2)
         )
-    )
+    ) + GeneratedItemCatalog.definitions
 
     fun find(itemId: String): ItemDefinition? = items.find { it.id == itemId }
     fun findByNameAndRarity(name: String, rarity: Rarity): ItemDefinition? =
         items.find { it.name == name && it.rarity == rarity }
 
-    fun baseValueFor(itemId: String): Long = when (itemId) {
-        "iron_ore" -> 10L
+    fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
         "oak_log" -> 8L
-        "steel_bar" -> 45L
         else -> 5L
     }
 }
