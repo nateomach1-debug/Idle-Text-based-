@@ -291,6 +291,9 @@ private fun verifyPassword(password: String, salt: ByteArray, expectedHash: Stri
             isMainCharacter = export.isMainCharacter
         )
         charactersById[character.id] = character
-        charactersByAccountId.getOrPut(character.accountId) { mutableListOf() }.add(character.id)
+        val siblingIds = charactersByAccountId.getOrPut(character.accountId) { mutableListOf() }
+        if (!siblingIds.contains(character.id)) {
+            siblingIds.add(character.id)
+        }
     }
 }
