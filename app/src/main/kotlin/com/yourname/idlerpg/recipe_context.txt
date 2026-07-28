@@ -1,0 +1,952 @@
+]633;E;echo "=== BARS ===";96298ff9-122a-4147-ba80-cfe729163c78]633;C=== BARS ===
+842:        id = "copper_bar",
+843-        name = "Copper Bar",
+844-        category = ItemCategory.MATERIAL,
+845-        isTradeable = true,
+846-        isStackable = true
+847-    ),
+848-    ItemDefinition(
+849:        id = "tin_bar",
+850-        name = "Tin Bar",
+851-        category = ItemCategory.MATERIAL,
+852-        isTradeable = true,
+853-        isStackable = true
+854-    ),
+855-    ItemDefinition(
+856:        id = "bronze_bar",
+857-        name = "Bronze Bar",
+858-        category = ItemCategory.MATERIAL,
+859-        isTradeable = true,
+860-        isStackable = true
+861-    ),
+862-    ItemDefinition(
+863:        id = "iron_bar",
+864-        name = "Iron Bar",
+865-        category = ItemCategory.MATERIAL,
+866-        isTradeable = true,
+867-        isStackable = true
+868-    ),
+869-    ItemDefinition(
+870:        id = "silver_bar",
+871-        name = "Silver Bar",
+872-        category = ItemCategory.MATERIAL,
+873-        isTradeable = true,
+874-        isStackable = true
+875-    ),
+876-    ItemDefinition(
+877:        id = "steel_bar",
+878-        name = "Steel Bar",
+879-        category = ItemCategory.MATERIAL,
+880-        isTradeable = true,
+881-        isStackable = true
+882-    ),
+883-    ItemDefinition(
+884:        id = "gold_bar",
+885-        name = "Gold Bar",
+886-        category = ItemCategory.MATERIAL,
+887-        isTradeable = true,
+888-        isStackable = true
+889-    ),
+890-    ItemDefinition(
+891:        id = "mithril_bar",
+892-        name = "Mithril Bar",
+893-        category = ItemCategory.MATERIAL,
+894-        isTradeable = true,
+895-        isStackable = true
+896-    ),
+897-    ItemDefinition(
+898:        id = "adamantite_bar",
+899-        name = "Adamantite Bar",
+900-        category = ItemCategory.MATERIAL,
+901-        isTradeable = true,
+902-        isStackable = true
+903-    ),
+904-    ItemDefinition(
+905:        id = "runite_bar",
+906-        name = "Runite Bar",
+907-        category = ItemCategory.MATERIAL,
+908-        isTradeable = true,
+909-        isStackable = true
+910-    ),
+911-    ItemDefinition(
+912:        id = "orichalcum_bar",
+913-        name = "Orichalcum Bar",
+914-        category = ItemCategory.MATERIAL,
+915-        isTradeable = true,
+916-        isStackable = true
+917-    ),
+918-    ItemDefinition(
+919:        id = "celestial_alloy_bar",
+920-        name = "Celestial Alloy Bar",
+921-        category = ItemCategory.MATERIAL,
+922-        isTradeable = true,
+923-        isStackable = true
+924-    ),
+925-    ItemDefinition(
+=== COOKED FOOD ===
+1170:        id = "cooked_shrimp",
+1171-        name = "Cooked Shrimp",
+1172-        category = ItemCategory.CONSUMABLE,
+1173-        isTradeable = true,
+1174-        isStackable = true
+1175-    ),
+1176-    ItemDefinition(
+1177:        id = "cooked_anchovies",
+1178-        name = "Cooked Anchovies",
+1179-        category = ItemCategory.CONSUMABLE,
+1180-        isTradeable = true,
+1181-        isStackable = true
+1182-    ),
+1183-    ItemDefinition(
+1184:        id = "cooked_sardine",
+1185-        name = "Cooked Sardine",
+1186-        category = ItemCategory.CONSUMABLE,
+1187-        isTradeable = true,
+1188-        isStackable = true
+1189-    ),
+1190-        ItemDefinition(
+1191:        id = "cooked_chicken",
+1192-        name = "Cooked Chicken",
+1193-        category = ItemCategory.CONSUMABLE,
+1194-        isTradeable = true,
+1195-        isStackable = true
+1196-    ),
+1197-    ItemDefinition(
+1198:        id = "cooked_herring",
+1199-        name = "Cooked Herring",
+1200-        category = ItemCategory.CONSUMABLE,
+1201-        isTradeable = true,
+1202-        isStackable = true
+1203-    ),
+1204-    ItemDefinition(
+1205:        id = "cooked_beef",
+1206-        name = "Cooked Beef",
+1207-        category = ItemCategory.CONSUMABLE,
+1208-        isTradeable = true,
+1209-        isStackable = true
+1210-    ),
+1211-    ItemDefinition(
+1212:        id = "cooked_crayfish",
+1213-        name = "Cooked Crayfish",
+1214-        category = ItemCategory.CONSUMABLE,
+1215-        isTradeable = true,
+1216-        isStackable = true
+1217-    ),
+1218-    ItemDefinition(
+1219:        id = "cooked_trout",
+1220-        name = "Cooked Trout",
+1221-        category = ItemCategory.CONSUMABLE,
+1222-        isTradeable = true,
+1223-        isStackable = true
+1224-    ),
+1225-    ItemDefinition(
+1226:        id = "cooked_salmon",
+1227-        name = "Cooked Salmon",
+1228-        category = ItemCategory.CONSUMABLE,
+1229-        isTradeable = true,
+1230-        isStackable = true
+1231-    ),
+1232-    ItemDefinition(
+--
+1240:        id = "cooked_tuna",
+1241-        name = "Cooked Tuna",
+1242-        category = ItemCategory.CONSUMABLE,
+1243-        isTradeable = true,
+1244-        isStackable = true
+1245-    ),
+1246-    ItemDefinition(
+--
+1254:        id = "cooked_mackerel",
+1255-        name = "Cooked Mackerel",
+1256-        category = ItemCategory.CONSUMABLE,
+1257-        isTradeable = true,
+1258-        isStackable = true
+1259-    ),
+1260-    ItemDefinition(
+1261:        id = "cooked_swordfish",
+1262-        name = "Cooked Swordfish",
+1263-        category = ItemCategory.CONSUMABLE,
+1264-        isTradeable = true,
+1265-        isStackable = true
+1266-    ),
+1267-    ItemDefinition(
+--
+1275:        id = "cooked_lobster",
+1276-        name = "Cooked Lobster",
+1277-        category = ItemCategory.CONSUMABLE,
+1278-        isTradeable = true,
+1279-        isStackable = true
+1280-    ),
+1281-    ItemDefinition(
+1282:        id = "cooked_crab",
+1283-        name = "Cooked Crab",
+1284-        category = ItemCategory.CONSUMABLE,
+1285-        isTradeable = true,
+1286-        isStackable = true
+1287-    ),
+1288-    ItemDefinition(
+1289:        id = "cooked_shark",
+1290-        name = "Cooked Shark",
+1291-        category = ItemCategory.CONSUMABLE,
+1292-        isTradeable = true,
+1293-        isStackable = true
+1294-    ),
+1295-    ItemDefinition(
+--
+1303:        id = "cooked_monkfish",
+1304-        name = "Cooked Monkfish",
+1305-        category = ItemCategory.CONSUMABLE,
+1306-        isTradeable = true,
+1307-        isStackable = true
+1308-    ),
+1309-    ItemDefinition(
+1310:        id = "cooked_manta_ray",
+1311-        name = "Cooked Manta Ray",
+1312-        category = ItemCategory.CONSUMABLE,
+1313-        isTradeable = true,
+1314-        isStackable = true
+1315-    ),
+1316-    ItemDefinition(
+1317:        id = "cooked_eel",
+1318-        name = "Cooked Eel",
+1319-        category = ItemCategory.CONSUMABLE,
+1320-        isTradeable = true,
+1321-        isStackable = true
+1322-    ),
+1323-    ItemDefinition(
+1324:        id = "cooked_deep_sea_cod",
+1325-        name = "Cooked Deep Sea Cod",
+1326-        category = ItemCategory.CONSUMABLE,
+1327-        isTradeable = true,
+1328-        isStackable = true
+1329-    ),
+1330-    ItemDefinition(
+1331:        id = "cooked_anglerfish",
+1332-        name = "Cooked Anglerfish",
+1333-        category = ItemCategory.CONSUMABLE,
+1334-        isTradeable = true,
+1335-        isStackable = true
+1336-    ),
+1337-    ItemDefinition(
+=== BOWS / BOWSTRING / ARROWS / SHAFTS / FEATHERS / ARROWHEADS ===
+1047:        id = "mithril_arrowheads",
+1048-        name = "Mithril Arrowheads",
+1049-        category = ItemCategory.MATERIAL,
+1050-        isTradeable = true,
+1051-        isStackable = true
+1052-    ),
+1053-    ItemDefinition(
+--
+1359:        id = "arrow_shafts",
+1360-        name = "Arrow Shafts",
+1361-        category = ItemCategory.MATERIAL,
+1362-        isTradeable = true,
+1363-        isStackable = true
+1364-    ),
+1365-    ItemDefinition(
+1366:        id = "feathers",
+1367-        name = "Feathers",
+1368-        category = ItemCategory.MATERIAL,
+1369-        isTradeable = true,
+1370-        isStackable = true
+1371-    ),
+1372-    ItemDefinition(
+1373:        id = "bowstring",
+1374-        name = "Bowstring",
+1375-        category = ItemCategory.MATERIAL,
+1376-        isTradeable = true,
+1377-        isStackable = true
+1378-    ),
+1379-    ItemDefinition(
+1380:        id = "crossbow_frame",
+1381-        name = "Crossbow Frame",
+1382-        category = ItemCategory.MATERIAL,
+1383-        isTradeable = true,
+1384-        isStackable = true
+1385-    ),
+1386-    ItemDefinition(
+--
+1394:        id = "shortbow_u",
+1395-        name = "Unstrung Shortbow",
+1396-        category = ItemCategory.MATERIAL,
+1397-        isTradeable = true,
+1398-        isStackable = true
+1399-    ),
+1400-    ItemDefinition(
+1401:        id = "shortbow",
+1402-        name = "Shortbow",
+1403-        category = ItemCategory.WEAPON,
+1404-        isTradeable = true,
+1405-        isStackable = false,
+1406-        equipSlot = EquipSlot.WEAPON,
+1407-        combatStyle = CombatStyle.RANGED,
+--
+1411:        id = "longbow_u",
+1412-        name = "Unstrung Longbow",
+1413-        category = ItemCategory.MATERIAL,
+1414-        isTradeable = true,
+1415-        isStackable = true
+1416-    ),
+1417-    ItemDefinition(
+1418:        id = "longbow",
+1419-        name = "Longbow",
+1420-        category = ItemCategory.WEAPON,
+1421-        isTradeable = true,
+1422-        isStackable = false,
+1423-        equipSlot = EquipSlot.WEAPON,
+1424-        combatStyle = CombatStyle.RANGED,
+--
+1428:        id = "oak_shortbow",
+1429-        name = "Oak Shortbow",
+1430-        category = ItemCategory.WEAPON,
+1431-        isTradeable = true,
+1432-        isStackable = false,
+1433-        equipSlot = EquipSlot.WEAPON,
+1434-        combatStyle = CombatStyle.RANGED,
+--
+1439:        id = "oak_longbow",
+1440-        name = "Oak Longbow",
+1441-        category = ItemCategory.WEAPON,
+1442-        isTradeable = true,
+1443-        isStackable = false,
+1444-        equipSlot = EquipSlot.WEAPON,
+1445-        combatStyle = CombatStyle.RANGED,
+--
+1450:        id = "willow_shortbow",
+1451-        name = "Willow Shortbow",
+1452-        category = ItemCategory.WEAPON,
+1453-        isTradeable = true,
+1454-        isStackable = false,
+1455-        equipSlot = EquipSlot.WEAPON,
+1456-        combatStyle = CombatStyle.RANGED,
+--
+1461:        id = "willow_longbow",
+1462-        name = "Willow Longbow",
+1463-        category = ItemCategory.WEAPON,
+1464-        isTradeable = true,
+1465-        isStackable = false,
+1466-        equipSlot = EquipSlot.WEAPON,
+1467-        combatStyle = CombatStyle.RANGED,
+--
+1472:        id = "composite_bow",
+1473-        name = "Composite Bow",
+1474-        category = ItemCategory.WEAPON,
+1475-        isTradeable = true,
+1476-        isStackable = false,
+1477-        equipSlot = EquipSlot.WEAPON,
+1478-        combatStyle = CombatStyle.RANGED,
+--
+1483:        id = "maple_longbow",
+1484-        name = "Maple Longbow",
+1485-        category = ItemCategory.WEAPON,
+1486-        isTradeable = true,
+1487-        isStackable = false,
+1488-        equipSlot = EquipSlot.WEAPON,
+1489-        combatStyle = CombatStyle.RANGED,
+--
+1494:        id = "crossbow",
+1495-        name = "Crossbow",
+1496-        category = ItemCategory.WEAPON,
+1497-        isTradeable = true,
+1498-        isStackable = false,
+1499-        equipSlot = EquipSlot.WEAPON,
+1500-        combatStyle = CombatStyle.RANGED,
+--
+1505:        id = "yew_shortbow",
+1506-        name = "Yew Shortbow",
+1507-        category = ItemCategory.WEAPON,
+1508-        isTradeable = true,
+1509-        isStackable = false,
+1510-        equipSlot = EquipSlot.WEAPON,
+1511-        combatStyle = CombatStyle.RANGED,
+--
+1516:        id = "yew_longbow",
+1517-        name = "Yew Longbow",
+1518-        category = ItemCategory.WEAPON,
+1519-        isTradeable = true,
+1520-        isStackable = false,
+1521-        equipSlot = EquipSlot.WEAPON,
+1522-        combatStyle = CombatStyle.RANGED,
+--
+1527:        id = "ironwood_composite_bow",
+1528-        name = "Ironwood Composite Bow",
+1529-        category = ItemCategory.WEAPON,
+1530-        isTradeable = true,
+1531-        isStackable = false,
+1532-        equipSlot = EquipSlot.WEAPON,
+1533-        combatStyle = CombatStyle.RANGED,
+--
+1538:        id = "magic_shortbow",
+1539-        name = "Magic Shortbow",
+1540-        category = ItemCategory.WEAPON,
+1541-        isTradeable = true,
+1542-        isStackable = false,
+1543-        equipSlot = EquipSlot.WEAPON,
+1544-        combatStyle = CombatStyle.RANGED,
+--
+1549:        id = "magic_longbow",
+1550-        name = "Magic Longbow",
+1551-        category = ItemCategory.WEAPON,
+1552-        isTradeable = true,
+1553-        isStackable = false,
+1554-        equipSlot = EquipSlot.WEAPON,
+1555-        combatStyle = CombatStyle.RANGED,
+--
+1560:        id = "elder_bow",
+1561-        name = "Elder Bow",
+1562-        category = ItemCategory.WEAPON,
+1563-        isTradeable = true,
+1564-        isStackable = false,
+1565-        equipSlot = EquipSlot.WEAPON,
+1566-        combatStyle = CombatStyle.RANGED,
+--
+1571:        id = "spirit_bow",
+1572-        name = "Spirit Bow",
+1573-        category = ItemCategory.WEAPON,
+1574-        isTradeable = true,
+1575-        isStackable = false,
+1576-        equipSlot = EquipSlot.WEAPON,
+1577-        combatStyle = CombatStyle.RANGED,
+--
+1582:        id = "ancient_ironbark_bow",
+1583-        name = "Ancient Ironbark Bow",
+1584-        category = ItemCategory.WEAPON,
+1585-        isTradeable = true,
+1586-        isStackable = false,
+1587-        equipSlot = EquipSlot.WEAPON,
+1588-        combatStyle = CombatStyle.RANGED,
+--
+1593:        id = "bronze_arrows",
+1594-        name = "Bronze Arrows",
+1595-        category = ItemCategory.MATERIAL,
+1596-        isTradeable = true,
+1597-        isStackable = true,
+1598-        equipSlot = EquipSlot.AMMO,
+1599-        skillRequired = "ARCHERY"
+--
+1612:        id = "iron_arrows",
+1613-        name = "Iron Arrows",
+1614-        category = ItemCategory.MATERIAL,
+1615-        isTradeable = true,
+1616-        isStackable = true,
+1617-        equipSlot = EquipSlot.AMMO,
+1618-        levelRequired = 10,
+--
+1622:        id = "steel_arrows",
+1623-        name = "Steel Arrows",
+1624-        category = ItemCategory.MATERIAL,
+1625-        isTradeable = true,
+1626-        isStackable = true,
+1627-        equipSlot = EquipSlot.AMMO,
+1628-        levelRequired = 20,
+--
+1632:        id = "mithril_arrows",
+1633-        name = "Mithril Arrows",
+1634-        category = ItemCategory.MATERIAL,
+1635-        isTradeable = true,
+1636-        isStackable = true,
+1637-        equipSlot = EquipSlot.AMMO,
+1638-        levelRequired = 30,
+--
+1642:        id = "adamant_arrows",
+1643-        name = "Adamant Arrows",
+1644-        category = ItemCategory.MATERIAL,
+1645-        isTradeable = true,
+1646-        isStackable = true,
+1647-        equipSlot = EquipSlot.AMMO,
+1648-        levelRequired = 40,
+--
+1652:        id = "rune_arrows",
+1653-        name = "Rune Arrows",
+1654-        category = ItemCategory.MATERIAL,
+1655-        isTradeable = true,
+1656-        isStackable = true,
+1657-        equipSlot = EquipSlot.AMMO,
+1658-        levelRequired = 50,
+--
+1672:        id = "broad_arrows",
+1673-        name = "Broad Arrows",
+1674-        category = ItemCategory.MATERIAL,
+1675-        isTradeable = true,
+1676-        isStackable = true,
+1677-        equipSlot = EquipSlot.AMMO,
+1678-        levelRequired = 55,
+--
+1682:        id = "dragon_arrows",
+1683-        name = "Dragon Arrows",
+1684-        category = ItemCategory.MATERIAL,
+1685-        isTradeable = true,
+1686-        isStackable = true,
+1687-        equipSlot = EquipSlot.AMMO,
+1688-        levelRequired = 65,
+=== POTIONS / VIALS ===
+1702:        id = "vial_of_water",
+1703-        name = "Vial of Water",
+1704-        category = ItemCategory.MATERIAL,
+1705-        isTradeable = true,
+1706-        isStackable = true
+1707-    ),
+1708-    ItemDefinition(
+1709:        id = "attack_potion",
+1710-        name = "Attack Potion",
+1711-        category = ItemCategory.CONSUMABLE,
+1712-        isTradeable = true,
+1713-        isStackable = true
+1714-    ),
+1715-    ItemDefinition(
+--
+1723:        id = "strength_potion",
+1724-        name = "Strength Potion",
+1725-        category = ItemCategory.CONSUMABLE,
+1726-        isTradeable = true,
+1727-        isStackable = true
+1728-    ),
+1729-    ItemDefinition(
+1730:        id = "defense_potion",
+1731-        name = "Defense Potion",
+1732-        category = ItemCategory.CONSUMABLE,
+1733-        isTradeable = true,
+1734-        isStackable = true
+1735-    ),
+1736-    ItemDefinition(
+1737:        id = "restore_potion",
+1738-        name = "Restore Potion",
+1739-        category = ItemCategory.CONSUMABLE,
+1740-        isTradeable = true,
+1741-        isStackable = true
+1742-    ),
+1743-    ItemDefinition(
+1744:        id = "energy_potion",
+1745-        name = "Energy Potion",
+1746-        category = ItemCategory.CONSUMABLE,
+1747-        isTradeable = true,
+1748-        isStackable = true
+1749-    ),
+1750-    ItemDefinition(
+1751:        id = "combat_potion",
+1752-        name = "Combat Potion",
+1753-        category = ItemCategory.CONSUMABLE,
+1754-        isTradeable = true,
+1755-        isStackable = true
+1756-    ),
+1757-    ItemDefinition(
+1758:        id = "prayer_potion",
+1759-        name = "Prayer Potion",
+1760-        category = ItemCategory.CONSUMABLE,
+1761-        isTradeable = true,
+1762-        isStackable = true
+1763-    ),
+1764-    ItemDefinition(
+1765:        id = "super_attack_potion",
+1766-        name = "Super Attack Potion",
+1767-        category = ItemCategory.CONSUMABLE,
+1768-        isTradeable = true,
+1769-        isStackable = true
+1770-    ),
+1771-    ItemDefinition(
+1772:        id = "super_strength_potion",
+1773-        name = "Super Strength Potion",
+1774-        category = ItemCategory.CONSUMABLE,
+1775-        isTradeable = true,
+1776-        isStackable = true
+1777-    ),
+1778-    ItemDefinition(
+1779:        id = "super_defense_potion",
+1780-        name = "Super Defense Potion",
+1781-        category = ItemCategory.CONSUMABLE,
+1782-        isTradeable = true,
+1783-        isStackable = true
+1784-    ),
+1785-    ItemDefinition(
+1786:        id = "ranging_potion",
+1787-        name = "Ranging Potion",
+1788-        category = ItemCategory.CONSUMABLE,
+1789-        isTradeable = true,
+1790-        isStackable = true
+1791-    ),
+1792-    ItemDefinition(
+1793:        id = "magic_potion",
+1794-        name = "Magic Potion",
+1795-        category = ItemCategory.CONSUMABLE,
+1796-        isTradeable = true,
+1797-        isStackable = true
+1798-    ),
+1799-    ItemDefinition(
+1800:        id = "super_restore_potion",
+1801-        name = "Super Restore Potion",
+1802-        category = ItemCategory.CONSUMABLE,
+1803-        isTradeable = true,
+1804-        isStackable = true
+1805-    ),
+1806-    ItemDefinition(
+--
+1821:        id = "antifire_potion",
+1822-        name = "Antifire Potion",
+1823-        category = ItemCategory.CONSUMABLE,
+1824-        isTradeable = true,
+1825-        isStackable = true
+1826-    ),
+1827-    ItemDefinition(
+1828:        id = "extreme_attack_potion",
+1829-        name = "Extreme Attack Potion",
+1830-        category = ItemCategory.CONSUMABLE,
+1831-        isTradeable = true,
+1832-        isStackable = true
+1833-    ),
+1834-    ItemDefinition(
+1835:        id = "extreme_strength_potion",
+1836-        name = "Extreme Strength Potion",
+1837-        category = ItemCategory.CONSUMABLE,
+1838-        isTradeable = true,
+1839-        isStackable = true
+1840-    ),
+1841-    ItemDefinition(
+1842:        id = "overload_potion",
+1843-        name = "Overload Potion",
+1844-        category = ItemCategory.CONSUMABLE,
+1845-        isTradeable = true,
+1846-        isStackable = true
+1847-    ),
+1848-    ItemDefinition(
+1849:        id = "divine_potion",
+1850-        name = "Divine Potion",
+1851-        category = ItemCategory.CONSUMABLE,
+1852-        isTradeable = true,
+1853-        isStackable = true
+1854-    ),
+1855-    ItemDefinition(
+--
+2230:        id = "glass_vial",
+2231-        name = "Glass Vial",
+2232-        category = ItemCategory.MATERIAL,
+2233-        isTradeable = true,
+2234-        isStackable = true
+2235-    ),
+2236-    ItemDefinition(
+=== GEMS ===
+86:        id = "uncut_gemstone",
+87-        name = "Uncut Gemstone",
+88-        category = ItemCategory.MATERIAL,
+89-        isTradeable = true,
+90-        isStackable = true
+91-    ),
+92-    ItemDefinition(
+--
+2056:        id = "uncut_sapphire",
+2057-        name = "Uncut Sapphire",
+2058-        category = ItemCategory.MATERIAL,
+2059-        isTradeable = true,
+2060-        isStackable = true
+2061-    ),
+2062-    ItemDefinition(
+2063:        id = "sapphire",
+2064-        name = "Sapphire",
+2065-        category = ItemCategory.MATERIAL,
+2066-        isTradeable = true,
+2067-        isStackable = true
+2068-    ),
+2069-    ItemDefinition(
+2070:        id = "uncut_emerald",
+2071-        name = "Uncut Emerald",
+2072-        category = ItemCategory.MATERIAL,
+2073-        isTradeable = true,
+2074-        isStackable = true
+2075-    ),
+2076-    ItemDefinition(
+2077:        id = "emerald",
+2078-        name = "Emerald",
+2079-        category = ItemCategory.MATERIAL,
+2080-        isTradeable = true,
+2081-        isStackable = true
+2082-    ),
+2083-    ItemDefinition(
+2084:        id = "uncut_ruby",
+2085-        name = "Uncut Ruby",
+2086-        category = ItemCategory.MATERIAL,
+2087-        isTradeable = true,
+2088-        isStackable = true
+2089-    ),
+2090-    ItemDefinition(
+2091:        id = "ruby",
+2092-        name = "Ruby",
+2093-        category = ItemCategory.MATERIAL,
+2094-        isTradeable = true,
+2095-        isStackable = true
+2096-    ),
+2097-    ItemDefinition(
+2098:        id = "uncut_diamond",
+2099-        name = "Uncut Diamond",
+2100-        category = ItemCategory.MATERIAL,
+2101-        isTradeable = true,
+2102-        isStackable = true
+2103-    ),
+2104-    ItemDefinition(
+2105:        id = "diamond",
+2106-        name = "Diamond",
+2107-        category = ItemCategory.MATERIAL,
+2108-        isTradeable = true,
+2109-        isStackable = true
+2110-    ),
+2111-    ItemDefinition(
+--
+2184:        id = "sapphire_ring",
+2185-        name = "Sapphire Ring",
+2186-        category = ItemCategory.ACCESSORY,
+2187-        isTradeable = true,
+2188-        isStackable = false,
+2189-        equipSlot = EquipSlot.RING_1
+2190-    ),
+--
+2199:        id = "emerald_amulet",
+2200-        name = "Emerald Amulet",
+2201-        category = ItemCategory.ACCESSORY,
+2202-        isTradeable = true,
+2203-        isStackable = false,
+2204-        equipSlot = EquipSlot.NECKLACE
+2205-    ),
+--
+2214:        id = "ruby_ring",
+2215-        name = "Ruby Ring",
+2216-        category = ItemCategory.ACCESSORY,
+2217-        isTradeable = true,
+2218-        isStackable = false,
+2219-        equipSlot = EquipSlot.RING_1
+2220-    ),
+--
+2222:        id = "diamond_necklace",
+2223-        name = "Diamond Necklace",
+2224-        category = ItemCategory.ACCESSORY,
+2225-        isTradeable = true,
+2226-        isStackable = false,
+2227-        equipSlot = EquipSlot.NECKLACE
+2228-    ),
+--
+2358:        id = "loose_gems",
+2359-        name = "Loose Gems",
+2360-        category = ItemCategory.MATERIAL,
+2361-        isTradeable = true,
+2362-        isStackable = true
+2363-    ),
+2364-    ItemDefinition(
+=== SAMPLE TIERED WEAPONS/ARMOR (for levelRequired progression) ===
+926:        id = "bronze_dagger",
+927-        name = "Bronze Dagger",
+928-        category = ItemCategory.WEAPON,
+929-        isTradeable = true,
+930-        isStackable = false,
+931-        equipSlot = EquipSlot.WEAPON,
+932-        combatStyle = CombatStyle.MELEE,
+--
+943:        id = "bronze_sword",
+944-        name = "Bronze Sword",
+945-        category = ItemCategory.WEAPON,
+946-        isTradeable = true,
+947-        isStackable = false,
+948-        equipSlot = EquipSlot.WEAPON,
+949-        combatStyle = CombatStyle.MELEE,
+--
+1005:        id = "steel_platebody",
+1006-        name = "Steel Platebody",
+1007-        category = ItemCategory.ARMOR,
+1008-        isTradeable = true,
+1009-        isStackable = false,
+1010-        equipSlot = EquipSlot.CHESTPLATE,
+1011-        levelRequired = 25,
+--
+1065:        id = "adamant_platebody_set",
+1066-        name = "Adamant Full Plate Armor Set",
+1067-        category = ItemCategory.ARMOR,
+1068-        isTradeable = true,
+1069-        isStackable = false,
+1070-        levelRequired = 45,
+1071-        skillRequired = "DEFENSE"
+=== ACTIONCATALOG: SMITHING/COOKING/FLETCHING/CRAFTING/ALCHEMY ===
+36-        SkillActionDefinition(SkillType.MINING, "primordial_ore", "Mine Primordial Ore", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+37:        SkillActionDefinition(SkillType.SMITHING, "copper_bar", "Smelt Copper Bar", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+38:        SkillActionDefinition(SkillType.SMITHING, "tin_bar", "Smelt Tin Bar", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+39:        SkillActionDefinition(SkillType.SMITHING, "bronze_bar", "Smelt Bronze Bar", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+40:        SkillActionDefinition(SkillType.SMITHING, "iron_bar", "Smelt Iron Bar", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+41:        SkillActionDefinition(SkillType.SMITHING, "silver_bar", "Smelt Silver Bar", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+42:        SkillActionDefinition(SkillType.SMITHING, "steel_bar", "Smelt Steel Bar", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+43:        SkillActionDefinition(SkillType.SMITHING, "gold_bar", "Smelt Gold Bar", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+44:        SkillActionDefinition(SkillType.SMITHING, "mithril_bar", "Smelt Mithril Bar", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+45:        SkillActionDefinition(SkillType.SMITHING, "adamantite_bar", "Smelt Adamantite Bar", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+46:        SkillActionDefinition(SkillType.SMITHING, "runite_bar", "Smelt Runite Bar", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+47:        SkillActionDefinition(SkillType.SMITHING, "orichalcum_bar", "Smelt Orichalcum Bar", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+48:        SkillActionDefinition(SkillType.SMITHING, "celestial_alloy_bar", "Smelt Celestial Alloy Bar", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+49:        SkillActionDefinition(SkillType.SMITHING, "dagger", "Forge Dagger", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+50:        SkillActionDefinition(SkillType.SMITHING, "nails", "Forge Nails", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+51:        SkillActionDefinition(SkillType.SMITHING, "sword", "Forge Sword", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+52:        SkillActionDefinition(SkillType.SMITHING, "mace", "Forge Mace", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+53:        SkillActionDefinition(SkillType.SMITHING, "warhammer", "Forge Warhammer", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+54:        SkillActionDefinition(SkillType.SMITHING, "chainmail_body", "Forge Chainmail Body", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+55:        SkillActionDefinition(SkillType.SMITHING, "full_helm", "Forge Full Helm", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+56:        SkillActionDefinition(SkillType.SMITHING, "platelegs", "Forge Platelegs", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+57:        SkillActionDefinition(SkillType.SMITHING, "platebody", "Forge Platebody", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+58:        SkillActionDefinition(SkillType.SMITHING, "kiteshield", "Forge Kiteshield", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+59:        SkillActionDefinition(SkillType.SMITHING, "battleaxe", "Forge Battleaxe", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+60:        SkillActionDefinition(SkillType.SMITHING, "two_handed_sword", "Forge Two-Handed Sword", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+61:        SkillActionDefinition(SkillType.SMITHING, "arrowheads", "Forge Arrowheads", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+62:        SkillActionDefinition(SkillType.SMITHING, "throwing_knives", "Forge Throwing Knives", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+63:        SkillActionDefinition(SkillType.SMITHING, "full_plate_armor_set", "Forge Full Plate Armor Set", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+64:        SkillActionDefinition(SkillType.SMITHING, "claws", "Forge Claws", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+65:        SkillActionDefinition(SkillType.SMITHING, "halberd", "Forge Halberd", xpPerAction = 173, secondsPerAction = 6, levelRequired = 75),
+66:        SkillActionDefinition(SkillType.SMITHING, "ceremonial_armor", "Forge Ceremonial Armor", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+67:        SkillActionDefinition(SkillType.SMITHING, "masterwork_weapon", "Forge Masterwork Weapon", xpPerAction = 195, secondsPerAction = 6, levelRequired = 85),
+68:        SkillActionDefinition(SkillType.SMITHING, "legendary_blade", "Forge Legendary Blade", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+69-        SkillActionDefinition(SkillType.FISHING, "raw_shrimp", "Fish for Shrimp", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+70-        SkillActionDefinition(SkillType.FISHING, "raw_anchovies", "Fish for Anchovies", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+71-        SkillActionDefinition(SkillType.FISHING, "raw_sardine", "Fish for Sardine", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+72-        SkillActionDefinition(SkillType.FISHING, "raw_herring", "Fish for Herring", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+73-        SkillActionDefinition(SkillType.FISHING, "raw_crayfish", "Fish for Crayfish", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+74-        SkillActionDefinition(SkillType.FISHING, "raw_trout", "Fish for Trout", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+75-        SkillActionDefinition(SkillType.FISHING, "raw_salmon", "Fish for Salmon", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+76-        SkillActionDefinition(SkillType.FISHING, "raw_tuna", "Fish for Tuna", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+--
+90-        SkillActionDefinition(SkillType.FISHING, "ancient_sea_serpent", "Fish for Ancient Sea Serpent", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+91:        SkillActionDefinition(SkillType.COOKING, "shrimp", "Cook Shrimp", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+92:        SkillActionDefinition(SkillType.COOKING, "anchovies", "Cook Anchovies", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+93:        SkillActionDefinition(SkillType.COOKING, "sardine", "Cook Sardine", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+94:        SkillActionDefinition(SkillType.COOKING, "chicken_meat", "Cook Chicken Meat", xpPerAction = 26, secondsPerAction = 3, levelRequired = 8),
+95:        SkillActionDefinition(SkillType.COOKING, "herring", "Cook Herring", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+96:        SkillActionDefinition(SkillType.COOKING, "beef", "Cook Beef", xpPerAction = 34, secondsPerAction = 3, levelRequired = 12),
+97:        SkillActionDefinition(SkillType.COOKING, "crayfish", "Cook Crayfish", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+98:        SkillActionDefinition(SkillType.COOKING, "trout", "Cook Trout", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+99:        SkillActionDefinition(SkillType.COOKING, "salmon", "Cook Salmon", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+100:        SkillActionDefinition(SkillType.COOKING, "bread", "Bake Bread", xpPerAction = 70, secondsPerAction = 4, levelRequired = 28),
+101:        SkillActionDefinition(SkillType.COOKING, "tuna", "Cook Tuna", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+102:        SkillActionDefinition(SkillType.COOKING, "meat_pie", "Bake Meat Pie", xpPerAction = 83, secondsPerAction = 4, levelRequired = 34),
+103:        SkillActionDefinition(SkillType.COOKING, "mackerel", "Cook Mackerel", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+104:        SkillActionDefinition(SkillType.COOKING, "swordfish", "Cook Swordfish", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+105:        SkillActionDefinition(SkillType.COOKING, "cake", "Bake Cake", xpPerAction = 100, secondsPerAction = 4, levelRequired = 42),
+106:        SkillActionDefinition(SkillType.COOKING, "lobster", "Cook Lobster", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+107:        SkillActionDefinition(SkillType.COOKING, "crab", "Cook Crab", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+108:        SkillActionDefinition(SkillType.COOKING, "shark", "Cook Shark", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+109:        SkillActionDefinition(SkillType.COOKING, "stew", "Bake Stew", xpPerAction = 136, secondsPerAction = 5, levelRequired = 58),
+110:        SkillActionDefinition(SkillType.COOKING, "monkfish", "Cook Monkfish", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+111:        SkillActionDefinition(SkillType.COOKING, "manta_ray", "Cook Manta Ray", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+112:        SkillActionDefinition(SkillType.COOKING, "eel", "Cook Eel", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+113:        SkillActionDefinition(SkillType.COOKING, "deep_sea_cod", "Cook Deep Sea Cod", xpPerAction = 173, secondsPerAction = 6, levelRequired = 75),
+114:        SkillActionDefinition(SkillType.COOKING, "anglerfish", "Cook Anglerfish", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+115:        SkillActionDefinition(SkillType.COOKING, "gourmet_feast", "Prepare Gourmet Feast", xpPerAction = 195, secondsPerAction = 6, levelRequired = 85),
+116:        SkillActionDefinition(SkillType.COOKING, "leviathan_steak", "Cook Leviathan Steak", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+117:        SkillActionDefinition(SkillType.COOKING, "ambrosia_banquet", "Prepare Ambrosia Banquet", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+118-        SkillActionDefinition(SkillType.WOODCUTTING, "logs", "Chop Logs", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+119-        SkillActionDefinition(SkillType.WOODCUTTING, "achey_logs", "Chop Achey Logs", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+120-        SkillActionDefinition(SkillType.WOODCUTTING, "oak_logs", "Chop Oak Logs", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+121-        SkillActionDefinition(SkillType.WOODCUTTING, "willow_logs", "Chop Willow Logs", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+122-        SkillActionDefinition(SkillType.WOODCUTTING, "teak_logs", "Chop Teak Logs", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+123-        SkillActionDefinition(SkillType.WOODCUTTING, "maple_logs", "Chop Maple Logs", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+124-        SkillActionDefinition(SkillType.WOODCUTTING, "mahogany_logs", "Chop Mahogany Logs", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+125-        SkillActionDefinition(SkillType.WOODCUTTING, "yew_logs", "Chop Yew Logs", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+--
+136-        SkillActionDefinition(SkillType.WOODCUTTING, "ancient_ironbark_logs", "Chop Ancient Ironbark Logs", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+137:        SkillActionDefinition(SkillType.FLETCHING, "shortbow", "Whittle Shortbow", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+138:        SkillActionDefinition(SkillType.FLETCHING, "shortbow_5", "String Shortbow", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+139:        SkillActionDefinition(SkillType.FLETCHING, "longbow", "Whittle Longbow", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+140:        SkillActionDefinition(SkillType.FLETCHING, "longbow_15", "String Longbow", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+141:        SkillActionDefinition(SkillType.FLETCHING, "oak_shortbow", "Craft Oak Shortbow", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+142:        SkillActionDefinition(SkillType.FLETCHING, "oak_longbow", "Craft Oak Longbow", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+143:        SkillActionDefinition(SkillType.FLETCHING, "willow_shortbow", "Craft Willow Shortbow", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+144:        SkillActionDefinition(SkillType.FLETCHING, "willow_longbow", "Craft Willow Longbow", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+145:        SkillActionDefinition(SkillType.FLETCHING, "composite_bow", "Craft Composite Bow", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+146:        SkillActionDefinition(SkillType.FLETCHING, "maple_longbow", "Craft Maple Longbow", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+147:        SkillActionDefinition(SkillType.FLETCHING, "crossbow_frame", "Craft Crossbow Frame", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+148:        SkillActionDefinition(SkillType.FLETCHING, "yew_shortbow", "Craft Yew Shortbow", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+149:        SkillActionDefinition(SkillType.FLETCHING, "yew_longbow", "Craft Yew Longbow", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+150:        SkillActionDefinition(SkillType.FLETCHING, "ironwood_composite_bow", "Craft Ironwood Composite Bow", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+151:        SkillActionDefinition(SkillType.FLETCHING, "magic_shortbow", "Craft Magic Shortbow", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+152:        SkillActionDefinition(SkillType.FLETCHING, "magic_longbow", "Craft Magic Longbow", xpPerAction = 173, secondsPerAction = 6, levelRequired = 75),
+153:        SkillActionDefinition(SkillType.FLETCHING, "elder_bow", "Craft Elder Bow", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+154:        SkillActionDefinition(SkillType.FLETCHING, "spirit_bow", "Craft Spirit Bow", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+155:        SkillActionDefinition(SkillType.FLETCHING, "ancient_ironbark_bow", "Craft Ancient Ironbark Bow", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+156:        SkillActionDefinition(SkillType.FLETCHING, "arrow_shafts", "Fletch Arrow Shafts", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+157:        SkillActionDefinition(SkillType.FLETCHING, "bronze_arrows", "Craft Bronze Arrows", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+158:        SkillActionDefinition(SkillType.FLETCHING, "iron_arrows", "Craft Iron Arrows", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+159:        SkillActionDefinition(SkillType.FLETCHING, "bolts_frame", "Craft Bolts Frame", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+160:        SkillActionDefinition(SkillType.FLETCHING, "steel_arrows", "Craft Steel Arrows", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+161:        SkillActionDefinition(SkillType.FLETCHING, "mithril_arrows", "Craft Mithril Arrows", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+162:        SkillActionDefinition(SkillType.FLETCHING, "adamant_arrows", "Craft Adamant Arrows", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+163:        SkillActionDefinition(SkillType.FLETCHING, "rune_arrows", "Craft Rune Arrows", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+164:        SkillActionDefinition(SkillType.FLETCHING, "barbed_bolts", "Craft Barbed Bolts", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+165:        SkillActionDefinition(SkillType.FLETCHING, "broad_arrows", "Craft Broad Arrows", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+166:        SkillActionDefinition(SkillType.FLETCHING, "dragon_arrows", "Craft Dragon Arrows", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+167:        SkillActionDefinition(SkillType.FLETCHING, "enchanted_bolts", "Craft Enchanted Bolts", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+168:        SkillActionDefinition(SkillType.ALCHEMY, "common_item", "Low Alch Common Item", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+169:        SkillActionDefinition(SkillType.ALCHEMY, "uncommon_item", "Low Alch Uncommon Item", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+170:        SkillActionDefinition(SkillType.ALCHEMY, "common_item_40", "High Alch Common Item", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+171:        SkillActionDefinition(SkillType.ALCHEMY, "rare_item", "High Alch Rare Item", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+172:        SkillActionDefinition(SkillType.ALCHEMY, "enchanted_item", "High Alch Enchanted Item", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+173:        SkillActionDefinition(SkillType.ALCHEMY, "artifact", "High Alch Artifact", xpPerAction = 195, secondsPerAction = 6, levelRequired = 85),
+174:        SkillActionDefinition(SkillType.ALCHEMY, "legendary_item", "Transmute Legendary Item", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+175:        SkillActionDefinition(SkillType.ALCHEMY, "attack_potion", "Brew Attack Potion", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+176:        SkillActionDefinition(SkillType.ALCHEMY, "antipoison", "Brew Antipoison", xpPerAction = 15, secondsPerAction = 3, levelRequired = 3),
+177:        SkillActionDefinition(SkillType.ALCHEMY, "strength_potion", "Brew Strength Potion", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+178:        SkillActionDefinition(SkillType.ALCHEMY, "defense_potion", "Brew Defense Potion", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+179:        SkillActionDefinition(SkillType.ALCHEMY, "restore_potion", "Brew Restore Potion", xpPerAction = 34, secondsPerAction = 3, levelRequired = 12),
+180:        SkillActionDefinition(SkillType.ALCHEMY, "energy_potion", "Brew Energy Potion", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+181:        SkillActionDefinition(SkillType.ALCHEMY, "combat_potion", "Brew Combat Potion", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+182:        SkillActionDefinition(SkillType.ALCHEMY, "prayer_potion", "Brew Prayer Potion", xpPerAction = 56, secondsPerAction = 3, levelRequired = 22),
+183:        SkillActionDefinition(SkillType.ALCHEMY, "super_attack_potion", "Brew Super Attack Potion", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+184:        SkillActionDefinition(SkillType.ALCHEMY, "super_strength_potion", "Brew Super Strength Potion", xpPerAction = 83, secondsPerAction = 4, levelRequired = 34),
+185:        SkillActionDefinition(SkillType.ALCHEMY, "super_defense_potion", "Brew Super Defense Potion", xpPerAction = 92, secondsPerAction = 4, levelRequired = 38),
+186:        SkillActionDefinition(SkillType.ALCHEMY, "ranging_potion", "Brew Ranging Potion", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+187:        SkillActionDefinition(SkillType.ALCHEMY, "magic_potion", "Brew Magic Potion", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+188:        SkillActionDefinition(SkillType.ALCHEMY, "super_restore_potion", "Brew Super Restore Potion", xpPerAction = 114, secondsPerAction = 4, levelRequired = 48),
+189:        SkillActionDefinition(SkillType.ALCHEMY, "antidote_plus", "Brew Antidote Plus", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+190:        SkillActionDefinition(SkillType.ALCHEMY, "saradomin_brew", "Brew Saradomin Brew", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+191:        SkillActionDefinition(SkillType.ALCHEMY, "antifire_potion", "Brew Antifire Potion", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+192:        SkillActionDefinition(SkillType.ALCHEMY, "extreme_attack_potion", "Brew Extreme Attack Potion", xpPerAction = 166, secondsPerAction = 5, levelRequired = 72),
+193:        SkillActionDefinition(SkillType.ALCHEMY, "extreme_strength_potion", "Brew Extreme Strength Potion", xpPerAction = 180, secondsPerAction = 6, levelRequired = 78),
+194:        SkillActionDefinition(SkillType.ALCHEMY, "overload_potion", "Brew Overload Potion", xpPerAction = 195, secondsPerAction = 6, levelRequired = 85),
+195:        SkillActionDefinition(SkillType.ALCHEMY, "divine_potion", "Brew Divine Potion", xpPerAction = 210, secondsPerAction = 6, levelRequired = 92),
+196:        SkillActionDefinition(SkillType.ALCHEMY, "elixir_of_the_ancients", "Brew Elixir of the Ancients", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+197:        SkillActionDefinition(SkillType.CRAFTING, "leather", "Tan Leather", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+198:        SkillActionDefinition(SkillType.CRAFTING, "leather_gloves", "Craft Leather Gloves", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+199:        SkillActionDefinition(SkillType.CRAFTING, "leather_boots", "Craft Leather Boots", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+200:        SkillActionDefinition(SkillType.CRAFTING, "leather_cowl", "Craft Leather Cowl", xpPerAction = 23, secondsPerAction = 3, levelRequired = 7),
+201:        SkillActionDefinition(SkillType.CRAFTING, "leather_vambraces", "Craft Leather Vambraces", xpPerAction = 28, secondsPerAction = 3, levelRequired = 9),
+202:        SkillActionDefinition(SkillType.CRAFTING, "leather_body", "Craft Leather Body", xpPerAction = 39, secondsPerAction = 3, levelRequired = 14),
+203:        SkillActionDefinition(SkillType.CRAFTING, "leather_chaps", "Craft Leather Chaps", xpPerAction = 48, secondsPerAction = 3, levelRequired = 18),
+204:        SkillActionDefinition(SkillType.CRAFTING, "studded_body", "Craft Studded Body", xpPerAction = 56, secondsPerAction = 3, levelRequired = 22),
+205:        SkillActionDefinition(SkillType.CRAFTING, "studded_chaps", "Craft Studded Chaps", xpPerAction = 78, secondsPerAction = 4, levelRequired = 32),
+206:        SkillActionDefinition(SkillType.CRAFTING, "hardleather_body", "Craft Hardleather Body", xpPerAction = 92, secondsPerAction = 4, levelRequired = 38),
+207:        SkillActionDefinition(SkillType.CRAFTING, "snakeskin_armor", "Craft Snakeskin Armor", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+208:        SkillActionDefinition(SkillType.CRAFTING, "dragonhide_vambraces", "Craft Dragonhide Vambraces", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+209:        SkillActionDefinition(SkillType.CRAFTING, "dragonhide_body", "Craft Dragonhide Body", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+210:        SkillActionDefinition(SkillType.CRAFTING, "dragonhide_chaps", "Craft Dragonhide Chaps", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+211:        SkillActionDefinition(SkillType.CRAFTING, "opal", "Cut Opal", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+212:        SkillActionDefinition(SkillType.CRAFTING, "jade", "Cut Jade", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+213:        SkillActionDefinition(SkillType.CRAFTING, "red_topaz", "Cut Red Topaz", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+214:        SkillActionDefinition(SkillType.CRAFTING, "sapphire", "Cut Sapphire", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+215:        SkillActionDefinition(SkillType.CRAFTING, "emerald", "Cut Emerald", xpPerAction = 67, secondsPerAction = 4, levelRequired = 27),
+216:        SkillActionDefinition(SkillType.CRAFTING, "ruby", "Cut Ruby", xpPerAction = 83, secondsPerAction = 4, levelRequired = 34),
+217:        SkillActionDefinition(SkillType.CRAFTING, "diamond", "Cut Diamond", xpPerAction = 103, secondsPerAction = 4, levelRequired = 43),
+218:        SkillActionDefinition(SkillType.CRAFTING, "dragonstone", "Cut Dragonstone", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+219:        SkillActionDefinition(SkillType.CRAFTING, "onyx", "Cut Onyx", xpPerAction = 155, secondsPerAction = 5, levelRequired = 67),
+220:        SkillActionDefinition(SkillType.CRAFTING, "zenyte", "Cut Zenyte", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+221:        SkillActionDefinition(SkillType.CRAFTING, "celestial_crystal", "Cut Celestial Crystal", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+222:        SkillActionDefinition(SkillType.CRAFTING, "gold_ring", "Craft Gold Ring", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+223:        SkillActionDefinition(SkillType.CRAFTING, "gold_necklace", "Craft Gold Necklace", xpPerAction = 26, secondsPerAction = 3, levelRequired = 8),
+224:        SkillActionDefinition(SkillType.CRAFTING, "sapphire_ring", "Craft Sapphire Ring", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+225:        SkillActionDefinition(SkillType.CRAFTING, "amulet", "String Amulet", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+226:        SkillActionDefinition(SkillType.CRAFTING, "emerald_amulet", "Craft Emerald Amulet", xpPerAction = 67, secondsPerAction = 4, levelRequired = 27),
+227:        SkillActionDefinition(SkillType.CRAFTING, "flax_into_bowstring", "Spin Flax into Bowstring", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+228:        SkillActionDefinition(SkillType.CRAFTING, "ruby_ring", "Craft Ruby Ring", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+229:        SkillActionDefinition(SkillType.CRAFTING, "diamond_necklace", "Craft Diamond Necklace", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+230:        SkillActionDefinition(SkillType.CRAFTING, "glass_vial", "Craft Glass Vial", xpPerAction = 109, secondsPerAction = 4, levelRequired = 46),
+231:        SkillActionDefinition(SkillType.CRAFTING, "battlestaff", "Craft Battlestaff", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+232:        SkillActionDefinition(SkillType.CRAFTING, "dragonstone_amulet", "Craft Dragonstone Amulet", xpPerAction = 131, secondsPerAction = 5, levelRequired = 56),
+233:        SkillActionDefinition(SkillType.CRAFTING, "basket", "Weave Basket", xpPerAction = 147, secondsPerAction = 5, levelRequired = 63),
+234:        SkillActionDefinition(SkillType.CRAFTING, "onyx_ring", "Craft Onyx Ring", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+235:        SkillActionDefinition(SkillType.CRAFTING, "zenyte_amulet", "Craft Zenyte Amulet", xpPerAction = 173, secondsPerAction = 6, levelRequired = 75),
+236:        SkillActionDefinition(SkillType.CRAFTING, "enchanted_circlet", "Craft Enchanted Circlet", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+237:        SkillActionDefinition(SkillType.CRAFTING, "celestial_diadem", "Craft Celestial Diadem", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+238-        SkillActionDefinition(SkillType.FARMING, "potato_seed", "Plant/Harvest Potato Seed", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+239-        SkillActionDefinition(SkillType.FARMING, "potato", "Plant/Harvest Potato", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+240-        SkillActionDefinition(SkillType.FARMING, "onion_seed", "Plant/Harvest Onion Seed", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+241-        SkillActionDefinition(SkillType.FARMING, "onion", "Plant/Harvest Onion", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+242-        SkillActionDefinition(SkillType.FARMING, "cabbage_seed", "Plant/Harvest Cabbage Seed", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+243-        SkillActionDefinition(SkillType.FARMING, "cabbage", "Plant/Harvest Cabbage", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+244-        SkillActionDefinition(SkillType.FARMING, "tomato_seed", "Plant/Harvest Tomato Seed", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+245-        SkillActionDefinition(SkillType.FARMING, "tomato", "Plant/Harvest Tomato", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
