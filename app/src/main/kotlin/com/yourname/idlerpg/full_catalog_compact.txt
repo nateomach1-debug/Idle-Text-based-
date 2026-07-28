@@ -1,0 +1,324 @@
+copper_ore | Copper Ore | MATERIAL
+tin_ore | Tin Ore | MATERIAL
+clay | Clay | MATERIAL
+iron_ore | Iron Ore | MATERIAL
+sandstone | Sandstone | MATERIAL
+silver_ore | Silver Ore | MATERIAL
+coal | Coal | MATERIAL
+gold_ore | Gold Ore | MATERIAL
+granite | Granite | MATERIAL
+mithril_ore | Mithril Ore | MATERIAL
+uncut_gemstone | Uncut Gemstone | MATERIAL
+adamantite_ore | Adamantite Ore | MATERIAL
+volcanic_rock | Volcanic Rock | MATERIAL
+runite_ore | Runite Ore | MATERIAL
+onyx_fragment | Onyx Fragment | MATERIAL
+dragonstone_ore | Dragonstone | MATERIAL
+elemental_ore | Elemental Ore | MATERIAL
+orichalcum_ore | Orichalcum Ore | MATERIAL
+meteorite_fragment | Meteorite Fragment | MATERIAL
+abyssal_ore | Abyssal Ore | MATERIAL
+celestial_silver | Celestial Silver | MATERIAL
+voidstone | Voidstone | MATERIAL
+primordial_ore | Primordial Ore | MATERIAL
+logs | Logs | MATERIAL
+achey_logs | Achey Logs | MATERIAL
+oak_logs | Oak Logs | MATERIAL
+willow_logs | Willow Logs | MATERIAL
+teak_logs | Teak Logs | MATERIAL
+maple_logs | Maple Logs | MATERIAL
+mahogany_logs | Mahogany Logs | MATERIAL
+yew_logs | Yew Logs | MATERIAL
+ironwood_logs | Ironwood Logs | MATERIAL
+bamboo | Bamboo | MATERIAL
+magic_logs | Magic Logs | MATERIAL
+petrified_logs | Petrified Logs | MATERIAL
+elder_logs | Elder Logs | MATERIAL
+shadow_logs | Shadow Logs | MATERIAL
+redwood_logs | Redwood Logs | MATERIAL
+spirit_logs | Spirit Logs | MATERIAL
+world_tree_branch | World Tree Branch | MATERIAL
+celestial_logs | Celestial Logs | MATERIAL
+ancient_ironbark_logs | Ancient Ironbark Logs | MATERIAL
+raw_shrimp | Raw Shrimp | MATERIAL
+raw_anchovies | Raw Anchovies | MATERIAL
+raw_sardine | Raw Sardine | MATERIAL
+raw_herring | Raw Herring | MATERIAL
+raw_crayfish | Raw Crayfish | MATERIAL
+raw_trout | Raw Trout | MATERIAL
+raw_salmon | Raw Salmon | MATERIAL
+raw_tuna | Raw Tuna | MATERIAL
+raw_mackerel | Raw Mackerel | MATERIAL
+raw_swordfish | Raw Swordfish | MATERIAL
+raw_lobster | Raw Lobster | MATERIAL
+raw_crab | Raw Crab | MATERIAL
+raw_shark | Raw Shark | MATERIAL
+raw_monkfish | Raw Monkfish | MATERIAL
+raw_manta_ray | Raw Manta Ray | MATERIAL
+raw_eel | Raw Eel | MATERIAL
+raw_deep_sea_cod | Raw Deep Sea Cod | MATERIAL
+raw_anglerfish | Raw Anglerfish | MATERIAL
+glowing_pearl_oyster | Glowing Pearl Oyster | MATERIAL
+leviathan_spawn | Leviathan Spawn | MATERIAL
+abyssal_squid | Abyssal Squid | MATERIAL
+ancient_sea_serpent | Ancient Sea Serpent | MATERIAL
+potato_seed | Potato Seed | MATERIAL
+potato | Potato | MATERIAL
+onion_seed | Onion Seed | MATERIAL
+onion | Onion | MATERIAL
+cabbage_seed | Cabbage Seed | MATERIAL
+cabbage | Cabbage | MATERIAL
+tomato_seed | Tomato Seed | MATERIAL
+tomato | Tomato | MATERIAL
+sweetcorn_seed | Sweetcorn Seed | MATERIAL
+sweetcorn | Sweetcorn | MATERIAL
+guam_seed | Guam Seed | MATERIAL
+guam_leaf | Guam Leaf | MATERIAL
+strawberry_seed | Strawberry Seed | MATERIAL
+strawberry | Strawberry | MATERIAL
+marrentill_seed | Marrentill Seed | MATERIAL
+marrentill | Marrentill | MATERIAL
+watermelon_seed | Watermelon Seed | MATERIAL
+watermelon | Watermelon | MATERIAL
+apple_sapling | Apple Tree Sapling | MATERIAL
+apple | Apple | MATERIAL
+tarromin_seed | Tarromin Seed | MATERIAL
+tarromin | Tarromin | MATERIAL
+banana_sapling | Banana Tree Sapling | MATERIAL
+banana | Banana | MATERIAL
+harralander_seed | Harralander Seed | MATERIAL
+harralander | Harralander | MATERIAL
+orange_sapling | Orange Tree Sapling | MATERIAL
+orange | Orange | MATERIAL
+ranarr_seed | Ranarr Seed | MATERIAL
+ranarr_weed | Ranarr Weed | MATERIAL
+willow_sapling | Willow Tree Sapling | MATERIAL
+grape_seed | Grape Vine Seed | MATERIAL
+grapes | Grapes | MATERIAL
+toadflax_seed | Toadflax Seed | MATERIAL
+toadflax | Toadflax | MATERIAL
+papaya_sapling | Papaya Tree Sapling | MATERIAL
+papaya | Papaya | MATERIAL
+irit_seed | Irit Seed | MATERIAL
+irit_leaf | Irit Leaf | MATERIAL
+palm_sapling | Palm Tree Sapling | MATERIAL
+coconut | Coconut | MATERIAL
+avantoe_seed | Avantoe Seed | MATERIAL
+avantoe | Avantoe | MATERIAL
+magic_sapling | Magic Tree Sapling | MATERIAL
+kwuarm_seed | Kwuarm Seed | MATERIAL
+kwuarm | Kwuarm | MATERIAL
+snapdragon_seed | Snapdragon Seed | MATERIAL
+snapdragon | Snapdragon | MATERIAL
+elder_sapling | Elder Tree Sapling | MATERIAL
+torstol_seed | Torstol Seed | MATERIAL
+torstol | Torstol | MATERIAL
+celestial_herb_seed | Celestial Herb Seed | MATERIAL
+celestial_herb | Celestial Herb | MATERIAL
+world_tree_sapling | World Tree Sapling | MATERIAL
+copper_bar | Copper Bar | MATERIAL
+tin_bar | Tin Bar | MATERIAL
+bronze_bar | Bronze Bar | MATERIAL
+iron_bar | Iron Bar | MATERIAL
+silver_bar | Silver Bar | MATERIAL
+steel_bar | Steel Bar | MATERIAL
+gold_bar | Gold Bar | MATERIAL
+mithril_bar | Mithril Bar | MATERIAL
+adamantite_bar | Adamantite Bar | MATERIAL
+runite_bar | Runite Bar | MATERIAL
+orichalcum_bar | Orichalcum Bar | MATERIAL
+celestial_alloy_bar | Celestial Alloy Bar | MATERIAL
+bronze_dagger | Bronze Dagger | WEAPON
+iron_nails | Iron Nails | MATERIAL
+bronze_sword | Bronze Sword | WEAPON
+bronze_mace | Bronze Mace | WEAPON
+bronze_warhammer | Bronze Warhammer | WEAPON
+iron_chainmail_body | Iron Chainmail Body | ARMOR
+iron_full_helm | Iron Full Helm | ARMOR
+steel_platelegs | Steel Platelegs | ARMOR
+steel_platebody | Steel Platebody | ARMOR
+steel_kiteshield | Steel Kiteshield | ARMOR
+mithril_battleaxe | Mithril Battleaxe | WEAPON
+mithril_2h_sword | Mithril Two-Handed Sword | WEAPON
+mithril_arrowheads | Mithril Arrowheads | MATERIAL
+adamant_throwing_knives | Adamant Throwing Knives | WEAPON
+adamant_platebody_set | Adamant Full Plate Armor Set | ARMOR
+rune_claws | Rune Claws | WEAPON
+rune_halberd | Rune Halberd | WEAPON
+orichalcum_ceremonial_armor | Orichalcum Ceremonial Armor | ARMOR
+masterwork_weapon | Masterwork Weapon | WEAPON
+legendary_blade | Legendary Blade | WEAPON
+raw_chicken | Raw Chicken | MATERIAL
+raw_beef | Raw Beef | MATERIAL
+flour | Flour | MATERIAL
+bread_dough | Bread Dough | MATERIAL
+pie_shell | Pie Shell | MATERIAL
+cake_mix | Cake Mix | MATERIAL
+cooked_shrimp | Cooked Shrimp | CONSUMABLE
+cooked_anchovies | Cooked Anchovies | CONSUMABLE
+cooked_sardine | Cooked Sardine | CONSUMABLE
+cooked_chicken | Cooked Chicken | CONSUMABLE
+cooked_herring | Cooked Herring | CONSUMABLE
+cooked_beef | Cooked Beef | CONSUMABLE
+cooked_crayfish | Cooked Crayfish | CONSUMABLE
+cooked_trout | Cooked Trout | CONSUMABLE
+cooked_salmon | Cooked Salmon | CONSUMABLE
+bread | Bread | CONSUMABLE
+cooked_tuna | Cooked Tuna | CONSUMABLE
+meat_pie | Meat Pie | CONSUMABLE
+cooked_mackerel | Cooked Mackerel | CONSUMABLE
+cooked_swordfish | Cooked Swordfish | CONSUMABLE
+cake | Cake | CONSUMABLE
+cooked_lobster | Cooked Lobster | CONSUMABLE
+cooked_crab | Cooked Crab | CONSUMABLE
+cooked_shark | Cooked Shark | CONSUMABLE
+stew | Stew | CONSUMABLE
+cooked_monkfish | Cooked Monkfish | CONSUMABLE
+cooked_manta_ray | Cooked Manta Ray | CONSUMABLE
+cooked_eel | Cooked Eel | CONSUMABLE
+cooked_deep_sea_cod | Cooked Deep Sea Cod | CONSUMABLE
+cooked_anglerfish | Cooked Anglerfish | CONSUMABLE
+gourmet_feast | Gourmet Feast | CONSUMABLE
+leviathan_steak | Leviathan Steak | CONSUMABLE
+ambrosia_banquet | Ambrosia Banquet | CONSUMABLE
+arrow_shafts | Arrow Shafts | MATERIAL
+feathers | Feathers | MATERIAL
+bowstring | Bowstring | MATERIAL
+crossbow_frame | Crossbow Frame | MATERIAL
+bolt_frame | Bolt Frame | MATERIAL
+shortbow_u | Unstrung Shortbow | MATERIAL
+shortbow | Shortbow | WEAPON
+longbow_u | Unstrung Longbow | MATERIAL
+longbow | Longbow | WEAPON
+oak_shortbow | Oak Shortbow | WEAPON
+oak_longbow | Oak Longbow | WEAPON
+willow_shortbow | Willow Shortbow | WEAPON
+willow_longbow | Willow Longbow | WEAPON
+composite_bow | Composite Bow | WEAPON
+maple_longbow | Maple Longbow | WEAPON
+crossbow | Crossbow | WEAPON
+yew_shortbow | Yew Shortbow | WEAPON
+yew_longbow | Yew Longbow | WEAPON
+ironwood_composite_bow | Ironwood Composite Bow | WEAPON
+magic_shortbow | Magic Shortbow | WEAPON
+magic_longbow | Magic Longbow | WEAPON
+elder_bow | Elder Bow | WEAPON
+spirit_bow | Spirit Bow | WEAPON
+ancient_ironbark_bow | Ancient Ironbark Bow | WEAPON
+bronze_arrows | Bronze Arrows | MATERIAL
+bolts | Bolts | MATERIAL
+iron_arrows | Iron Arrows | MATERIAL
+steel_arrows | Steel Arrows | MATERIAL
+mithril_arrows | Mithril Arrows | MATERIAL
+adamant_arrows | Adamant Arrows | MATERIAL
+rune_arrows | Rune Arrows | MATERIAL
+barbed_bolts | Barbed Bolts | MATERIAL
+broad_arrows | Broad Arrows | MATERIAL
+dragon_arrows | Dragon Arrows | MATERIAL
+enchanted_bolts | Enchanted Bolts | MATERIAL
+vial_of_water | Vial of Water | MATERIAL
+attack_potion | Attack Potion | CONSUMABLE
+antipoison | Antipoison | CONSUMABLE
+strength_potion | Strength Potion | CONSUMABLE
+defense_potion | Defense Potion | CONSUMABLE
+restore_potion | Restore Potion | CONSUMABLE
+energy_potion | Energy Potion | CONSUMABLE
+combat_potion | Combat Potion | CONSUMABLE
+prayer_potion | Prayer Potion | CONSUMABLE
+super_attack_potion | Super Attack Potion | CONSUMABLE
+super_strength_potion | Super Strength Potion | CONSUMABLE
+super_defense_potion | Super Defense Potion | CONSUMABLE
+ranging_potion | Ranging Potion | CONSUMABLE
+magic_potion | Magic Potion | CONSUMABLE
+super_restore_potion | Super Restore Potion | CONSUMABLE
+antidote_plus | Antidote+ | CONSUMABLE
+brew_of_vigor | Brew of Vigor | CONSUMABLE
+antifire_potion | Antifire Potion | CONSUMABLE
+extreme_attack_potion | Extreme Attack Potion | CONSUMABLE
+extreme_strength_potion | Extreme Strength Potion | CONSUMABLE
+overload_potion | Overload Potion | CONSUMABLE
+divine_potion | Divine Potion | CONSUMABLE
+elixir_of_the_ancients | Elixir of the Ancients | CONSUMABLE
+cowhide | Cowhide | MATERIAL
+leather | Leather | MATERIAL
+snake_hide | Snake Hide | MATERIAL
+green_dragonhide | Green Dragonhide | MATERIAL
+blue_dragonhide | Blue Dragonhide | MATERIAL
+leather_gloves | Leather Gloves | ARMOR
+leather_boots | Leather Boots | ARMOR
+leather_cowl | Leather Cowl | ARMOR
+leather_vambraces | Leather Vambraces | ARMOR
+leather_body | Leather Body | ARMOR
+leather_chaps | Leather Chaps | ARMOR
+studded_body | Studded Body | ARMOR
+studded_chaps | Studded Chaps | ARMOR
+hardleather_body | Hardleather Body | ARMOR
+snakeskin_armor | Snakeskin Armor | ARMOR
+green_dhide_vambraces | Green Dragonhide Vambraces | ARMOR
+blue_dhide_body | Blue Dragonhide Body | ARMOR
+blue_dhide_chaps | Blue Dragonhide Chaps | ARMOR
+uncut_opal | Uncut Opal | MATERIAL
+opal | Opal | MATERIAL
+uncut_jade | Uncut Jade | MATERIAL
+jade | Jade | MATERIAL
+uncut_red_topaz | Uncut Red Topaz | MATERIAL
+red_topaz | Red Topaz | MATERIAL
+uncut_sapphire | Uncut Sapphire | MATERIAL
+sapphire | Sapphire | MATERIAL
+uncut_emerald | Uncut Emerald | MATERIAL
+emerald | Emerald | MATERIAL
+uncut_ruby | Uncut Ruby | MATERIAL
+ruby | Ruby | MATERIAL
+uncut_diamond | Uncut Diamond | MATERIAL
+diamond | Diamond | MATERIAL
+uncut_dragonstone | Uncut Dragonstone | MATERIAL
+dragonstone | Dragonstone | MATERIAL
+uncut_onyx | Uncut Onyx | MATERIAL
+onyx | Onyx | MATERIAL
+uncut_zenyte | Uncut Zenyte | MATERIAL
+zenyte | Zenyte | MATERIAL
+uncut_celestial_crystal | Uncut Celestial Crystal | MATERIAL
+celestial_crystal | Celestial Crystal | MATERIAL
+gold_ring | Gold Ring | ACCESSORY
+gold_necklace | Gold Necklace | ACCESSORY
+sapphire_ring | Sapphire Ring | ACCESSORY
+amulet_u | Unstrung Amulet | MATERIAL
+emerald_amulet | Emerald Amulet | ACCESSORY
+flax | Flax | MATERIAL
+ruby_ring | Ruby Ring | ACCESSORY
+diamond_necklace | Diamond Necklace | ACCESSORY
+glass_vial | Glass Vial | MATERIAL
+battlestaff | Battlestaff | WEAPON
+dragonstone_amulet | Dragonstone Amulet | ACCESSORY
+basket | Basket | MATERIAL
+onyx_ring | Onyx Ring | ACCESSORY
+zenyte_amulet | Zenyte Amulet | ACCESSORY
+enchanted_circlet | Enchanted Circlet | ACCESSORY
+celestial_diadem | Celestial Diadem | ACCESSORY
+peasants_purse | Peasant's Purse | MATERIAL
+vegetables | Stolen Vegetables | MATERIAL
+farmers_purse | Farmer's Purse | MATERIAL
+baked_goods | Stolen Baked Goods | MATERIAL
+guards_purse | Guard's Purse | MATERIAL
+silk | Stolen Silk | MATERIAL
+merchants_purse | Merchant's Purse | MATERIAL
+furs | Stolen Furs | MATERIAL
+wealthy_citizens_purse | Wealthy Citizen's Purse | MATERIAL
+loose_gems | Loose Gems | MATERIAL
+simple_lockbox_loot | Simple Lockbox Contents | MATERIAL
+guard_captains_purse | Guard Captain's Purse | MATERIAL
+silver_goods | Stolen Silver Goods | MATERIAL
+nobles_purse | Noble's Purse | MATERIAL
+wall_safe_loot | Wall Safe Contents | MATERIAL
+enchanted_trinkets | Enchanted Trinkets | MATERIAL
+wizards_purse | Wizard's Purse | MATERIAL
+gold_goods | Stolen Gold Goods | MATERIAL
+knights_purse | Knight's Purse | MATERIAL
+reinforced_chest_loot | Reinforced Chest Contents | MATERIAL
+royal_guards_purse | Royal Guard's Purse | MATERIAL
+vault_antechamber_loot | Vault Antechamber Loot | MATERIAL
+assassins_purse | Master Assassin's Purse | MATERIAL
+bank_vault_loot | Bank Vault Contents | MATERIAL
+court_officials_purse | Court Official's Purse | MATERIAL
+dragon_hoard_loot | Dragon Hoard Loot | MATERIAL
+monarchs_purse | Monarch's Purse | MATERIAL
