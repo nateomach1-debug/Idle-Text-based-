@@ -1,0 +1,85 @@
+]633;E;echo "=== GAMEVIEWMODEL: main tick loop / coroutine calling tickSkilling ===";12525a63-9ea2-4dda-a57a-bcb223c6d860]633;C=== GAMEVIEWMODEL: main tick loop / coroutine calling tickSkilling ===
+57-
+58-    init {
+59-        viewModelScope.launch(Dispatchers.Default) {
+60-            while (true) {
+61-                delay(1000L)
+62:                tickSkilling()
+63-            }
+64-        }
+65-    }
+66-    init {
+67-    viewModelScope.launch(Dispatchers.Default) {
+68-        while (true) {
+69-            delay(30_000L)
+70-            saveGame()
+71-        }
+72-    }
+73-}
+74-
+75-override fun onCleared() {
+76-    super.onCleared()
+77-    saveGame()
+--
+177-        val characterId = _currentCharacterId.value ?: return
+178-        offlineIdleService.stopQueue(characterId)
+179-        skillActionProgressSeconds = 0
+180-    }
+181-
+182:    private fun tickSkilling() {
+183-        val characterId = _currentCharacterId.value ?: return
+184-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+185-
+186-        skillActionProgressSeconds += 1
+187-        if (skillActionProgressSeconds < queue.secondsPerAction) return
+188-
+189-        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+190-        skillActionProgressSeconds %= queue.secondsPerAction
+191-
+192-        val skillType = SkillType.valueOf(queue.skillId)
+193-        val action = ActionCatalog.find(skillType, queue.itemId)
+194-        if (action != null) {
+195-            progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+196-            inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
+197-            refreshSkills()
+=== GAMEVIEWMODEL: init block / viewModelScope / delay loop ===
+56-    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+57-
+58:    init {
+59:        viewModelScope.launch(Dispatchers.Default) {
+60-            while (true) {
+61-                delay(1000L)
+62-                tickSkilling()
+63-            }
+64-        }
+65-    }
+66:    init {
+67:    viewModelScope.launch(Dispatchers.Default) {
+68-        while (true) {
+69-            delay(30_000L)
+70-            saveGame()
+71-        }
+72-    }
+73-}
+74-
+75-override fun onCleared() {
+76-    super.onCleared()
+77-    saveGame()
+78-}
+79-    private var hasLoaded = false
+80-
+81-    fun loadGame() {
+82-        if (hasLoaded) return
+83-        hasLoaded = true
+84-        val saved = repository.load() ?: return
+85-        saved.accounts.forEach { accountService.restoreAccount(it) }
+86-        saved.characters.forEach { accountService.restoreCharacter(it) }
+87-        saved.skills.forEach { progressionService.restoreSkill(it) }
+=== SAVE/PERSISTENCE: exportSkillingQueues call site ===
+./GameViewModel.kt:88:        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+./GameViewModel.kt:130:            offlineIdleService.exportSkillingQueues(),
+./OfflineIdleMechanicsSystem.kt:274:    fun exportSkillingQueues(): List<SkillingQueueExport> =
+./OfflineIdleMechanicsSystem.kt:282:    fun restoreSkillingQueue(export: SkillingQueueExport) {
+=== SAVE/PERSISTENCE: whatever file/class those call sites are in ===
+./GameViewModel.kt
+./OfflineIdleMechanicsSystem.kt
