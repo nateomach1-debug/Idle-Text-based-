@@ -1,0 +1,220 @@
+]633;E;echo "=== OFFLINEIDLEMECHANICSSYSTEM: full OfflineIdleService class ===";12525a63-9ea2-4dda-a57a-bcb223c6d860]633;C=== OFFLINEIDLEMECHANICSSYSTEM: full OfflineIdleService class ===
+148:class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
+149-
+150-    private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
+151-    private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
+152-    private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
+153-
+154-    fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
+155-        if (activeQueues.containsKey(characterId)) {
+156-            return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
+157-        }
+158-        val queue = ActiveQueue.SkillingQueue(characterId, skillId, itemId, secondsPerAction)
+159-        activeQueues[characterId] = queue
+160-        return ServiceResult.Success(queue)
+161-    }
+162-
+163-    fun startCraftingQueue(
+164-        characterId: String,
+165-        itemId: String,
+166-        secondsPerAction: Long,
+167-        targetQuantity: Int?
+168-    ): ServiceResult<ActiveQueue> {
+169-        if (activeQueues.containsKey(characterId)) {
+170-            return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
+171-        }
+172-        if (targetQuantity != null && targetQuantity <= 0) {
+173-            return ServiceResult.Failure("Target quantity must be positive if specified.")
+174-        }
+175-        val queue = ActiveQueue.CraftingQueue(characterId, itemId, secondsPerAction, targetQuantity)
+176-        activeQueues[characterId] = queue
+177-        return ServiceResult.Success(queue)
+178-    }
+179-
+180-    fun optIntoOfflineCombat(characterId: String, zoneId: String): ServiceResult<ActiveQueue> {
+181-        if (activeQueues.containsKey(characterId)) {
+182-            return ServiceResult.Failure("Character already has an active queue. Stop it before opting into offline combat.")
+183-        }
+184-        val queue = ActiveQueue.OfflineCombatQueue(characterId, zoneId)
+185-        activeQueues[characterId] = queue
+186-        return ServiceResult.Success(queue)
+187-    }
+188-
+189-    fun stopQueue(characterId: String): ServiceResult<Unit> {
+190-        if (!activeQueues.containsKey(characterId)) return ServiceResult.Failure("No active queue to stop.")
+191-        activeQueues.remove(characterId)
+192-        return ServiceResult.Success(Unit)
+193-    }
+194-
+195-    fun activeQueueFor(characterId: String): ActiveQueue? = activeQueues[characterId]
+196-
+197-    fun recordLastSeen(characterId: String, now: Instant = Instant.now()) {
+198-        lastSeenAt[characterId] = now
+199-    }
+200-
+201-    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
+202-        val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
+203-        val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
+204-
+205-        val claimedElapsed = Duration.between(lastSeen, now)
+206-        if (claimedElapsed.isNegative) return ServiceResult.Failure("Invalid elapsed time (negative duration).")
+207-
+208-        val (cappedElapsed, flag) = OfflineSanityCheck.validate(characterId, claimedElapsed)
+209-        if (flag != null) flaggedAccounts.add(flag)
+210-
+211-        val combatPenaltyMultiplier = if (queue.type == QueueType.OFFLINE_COMBAT) 0.8 else 1.0
+212-        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed)
+213-        val penalizedEffectiveMillis = (effectiveElapsed.toMillis() * combatPenaltyMultiplier).toLong()
+214-        val finalEffectiveElapsed = Duration.ofMillis(penalizedEffectiveMillis)
+215-
+216-        var actionsCompleted = 0
+217-        var queueExhausted = false
+218-
+219-        when (queue) {
+220-            is ActiveQueue.SkillingQueue -> {
+221-                actionsCompleted = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+222-            }
+223-            is ActiveQueue.CraftingQueue -> {
+224-                var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+225-                if (queue.targetQuantity != null) {
+226-                    val remaining = queue.targetQuantity - queue.quantityCompleted
+227-                    possibleActions = possibleActions.coerceAtMost(remaining)
+228-                }
+229-                var completed = 0
+230-                for (i in 0 until possibleActions) {
+231-                    if (!materialCheck.hasMaterialsFor(characterId, queue.itemId)) {
+232-                        queueExhausted = true
+233-                        break
+234-                    }
+235-                    completed++
+236-                }
+237-                queue.quantityCompleted += completed
+238-                actionsCompleted = completed
+239-                if (queue.isTargetReached()) queueExhausted = true
+240-            }
+241-            is ActiveQueue.OfflineCombatQueue -> {
+242-                actionsCompleted = 0
+243-            }
+244-        }
+245-
+246-        if (queueExhausted) {
+247-            activeQueues.remove(characterId)
+248-        }
+249-
+250-        return ServiceResult.Success(
+251-            OfflineResolution(
+252-                characterId = characterId,
+253-                queueType = queue.type,
+254-                claimedElapsed = claimedElapsed,
+255-                cappedElapsed = cappedElapsed,
+256-                effectiveElapsed = finalEffectiveElapsed,
+257-                actionsCompleted = actionsCompleted,
+258-                wasFlagged = flag != null,
+259-                queueExhausted = queueExhausted
+260-            )
+261-        )
+262-    }
+263-
+264-    fun estimatedTimeUntilExhausted(characterId: String): Duration? {
+265-        val queue = activeQueues[characterId] as? ActiveQueue.CraftingQueue ?: return null
+266-        val target = queue.targetQuantity ?: return null
+267-        val remaining = target - queue.quantityCompleted
+268-        if (remaining <= 0) return Duration.ZERO
+269-        return Duration.ofSeconds(remaining * queue.secondsPerAction)
+270-    }
+271-
+272-    fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
+273-
+274-    fun exportSkillingQueues(): List<SkillingQueueExport> =
+275-        activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
+276-            SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
+277-        }
+278-
+279-    fun exportLastSeen(): List<LastSeenExport> =
+280-        lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
+281-
+282-    fun restoreSkillingQueue(export: SkillingQueueExport) {
+283-        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+284-            characterId = export.characterId,
+285-            skillId = export.skillId,
+286-            itemId = export.itemId,
+287-            secondsPerAction = export.secondsPerAction,
+288-            startedAt = Instant.parse(export.startedAt)
+289-        )
+290-    }
+291-
+292-    fun restoreLastSeen(export: LastSeenExport) {
+293-        lastSeenAt[export.characterId] = Instant.parse(export.lastSeenAt)
+294-    }
+295-}
+=== OFFLINEIDLEMECHANICSSYSTEM: MaterialAvailabilityCheck ===
+50-// =========================================================
+51-
+52:fun interface MaterialAvailabilityCheck {
+53-    fun hasMaterialsFor(characterId: String, itemId: String): Boolean
+54-}
+55-
+56-// =========================================================
+57-// EFFICIENCY TAPER
+58-// =========================================================
+59-
+60-object OfflineEfficiencyCurve {
+61-    private val fullRateWindow: Duration = Duration.ofHours(12)
+62-    private val reducedRateWindow: Duration = Duration.ofHours(72)
+63-    private const val FULL_RATE_PERCENT = 100.0
+64-    private const val REDUCED_RATE_PERCENT = 50.0
+65-    private const val FLOOR_RATE_PERCENT = 25.0
+66-
+67-    fun efficiencyAt(elapsed: Duration): Double {
+--
+146-// =========================================================
+147-
+148:class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
+149-
+150-    private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
+151-    private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
+152-    private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
+153-
+154-    fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
+155-        if (activeQueues.containsKey(characterId)) {
+156-            return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
+157-        }
+158-        val queue = ActiveQueue.SkillingQueue(characterId, skillId, itemId, secondsPerAction)
+159-        activeQueues[characterId] = queue
+160-        return ServiceResult.Success(queue)
+161-    }
+162-
+163-    fun startCraftingQueue(
+=== OFFLINEIDLEMECHANICSSYSTEM: OfflineResolution data class ===
+121-// =========================================================
+122-
+123:data class OfflineResolution(
+124-    val characterId: String,
+125-    val queueType: QueueType,
+126-    val claimedElapsed: Duration,
+127-    val cappedElapsed: Duration,
+128-    val effectiveElapsed: Duration,
+129-    val actionsCompleted: Int,
+130-    val wasFlagged: Boolean,
+131-    val queueExhausted: Boolean
+132-)
+133-
+=== OFFLINEIDLEMECHANICSSYSTEM: export/import/persist functions (any name) ===
+277-        }
+278-
+279:    fun exportLastSeen(): List<LastSeenExport> =
+280-        lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
+281-
+282-    fun restoreSkillingQueue(export: SkillingQueueExport) {
+283-        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+284-            characterId = export.characterId,
+285-            skillId = export.skillId,
+286-            itemId = export.itemId,
+287-            secondsPerAction = export.secondsPerAction,
+288-            startedAt = Instant.parse(export.startedAt)
+289-        )
+290-    }
+291-
+292-    fun restoreLastSeen(export: LastSeenExport) {
+293-        lastSeenAt[export.characterId] = Instant.parse(export.lastSeenAt)
+294-    }
