@@ -1,0 +1,428 @@
+]633;E;echo "=== SkillDetailScreen.kt (full file) ===";fb60fb0f-489f-420f-99df-1d5cc2e47ca8]633;C=== SkillDetailScreen.kt (full file) ===
+package com.yourname.idlerpg.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+
+// =========================================================
+// SKILL DETAIL SCREEN
+// Simple view: level, XP bar, earned unlocks.
+// Advanced view (toggle): exact XP numbers, XP-to-next-level,
+// next unlock preview.
+// Includes "Start" action to queue a gather/craft action for
+// this skill directly from this screen.
+// =========================================================
+
+data class SkillUnlockSummary(val description: String, val levelRequired: Int)
+
+data class SkillActionSummary(val actionId: String, val displayName: String, val levelRequired: Int)
+
+data class SkillDetailState(
+    val skillId: String,
+    val displayName: String,
+    val level: Int,
+    val currentXp: Long,
+    val xpToNextLevel: Long,
+    val earnedUnlocks: List<SkillUnlockSummary>,
+    val nextUnlock: SkillUnlockSummary?,       // null if none remaining
+    val availableActions: List<SkillActionSummary>
+)
+
+@Composable
+fun SkillDetailScreen(
+    state: SkillDetailState,
+    onBack: () -> Unit,
+    onStartAction: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showAdvanced by remember { mutableStateOf(false) }
+    var showActionPicker by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(text = "Level " + state.level, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        ThinProgressBarPublic(skillProgressFractionPublic(state.currentXp, state.xpToNextLevel))
+
+        if (showAdvanced) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "XP: " + state.currentXp + "  |  " + state.xpToNextLevel + " to next level",
+                style = MaterialTheme.typography.labelSmall
+            )
+            state.nextUnlock?.let {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Next unlock at level " + it.levelRequired + ": " + it.description,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        TextButton(onClick = { showAdvanced = !showAdvanced }) {
+            Text(text = if (showAdvanced) "Hide details" else "Show details")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { showActionPicker = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Start " + state.displayName)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (state.earnedUnlocks.isNotEmpty()) {
+            Text(text = "Unlocks earned", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            state.earnedUnlocks.forEach { unlock ->
+                Text(
+                    text = "• " + unlock.description + " (Lv. " + unlock.levelRequired + ")",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
+            }
+        }
+    }
+
+    if (showActionPicker) {
+        ActionPickerSheet(
+            actions = state.availableActions,
+            onActionSelected = {
+                showActionPicker = false
+                onStartAction(it)
+            },
+            onDismiss = { showActionPicker = false }
+        )
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun ActionPickerSheet(
+    actions: List<SkillActionSummary>,
+    onActionSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Choose an action", style = MaterialTheme.typography.titleMedium) },
+        text = {
+            Column {
+                if (actions.isEmpty()) {
+                    Text(text = "No actions available at your current level.", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                    items(actions) { action ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { onActionSelected(action.actionId) }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ThinProgressBarPublic(fraction: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }
+}
+
+private fun skillProgressFractionPublic(currentXp: Long, xpToNextLevel: Long): Float {
+    val total = currentXp + xpToNextLevel
+    if (total <= 0) return 0f
+    return (currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+}
+=== SkillsScreen.kt (full file) ===
+package com.yourname.idlerpg.ui.screens
+
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+
+enum class SkillsViewMode { LIST, GRID }
+
+private const val PREFS_NAME = "idlerpg_prefs"
+private const val KEY_SKILLS_VIEW_MODE = "skills_view_mode"
+
+private fun loadSavedViewMode(context: Context): SkillsViewMode {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val saved = prefs.getString(KEY_SKILLS_VIEW_MODE, SkillsViewMode.LIST.name)
+    return runCatching { SkillsViewMode.valueOf(saved ?: SkillsViewMode.LIST.name) }
+        .getOrDefault(SkillsViewMode.LIST)
+}
+
+private fun saveViewMode(context: Context, mode: SkillsViewMode) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_SKILLS_VIEW_MODE, mode.name).apply()
+}
+
+data class SkillSummary(
+    val skillId: String,
+    val displayName: String,
+    val level: Int,
+    val currentXp: Long,
+    val xpToNextLevel: Long
+)
+
+data class SkillGroupSection(
+    val title: String,
+    val skills: List<SkillSummary>
+)
+
+fun buildSkillGroupSections(allSkills: Map<String, SkillSummary>): List<SkillGroupSection> {
+    fun skill(id: String): SkillSummary? = allSkills[id]
+
+    val pairedSections = listOf(
+        "Mining & Smithing" to listOf("MINING", "SMITHING"),
+        "Fishing & Cooking" to listOf("FISHING", "COOKING"),
+        "Woodcutting & Fletching" to listOf("WOODCUTTING", "FLETCHING"),
+        "Farming & Alchemy" to listOf("FARMING", "ALCHEMY"),
+        "Thieving & Crafting" to listOf("THIEVING", "CRAFTING")
+    ).map { (title, ids) ->
+        SkillGroupSection(title, ids.mapNotNull { skill(it) })
+    }
+
+    val combatSection = SkillGroupSection(
+        title = "Combat",
+        skills = listOf("ATTACK", "STRENGTH", "DEFENSE", "ARCHERY", "PRAYER", "MAGIC").mapNotNull { skill(it) }
+    )
+
+    return pairedSections + combatSection
+}
+
+@Composable
+fun SkillsScreen(
+    allSkills: Map<String, SkillSummary>,
+    onSkillSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var viewMode by remember { mutableStateOf(loadSavedViewMode(context)) }
+    val sections = remember(allSkills) { buildSkillGroupSections(allSkills) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Skills", style = MaterialTheme.typography.headlineMedium)
+            ViewModeToggle(
+                current = viewMode,
+                onChange = {
+                    viewMode = it
+                    saveViewMode(context, it)
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (viewMode) {
+            SkillsViewMode.LIST -> SkillsListView(sections, onSkillSelected)
+            SkillsViewMode.GRID -> SkillsGridView(sections, onSkillSelected)
+        }
+    }
+}
+
+@Composable
+private fun ViewModeToggle(current: SkillsViewMode, onChange: (SkillsViewMode) -> Unit) {
+    Row {
+        IconButton(onClick = { onChange(SkillsViewMode.LIST) }) {
+            Icon(
+                imageVector = Icons.Filled.ViewList,
+                contentDescription = "List view",
+                tint = if (current == SkillsViewMode.LIST) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+        IconButton(onClick = { onChange(SkillsViewMode.GRID) }) {
+            Icon(
+                imageVector = Icons.Filled.GridView,
+                contentDescription = "Grid view",
+                tint = if (current == SkillsViewMode.GRID) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun SkillsListView(sections: List<SkillGroupSection>, onSkillSelected: (String) -> Unit) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        sections.forEach { section ->
+            item { SectionHeader(section.title) }
+            items(section.skills) { skill ->
+                SkillListRow(skill, onClick = { onSkillSelected(skill.skillId) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkillsGridView(sections: List<SkillGroupSection>, onSkillSelected: (String) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        sections.forEach { section ->
+            item(span = { GridItemSpan(maxLineSpan) }) { SectionHeader(section.title) }
+            items(section.skills) { skill ->
+                SkillGridTile(skill, onClick = { onSkillSelected(skill.skillId) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+private fun SkillListRow(skill: SkillSummary, onClick: () -> Unit) {
+    val progressFraction = skillProgressFraction(skill)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Text(text = skill.displayName, style = MaterialTheme.typography.titleMedium)
+                Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            ThinProgressBar(progressFraction)
+        }
+    }
+}
+
+@Composable
+private fun SkillGridTile(skill: SkillSummary, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(12.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = skill.displayName, style = MaterialTheme.typography.labelSmall)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun ThinProgressBar(fraction: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }
+}
+
+private fun skillProgressFraction(skill: SkillSummary): Float {
+    val total = skill.currentXp + skill.xpToNextLevel
+    if (total <= 0) return 0f
+    return (skill.currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+}
+=== Any existing Dialog/Popup composable in the app ===
+./InventoryScreen.kt
+./SkillDetailScreen.kt
+./ChatBanner.kt
+./MemberActionPopup.kt
+./MainActivity.kt
