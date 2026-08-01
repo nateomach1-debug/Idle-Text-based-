@@ -60,6 +60,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             while (true) {
                 delay(1000L)
                 tickSkilling()
+            tickCrafting()
             }
         }
     }
@@ -86,6 +87,7 @@ override fun onCleared() {
         saved.characters.forEach { accountService.restoreCharacter(it) }
         saved.skills.forEach { progressionService.restoreSkill(it) }
         saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
         saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
@@ -128,6 +130,7 @@ fun logout() {
             accountService.exportAllCharacters(),
             progressionService.exportAllSkills(),
             offlineIdleService.exportSkillingQueues(),
+            offlineIdleService.exportCraftingQueues(),
             offlineIdleService.exportLastSeen(),
             inventoryService.exportAllItems(),
             inventoryService.exportAllEquipped()
@@ -158,8 +161,26 @@ fun logout() {
             }
         }
 
+        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
+        if (craftingQueue != null) {
+            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+            if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
+                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
+                if (batch.xpGranted > 0) {
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = craftResult.value.claimedElapsed.seconds,
+                        skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
+                        itemName = formatItemName(craftingQueue.itemId),
+                        quantity = batch.itemsProduced,
+                        xpEarned = batch.xpGranted
+                    )
+                }
+            }
+        }
+
         offlineIdleService.recordLastSeen(characterId)
         skillActionProgressSeconds = 0
+        craftActionProgressSeconds = 0
         refreshSkills()
         refreshInventory()
     }
@@ -196,6 +217,93 @@ fun logout() {
             inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
             refreshSkills()
             refreshInventory()
+        }
+    }
+
+    // =========================================================
+    // CRAFTING -- mirrors the SkillingQueue flow above. Recipe.levelRequired
+    // (via CraftingTierCurve) is the source of truth for timing/XP, decoupled
+    // from ActionCatalog since production item ids don't line up with
+    // ActionCatalog's generic class-action ids (see Step 5 handoff notes).
+    // =========================================================
+
+    private var craftActionProgressSeconds: Long = 0
+
+    private val craftingService = CraftingService()
+
+    private data class CraftBatchResult(val successfulCrafts: Int, val itemsProduced: Int, val xpGranted: Long)
+
+    private fun craftItems(characterId: String, itemId: String, attempts: Int): CraftBatchResult {
+        val recipe = RecipeCatalog.forOutput(itemId) ?: return CraftBatchResult(0, 0, 0)
+        val skillType = SkillType.valueOf(recipe.skillRequired)
+        val book = progressionService.skillBookFor(characterId)
+        val skill = book.all().find { it.type == skillType }
+        val playerLevel = if (skill != null) LevelCurve.levelForXp(skill.xp) else 1
+        val inventory = inventoryService.inventoryFor(characterId)
+        val xpPerAttempt = CraftingTierCurve.xpFor(recipe.levelRequired)
+
+        var successes = 0
+        var totalProduced = 0
+        var xpGranted = 0L
+        for (i in 0 until attempts) {
+            val result = craftingService.craftOnce(inventory, itemId, playerLevel)
+            if (result is ServiceResult.Success) {
+                xpGranted += xpPerAttempt
+                if (result.value.succeeded) {
+                    successes += 1
+                    totalProduced += result.value.quantityProduced
+                }
+            } else {
+                break
+            }
+        }
+        if (xpGranted > 0) {
+            progressionService.grantXp(characterId, skillType, xpGranted)
+        }
+        return CraftBatchResult(successes, totalProduced, xpGranted)
+    }
+
+    fun startCraftingAction(itemId: String, targetQuantity: Int? = null) {
+        val characterId = _currentCharacterId.value ?: return
+        val recipe = RecipeCatalog.forOutput(itemId) ?: return
+        offlineIdleService.stopQueue(characterId)
+        offlineIdleService.startCraftingQueue(
+            characterId,
+            itemId,
+            CraftingTierCurve.secondsFor(recipe.levelRequired),
+            targetQuantity
+        )
+        offlineIdleService.recordLastSeen(characterId)
+        craftActionProgressSeconds = 0
+    }
+
+    fun stopCraftingAction() {
+        val characterId = _currentCharacterId.value ?: return
+        offlineIdleService.stopQueue(characterId)
+        craftActionProgressSeconds = 0
+    }
+
+    private fun tickCrafting() {
+        val characterId = _currentCharacterId.value ?: return
+        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue ?: return
+
+        craftActionProgressSeconds += 1
+        if (craftActionProgressSeconds < queue.secondsPerAction) return
+
+        val attempts = (craftActionProgressSeconds / queue.secondsPerAction).toInt()
+        craftActionProgressSeconds %= queue.secondsPerAction
+
+        val remainingToTarget = queue.targetQuantity?.let { it - queue.quantityCompleted }
+        val cappedAttempts = if (remainingToTarget != null) minOf(attempts, remainingToTarget) else attempts
+        if (cappedAttempts <= 0) return
+
+        val batch = craftItems(characterId, queue.itemId, cappedAttempts)
+        queue.quantityCompleted += batch.successfulCrafts
+        refreshSkills()
+        refreshInventory()
+
+        if (queue.isTargetReached()) {
+            offlineIdleService.stopQueue(characterId)
         }
     }
 

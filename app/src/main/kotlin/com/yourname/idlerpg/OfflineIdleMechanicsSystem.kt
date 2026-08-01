@@ -139,6 +139,15 @@ data class SkillingQueueExport(
     val startedAt: String
 )
 
+data class CraftingQueueExport(
+    val characterId: String,
+    val itemId: String,
+    val secondsPerAction: Long,
+    val targetQuantity: Int?,
+    val quantityCompleted: Int,
+    val startedAt: String
+)
+
 data class LastSeenExport(val characterId: String, val lastSeenAt: String)
 
 // =========================================================
@@ -276,6 +285,18 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
             SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
         }
 
+    fun exportCraftingQueues(): List<CraftingQueueExport> =
+        activeQueues.values.filterIsInstance<ActiveQueue.CraftingQueue>().map {
+            CraftingQueueExport(
+                it.characterId,
+                it.itemId,
+                it.secondsPerAction,
+                it.targetQuantity,
+                it.quantityCompleted,
+                it.startedAt.toString()
+            )
+        }
+
     fun exportLastSeen(): List<LastSeenExport> =
         lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
 
@@ -287,6 +308,18 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
             secondsPerAction = export.secondsPerAction,
             startedAt = Instant.parse(export.startedAt)
         )
+    }
+
+    fun restoreCraftingQueue(export: CraftingQueueExport) {
+        val queue = ActiveQueue.CraftingQueue(
+            characterId = export.characterId,
+            itemId = export.itemId,
+            secondsPerAction = export.secondsPerAction,
+            targetQuantity = export.targetQuantity,
+            startedAt = Instant.parse(export.startedAt)
+        )
+        queue.quantityCompleted = export.quantityCompleted
+        activeQueues[export.characterId] = queue
     }
 
     fun restoreLastSeen(export: LastSeenExport) {

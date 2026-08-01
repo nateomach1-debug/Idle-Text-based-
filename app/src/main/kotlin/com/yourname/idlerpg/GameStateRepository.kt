@@ -14,6 +14,7 @@ class GameStateRepository(private val context: Context) {
         characters: List<CharacterExport>,
         skills: List<SkillExport>,
         skillingQueues: List<SkillingQueueExport>,
+        craftingQueues: List<CraftingQueueExport>,
         lastSeen: List<LastSeenExport>,
         inventoryItems: List<InventorySlotExport>,
         equippedSlots: List<EquippedSlotExport>
@@ -77,6 +78,19 @@ class GameStateRepository(private val context: Context) {
             queuesArray.put(obj)
         }
         root.put("skillingQueues", queuesArray)
+
+        val craftingQueuesArray = JSONArray()
+        craftingQueues.forEach { queue ->
+            val obj = JSONObject()
+            obj.put("characterId", queue.characterId)
+            obj.put("itemId", queue.itemId)
+            obj.put("secondsPerAction", queue.secondsPerAction)
+            obj.put("targetQuantity", queue.targetQuantity)
+            obj.put("quantityCompleted", queue.quantityCompleted)
+            obj.put("startedAt", queue.startedAt)
+            craftingQueuesArray.put(obj)
+        }
+        root.put("craftingQueues", craftingQueuesArray)
 
         val lastSeenArray = JSONArray()
         lastSeen.forEach { entry ->
@@ -178,6 +192,22 @@ class GameStateRepository(private val context: Context) {
             )
         }
 
+        val craftingQueues = mutableListOf<CraftingQueueExport>()
+        val craftingQueuesArray = root.optJSONArray("craftingQueues") ?: JSONArray()
+        for (i in 0 until craftingQueuesArray.length()) {
+            val obj = craftingQueuesArray.getJSONObject(i)
+            craftingQueues.add(
+                CraftingQueueExport(
+                    characterId = obj.getString("characterId"),
+                    itemId = obj.getString("itemId"),
+                    secondsPerAction = obj.getLong("secondsPerAction"),
+                    targetQuantity = if (obj.isNull("targetQuantity")) null else obj.getInt("targetQuantity"),
+                    quantityCompleted = obj.getInt("quantityCompleted"),
+                    startedAt = obj.getString("startedAt")
+                )
+            )
+        }
+
         val lastSeen = mutableListOf<LastSeenExport>()
         val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
         for (i in 0 until lastSeenArray.length()) {
@@ -211,7 +241,7 @@ class GameStateRepository(private val context: Context) {
             )
         }
 
-        return SavedGameState(accounts, characters, skills, skillingQueues, lastSeen, inventoryItems, equippedSlots)
+        return SavedGameState(accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots)
     }
 }
 
@@ -220,6 +250,7 @@ data class SavedGameState(
     val characters: List<CharacterExport>,
     val skills: List<SkillExport>,
     val skillingQueues: List<SkillingQueueExport>,
+    val craftingQueues: List<CraftingQueueExport>,
     val lastSeen: List<LastSeenExport>,
     val inventoryItems: List<InventorySlotExport>,
     val equippedSlots: List<EquippedSlotExport>

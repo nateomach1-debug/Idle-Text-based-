@@ -1878,6 +1878,30 @@ object CraftingSuccessCalculator {
 }
 
 // =========================================================
+// CRAFTING TIER CURVE
+// Decoupled from ActionCatalog on purpose -- Recipe.levelRequired is
+// the sole source of truth for crafting XP/time, reusing the same
+// tier ladder ActionCatalog already uses elsewhere in the game.
+// =========================================================
+
+object CraftingTierCurve {
+    private val tierLevels = intArrayOf(1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 99)
+    private val tierXp = intArrayOf(10, 19, 30, 41, 52, 63, 74, 85, 96, 107, 118, 129, 140, 151, 162, 173, 184, 195, 206, 226)
+    private val tierSeconds = longArrayOf(3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6)
+
+    private fun tierIndexFor(level: Int): Int {
+        var index = 0
+        for (i in tierLevels.indices) {
+            if (level >= tierLevels[i]) index = i else break
+        }
+        return index
+    }
+
+    fun xpFor(level: Int): Int = tierXp[tierIndexFor(level)]
+    fun secondsFor(level: Int): Long = tierSeconds[tierIndexFor(level)]
+}
+
+// =========================================================
 // INVENTORY
 // (ServiceResult now comes from SharedTypes.kt.)
 // =========================================================
