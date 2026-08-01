@@ -78,7 +78,7 @@ object ItemCatalog {
             equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE, levelRequired = 1,
             stats = ItemStats(attackBonus = 2, maxHitBonus = 2)
         )
-    ) + GeneratedItemCatalog.definitions
+   ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
 
     fun find(itemId: String): ItemDefinition? = items.find { it.id == itemId }
     fun findByNameAndRarity(name: String, rarity: Rarity): ItemDefinition? =
