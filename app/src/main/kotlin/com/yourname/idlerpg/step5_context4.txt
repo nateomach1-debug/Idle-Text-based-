@@ -1,0 +1,184 @@
+]633;E;echo "=== GAMEVIEWMODEL: full loadGame() body ===";12525a63-9ea2-4dda-a57a-bcb223c6d860]633;C=== GAMEVIEWMODEL: full loadGame() body ===
+81:    fun loadGame() {
+82-        if (hasLoaded) return
+83-        hasLoaded = true
+84-        val saved = repository.load() ?: return
+85-        saved.accounts.forEach { accountService.restoreAccount(it) }
+86-        saved.characters.forEach { accountService.restoreCharacter(it) }
+87-        saved.skills.forEach { progressionService.restoreSkill(it) }
+88-        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+89-        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+90-        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+91-        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+92-    }
+93-fun login(email: String, password: String): ServiceResult<Account> {
+94-    val result = accountService.login(email, password)
+95-    if (result is ServiceResult.Success) {
+96-        sessionManager.saveSession(result.value.id)
+97-            _currentAccountId.value = result.value.id
+98-    }
+99-    return result
+100-}
+101-  fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
+102-    val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
+103-    if (result is ServiceResult.Success) {
+104-        sessionManager.saveSession(result.value.id)
+105-            _currentAccountId.value = result.value.id
+106-    }
+=== GAMEVIEWMODEL: full saveGame() body ===
+125:    fun saveGame() {
+126-        repository.save(
+127-            accountService.exportAllAccounts(),
+128-            accountService.exportAllCharacters(),
+129-            progressionService.exportAllSkills(),
+130-            offlineIdleService.exportSkillingQueues(),
+131-            offlineIdleService.exportLastSeen(),
+132-            inventoryService.exportAllItems(),
+133-            inventoryService.exportAllEquipped()
+134-        )
+135-    }
+136-
+137-    fun selectCharacter(characterId: String) {
+138-        _currentCharacterId.value = characterId
+139-
+140-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+141-        if (queue != null) {
+142-            val result = offlineIdleService.resolveOfflineProgress(characterId)
+143-            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+144-                val skillType = SkillType.valueOf(queue.skillId)
+145-                val action = ActionCatalog.find(skillType, queue.itemId)
+146-                if (action != null) {
+147-                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+148-                    progressionService.grantXp(characterId, skillType, xpEarned)
+149-                    inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+150-                    _offlineSummary.value = OfflineSummary(
+=== SAVED GAME DATA CLASS DEFINITION ===
+--
+./GameStateRepository.kt-14-        characters: List<CharacterExport>,
+./GameStateRepository.kt-15-        skills: List<SkillExport>,
+./GameStateRepository.kt:16:        skillingQueues: List<SkillingQueueExport>,
+./GameStateRepository.kt-17-        lastSeen: List<LastSeenExport>,
+./GameStateRepository.kt-18-        inventoryItems: List<InventorySlotExport>,
+./GameStateRepository.kt-19-        equippedSlots: List<EquippedSlotExport>
+./GameStateRepository.kt-20-    ) {
+./GameStateRepository.kt-21-        val root = JSONObject()
+./GameStateRepository.kt-22-
+./GameStateRepository.kt-23-        val accountsArray = JSONArray()
+./GameStateRepository.kt-24-        accounts.forEach { acc ->
+./GameStateRepository.kt-25-            val obj = JSONObject()
+./GameStateRepository.kt-26-            obj.put("id", acc.id)
+./GameStateRepository.kt-27-            obj.put("email", acc.email)
+./GameStateRepository.kt-28-            obj.put("username", acc.username)
+./GameStateRepository.kt-29-            obj.put("passwordHash", acc.passwordHash)
+./GameStateRepository.kt-30-            obj.put("passwordSalt", acc.passwordSalt)
+./GameStateRepository.kt-31-            obj.put("createdAt", acc.createdAt)
+./GameStateRepository.kt-32-            obj.put("lastLoginAt", acc.lastLoginAt)
+./GameStateRepository.kt-33-            obj.put("ageBracket", acc.ageBracket)
+./GameStateRepository.kt-34-            obj.put("region", acc.region)
+./GameStateRepository.kt-35-            obj.put("isBanned", acc.isBanned)
+./GameStateRepository.kt-36-            obj.put("banReason", acc.banReason)
+--
+./GameStateRepository.kt-68-
+./GameStateRepository.kt-69-        val queuesArray = JSONArray()
+./GameStateRepository.kt:70:        skillingQueues.forEach { queue ->
+./GameStateRepository.kt-71-            val obj = JSONObject()
+./GameStateRepository.kt-72-            obj.put("characterId", queue.characterId)
+./GameStateRepository.kt-73-            obj.put("skillId", queue.skillId)
+./GameStateRepository.kt-74-            obj.put("itemId", queue.itemId)
+./GameStateRepository.kt-75-            obj.put("secondsPerAction", queue.secondsPerAction)
+./GameStateRepository.kt-76-            obj.put("startedAt", queue.startedAt)
+./GameStateRepository.kt-77-            queuesArray.put(obj)
+./GameStateRepository.kt-78-        }
+./GameStateRepository.kt:79:        root.put("skillingQueues", queuesArray)
+./GameStateRepository.kt-80-
+./GameStateRepository.kt-81-        val lastSeenArray = JSONArray()
+./GameStateRepository.kt-82-        lastSeen.forEach { entry ->
+./GameStateRepository.kt-83-            val obj = JSONObject()
+./GameStateRepository.kt-84-            obj.put("characterId", entry.characterId)
+./GameStateRepository.kt-85-            obj.put("lastSeenAt", entry.lastSeenAt)
+./GameStateRepository.kt-86-            lastSeenArray.put(obj)
+./GameStateRepository.kt-87-        }
+./GameStateRepository.kt-88-        root.put("lastSeen", lastSeenArray)
+./GameStateRepository.kt-89-
+./GameStateRepository.kt-90-        val inventoryArray = JSONArray()
+./GameStateRepository.kt-91-        inventoryItems.forEach { entry ->
+./GameStateRepository.kt-92-            val obj = JSONObject()
+./GameStateRepository.kt-93-            obj.put("characterId", entry.characterId)
+./GameStateRepository.kt-94-            obj.put("itemId", entry.itemId)
+./GameStateRepository.kt-95-            obj.put("quantity", entry.quantity)
+./GameStateRepository.kt-96-            inventoryArray.put(obj)
+./GameStateRepository.kt-97-        }
+./GameStateRepository.kt-98-        root.put("inventoryItems", inventoryArray)
+./GameStateRepository.kt-99-
+--
+./GameStateRepository.kt-164-        }
+./GameStateRepository.kt-165-
+./GameStateRepository.kt:166:        val skillingQueues = mutableListOf<SkillingQueueExport>()
+./GameStateRepository.kt:167:        val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+./GameStateRepository.kt-168-        for (i in 0 until queuesArray.length()) {
+./GameStateRepository.kt-169-            val obj = queuesArray.getJSONObject(i)
+./GameStateRepository.kt:170:            skillingQueues.add(
+./GameStateRepository.kt-171-                SkillingQueueExport(
+./GameStateRepository.kt-172-                    characterId = obj.getString("characterId"),
+./GameStateRepository.kt-173-                    skillId = obj.getString("skillId"),
+./GameStateRepository.kt-174-                    itemId = obj.getString("itemId"),
+./GameStateRepository.kt-175-                    secondsPerAction = obj.getLong("secondsPerAction"),
+./GameStateRepository.kt-176-                    startedAt = obj.getString("startedAt")
+./GameStateRepository.kt-177-                )
+./GameStateRepository.kt-178-            )
+./GameStateRepository.kt-179-        }
+./GameStateRepository.kt-180-
+./GameStateRepository.kt-181-        val lastSeen = mutableListOf<LastSeenExport>()
+./GameStateRepository.kt-182-        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+./GameStateRepository.kt-183-        for (i in 0 until lastSeenArray.length()) {
+./GameStateRepository.kt-184-            val obj = lastSeenArray.getJSONObject(i)
+./GameStateRepository.kt-185-            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+./GameStateRepository.kt-186-        }
+./GameStateRepository.kt-187-
+./GameStateRepository.kt-188-        val inventoryItems = mutableListOf<InventorySlotExport>()
+./GameStateRepository.kt-189-        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+./GameStateRepository.kt-190-        for (i in 0 until inventoryArray.length()) {
+--
+./GameStateRepository.kt-212-        }
+./GameStateRepository.kt-213-
+./GameStateRepository.kt:214:        return SavedGameState(accounts, characters, skills, skillingQueues, lastSeen, inventoryItems, equippedSlots)
+./GameStateRepository.kt-215-    }
+./GameStateRepository.kt-216-}
+./GameStateRepository.kt-217-
+./GameStateRepository.kt-218-data class SavedGameState(
+./GameStateRepository.kt-219-    val accounts: List<AccountExport>,
+./GameStateRepository.kt-220-    val characters: List<CharacterExport>,
+./GameStateRepository.kt-221-    val skills: List<SkillExport>,
+./GameStateRepository.kt:222:    val skillingQueues: List<SkillingQueueExport>,
+./GameStateRepository.kt-223-    val lastSeen: List<LastSeenExport>,
+./GameStateRepository.kt-224-    val inventoryItems: List<InventorySlotExport>,
+./GameStateRepository.kt-225-    val equippedSlots: List<EquippedSlotExport>
+./GameStateRepository.kt-226-)
+=== repository.load / repository.save signatures ===
+./GameStateRepository.kt-10-    private val saveFile: File get() = File(context.filesDir, "game_state.json")
+./GameStateRepository.kt-11-
+./GameStateRepository.kt:12:    fun save(
+./GameStateRepository.kt-13-        accounts: List<AccountExport>,
+./GameStateRepository.kt-14-        characters: List<CharacterExport>,
+./GameStateRepository.kt-15-        skills: List<SkillExport>,
+./GameStateRepository.kt-16-        skillingQueues: List<SkillingQueueExport>,
+./GameStateRepository.kt-17-        lastSeen: List<LastSeenExport>,
+./GameStateRepository.kt-18-        inventoryItems: List<InventorySlotExport>,
+./GameStateRepository.kt-19-        equippedSlots: List<EquippedSlotExport>
+./GameStateRepository.kt-20-    ) {
+./GameStateRepository.kt-21-        val root = JSONObject()
+./GameStateRepository.kt-22-
+--
+./GameStateRepository.kt-111-    }
+./GameStateRepository.kt-112-
+./GameStateRepository.kt:113:    fun load(): SavedGameState? {
+./GameStateRepository.kt-114-        if (!saveFile.exists()) return null
+./GameStateRepository.kt-115-
+./GameStateRepository.kt-116-        val root = JSONObject(saveFile.readText())
+./GameStateRepository.kt-117-
+./GameStateRepository.kt-118-        val accounts = mutableListOf<AccountExport>()
+./GameStateRepository.kt-119-        val accountsArray = root.optJSONArray("accounts") ?: JSONArray()
+./GameStateRepository.kt-120-        for (i in 0 until accountsArray.length()) {
+./GameStateRepository.kt-121-            val obj = accountsArray.getJSONObject(i)
+./GameStateRepository.kt-122-            accounts.add(
+./GameStateRepository.kt-123-                AccountExport(
