@@ -1,0 +1,202 @@
+]633;E;echo "=== Wherever SkillDetailState gets constructed ===";fb60fb0f-489f-420f-99df-1d5cc2e47ca8]633;C=== Wherever SkillDetailState gets constructed ===
+./SkillDetailScreen.kt-28-
+./SkillDetailScreen.kt-29-data class SkillActionSummary(val actionId: String, val displayName: String, val levelRequired: Int)
+./SkillDetailScreen.kt-30-
+./SkillDetailScreen.kt:31:data class SkillDetailState(
+./SkillDetailScreen.kt-32-    val skillId: String,
+./SkillDetailScreen.kt-33-    val displayName: String,
+./SkillDetailScreen.kt-34-    val level: Int,
+./SkillDetailScreen.kt-35-    val currentXp: Long,
+./SkillDetailScreen.kt-36-    val xpToNextLevel: Long,
+./SkillDetailScreen.kt-37-    val earnedUnlocks: List<SkillUnlockSummary>,
+./SkillDetailScreen.kt-38-    val nextUnlock: SkillUnlockSummary?,       // null if none remaining
+./SkillDetailScreen.kt-39-    val availableActions: List<SkillActionSummary>
+./SkillDetailScreen.kt-40-)
+./SkillDetailScreen.kt-41-
+./SkillDetailScreen.kt-42-@Composable
+./SkillDetailScreen.kt-43-fun SkillDetailScreen(
+./SkillDetailScreen.kt-44-    state: SkillDetailState,
+./SkillDetailScreen.kt-45-    onBack: () -> Unit,
+./SkillDetailScreen.kt-46-    onStartAction: (String) -> Unit,
+./SkillDetailScreen.kt-47-    modifier: Modifier = Modifier
+./SkillDetailScreen.kt-48-) {
+./SkillDetailScreen.kt-49-    var showAdvanced by remember { mutableStateOf(false) }
+./SkillDetailScreen.kt-50-    var showActionPicker by remember { mutableStateOf(false) }
+./SkillDetailScreen.kt-51-
+./SkillDetailScreen.kt-52-    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+./SkillDetailScreen.kt-53-        Row(verticalAlignment = Alignment.CenterVertically) {
+./SkillDetailScreen.kt-54-            IconButton(onClick = onBack) {
+./SkillDetailScreen.kt-55-                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+./SkillDetailScreen.kt-56-            }
+--
+./MainActivity.kt-54-    is Effect.TimerReduction -> "-" + effect.percent + "% action time"
+./MainActivity.kt-55-}
+./MainActivity.kt-56-
+./MainActivity.kt:57:private fun buildSkillDetailState(skillId: String, summary: SkillSummary): SkillDetailState {
+./MainActivity.kt-58-    val skillType = SkillType.valueOf(skillId)
+./MainActivity.kt-59-
+./MainActivity.kt-60-    val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
+./MainActivity.kt-61-        SkillUnlockSummary(
+./MainActivity.kt-62-            description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+./MainActivity.kt-63-            levelRequired = unlock.levelRequired
+./MainActivity.kt-64-        )
+./MainActivity.kt-65-    }
+./MainActivity.kt-66-
+./MainActivity.kt-67-    val next = UnlockTable.allUnlocksFor(skillType)
+./MainActivity.kt-68-        .filter { it.levelRequired > summary.level }
+./MainActivity.kt-69-        .minByOrNull { it.levelRequired }
+./MainActivity.kt-70-        ?.let { unlock ->
+./MainActivity.kt-71-            SkillUnlockSummary(
+./MainActivity.kt-72-                description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+./MainActivity.kt-73-                levelRequired = unlock.levelRequired
+./MainActivity.kt-74-            )
+./MainActivity.kt-75-        }
+./MainActivity.kt-76-
+./MainActivity.kt-77-    val actions = ActionCatalog.allFor(skillType)
+./MainActivity.kt-78-        .filter { it.levelRequired <= summary.level }
+./MainActivity.kt-79-        .map { SkillActionSummary(it.itemId, it.displayName, it.levelRequired) }
+./MainActivity.kt-80-
+./MainActivity.kt:81:    return SkillDetailState(
+./MainActivity.kt-82-        skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
+./MainActivity.kt-83-        currentXp = summary.currentXp, xpToNextLevel = summary.xpToNextLevel,
+./MainActivity.kt-84-        earnedUnlocks = earned,
+./MainActivity.kt-85-        nextUnlock = next,
+./MainActivity.kt-86-        availableActions = actions
+./MainActivity.kt-87-    )
+./MainActivity.kt-88-}
+./MainActivity.kt-89-
+./MainActivity.kt-90-private fun demoZones(): List<ZoneSummary> = listOf(
+./MainActivity.kt-91-    ZoneSummary("goblin_camp", "Goblin Camp", 1, listOf("Goblin Grunt")),
+./MainActivity.kt-92-    ZoneSummary("shadow_ruins", "Shadow Ruins", 20, listOf("Wraith")),
+./MainActivity.kt-93-    ZoneSummary("frost_peak", "Frost Peak", 40, listOf("Ice Troll", "Frost Wolf"))
+./MainActivity.kt-94-)
+./MainActivity.kt-95-
+./MainActivity.kt-96-private fun demoWeapons(style: CombatStyleOption): List<WeaponOption> = when (style) {
+./MainActivity.kt-97-    CombatStyleOption.MELEE -> listOf(
+./MainActivity.kt-98-        WeaponOption("bronze_sword", "Bronze Sword", CombatStyleOption.MELEE),
+./MainActivity.kt-99-        WeaponOption("iron_sword_common", "Iron Sword", CombatStyleOption.MELEE)
+./MainActivity.kt-100-    )
+./MainActivity.kt-101-    CombatStyleOption.RANGED -> listOf(WeaponOption("shortbow", "Shortbow", CombatStyleOption.RANGED))
+./MainActivity.kt-102-    CombatStyleOption.MAGIC -> listOf(WeaponOption("spark_bolt", "Spark Bolt Staff", CombatStyleOption.MAGIC))
+./MainActivity.kt-103-}
+./MainActivity.kt-104-
+./MainActivity.kt-105-private fun mapItemCategory(category: ItemCategory): InventoryCategory = when (category) {
+./MainActivity.kt-106-    ItemCategory.WEAPON -> InventoryCategory.WEAPON
+--
+./MainActivity.kt-484-                                )
+./MainActivity.kt-485-                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+./MainActivity.kt-486-                                    SkillDetailScreen(
+./MainActivity.kt:487:                                    buildSkillDetailState(screen.skillId, it),
+./MainActivity.kt-488-                                    { skillsScreenState = SkillsScreenState.List },
+./MainActivity.kt-489-                                    { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+./MainActivity.kt-490-                                )
+./MainActivity.kt-491-                                }
+./MainActivity.kt-492-                            }
+./MainActivity.kt-493-
+./MainActivity.kt-494-                            AppDestination.COMBAT -> when (combatScreenState) {
+./MainActivity.kt-495-                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+./MainActivity.kt-496-                                    zones = zones, playerLevel = 24,
+./MainActivity.kt-497-                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
+./MainActivity.kt-498-                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+./MainActivity.kt-499-                                )
+./MainActivity.kt-500-                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
+./MainActivity.kt-501-                                CombatScreenState.Loadout -> LoadoutScreen(
+./MainActivity.kt-502-                                    state = LoadoutState(
+./MainActivity.kt-503-                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
+./MainActivity.kt-504-                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+./MainActivity.kt-505-                                    ),
+./MainActivity.kt-506-                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+./MainActivity.kt-507-                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
+./MainActivity.kt-508-                                    onWeaponSelected = { loadoutWeaponId = it },
+./MainActivity.kt-509-                                    onAutoHealChanged = { autoHeal = it },
+./MainActivity.kt-510-                                    onAutoFleeChanged = { autoFlee = it }
+./MainActivity.kt-511-                                )
+./MainActivity.kt-512-                            }
+=== MainActivity.kt: navigation routing for skill screens ===
+483-                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) }
+484-                                )
+485-                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+486:                                    SkillDetailScreen(
+487-                                    buildSkillDetailState(screen.skillId, it),
+488-                                    { skillsScreenState = SkillsScreenState.List },
+489-                                    { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+490-                                )
+491-                                }
+492-                            }
+493-
+494-                            AppDestination.COMBAT -> when (combatScreenState) {
+495-                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+496-                                    zones = zones, playerLevel = 24,
+497-                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
+498-                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+499-                                )
+500-                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
+501-                                CombatScreenState.Loadout -> LoadoutScreen(
+502-                                    state = LoadoutState(
+503-                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
+504-                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+505-                                    ),
+506-                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+=== MemberActionPopup.kt (full file) ===
+package com.yourname.idlerpg.ui.screens
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+
+// =========================================================
+// MEMBER ACTION POPUP
+// Role-based actions shown depending on the VIEWER's role,
+// not the tapped member's role. Leader sees the most options.
+// =========================================================
+
+@Composable
+fun MemberActionPopup(
+    member: GuildMemberSummary,
+    viewerRole: GuildMemberRole,
+    onDismiss: () -> Unit,
+    onKick: () -> Unit,
+    onPromote: () -> Unit,
+    onDemote: () -> Unit,
+    onInitiateVote: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = member.displayName, style = MaterialTheme.typography.headlineMedium) },
+        text = {
+            Column {
+                Text(text = "Role: " + member.role.name, style = MaterialTheme.typography.bodyMedium)
+                Spacer()
+
+                if (viewerRole == GuildMemberRole.LEADER) {
+                    if (member.role == GuildMemberRole.MEMBER) {
+                        TextButton(onClick = onPromote) { Text(text = "Promote to Officer") }
+                    }
+                    if (member.role == GuildMemberRole.OFFICER) {
+                        TextButton(onClick = onPromote) { Text(text = "Promote to Leader") }
+                        TextButton(onClick = onDemote) { Text(text = "Demote to Member") }
+                    }
+                    if (member.role == GuildMemberRole.LEADER) {
+                        TextButton(onClick = onInitiateVote) { Text(text = "Initiate Removal Vote") }
+                    }
+                    if (member.role != GuildMemberRole.LEADER) {
+                        TextButton(onClick = onKick) { Text(text = "Kick from Guild") }
+                    }
+                }
+                // Officers and Members currently have no actions available here --
+                // consistent with the backend's Permissions object, where only
+                // Leaders can kick/promote/demote/initiate votes.
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(text = "Close") }
+        }
+    )
+}
+
+@Composable
+private fun Spacer() {
+    androidx.compose.foundation.layout.Spacer(modifier = Modifier.fillMaxWidth())
+}
