@@ -1,0 +1,221 @@
+]633;E;echo "=== GAMEVIEWMODEL: startSkillAction / tickSkilling / related state ===";12525a63-9ea2-4dda-a57a-bcb223c6d860]633;C=== GAMEVIEWMODEL: startSkillAction / tickSkilling / related state ===
+165-    }
+166-
+167:    fun startSkillAction(skillType: SkillType, itemId: String) {
+168-        val characterId = _currentCharacterId.value ?: return
+169-        val action = ActionCatalog.find(skillType, itemId) ?: return
+170-        offlineIdleService.stopQueue(characterId)
+171-        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+172-        offlineIdleService.recordLastSeen(characterId)
+173-        skillActionProgressSeconds = 0
+174-    }
+175-
+176:    fun stopSkillAction() {
+177-        val characterId = _currentCharacterId.value ?: return
+178-        offlineIdleService.stopQueue(characterId)
+179-        skillActionProgressSeconds = 0
+180-    }
+181-
+182:    private fun tickSkilling() {
+183-        val characterId = _currentCharacterId.value ?: return
+184-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+185-
+186-        skillActionProgressSeconds += 1
+187-        if (skillActionProgressSeconds < queue.secondsPerAction) return
+188-
+189-        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+190-        skillActionProgressSeconds %= queue.secondsPerAction
+191-
+192-        val skillType = SkillType.valueOf(queue.skillId)
+193-        val action = ActionCatalog.find(skillType, queue.itemId)
+194-        if (action != null) {
+195-            progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+196-            inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
+197-            refreshSkills()
+198-            refreshInventory()
+199-        }
+200-    }
+201-
+202-    fun refreshSkills() {
+203-        val characterId = _currentCharacterId.value ?: return
+204-        val book = progressionService.skillBookFor(characterId)
+205-        _skills.value = book.all().associate { skill ->
+206-            val level = LevelCurve.levelForXp(skill.xp)
+207-            val xpAtLevelStart = LevelCurve.xpRequiredForLevel(level)
+=== GAMEVIEWMODEL: class fields / state related to active skilling ===
+139-
+140:        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+141-        if (queue != null) {
+142-            val result = offlineIdleService.resolveOfflineProgress(characterId)
+143-            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+144-                val skillType = SkillType.valueOf(queue.skillId)
+145-                val action = ActionCatalog.find(skillType, queue.itemId)
+--
+183-        val characterId = _currentCharacterId.value ?: return
+184:        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+185-
+186-        skillActionProgressSeconds += 1
+187-        if (skillActionProgressSeconds < queue.secondsPerAction) return
+188-
+189-        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+=== GAMEVIEWMODEL: selectCharacter (offline catch-up resolution) ===
+135-    }
+136-
+137:    fun selectCharacter(characterId: String) {
+138-        _currentCharacterId.value = characterId
+139-
+140-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+141-        if (queue != null) {
+142-            val result = offlineIdleService.resolveOfflineProgress(characterId)
+143-            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+144-                val skillType = SkillType.valueOf(queue.skillId)
+145-                val action = ActionCatalog.find(skillType, queue.itemId)
+146-                if (action != null) {
+147-                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+148-                    progressionService.grantXp(characterId, skillType, xpEarned)
+149-                    inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+150-                    _offlineSummary.value = OfflineSummary(
+151-                        awaySeconds = result.value.claimedElapsed.seconds,
+152-                        skillActionName = action.displayName,
+153-                        itemName = formatItemName(queue.itemId),
+154-                        quantity = result.value.actionsCompleted,
+155-                        xpEarned = xpEarned
+156-                    )
+157-                }
+158-            }
+159-        }
+160-
+161-        offlineIdleService.recordLastSeen(characterId)
+162-        skillActionProgressSeconds = 0
+163-        refreshSkills()
+164-        refreshInventory()
+165-    }
+166-
+167-    fun startSkillAction(skillType: SkillType, itemId: String) {
+168-        val characterId = _currentCharacterId.value ?: return
+169-        val action = ActionCatalog.find(skillType, itemId) ?: return
+170-        offlineIdleService.stopQueue(characterId)
+171-        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+172-        offlineIdleService.recordLastSeen(characterId)
+173-        skillActionProgressSeconds = 0
+174-    }
+175-
+176-    fun stopSkillAction() {
+177-        val characterId = _currentCharacterId.value ?: return
+=== OFFLINEIDLEMECHANICSSYSTEM: ActiveQueue sealed class / CraftingQueue / SkillingQueue ===
+10-enum class QueueType { SKILLING, CRAFTING, OFFLINE_COMBAT }
+11-
+12:sealed class ActiveQueue {
+13-    abstract val characterId: String
+14-    abstract val startedAt: Instant
+15-    abstract val type: QueueType
+16-
+17:    data class SkillingQueue(
+18-        override val characterId: String,
+19-        val skillId: String,
+20-        val itemId: String,
+21-        val secondsPerAction: Long,
+22-        override val startedAt: Instant = Instant.now()
+23-    ) : ActiveQueue() {
+24-        override val type = QueueType.SKILLING
+25-    }
+26-
+27:    data class CraftingQueue(
+28-        override val characterId: String,
+29-        val itemId: String,
+30-        val secondsPerAction: Long,
+31-        val targetQuantity: Int?,
+32-        var quantityCompleted: Int = 0,
+33-        override val startedAt: Instant = Instant.now()
+34-    ) : ActiveQueue() {
+35-        override val type = QueueType.CRAFTING
+36-        fun isTargetReached(): Boolean = targetQuantity != null && quantityCompleted >= targetQuantity
+37-    }
+38-
+39-    data class OfflineCombatQueue(
+40-        override val characterId: String,
+41-        val zoneId: String,
+42-        override val startedAt: Instant = Instant.now()
+43-    ) : ActiveQueue() {
+44-        override val type = QueueType.OFFLINE_COMBAT
+45-    }
+46-}
+47-
+--
+132-)
+133-
+134:data class SkillingQueueExport(
+135-    val characterId: String,
+136-    val skillId: String,
+137-    val itemId: String,
+138-    val secondsPerAction: Long,
+139-    val startedAt: String
+140-)
+141-
+142-data class LastSeenExport(val characterId: String, val lastSeenAt: String)
+143-
+144-// =========================================================
+145-// OFFLINE/IDLE SERVICE
+146-// =========================================================
+147-
+148-class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
+149-
+150-    private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
+151-    private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
+152-    private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
+153-
+154-    fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
+=== OFFLINEIDLEMECHANICSSYSTEM: offline catch-up resolver for SkillingQueue ===
+199-    }
+200-
+201:    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
+202-        val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
+203-        val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
+204-
+205-        val claimedElapsed = Duration.between(lastSeen, now)
+206-        if (claimedElapsed.isNegative) return ServiceResult.Failure("Invalid elapsed time (negative duration).")
+207-
+208-        val (cappedElapsed, flag) = OfflineSanityCheck.validate(characterId, claimedElapsed)
+209-        if (flag != null) flaggedAccounts.add(flag)
+210-
+211-        val combatPenaltyMultiplier = if (queue.type == QueueType.OFFLINE_COMBAT) 0.8 else 1.0
+212-        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed)
+213-        val penalizedEffectiveMillis = (effectiveElapsed.toMillis() * combatPenaltyMultiplier).toLong()
+214-        val finalEffectiveElapsed = Duration.ofMillis(penalizedEffectiveMillis)
+215-
+216-        var actionsCompleted = 0
+217-        var queueExhausted = false
+218-
+219-        when (queue) {
+220:            is ActiveQueue.SkillingQueue -> {
+221-                actionsCompleted = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+222-            }
+223-            is ActiveQueue.CraftingQueue -> {
+224-                var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+225-                if (queue.targetQuantity != null) {
+226-                    val remaining = queue.targetQuantity - queue.quantityCompleted
+227-                    possibleActions = possibleActions.coerceAtMost(remaining)
+228-                }
+229-                var completed = 0
+230-                for (i in 0 until possibleActions) {
+231-                    if (!materialCheck.hasMaterialsFor(characterId, queue.itemId)) {
+232-                        queueExhausted = true
+233-                        break
+234-                    }
+235-                    completed++
+236-                }
+237-                queue.quantityCompleted += completed
+238-                actionsCompleted = completed
+239-                if (queue.isTargetReached()) queueExhausted = true
+240-            }
+241-            is ActiveQueue.OfflineCombatQueue -> {
+242-                actionsCompleted = 0
+243-            }
+244-        }
+245-
+246-        if (queueExhausted) {
+247-            activeQueues.remove(characterId)
+248-        }
+249-
+250-        return ServiceResult.Success(
+=== OFFLINEIDLEMECHANICSSYSTEM: persistence for last-seen timestamp / queue save-restore ===
