@@ -1,0 +1,314 @@
+]633;E;echo "=== ACTIVEQUEUE SEALED CLASS + SKILLINGQUEUE + CRAFTINGQUEUE (verbatim) ===";328e3a18-113b-4492-a8d4-0c02e4e784e5]633;C=== ACTIVEQUEUE SEALED CLASS + SKILLINGQUEUE + CRAFTINGQUEUE (verbatim) ===
+12:sealed class ActiveQueue {
+13-    abstract val characterId: String
+14-    abstract val startedAt: Instant
+15-    abstract val type: QueueType
+17:    data class SkillingQueue(
+18-        override val characterId: String,
+19-        val skillId: String,
+20-        val itemId: String,
+21-        val secondsPerAction: Long,
+22-        override val startedAt: Instant = Instant.now()
+23-    ) : ActiveQueue() {
+24-        override val type = QueueType.SKILLING
+25-    }
+26-
+27-    data class CraftingQueue(
+--
+134:data class SkillingQueueExport(
+135-    val characterId: String,
+136-    val skillId: String,
+137-    val itemId: String,
+138-    val secondsPerAction: Long,
+139-    val startedAt: String
+140-)
+141-
+142-data class LastSeenExport(val characterId: String, val lastSeenAt: String)
+143-
+144-// =========================================================
+27:    data class CraftingQueue(
+28-        override val characterId: String,
+29-        val itemId: String,
+30-        val secondsPerAction: Long,
+31-        val targetQuantity: Int?,
+32-        var quantityCompleted: Int = 0,
+33-        override val startedAt: Instant = Instant.now()
+34-    ) : ActiveQueue() {
+35-        override val type = QueueType.CRAFTING
+36-        fun isTargetReached(): Boolean = targetQuantity != null && quantityCompleted >= targetQuantity
+37-    }
+=== INTERNAL QUEUE STORAGE FIELD ===
+148-class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
+149-
+150:    private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
+151-    private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
+152-    private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
+153-
+154-    fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
+155:        if (activeQueues.containsKey(characterId)) {
+156-            return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
+157-        }
+158-        val queue = ActiveQueue.SkillingQueue(characterId, skillId, itemId, secondsPerAction)
+159:        activeQueues[characterId] = queue
+160-        return ServiceResult.Success(queue)
+161-    }
+162-
+163-    fun startCraftingQueue(
+164-        characterId: String,
+--
+167-        targetQuantity: Int?
+168-    ): ServiceResult<ActiveQueue> {
+169:        if (activeQueues.containsKey(characterId)) {
+170-            return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
+171-        }
+172-        if (targetQuantity != null && targetQuantity <= 0) {
+173-            return ServiceResult.Failure("Target quantity must be positive if specified.")
+174-        }
+175-        val queue = ActiveQueue.CraftingQueue(characterId, itemId, secondsPerAction, targetQuantity)
+176:        activeQueues[characterId] = queue
+177-        return ServiceResult.Success(queue)
+178-    }
+179-
+180-    fun optIntoOfflineCombat(characterId: String, zoneId: String): ServiceResult<ActiveQueue> {
+181:        if (activeQueues.containsKey(characterId)) {
+182-            return ServiceResult.Failure("Character already has an active queue. Stop it before opting into offline combat.")
+183-        }
+184-        val queue = ActiveQueue.OfflineCombatQueue(characterId, zoneId)
+185:        activeQueues[characterId] = queue
+186-        return ServiceResult.Success(queue)
+187-    }
+188-
+189-    fun stopQueue(characterId: String): ServiceResult<Unit> {
+190:        if (!activeQueues.containsKey(characterId)) return ServiceResult.Failure("No active queue to stop.")
+191:        activeQueues.remove(characterId)
+192-        return ServiceResult.Success(Unit)
+193-    }
+194-
+195:    fun activeQueueFor(characterId: String): ActiveQueue? = activeQueues[characterId]
+196-
+197-    fun recordLastSeen(characterId: String, now: Instant = Instant.now()) {
+198-        lastSeenAt[characterId] = now
+199-    }
+200-
+201-    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
+202:        val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
+203-        val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
+204-
+205-        val claimedElapsed = Duration.between(lastSeen, now)
+206-        if (claimedElapsed.isNegative) return ServiceResult.Failure("Invalid elapsed time (negative duration).")
+207-
+--
+245-
+246-        if (queueExhausted) {
+247:            activeQueues.remove(characterId)
+248-        }
+249-
+250-        return ServiceResult.Success(
+251-            OfflineResolution(
+252-                characterId = characterId,
+--
+263-
+264-    fun estimatedTimeUntilExhausted(characterId: String): Duration? {
+265:        val queue = activeQueues[characterId] as? ActiveQueue.CraftingQueue ?: return null
+266-        val target = queue.targetQuantity ?: return null
+267-        val remaining = target - queue.quantityCompleted
+268-        if (remaining <= 0) return Duration.ZERO
+269-        return Duration.ofSeconds(remaining * queue.secondsPerAction)
+270-    }
+--
+273-
+274-    fun exportSkillingQueues(): List<SkillingQueueExport> =
+275:        activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
+276-            SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
+277-        }
+278-
+279-    fun exportLastSeen(): List<LastSeenExport> =
+280-        lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
+281-
+282-    fun restoreSkillingQueue(export: SkillingQueueExport) {
+283:        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+284-            characterId = export.characterId,
+285-            skillId = export.skillId,
+286-            itemId = export.itemId,
+287-            secondsPerAction = export.secondsPerAction,
+288-            startedAt = Instant.parse(export.startedAt)
+=== exportSkillingQueues FULL BODY ===
+274:    fun exportSkillingQueues(): List<SkillingQueueExport> =
+275-        activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
+276-            SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
+277-        }
+278-
+279-    fun exportLastSeen(): List<LastSeenExport> =
+280-        lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
+281-
+282-    fun restoreSkillingQueue(export: SkillingQueueExport) {
+283-        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+284-            characterId = export.characterId,
+285-            skillId = export.skillId,
+286-            itemId = export.itemId,
+287-            secondsPerAction = export.secondsPerAction,
+288-            startedAt = Instant.parse(export.startedAt)
+289-        )
+=== restoreSkillingQueue FULL BODY ===
+282:    fun restoreSkillingQueue(export: SkillingQueueExport) {
+283-        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+284-            characterId = export.characterId,
+285-            skillId = export.skillId,
+286-            itemId = export.itemId,
+287-            secondsPerAction = export.secondsPerAction,
+288-            startedAt = Instant.parse(export.startedAt)
+289-        )
+290-    }
+291-
+292-    fun restoreLastSeen(export: LastSeenExport) {
+=== startSkillAction / tickSkilling / stopSkillAction FULL BODIES ===
+167:    fun startSkillAction(skillType: SkillType, itemId: String) {
+168-        val characterId = _currentCharacterId.value ?: return
+169-        val action = ActionCatalog.find(skillType, itemId) ?: return
+170-        offlineIdleService.stopQueue(characterId)
+171-        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+172-        offlineIdleService.recordLastSeen(characterId)
+173-        skillActionProgressSeconds = 0
+174-    }
+175-
+176-    fun stopSkillAction() {
+177-        val characterId = _currentCharacterId.value ?: return
+178-        offlineIdleService.stopQueue(characterId)
+179-        skillActionProgressSeconds = 0
+180-    }
+181-
+182-    private fun tickSkilling() {
+183-        val characterId = _currentCharacterId.value ?: return
+184-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+185-
+186-        skillActionProgressSeconds += 1
+187-        if (skillActionProgressSeconds < queue.secondsPerAction) return
+188-
+189-        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+190-        skillActionProgressSeconds %= queue.secondsPerAction
+191-
+192-        val skillType = SkillType.valueOf(queue.skillId)
+193-        val action = ActionCatalog.find(skillType, queue.itemId)
+194-        if (action != null) {
+195-            progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+196-            inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
+197-            refreshSkills()
+182:    private fun tickSkilling() {
+183-        val characterId = _currentCharacterId.value ?: return
+184-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+185-
+186-        skillActionProgressSeconds += 1
+187-        if (skillActionProgressSeconds < queue.secondsPerAction) return
+188-
+189-        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+190-        skillActionProgressSeconds %= queue.secondsPerAction
+191-
+192-        val skillType = SkillType.valueOf(queue.skillId)
+193-        val action = ActionCatalog.find(skillType, queue.itemId)
+194-        if (action != null) {
+195-            progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+196-            inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
+197-            refreshSkills()
+198-            refreshInventory()
+199-        }
+200-    }
+201-
+202-    fun refreshSkills() {
+203-        val characterId = _currentCharacterId.value ?: return
+204-        val book = progressionService.skillBookFor(characterId)
+205-        _skills.value = book.all().associate { skill ->
+206-            val level = LevelCurve.levelForXp(skill.xp)
+207-            val xpAtLevelStart = LevelCurve.xpRequiredForLevel(level)
+208-            val xpAtNextLevel = LevelCurve.xpRequiredForLevel(level + 1)
+209-            val displayName = skill.type.name.lowercase().replaceFirstChar { it.uppercase() }
+210-            skill.type.name to SkillSummary(
+211-                skillId = skill.type.name,
+212-                displayName = displayName,
+176:    fun stopSkillAction() {
+177-        val characterId = _currentCharacterId.value ?: return
+178-        offlineIdleService.stopQueue(characterId)
+179-        skillActionProgressSeconds = 0
+180-    }
+181-
+182-    private fun tickSkilling() {
+183-        val characterId = _currentCharacterId.value ?: return
+184-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+185-
+186-        skillActionProgressSeconds += 1
+187-        if (skillActionProgressSeconds < queue.secondsPerAction) return
+188-
+189-        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+190-        skillActionProgressSeconds %= queue.secondsPerAction
+191-
+=== selectCharacter FULL BODY (past what we've already seen) ===
+137:    fun selectCharacter(characterId: String) {
+138-        _currentCharacterId.value = characterId
+139-
+140-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+141-        if (queue != null) {
+142-            val result = offlineIdleService.resolveOfflineProgress(characterId)
+143-            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+144-                val skillType = SkillType.valueOf(queue.skillId)
+145-                val action = ActionCatalog.find(skillType, queue.itemId)
+146-                if (action != null) {
+147-                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+148-                    progressionService.grantXp(characterId, skillType, xpEarned)
+149-                    inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+150-                    _offlineSummary.value = OfflineSummary(
+151-                        awaySeconds = result.value.claimedElapsed.seconds,
+152-                        skillActionName = action.displayName,
+153-                        itemName = formatItemName(queue.itemId),
+154-                        quantity = result.value.actionsCompleted,
+155-                        xpEarned = xpEarned
+156-                    )
+157-                }
+158-            }
+159-        }
+160-
+161-        offlineIdleService.recordLastSeen(characterId)
+162-        skillActionProgressSeconds = 0
+163-        refreshSkills()
+164-        refreshInventory()
+165-    }
+166-
+167-    fun startSkillAction(skillType: SkillType, itemId: String) {
+168-        val characterId = _currentCharacterId.value ?: return
+169-        val action = ActionCatalog.find(skillType, itemId) ?: return
+170-        offlineIdleService.stopQueue(characterId)
+171-        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+172-        offlineIdleService.recordLastSeen(characterId)
+173-        skillActionProgressSeconds = 0
+174-    }
+175-
+176-    fun stopSkillAction() {
+177-        val characterId = _currentCharacterId.value ?: return
+178-        offlineIdleService.stopQueue(characterId)
+179-        skillActionProgressSeconds = 0
+180-    }
+181-
+182-    private fun tickSkilling() {
+183-        val characterId = _currentCharacterId.value ?: return
+184-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+185-
+186-        skillActionProgressSeconds += 1
+187-        if (skillActionProgressSeconds < queue.secondsPerAction) return
+188-
+189-        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+190-        skillActionProgressSeconds %= queue.secondsPerAction
+191-
+192-        val skillType = SkillType.valueOf(queue.skillId)
+193-        val action = ActionCatalog.find(skillType, queue.itemId)
+194-        if (action != null) {
+195-            progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+196-            inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
+197-            refreshSkills()
+198-            refreshInventory()
+199-        }
+200-    }
+201-
+202-    fun refreshSkills() {
+203-        val characterId = _currentCharacterId.value ?: return
+204-        val book = progressionService.skillBookFor(characterId)
+205-        _skills.value = book.all().associate { skill ->
+206-            val level = LevelCurve.levelForXp(skill.xp)
+207-            val xpAtLevelStart = LevelCurve.xpRequiredForLevel(level)
