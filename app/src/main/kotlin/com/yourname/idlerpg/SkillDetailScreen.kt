@@ -44,7 +44,8 @@ fun SkillDetailScreen(
     state: SkillDetailState,
     onBack: () -> Unit,
     onStartAction: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    startButtonLabel: String = "Start " + state.displayName
 ) {
     var showAdvanced by remember { mutableStateOf(false) }
     var showActionPicker by remember { mutableStateOf(false) }
@@ -91,7 +92,7 @@ fun SkillDetailScreen(
             onClick = { showActionPicker = true },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Start " + state.displayName)
+            Text(text = startButtonLabel)
         }
 
         Spacer(modifier = Modifier.height(24.dp))

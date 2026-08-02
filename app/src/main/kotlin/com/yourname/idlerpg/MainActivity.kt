@@ -74,9 +74,16 @@ private fun buildSkillDetailState(skillId: String, summary: SkillSummary): Skill
             )
         }
 
-    val actions = ActionCatalog.allFor(skillType)
-        .filter { it.levelRequired <= summary.level }
-        .map { SkillActionSummary(it.itemId, it.displayName, it.levelRequired) }
+    val actions = if (skillType == SkillType.CRAFTING) {
+        RecipeCatalog.recipes
+            .filter { it.skillRequired == "CRAFTING" && it.levelRequired <= summary.level }
+            .map { SkillActionSummary(it.outputItemId, ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId, it.levelRequired) }
+            .sortedBy { it.levelRequired }
+    } else {
+        ActionCatalog.allFor(skillType)
+            .filter { it.levelRequired <= summary.level }
+            .map { SkillActionSummary(it.itemId, it.displayName, it.levelRequired) }
+    }
 
     return SkillDetailState(
         skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
@@ -84,6 +91,48 @@ private fun buildSkillDetailState(skillId: String, summary: SkillSummary): Skill
         earnedUnlocks = earned,
         nextUnlock = next,
         availableActions = actions
+    )
+}
+
+private val SMITHING_METALS = listOf(
+    Triple("bronze", "Bronze", "bronze_bar"),
+    Triple("iron", "Iron", "iron_bar"),
+    Triple("steel", "Steel", "steel_bar"),
+    Triple("mithril", "Mithril", "mithril_bar"),
+    Triple("adamant", "Adamant", "adamantite_bar"),
+    Triple("rune", "Rune", "runite_bar"),
+    Triple("orichalcum", "Orichalcum", "orichalcum_bar"),
+    Triple("celestial", "Celestial", "celestial_alloy_bar")
+)
+
+private fun recipeToSmithingSummary(recipe: Recipe): SmithingRecipeSummary {
+    val displayName = ItemCatalog.find(recipe.outputItemId)?.name ?: recipe.outputItemId
+    val ingredients = recipe.ingredients.map { ing ->
+        val ingName = ItemCatalog.find(ing.itemId)?.name ?: ing.itemId
+        SmithingIngredientSummary(ing.itemId, ingName, ing.quantity)
+    }
+    return SmithingRecipeSummary(recipe.outputItemId, displayName, recipe.levelRequired, ingredients)
+}
+
+private fun buildSmithingState(summary: SkillSummary): SmithingState {
+    val materials = SMITHING_METALS.map { (materialId, displayName, barItemId) ->
+        val barRecipe = RecipeCatalog.forOutput(barItemId)?.let { recipeToSmithingSummary(it) }
+        val gearRecipes = RecipeCatalog.recipes
+            .filter { it.skillRequired == "SMITHING" && it.ingredients.any { ing -> ing.itemId == barItemId } }
+            .map { recipeToSmithingSummary(it) }
+            .sortedBy { it.levelRequired }
+        SmithingMaterialCatalogEntry(
+            material = SmithingMaterialOption(materialId, displayName),
+            bar = barRecipe,
+            gear = gearRecipes
+        )
+    }
+    return SmithingState(
+        displayName = summary.displayName,
+        level = summary.level,
+        currentXp = summary.currentXp,
+        xpToNextLevel = summary.xpToNextLevel,
+        materials = materials
     )
 }
 
@@ -483,11 +532,24 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) }
                                 )
                                 is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-                                    SkillDetailScreen(
-                                    buildSkillDetailState(screen.skillId, it),
-                                    { skillsScreenState = SkillsScreenState.List },
-                                    { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
-                                )
+                                    when (screen.skillId) {
+                                        "SMITHING" -> SmithingScreen(
+                                            buildSmithingState(it),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { itemId -> gameViewModel.startCraftingAction(itemId) }
+                                        )
+                                        "CRAFTING" -> SkillDetailScreen(
+                                            buildSkillDetailState(screen.skillId, it),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { itemId -> gameViewModel.startCraftingAction(itemId) },
+                                            startButtonLabel = "Select Recipe"
+                                        )
+                                        else -> SkillDetailScreen(
+                                            buildSkillDetailState(screen.skillId, it),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+                                        )
+                                    }
                                 }
                             }
 
