@@ -1,0 +1,27 @@
+]633;E;echo "===== distinct skillRequired values in RecipeCatalog =====";efb184f9-d662-46c3-8ada-aa40df5b0b6b]633;C===== distinct skillRequired values in RecipeCatalog =====
+     22 skillRequired = "ALCHEMY"
+     28 skillRequired = "COOKING"
+     41 skillRequired = "CRAFTING"
+     33 skillRequired = "FLETCHING"
+    137 skillRequired = "SMITHING"
+
+===== sample COOKING recipe entries =====
+991:            skillRequired = "COOKING",
+998:            skillRequired = "COOKING",
+1005:            skillRequired = "COOKING",
+1012:            skillRequired = "COOKING",
+1019:            skillRequired = "COOKING",
+
+===== sample FLETCHING recipe entries =====
+1187:            skillRequired = "FLETCHING",
+1194:            skillRequired = "FLETCHING",
+1201:            skillRequired = "FLETCHING",
+1208:            skillRequired = "FLETCHING",
+1215:            skillRequired = "FLETCHING",
+
+===== sample ALCHEMY recipe entries =====
+1418:            skillRequired = "ALCHEMY",
+1425:            skillRequired = "ALCHEMY",
+1432:            skillRequired = "ALCHEMY",
+1439:            skillRequired = "ALCHEMY",
+1446:            skillRequired = "ALCHEMY",
