@@ -1,0 +1,187 @@
+]633;E;echo "===== GameViewModel: class properties and StateFlows =====";efb184f9-d662-46c3-8ada-aa40df5b0b6b]633;C===== GameViewModel: class properties and StateFlows =====
+10:import kotlinx.coroutines.flow.MutableStateFlow
+11:import kotlinx.coroutines.flow.StateFlow
+12:import kotlinx.coroutines.flow.asStateFlow
+16:    val awaySeconds: Long,
+17:    val skillActionName: String,
+18:    val itemName: String,
+19:    val quantity: Int,
+20:    val xpEarned: Long
+28:    private val repository = GameStateRepository(application)
+30:    val accountService = AccountService()
+31:    val progressionService = ProgressionService()
+32:    val inventoryService = InventoryService()
+33:    val sessionManager = SessionManager(application)
+36:    val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
+38:    private var skillActionProgressSeconds: Long = 0
+40:    private val _currentAccountId = MutableStateFlow<String?>(null)
+41:    val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
+43:    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+44:    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+46:    private val _currentCharacterId = MutableStateFlow<String?>(null)
+47:    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+49:    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+50:    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+52:    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+53:    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+55:    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+56:    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+80:    private var hasLoaded = false
+85:        val saved = repository.load() ?: return
+96:    val result = accountService.login(email, password)
+104:    val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
+112:    val accountId = sessionManager.getSavedAccountId() ?: return null
+113:    val account = accountService.accountById(accountId) ?: return null
+143:        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+145:            val result = offlineIdleService.resolveOfflineProgress(characterId)
+147:                val skillType = SkillType.valueOf(queue.skillId)
+148:                val action = ActionCatalog.find(skillType, queue.itemId)
+150:                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+164:        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
+166:            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+168:                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
+188:    fun startSkillAction(skillType: SkillType, itemId: String) {
+189:        val characterId = _currentCharacterId.value ?: return
+190:        val action = ActionCatalog.find(skillType, itemId) ?: return
+197:    fun stopSkillAction() {
+198:        val characterId = _currentCharacterId.value ?: return
+203:    private fun tickSkilling() {
+204:        val characterId = _currentCharacterId.value ?: return
+205:        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+210:        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+213:        val skillType = SkillType.valueOf(queue.skillId)
+214:        val action = ActionCatalog.find(skillType, queue.itemId)
+230:    private var craftActionProgressSeconds: Long = 0
+232:    private val craftingService = CraftingService()
+234:    private data class CraftBatchResult(val successfulCrafts: Int, val itemsProduced: Int, val xpGranted: Long)
+237:        val recipe = RecipeCatalog.forOutput(itemId) ?: return CraftBatchResult(0, 0, 0)
+238:        val skillType = SkillType.valueOf(recipe.skillRequired)
+239:        val book = progressionService.skillBookFor(characterId)
+240:        val skill = book.all().find { it.type == skillType }
+241:        val playerLevel = if (skill != null) LevelCurve.levelForXp(skill.xp) else 1
+242:        val inventory = inventoryService.inventoryFor(characterId)
+243:        val xpPerAttempt = CraftingTierCurve.xpFor(recipe.levelRequired)
+245:        var successes = 0
+246:        var totalProduced = 0
+247:        var xpGranted = 0L
+249:            val result = craftingService.craftOnce(inventory, itemId, playerLevel)
+266:    fun startCraftingAction(itemId: String, targetQuantity: Int? = null) {
+267:        val characterId = _currentCharacterId.value ?: return
+268:        val recipe = RecipeCatalog.forOutput(itemId) ?: return
+280:    fun stopCraftingAction() {
+281:        val characterId = _currentCharacterId.value ?: return
+286:    private fun tickCrafting() {
+287:        val characterId = _currentCharacterId.value ?: return
+288:        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue ?: return
+293:        val attempts = (craftActionProgressSeconds / queue.secondsPerAction).toInt()
+296:        val remainingToTarget = queue.targetQuantity?.let { it - queue.quantityCompleted }
+297:        val cappedAttempts = if (remainingToTarget != null) minOf(attempts, remainingToTarget) else attempts
+300:        val batch = craftItems(characterId, queue.itemId, cappedAttempts)
+311:        val characterId = _currentCharacterId.value ?: return
+312:        val book = progressionService.skillBookFor(characterId)
+314:            val level = LevelCurve.levelForXp(skill.xp)
+315:            val xpAtLevelStart = LevelCurve.xpRequiredForLevel(level)
+316:            val xpAtNextLevel = LevelCurve.xpRequiredForLevel(level + 1)
+317:            val displayName = skill.type.name.lowercase().replaceFirstChar { it.uppercase() }
+329:        val characterId = _currentCharacterId.value ?: return
+330:        val inv = inventoryService.inventoryFor(characterId)
+
+===== GameViewModel: search for currency/gold/gems =====
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:30:    var softCurrency: Long = 0,
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:31:    var premiumCurrency: Long = 0
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:57:    val subscriptionTier: String, val softCurrency: Long, val premiumCurrency: Long
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:206:    fun addCurrency(accountId: String, soft: Long = 0, premium: Long = 0): ServiceResult<Account> {
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:208:        if (soft < 0 || premium < 0) return ServiceResult.Failure("Currency amounts cannot be negative.")
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:209:        account.softCurrency += soft
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:210:        account.premiumCurrency += premium
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:259:            it.subscriptionTier.name, it.softCurrency, it.premiumCurrency
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:279:            softCurrency = export.softCurrency, premiumCurrency = export.premiumCurrency
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:21:        SkillActionDefinition(SkillType.MINING, "gold_ore", "Mine Gold Ore", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:24:        SkillActionDefinition(SkillType.MINING, "uncut_gemstone", "Mine Uncut Gemstone", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:43:        SkillActionDefinition(SkillType.SMITHING, "gold_bar", "Smelt Gold Bar", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:222:        SkillActionDefinition(SkillType.CRAFTING, "gold_ring", "Craft Gold Ring", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:223:        SkillActionDefinition(SkillType.CRAFTING, "gold_necklace", "Craft Gold Necklace", xpPerAction = 26, secondsPerAction = 3, levelRequired = 8),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:301:        SkillActionDefinition(SkillType.THIEVING, "loose_gems", "Steal from Loose Gems", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:309:        SkillActionDefinition(SkillType.THIEVING, "gold_goods", "Steal from Gold Goods", xpPerAction = 144, secondsPerAction = 5, levelRequired = 62),
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:14:    var currencyBalance: Long,
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:148:        if (account.currencyBalance < totalCost) {
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:149:            return ServiceResult.Failure("Insufficient currency to escrow this order.")
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:152:        account.currencyBalance -= totalCost
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:230:            buyerAccount.currencyBalance += refundToBuyer
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:233:        sellerAccount.currencyBalance += sellerProceeds
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:270:            account.currencyBalance += refund
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:294:        account.currencyBalance += payout
+app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:40:            obj.put("softCurrency", acc.softCurrency)
+app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:41:            obj.put("premiumCurrency", acc.premiumCurrency)
+app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:147:                    softCurrency = obj.getLong("softCurrency"), premiumCurrency = obj.getLong("premiumCurrency")
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:65:        id = "gold_ore",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:66:        name = "Gold Ore",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:86:        id = "uncut_gemstone",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:87:        name = "Uncut Gemstone",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:884:        id = "gold_bar",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:885:        name = "Gold Bar",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2168:        id = "gold_ring",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2169:        name = "Gold Ring",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2176:        id = "gold_necklace",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2177:        name = "Gold Necklace",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2358:        id = "loose_gems",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2359:        name = "Loose Gems",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2414:        id = "gold_goods",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2415:        name = "Stolen Gold Goods",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2493:    "gold_ore" to 25L,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2496:    "uncut_gemstone" to 60L,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2610:    "gold_bar" to 60L,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2767:    "gold_ring" to 30L,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2768:    "gold_necklace" to 32L,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2792:    "loose_gems" to 70L,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2800:    "gold_goods" to 260L,
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:31:    var currencyAllTime: Long = 0,
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:32:    var currencyDaily: Long = 0,
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:210:    fun createGuild(accountId: String, founderCharacterId: String, name: String, currencyBalance: Long): ServiceResult<Guild> {
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:212:        if (!isFree && currencyBalance < creationCost) {
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:213:            return ServiceResult.Failure("Guild creation costs " + creationCost + " currency; insufficient balance.")
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:413:    fun recordCurrencyContribution(guildId: String, characterId: String, amount: Long): ServiceResult<Unit> {
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:416:        member.contributions.currencyAllTime += amount
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:417:        member.contributions.currencyDaily += amount
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:19:// Per the locked spec: queue status + time remaining, currency,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:28:    val softCurrency: Long,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:29:    val premiumCurrency: Long,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:55:        CurrencyRow(soft = state.softCurrency, premium = state.premiumCurrency)
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:80:private fun CurrencyRow(soft: Long, premium: Long) {
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:85:        CurrencyPill(label = "Gold", amount = soft)
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:86:        CurrencyPill(label = "Gems", amount = premium)
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:91:private fun CurrencyPill(label: String, amount: Long) {
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:939:            outputItemId = "gold_bar",
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:941:            ingredients = listOf(RecipeIngredient("gold_ore", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1744:            outputItemId = "gold_ring",
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1746:            ingredients = listOf(RecipeIngredient("gold_bar", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1751:            outputItemId = "gold_necklace",
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1753:            ingredients = listOf(RecipeIngredient("gold_bar", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1760:            ingredients = listOf(RecipeIngredient("gold_ring", 1), RecipeIngredient("sapphire", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1767:            ingredients = listOf(RecipeIngredient("gold_bar", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1788:            ingredients = listOf(RecipeIngredient("gold_ring", 1), RecipeIngredient("ruby", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1795:            ingredients = listOf(RecipeIngredient("gold_necklace", 1), RecipeIngredient("diamond", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1830:            ingredients = listOf(RecipeIngredient("gold_ring", 1), RecipeIngredient("onyx", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1844:            ingredients = listOf(RecipeIngredient("gold_bar", 1), RecipeIngredient("dragonstone", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:163:data class CurrencyBundle(
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:166:    val premiumCurrencyGranted: Long,
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:170:object CurrencyBundleCatalog {
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:172:        CurrencyBundle(id = "bundle_small", realMoneyPriceUsd = 4.99, premiumCurrencyGranted = 500),
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:173:        CurrencyBundle(id = "bundle_medium", realMoneyPriceUsd = 9.99, premiumCurrencyGranted = 1100, bonusPercent = 10.0),
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:174:        CurrencyBundle(id = "bundle_large", realMoneyPriceUsd = 24.99, premiumCurrencyGranted = 3000, bonusPercent = 20.0)
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:177:    fun find(bundleId: String): CurrencyBundle? = bundles.find { it.id == bundleId }
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:180:class CurrencyPurchaseService {
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:186:        val bundle = CurrencyBundleCatalog.find(bundleId) ?: return ServiceResult.Failure("Unknown bundle.")
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:187:        val newBalance = balanceFor(characterId) + bundle.premiumCurrencyGranted
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:194:        if (balance < amount) return ServiceResult.Failure("Insufficient premium currency.")
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:16:    val currency: Long = 0,
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:57:            reward = QuestReward(currency = 200, xp = mapOf("ATTACK" to 100))
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:69:                currency = 500,
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:81:            reward = QuestReward(currency = 300)
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:280:                        reward = QuestReward(currency = targetAmount * 8L, xp = mapOf(skillId to (targetAmount * 12L)))
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:294:                        reward = QuestReward(currency = targetAmount * 5L, xp = mapOf(skillId to (targetAmount * 10L)))
+app/src/main/kotlin/com/yourname/idlerpg/Theme.kt:16:// Dark charcoal background, parchment-gold primary accent,
+app/src/main/kotlin/com/yourname/idlerpg/Theme.kt:22:val ParchmentGold = Color(0xFFD4AF6A)
+app/src/main/kotlin/com/yourname/idlerpg/Theme.kt:29:    primary = ParchmentGold,
+
+===== GameViewModel: active skill/crafting action state =====
