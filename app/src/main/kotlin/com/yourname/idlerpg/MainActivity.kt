@@ -54,6 +54,13 @@ private fun effectSummaryText(effect: Effect): String = when (effect) {
     is Effect.TimerReduction -> "-" + effect.percent + "% action time"
 }
 
+private val RECIPE_BASED_SKILL_LABELS: Map<String, String> = mapOf(
+    "CRAFTING" to "Select Recipe",
+    "COOKING" to "Select Dish",
+    "FLETCHING" to "Select Item",
+    "ALCHEMY" to "Select Potion"
+)
+
 private fun buildSkillDetailState(skillId: String, summary: SkillSummary): SkillDetailState {
     val skillType = SkillType.valueOf(skillId)
 
@@ -74,9 +81,9 @@ private fun buildSkillDetailState(skillId: String, summary: SkillSummary): Skill
             )
         }
 
-    val actions = if (skillType == SkillType.CRAFTING) {
+    val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
         RecipeCatalog.recipes
-            .filter { it.skillRequired == "CRAFTING" && it.levelRequired <= summary.level }
+            .filter { it.skillRequired == skillId && it.levelRequired <= summary.level }
             .map { SkillActionSummary(it.outputItemId, ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId, it.levelRequired) }
             .sortedBy { it.levelRequired }
     } else {
@@ -538,11 +545,11 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                             { skillsScreenState = SkillsScreenState.List },
                                             { itemId -> gameViewModel.startCraftingAction(itemId) }
                                         )
-                                        "CRAFTING" -> SkillDetailScreen(
+                                        in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
                                             buildSkillDetailState(screen.skillId, it),
                                             { skillsScreenState = SkillsScreenState.List },
                                             { itemId -> gameViewModel.startCraftingAction(itemId) },
-                                            startButtonLabel = "Select Recipe"
+                                            startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
                                         )
                                         else -> SkillDetailScreen(
                                             buildSkillDetailState(screen.skillId, it),
