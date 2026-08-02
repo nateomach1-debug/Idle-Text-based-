@@ -1,0 +1,319 @@
+]633;E;echo "===== buildSkillDetailState() =====";efb184f9-d662-46c3-8ada-aa40df5b0b6b]633;C===== buildSkillDetailState() =====
+private fun buildSkillDetailState(skillId: String, summary: SkillSummary): SkillDetailState {
+    val skillType = SkillType.valueOf(skillId)
+
+    val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
+        SkillUnlockSummary(
+            description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+            levelRequired = unlock.levelRequired
+        )
+    }
+
+    val next = UnlockTable.allUnlocksFor(skillType)
+        .filter { it.levelRequired > summary.level }
+        .minByOrNull { it.levelRequired }
+        ?.let { unlock ->
+            SkillUnlockSummary(
+                description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+                levelRequired = unlock.levelRequired
+            )
+        }
+
+    val actions = if (skillType == SkillType.CRAFTING) {
+        RecipeCatalog.recipes
+            .filter { it.skillRequired == "CRAFTING" && it.levelRequired <= summary.level }
+            .map { SkillActionSummary(it.outputItemId, ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId, it.levelRequired) }
+            .sortedBy { it.levelRequired }
+    } else {
+        ActionCatalog.allFor(skillType)
+            .filter { it.levelRequired <= summary.level }
+            .map { SkillActionSummary(it.itemId, it.displayName, it.levelRequired) }
+    }
+
+    return SkillDetailState(
+        skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
+        currentXp = summary.currentXp, xpToNextLevel = summary.xpToNextLevel,
+        earnedUnlocks = earned,
+        nextUnlock = next,
+        availableActions = actions
+    )
+}
+
+===== when (screen.skillId) routing block =====
+534:                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+535:                                    when (screen.skillId) {
+542:                                            buildSkillDetailState(screen.skillId, it),
+548:                                            buildSkillDetailState(screen.skillId, it),
+550:                                            { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+--- context around routing ---
+                                    when (screen.skillId) {
+                                        "SMITHING" -> SmithingScreen(
+                                            buildSmithingState(it),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { itemId -> gameViewModel.startCraftingAction(itemId) }
+                                        )
+                                        "CRAFTING" -> SkillDetailScreen(
+                                            buildSkillDetailState(screen.skillId, it),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { itemId -> gameViewModel.startCraftingAction(itemId) },
+                                            startButtonLabel = "Select Recipe"
+                                        )
+                                        else -> SkillDetailScreen(
+                                            buildSkillDetailState(screen.skillId, it),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+                                        )
+                                    }
+                                }
+                            }
+
+                            AppDestination.COMBAT -> when (combatScreenState) {
+                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+                                    zones = zones, playerLevel = 24,
+                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
+                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+                                )
+                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
+                                CombatScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
+                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+                                    ),
+                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
+                                    onWeaponSelected = { loadoutWeaponId = it },
+                                    onAutoHealChanged = { autoHeal = it },
+                                    onAutoFleeChanged = { autoFlee = it }
+                                )
+                            }
+
+                            AppDestination.INVENTORY -> when (inventoryScreenState) {
+                                InventoryScreenState.Items -> InventoryScreen(
+                                    items = inventoryItems,
+                                    onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
+                                    onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
+                                    onUseItem = { },
+                                    onSellOnMarket = { itemId ->
+                                        val item = inventoryItems.find { it.itemId == itemId }
+                                        selectedMarketItemId = itemId
+                                        prefilledSellQuantity = item?.quantity
+                                        currentDestination = AppDestination.MARKET
+                                    },
+                                    onEquipItem = { },
+                                    canEquip = ::canEquip
+                                )
+                                InventoryScreenState.Equipment -> EquipmentScreen(
+                                    state = EquipmentScreenState(equipped, lockedEquipSlots),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onSlotTapped = { }
+                                )
+                                InventoryScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
+                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+                                    ),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
+                                    onWeaponSelected = { loadoutWeaponId = it },
+                                    onAutoHealChanged = { autoHeal = it },
+                                    onAutoFleeChanged = { autoFlee = it }
+                                )
+                            }
+
+                            AppDestination.MARKET -> {
+                                val itemId = selectedMarketItemId
+                                if (itemId != null) {
+                                    OrderBookScreen(
+                                        detail = demoOrderBook(itemId),
+                                        prefilledQuantity = prefilledSellQuantity,
+                                        onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+                                        onPlaceOrder = { _, _, _ -> selectedMarketItemId = null; prefilledSellQuantity = null }
+                                    )
+                                } else {
+                                    MarketScreen(
+                                        currentTab = marketTab,
+                                        onTabSelected = { marketTab = it },
+                                        listings = demoMarketListings(),
+                                        showingBuyOrders = showingBuyOrders,
+                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+                                        onItemSelected = { selectedMarketItemId = it },
+                                        myBuyOrders = demoMyBuyOrders(),
+                                        mySellOrders = demoMySellOrders(),
+                                        onCancelOrder = { },
+                                        vendorSellableItems = inventoryItems,
+                                        onSellToVendor = { _, _ -> }
+                                    )
+                                }
+                            }
+
+                            AppDestination.GUILD -> {
+                                GuildHomeScreen(
+                                    state = demoGuildState(),
+                                    leaderboardEntries = demoLeaderboard(),
+                                    leaderboardShowingDaily = leaderboardShowingDaily,
+                                    onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+                                    onMemberTapped = { selectedGuildMember = it },
+                                    onContributeToEvent = { },
+                                    onCastVote = { }
+                                )
+
+                                selectedGuildMember?.let { member ->
+                                    MemberActionPopup(
+                                        member = member,
+                                        viewerRole = GuildMemberRole.LEADER,
+                                        onDismiss = { selectedGuildMember = null },
+                                        onKick = { selectedGuildMember = null },
+                                        onPromote = { selectedGuildMember = null },
+                                        onDemote = { selectedGuildMember = null },
+                                        onInitiateVote = { selectedGuildMember = null }
+                                    )
+                                }
+                            }
+
+                            else -> androidx.compose.material3.Text(
+                                text = currentDestination.label + " screen coming soon",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+
+                    ChatBanner(
+                        selectedChannel = selectedChatChannel,
+                        onChannelSelected = {
+                            selectedChatChannel = it
+                            if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
+                        },
+                        messages = chatMessages.filter { it.channel == selectedChatChannel },
+                        dmConversations = demoDmConversations(),
+                        selectedDmCharacterId = selectedDmCharacterId,
+                        onDmSelected = { selectedDmCharacterId = it },
+                        hasUnread = true,
+                        messageInput = chatMessageInput,
+                        onMessageInputChanged = { chatMessageInput = it },
+                        onSendMessage = {
+                            if (chatMessageInput.isNotBlank()) {
+                                chatMessages.add(ChatMessageUi("m" + (chatMessages.size + 1), "You", chatMessageInput, selectedChatChannel))
+                                chatMessageInput = ""
+                            }
+                        },
+                        onMessageAction = { _, _ -> }
+                    )
+                }
+            }
+        }
+    }
+
+===== ActionCatalog.kt: COOKING section =====
+        SkillActionDefinition(SkillType.COOKING, "shrimp", "Cook Shrimp", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+        SkillActionDefinition(SkillType.COOKING, "anchovies", "Cook Anchovies", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+        SkillActionDefinition(SkillType.COOKING, "sardine", "Cook Sardine", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+        SkillActionDefinition(SkillType.COOKING, "chicken_meat", "Cook Chicken Meat", xpPerAction = 26, secondsPerAction = 3, levelRequired = 8),
+        SkillActionDefinition(SkillType.COOKING, "herring", "Cook Herring", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+        SkillActionDefinition(SkillType.COOKING, "beef", "Cook Beef", xpPerAction = 34, secondsPerAction = 3, levelRequired = 12),
+        SkillActionDefinition(SkillType.COOKING, "crayfish", "Cook Crayfish", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+        SkillActionDefinition(SkillType.COOKING, "trout", "Cook Trout", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+        SkillActionDefinition(SkillType.COOKING, "salmon", "Cook Salmon", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+        SkillActionDefinition(SkillType.COOKING, "bread", "Bake Bread", xpPerAction = 70, secondsPerAction = 4, levelRequired = 28),
+        SkillActionDefinition(SkillType.COOKING, "tuna", "Cook Tuna", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+        SkillActionDefinition(SkillType.COOKING, "meat_pie", "Bake Meat Pie", xpPerAction = 83, secondsPerAction = 4, levelRequired = 34),
+        SkillActionDefinition(SkillType.COOKING, "mackerel", "Cook Mackerel", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+        SkillActionDefinition(SkillType.COOKING, "swordfish", "Cook Swordfish", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+        SkillActionDefinition(SkillType.COOKING, "cake", "Bake Cake", xpPerAction = 100, secondsPerAction = 4, levelRequired = 42),
+        SkillActionDefinition(SkillType.COOKING, "lobster", "Cook Lobster", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+        SkillActionDefinition(SkillType.COOKING, "crab", "Cook Crab", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+        SkillActionDefinition(SkillType.COOKING, "shark", "Cook Shark", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+        SkillActionDefinition(SkillType.COOKING, "stew", "Bake Stew", xpPerAction = 136, secondsPerAction = 5, levelRequired = 58),
+        SkillActionDefinition(SkillType.COOKING, "monkfish", "Cook Monkfish", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+        SkillActionDefinition(SkillType.COOKING, "manta_ray", "Cook Manta Ray", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+        SkillActionDefinition(SkillType.COOKING, "eel", "Cook Eel", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+        SkillActionDefinition(SkillType.COOKING, "deep_sea_cod", "Cook Deep Sea Cod", xpPerAction = 173, secondsPerAction = 6, levelRequired = 75),
+        SkillActionDefinition(SkillType.COOKING, "anglerfish", "Cook Anglerfish", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+        SkillActionDefinition(SkillType.COOKING, "gourmet_feast", "Prepare Gourmet Feast", xpPerAction = 195, secondsPerAction = 6, levelRequired = 85),
+        SkillActionDefinition(SkillType.COOKING, "leviathan_steak", "Cook Leviathan Steak", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+        SkillActionDefinition(SkillType.COOKING, "ambrosia_banquet", "Prepare Ambrosia Banquet", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+        SkillActionDefinition(SkillType.WOODCUTTING, "logs", "Chop Logs", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+        SkillActionDefinition(SkillType.WOODCUTTING, "achey_logs", "Chop Achey Logs", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+        SkillActionDefinition(SkillType.WOODCUTTING, "oak_logs", "Chop Oak Logs", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+        SkillActionDefinition(SkillType.WOODCUTTING, "willow_logs", "Chop Willow Logs", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+        SkillActionDefinition(SkillType.WOODCUTTING, "teak_logs", "Chop Teak Logs", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+        SkillActionDefinition(SkillType.WOODCUTTING, "maple_logs", "Chop Maple Logs", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+        SkillActionDefinition(SkillType.WOODCUTTING, "mahogany_logs", "Chop Mahogany Logs", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+        SkillActionDefinition(SkillType.WOODCUTTING, "yew_logs", "Chop Yew Logs", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+        SkillActionDefinition(SkillType.WOODCUTTING, "ironwood_logs", "Chop Ironwood Logs", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+        SkillActionDefinition(SkillType.WOODCUTTING, "bamboo", "Chop Bamboo", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+        SkillActionDefinition(SkillType.WOODCUTTING, "magic_logs", "Chop Magic Logs", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+        SkillActionDefinition(SkillType.WOODCUTTING, "petrified_logs", "Chop Petrified Logs", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+        SkillActionDefinition(SkillType.WOODCUTTING, "elder_logs", "Chop Elder Logs", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+        SkillActionDefinition(SkillType.WOODCUTTING, "shadow_logs", "Chop Shadow Logs", xpPerAction = 173, secondsPerAction = 6, levelRequired = 75),
+        SkillActionDefinition(SkillType.WOODCUTTING, "redwood_logs", "Chop Redwood Logs", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+        SkillActionDefinition(SkillType.WOODCUTTING, "spirit_logs", "Chop Spirit Logs", xpPerAction = 195, secondsPerAction = 6, levelRequired = 85),
+        SkillActionDefinition(SkillType.WOODCUTTING, "world_tree_branch", "Chop World Tree Branch", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+        SkillActionDefinition(SkillType.WOODCUTTING, "celestial_logs", "Chop Celestial Logs", xpPerAction = 217, secondsPerAction = 6, levelRequired = 95),
+        SkillActionDefinition(SkillType.WOODCUTTING, "ancient_ironbark_logs", "Chop Ancient Ironbark Logs", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+        SkillActionDefinition(SkillType.FLETCHING, "shortbow", "Whittle Shortbow", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+
+===== ActionCatalog.kt: FLETCHING section =====
+        SkillActionDefinition(SkillType.FLETCHING, "shortbow", "Whittle Shortbow", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+        SkillActionDefinition(SkillType.FLETCHING, "shortbow_5", "String Shortbow", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+        SkillActionDefinition(SkillType.FLETCHING, "longbow", "Whittle Longbow", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+        SkillActionDefinition(SkillType.FLETCHING, "longbow_15", "String Longbow", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+        SkillActionDefinition(SkillType.FLETCHING, "oak_shortbow", "Craft Oak Shortbow", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+        SkillActionDefinition(SkillType.FLETCHING, "oak_longbow", "Craft Oak Longbow", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+        SkillActionDefinition(SkillType.FLETCHING, "willow_shortbow", "Craft Willow Shortbow", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+        SkillActionDefinition(SkillType.FLETCHING, "willow_longbow", "Craft Willow Longbow", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+        SkillActionDefinition(SkillType.FLETCHING, "composite_bow", "Craft Composite Bow", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+        SkillActionDefinition(SkillType.FLETCHING, "maple_longbow", "Craft Maple Longbow", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+        SkillActionDefinition(SkillType.FLETCHING, "crossbow_frame", "Craft Crossbow Frame", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+        SkillActionDefinition(SkillType.FLETCHING, "yew_shortbow", "Craft Yew Shortbow", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+        SkillActionDefinition(SkillType.FLETCHING, "yew_longbow", "Craft Yew Longbow", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+        SkillActionDefinition(SkillType.FLETCHING, "ironwood_composite_bow", "Craft Ironwood Composite Bow", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+        SkillActionDefinition(SkillType.FLETCHING, "magic_shortbow", "Craft Magic Shortbow", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+        SkillActionDefinition(SkillType.FLETCHING, "magic_longbow", "Craft Magic Longbow", xpPerAction = 173, secondsPerAction = 6, levelRequired = 75),
+        SkillActionDefinition(SkillType.FLETCHING, "elder_bow", "Craft Elder Bow", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+        SkillActionDefinition(SkillType.FLETCHING, "spirit_bow", "Craft Spirit Bow", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+        SkillActionDefinition(SkillType.FLETCHING, "ancient_ironbark_bow", "Craft Ancient Ironbark Bow", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+        SkillActionDefinition(SkillType.FLETCHING, "arrow_shafts", "Fletch Arrow Shafts", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+        SkillActionDefinition(SkillType.FLETCHING, "bronze_arrows", "Craft Bronze Arrows", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+        SkillActionDefinition(SkillType.FLETCHING, "iron_arrows", "Craft Iron Arrows", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+        SkillActionDefinition(SkillType.FLETCHING, "bolts_frame", "Craft Bolts Frame", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+        SkillActionDefinition(SkillType.FLETCHING, "steel_arrows", "Craft Steel Arrows", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+        SkillActionDefinition(SkillType.FLETCHING, "mithril_arrows", "Craft Mithril Arrows", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+        SkillActionDefinition(SkillType.FLETCHING, "adamant_arrows", "Craft Adamant Arrows", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+        SkillActionDefinition(SkillType.FLETCHING, "rune_arrows", "Craft Rune Arrows", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+        SkillActionDefinition(SkillType.FLETCHING, "barbed_bolts", "Craft Barbed Bolts", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+        SkillActionDefinition(SkillType.FLETCHING, "broad_arrows", "Craft Broad Arrows", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+        SkillActionDefinition(SkillType.FLETCHING, "dragon_arrows", "Craft Dragon Arrows", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+        SkillActionDefinition(SkillType.FLETCHING, "enchanted_bolts", "Craft Enchanted Bolts", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+        SkillActionDefinition(SkillType.ALCHEMY, "common_item", "Low Alch Common Item", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+
+===== ActionCatalog.kt: ALCHEMY section =====
+        SkillActionDefinition(SkillType.ALCHEMY, "common_item", "Low Alch Common Item", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+        SkillActionDefinition(SkillType.ALCHEMY, "uncommon_item", "Low Alch Uncommon Item", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+        SkillActionDefinition(SkillType.ALCHEMY, "common_item_40", "High Alch Common Item", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+        SkillActionDefinition(SkillType.ALCHEMY, "rare_item", "High Alch Rare Item", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+        SkillActionDefinition(SkillType.ALCHEMY, "enchanted_item", "High Alch Enchanted Item", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+        SkillActionDefinition(SkillType.ALCHEMY, "artifact", "High Alch Artifact", xpPerAction = 195, secondsPerAction = 6, levelRequired = 85),
+        SkillActionDefinition(SkillType.ALCHEMY, "legendary_item", "Transmute Legendary Item", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+        SkillActionDefinition(SkillType.ALCHEMY, "attack_potion", "Brew Attack Potion", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+        SkillActionDefinition(SkillType.ALCHEMY, "antipoison", "Brew Antipoison", xpPerAction = 15, secondsPerAction = 3, levelRequired = 3),
+        SkillActionDefinition(SkillType.ALCHEMY, "strength_potion", "Brew Strength Potion", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+        SkillActionDefinition(SkillType.ALCHEMY, "defense_potion", "Brew Defense Potion", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+        SkillActionDefinition(SkillType.ALCHEMY, "restore_potion", "Brew Restore Potion", xpPerAction = 34, secondsPerAction = 3, levelRequired = 12),
+        SkillActionDefinition(SkillType.ALCHEMY, "energy_potion", "Brew Energy Potion", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+        SkillActionDefinition(SkillType.ALCHEMY, "combat_potion", "Brew Combat Potion", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+        SkillActionDefinition(SkillType.ALCHEMY, "prayer_potion", "Brew Prayer Potion", xpPerAction = 56, secondsPerAction = 3, levelRequired = 22),
+        SkillActionDefinition(SkillType.ALCHEMY, "super_attack_potion", "Brew Super Attack Potion", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+        SkillActionDefinition(SkillType.ALCHEMY, "super_strength_potion", "Brew Super Strength Potion", xpPerAction = 83, secondsPerAction = 4, levelRequired = 34),
+        SkillActionDefinition(SkillType.ALCHEMY, "super_defense_potion", "Brew Super Defense Potion", xpPerAction = 92, secondsPerAction = 4, levelRequired = 38),
+        SkillActionDefinition(SkillType.ALCHEMY, "ranging_potion", "Brew Ranging Potion", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+        SkillActionDefinition(SkillType.ALCHEMY, "magic_potion", "Brew Magic Potion", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+        SkillActionDefinition(SkillType.ALCHEMY, "super_restore_potion", "Brew Super Restore Potion", xpPerAction = 114, secondsPerAction = 4, levelRequired = 48),
+        SkillActionDefinition(SkillType.ALCHEMY, "antidote_plus", "Brew Antidote Plus", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+        SkillActionDefinition(SkillType.ALCHEMY, "saradomin_brew", "Brew Saradomin Brew", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+        SkillActionDefinition(SkillType.ALCHEMY, "antifire_potion", "Brew Antifire Potion", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+        SkillActionDefinition(SkillType.ALCHEMY, "extreme_attack_potion", "Brew Extreme Attack Potion", xpPerAction = 166, secondsPerAction = 5, levelRequired = 72),
+        SkillActionDefinition(SkillType.ALCHEMY, "extreme_strength_potion", "Brew Extreme Strength Potion", xpPerAction = 180, secondsPerAction = 6, levelRequired = 78),
+        SkillActionDefinition(SkillType.ALCHEMY, "overload_potion", "Brew Overload Potion", xpPerAction = 195, secondsPerAction = 6, levelRequired = 85),
+        SkillActionDefinition(SkillType.ALCHEMY, "divine_potion", "Brew Divine Potion", xpPerAction = 210, secondsPerAction = 6, levelRequired = 92),
+        SkillActionDefinition(SkillType.ALCHEMY, "elixir_of_the_ancients", "Brew Elixir of the Ancients", xpPerAction = 226, secondsPerAction = 6, levelRequired = 99),
+        SkillActionDefinition(SkillType.CRAFTING, "leather", "Tan Leather", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
