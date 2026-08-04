@@ -1,0 +1,58 @@
+]633;E;echo "===== offlineSummary usage in MainActivity.kt =====";1ff832ac-8c8c-4f4f-a18a-27a2d4c66967]633;C===== offlineSummary usage in MainActivity.kt =====
+342:    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
+343:    offlineSummary?.let { summary ->
+345:            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+346:            title = { androidx.compose.material3.Text("Welcome back!") },
+358:                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+
+===== context around the welcome-back dialog =====
+                flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+            }
+        }
+    }
+
+    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
+    offlineSummary?.let { summary ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+            title = { androidx.compose.material3.Text("Welcome back!") },
+            text = {
+                val minutes = summary.awaySeconds / 60
+                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
+                androidx.compose.material3.Text(
+                    "You were away for " + awayText + ".\n\n" +
+                    "While gone, you were " + summary.skillActionName + ":\n" +
+                    "+" + summary.xpEarned + " XP\n" +
+                    "Gathered " + summary.quantity + "x " + summary.itemName
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
+    var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
+    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
+    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
+    var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
+
+    val allSkills by gameViewModel.skills.collectAsState()
+    val zones = remember { demoZones() }
+    val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
+    val inventoryItems = remember(inventoryItemEntries) { buildInventoryItemSummaries(inventoryItemEntries) }
+    val equipped = remember { demoEquipped() }
+
+    val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
+    val currency by gameViewModel.currency.collectAsState()
+    val homeState = HomeScreenState(
+        activeQueue = activeQueue,
+        softCurrency = currency.first,
+        premiumCurrency = currency.second,
+        currentHp = null,
+
+===== selectCharacter() call site(s) =====
+482:    gameViewModel.selectCharacter(result.value.id)
+503:    gameViewModel.selectCharacter(it)
