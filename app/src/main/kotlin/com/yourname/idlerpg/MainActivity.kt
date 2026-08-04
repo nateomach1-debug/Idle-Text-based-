@@ -373,9 +373,17 @@ fun AppRoot(gameViewModel: GameViewModel) {
     val inventoryItems = remember(inventoryItemEntries) { buildInventoryItemSummaries(inventoryItemEntries) }
     val equipped = remember { demoEquipped() }
 
-    val homeState = remember {
-        HomeScreenState("Mining Iron Ore", Instant.now().plusSeconds(90), 1250, 40, 80, 100, false, 3, 2)
-    }
+    val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
+    val currency by gameViewModel.currency.collectAsState()
+    val homeState = HomeScreenState(
+        activeQueue = activeQueue,
+        softCurrency = currency.first,
+        premiumCurrency = currency.second,
+        currentHp = null,
+        maxHp = null,
+        isRecovering = false,
+        unreadNotificationCount = 2
+    )
 
     val recoveringUntil = remember { mutableStateOf<Instant?>(null) }
 
@@ -531,7 +539,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                         )
 
                         when (currentDestination) {
-                            AppDestination.HOME -> HomeScreen(state = homeState, onCollectLoot = { })
+                            AppDestination.HOME -> HomeScreen(state = homeState)
 
                             AppDestination.SKILLS -> when (val screen = skillsScreenState) {
                                 is SkillsScreenState.List -> SkillsScreen(
