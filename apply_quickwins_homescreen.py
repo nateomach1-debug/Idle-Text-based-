@@ -21,7 +21,7 @@ sites won't compile until both are applied.
 import sys
 from pathlib import Path
 
-TARGET = Path("app/src/main/kotlin/com/yourname/idlerpg/ui/screens/HomeScreen.kt")
+TARGET = Path("app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt")
 
 EXPECTED_OLD = '''package com.yourname.idlerpg.ui.screens
 
