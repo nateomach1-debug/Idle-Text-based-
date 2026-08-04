@@ -1,0 +1,263 @@
+]633;E;echo "===== full SkillDetailScreen.kt =====";1ff832ac-8c8c-4f4f-a18a-27a2d4c66967]633;C===== full SkillDetailScreen.kt =====
+package com.yourname.idlerpg.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+
+// =========================================================
+// SKILL DETAIL SCREEN
+// Simple view: level, XP bar, earned unlocks.
+// Advanced view (toggle): exact XP numbers, XP-to-next-level,
+// next unlock preview.
+// Includes "Start" action to queue a gather/craft action for
+// this skill directly from this screen.
+// =========================================================
+
+data class SkillUnlockSummary(val description: String, val levelRequired: Int)
+
+data class SkillActionSummary(val actionId: String, val displayName: String, val levelRequired: Int)
+
+data class SkillDetailState(
+    val skillId: String,
+    val displayName: String,
+    val level: Int,
+    val currentXp: Long,
+    val xpToNextLevel: Long,
+    val earnedUnlocks: List<SkillUnlockSummary>,
+    val nextUnlock: SkillUnlockSummary?,       // null if none remaining
+    val availableActions: List<SkillActionSummary>
+)
+
+@Composable
+fun SkillDetailScreen(
+    state: SkillDetailState,
+    onBack: () -> Unit,
+    onStartAction: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    startButtonLabel: String = "Start " + state.displayName
+) {
+    var showAdvanced by remember { mutableStateOf(false) }
+    var showActionPicker by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(text = "Level " + state.level, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        ThinProgressBarPublic(skillProgressFractionPublic(state.currentXp, state.xpToNextLevel))
+
+        if (showAdvanced) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "XP: " + state.currentXp + "  |  " + state.xpToNextLevel + " to next level",
+                style = MaterialTheme.typography.labelSmall
+            )
+            state.nextUnlock?.let {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Next unlock at level " + it.levelRequired + ": " + it.description,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        TextButton(onClick = { showAdvanced = !showAdvanced }) {
+            Text(text = if (showAdvanced) "Hide details" else "Show details")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { showActionPicker = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = startButtonLabel)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (state.earnedUnlocks.isNotEmpty()) {
+            Text(text = "Unlocks earned", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            state.earnedUnlocks.forEach { unlock ->
+                Text(
+                    text = "• " + unlock.description + " (Lv. " + unlock.levelRequired + ")",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
+            }
+        }
+    }
+
+    if (showActionPicker) {
+        ActionPickerSheet(
+            actions = state.availableActions,
+            onActionSelected = {
+                showActionPicker = false
+                onStartAction(it)
+            },
+            onDismiss = { showActionPicker = false }
+        )
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun ActionPickerSheet(
+    actions: List<SkillActionSummary>,
+    onActionSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Choose an action", style = MaterialTheme.typography.titleMedium) },
+        text = {
+            Column {
+                if (actions.isEmpty()) {
+                    Text(text = "No actions available at your current level.", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                    items(actions) { action ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { onActionSelected(action.actionId) }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ThinProgressBarPublic(fraction: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }
+}
+
+private fun skillProgressFractionPublic(currentXp: Long, xpToNextLevel: Long): Float {
+    val total = currentXp + xpToNextLevel
+    if (total <= 0) return 0f
+    return (currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+}
+
+===== InventorySlotEntry definition =====
+data class InventorySlotEntry(val itemId: String, var quantity: Int)
+
+class Inventory(
+    var maxSlots: Int = 100,
+    private val entries: MutableMap<String, InventorySlotEntry> = mutableMapOf(),
+    private val equipped: MutableMap<EquipSlot, String> = mutableMapOf()
+) {
+
+===== buildSmithingState() =====
+private fun buildSmithingState(summary: SkillSummary): SmithingState {
+    val materials = SMITHING_METALS.map { (materialId, displayName, barItemId) ->
+        val barRecipe = RecipeCatalog.forOutput(barItemId)?.let { recipeToSmithingSummary(it) }
+        val gearRecipes = RecipeCatalog.recipes
+            .filter { it.skillRequired == "SMITHING" && it.ingredients.any { ing -> ing.itemId == barItemId } }
+            .map { recipeToSmithingSummary(it) }
+            .sortedBy { it.levelRequired }
+        SmithingMaterialCatalogEntry(
+            material = SmithingMaterialOption(materialId, displayName),
+            bar = barRecipe,
+            gear = gearRecipes
+        )
+    }
+    return SmithingState(
+        displayName = summary.displayName,
+        level = summary.level,
+        currentXp = summary.currentXp,
+        xpToNextLevel = summary.xpToNextLevel,
+        materials = materials
+    )
+}
+
+===== buildSkillDetailState() full (latest, post Step 7) =====
+private fun buildSkillDetailState(skillId: String, summary: SkillSummary): SkillDetailState {
+    val skillType = SkillType.valueOf(skillId)
+
+    val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
+        SkillUnlockSummary(
+            description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+            levelRequired = unlock.levelRequired
+        )
+    }
+
+    val next = UnlockTable.allUnlocksFor(skillType)
+        .filter { it.levelRequired > summary.level }
+        .minByOrNull { it.levelRequired }
+        ?.let { unlock ->
+            SkillUnlockSummary(
+                description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+                levelRequired = unlock.levelRequired
+            )
+        }
+
+    val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
+        RecipeCatalog.recipes
+            .filter { it.skillRequired == skillId && it.levelRequired <= summary.level }
+            .map { SkillActionSummary(it.outputItemId, ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId, it.levelRequired) }
+            .sortedBy { it.levelRequired }
+    } else {
+        ActionCatalog.allFor(skillType)
+            .filter { it.levelRequired <= summary.level }
+            .map { SkillActionSummary(it.itemId, it.displayName, it.levelRequired) }
+    }
+
+    return SkillDetailState(
+        skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
+        currentXp = summary.currentXp, xpToNextLevel = summary.xpToNextLevel,
+        earnedUnlocks = earned,
+        nextUnlock = next,
+        availableActions = actions
+    )
+}
