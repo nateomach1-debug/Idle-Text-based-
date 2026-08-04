@@ -1,0 +1,360 @@
+]633;E;echo "===== Recipe class definition (ingredients field) =====";1ff832ac-8c8c-4f4f-a18a-27a2d4c66967]633;C===== Recipe class definition (ingredients field) =====
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:16:data class RecipeIngredient(val itemId: String, val quantity: Int)
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:18:data class Recipe(
+--- full Recipe definition ---
+data class RecipeIngredient(val itemId: String, val quantity: Int)
+
+data class Recipe(
+    val outputItemId: String,
+    val outputQuantity: Int,
+    val ingredients: List<RecipeIngredient>,
+    val skillRequired: String,
+    val levelRequired: Int
+)
+
+===== ActionPickerSheet (recipe/action list UI) =====
+app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt
+--- full ActionPickerSheet ---
+private fun ActionPickerSheet(
+    actions: List<SkillActionSummary>,
+    onActionSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Choose an action", style = MaterialTheme.typography.titleMedium) },
+        text = {
+            Column {
+                if (actions.isEmpty()) {
+                    Text(text = "No actions available at your current level.", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                    items(actions) { action ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { onActionSelected(action.actionId) }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancel")
+            }
+        }
+    )
+}
+
+===== InventoryService: quantity-check methods =====
+
+===== SmithingScreen.kt: item list rendering (Gear/Bars) =====
+package com.yourname.idlerpg
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+
+// =========================================================
+// SMITHING SCREEN DATA MODELS
+// =========================================================
+
+data class SmithingMaterialOption(val materialId: String, val displayName: String)
+
+data class SmithingIngredientSummary(val itemId: String, val displayName: String, val quantity: Int)
+
+data class SmithingRecipeSummary(
+    val itemId: String,
+    val displayName: String,
+    val levelRequired: Int,
+    val ingredients: List<SmithingIngredientSummary>
+)
+
+data class SmithingMaterialCatalogEntry(
+    val material: SmithingMaterialOption,
+    val bar: SmithingRecipeSummary?,
+    val gear: List<SmithingRecipeSummary>
+)
+
+data class SmithingState(
+    val displayName: String,
+    val level: Int,
+    val currentXp: Long,
+    val xpToNextLevel: Long,
+    val materials: List<SmithingMaterialCatalogEntry>
+)
+
+// =========================================================
+// SMITHING SCREEN
+// =========================================================
+
+@Composable
+fun SmithingScreen(
+    state: SmithingState,
+    onBack: () -> Unit,
+    onStartAction: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var materialDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedMaterialId by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(text = "Level " + state.level, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        SmithingXpBar(state.currentXp, state.xpToNextLevel)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Box {
+            Button(
+                onClick = { materialDropdownExpanded = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "Select Material")
+            }
+            DropdownMenu(
+                expanded = materialDropdownExpanded,
+                onDismissRequest = { materialDropdownExpanded = false }
+            ) {
+                state.materials.forEach { entry ->
+                    DropdownMenuItem(
+                        text = { Text(text = entry.material.displayName) },
+                        onClick = {
+                            materialDropdownExpanded = false
+                            selectedMaterialId = entry.material.materialId
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    val selectedEntry = state.materials.find { it.material.materialId == selectedMaterialId }
+    if (selectedEntry != null) {
+        SmithingMaterialPickerDialog(
+            entry = selectedEntry,
+            playerLevel = state.level,
+            onItemSelected = { itemId ->
+                selectedMaterialId = null
+                onStartAction(itemId)
+            },
+            onDismiss = { selectedMaterialId = null }
+        )
+    }
+}
+
+@Composable
+private fun SmithingXpBar(currentXp: Long, xpToNextLevel: Long) {
+    val total = currentXp + xpToNextLevel
+    val fraction = if (total > 0) (currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f) else 0f
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }
+}
+
+// =========================================================
+// MATERIAL PICKER DIALOG -- Bars / Gear toggle
+// =========================================================
+
+@Composable
+private fun SmithingMaterialPickerDialog(
+    entry: SmithingMaterialCatalogEntry,
+    playerLevel: Int,
+    onItemSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var showingBars by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = entry.material.displayName, style = MaterialTheme.typography.titleMedium) },
+        text = {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { showingBars = false },
+                        modifier = Modifier.weight(1f),
+                        colors = if (!showingBars) {
+                            ButtonDefaults.buttonColors()
+                        } else {
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    ) {
+                        Text(text = "Gear")
+                    }
+                    Button(
+                        onClick = { showingBars = true },
+                        modifier = Modifier.weight(1f),
+                        colors = if (showingBars) {
+                            ButtonDefaults.buttonColors()
+                        } else {
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    ) {
+                        Text(text = "Bars")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (showingBars) {
+                    val bar = entry.bar
+                    if (bar == null) {
+                        Text(
+                            text = "No bar recipe for this material.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                            item {
+                                SmithingRecipeRow(
+                                    recipe = bar,
+                                    playerLevel = playerLevel,
+                                    showIngredients = true,
+                                    onClick = { onItemSelected(bar.itemId) }
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    if (entry.gear.isEmpty()) {
+                        Text(
+                            text = "No gear recipes for this material.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                            items(entry.gear) { recipe ->
+                                SmithingRecipeRow(
+                                    recipe = recipe,
+                                    playerLevel = playerLevel,
+                                    showIngredients = false,
+                                    onClick = { onItemSelected(recipe.itemId) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(text = "Cancel") }
+        }
+    )
+}
+
+@Composable
+private fun SmithingRecipeRow(
+    recipe: SmithingRecipeSummary,
+    playerLevel: Int,
+    showIngredients: Boolean,
+    onClick: () -> Unit
+) {
+    val eligible = playerLevel >= recipe.levelRequired
+    val contentColor = if (eligible) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .then(if (eligible) Modifier.clickable { onClick() } else Modifier)
+            .padding(vertical = 10.dp, horizontal = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = recipe.displayName, style = MaterialTheme.typography.bodyMedium, color = contentColor)
+            Text(text = "Lv. " + recipe.levelRequired, style = MaterialTheme.typography.labelSmall, color = contentColor)
+        }
+        if (showIngredients && recipe.ingredients.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = recipe.ingredients.joinToString(", ") { it.quantity.toString() + "x " + it.displayName },
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor
+            )
+        }
+    }
+}
