@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 data class OfflineSummary(
     val awaySeconds: Long,
@@ -18,6 +19,12 @@ data class OfflineSummary(
     val itemName: String,
     val quantity: Int,
     val xpEarned: Long
+)
+
+data class ActiveQueueInfo(
+    val label: String,
+    val secondsPerAction: Long,
+    val startedAt: Instant
 )
 
 private fun formatItemName(itemId: String): String =
@@ -54,6 +61,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
     val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+
+    private val _activeQueueInfo = MutableStateFlow<ActiveQueueInfo?>(null)
+    val activeQueueInfo: StateFlow<ActiveQueueInfo?> = _activeQueueInfo.asStateFlow()
+
+    private val _currency = MutableStateFlow(0L to 0L)
+    val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -97,6 +110,7 @@ fun login(email: String, password: String): ServiceResult<Account> {
     if (result is ServiceResult.Success) {
         sessionManager.saveSession(result.value.id)
             _currentAccountId.value = result.value.id
+            refreshCurrency()
     }
     return result
 }
@@ -105,6 +119,7 @@ fun login(email: String, password: String): ServiceResult<Account> {
     if (result is ServiceResult.Success) {
         sessionManager.saveSession(result.value.id)
             _currentAccountId.value = result.value.id
+            refreshCurrency()
     }
     return result
   }
@@ -112,6 +127,7 @@ fun login(email: String, password: String): ServiceResult<Account> {
     val accountId = sessionManager.getSavedAccountId() ?: return null
     val account = accountService.accountById(accountId) ?: return null
     _currentAccountId.value = account.id
+    refreshCurrency()
     return account
 }
 
@@ -183,6 +199,7 @@ fun logout() {
         craftActionProgressSeconds = 0
         refreshSkills()
         refreshInventory()
+        refreshActiveQueue()
     }
 
     fun startSkillAction(skillType: SkillType, itemId: String) {
@@ -192,12 +209,14 @@ fun logout() {
         offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
         offlineIdleService.recordLastSeen(characterId)
         skillActionProgressSeconds = 0
+        refreshActiveQueue()
     }
 
     fun stopSkillAction() {
         val characterId = _currentCharacterId.value ?: return
         offlineIdleService.stopQueue(characterId)
         skillActionProgressSeconds = 0
+        refreshActiveQueue()
     }
 
     private fun tickSkilling() {
@@ -275,12 +294,14 @@ fun logout() {
         )
         offlineIdleService.recordLastSeen(characterId)
         craftActionProgressSeconds = 0
+        refreshActiveQueue()
     }
 
     fun stopCraftingAction() {
         val characterId = _currentCharacterId.value ?: return
         offlineIdleService.stopQueue(characterId)
         craftActionProgressSeconds = 0
+        refreshActiveQueue()
     }
 
     private fun tickCrafting() {
@@ -304,6 +325,7 @@ fun logout() {
 
         if (queue.isTargetReached()) {
             offlineIdleService.stopQueue(characterId)
+            refreshActiveQueue()
         }
     }
 
@@ -330,5 +352,33 @@ fun logout() {
         val inv = inventoryService.inventoryFor(characterId)
         _inventoryItems.value = inv.allItems()
         _equippedItems.value = inv.allEquipped()
+    }
+
+    fun refreshActiveQueue() {
+        val characterId = _currentCharacterId.value
+        val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
+        _activeQueueInfo.value = when (queue) {
+            is ActiveQueue.SkillingQueue -> {
+                val skillType = SkillType.valueOf(queue.skillId)
+                val action = ActionCatalog.find(skillType, queue.itemId)
+                ActiveQueueInfo(
+                    label = action?.displayName ?: formatItemName(queue.itemId),
+                    secondsPerAction = queue.secondsPerAction,
+                    startedAt = queue.startedAt
+                )
+            }
+            is ActiveQueue.CraftingQueue -> ActiveQueueInfo(
+                label = "Crafting " + formatItemName(queue.itemId),
+                secondsPerAction = queue.secondsPerAction,
+                startedAt = queue.startedAt
+            )
+            else -> null
+        }
+    }
+
+    fun refreshCurrency() {
+        val accountId = _currentAccountId.value ?: return
+        val account = accountService.accountById(accountId) ?: return
+        _currency.value = account.softCurrency to account.premiumCurrency
     }
 }
