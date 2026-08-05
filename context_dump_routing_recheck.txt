@@ -1,0 +1,28 @@
+]633;E;echo "===== current buildSkillDetailState / buildSmithingState / routing block =====";7ea733e9-5a04-4ba2-85dd-bbe8a7c954a8]633;C===== current buildSkillDetailState / buildSmithingState / routing block =====
+550:                                    when (screen.skillId) {
+551:                                        "SMITHING" -> SmithingScreen(
+556:                                        in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
+562:                                        else -> SkillDetailScreen(
+
+--- exact routing block with context ---
+                                    when (screen.skillId) {
+                                        "SMITHING" -> SmithingScreen(
+                                            buildSmithingState(it),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { itemId -> gameViewModel.startCraftingAction(itemId) }
+                                        )
+                                        in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
+                                            buildSkillDetailState(screen.skillId, it),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { itemId -> gameViewModel.startCraftingAction(itemId) },
+                                            startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
+                                        )
+                                        else -> SkillDetailScreen(
+                                            buildSkillDetailState(screen.skillId, it),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+                                        )
+                                    }
+                                }
+                            }
+
