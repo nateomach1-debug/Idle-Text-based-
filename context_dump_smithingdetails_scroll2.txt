@@ -1,0 +1,306 @@
+]633;E;echo "===== SmithingScreen.kt: lines 79-140 (full header through material button) =====";54eab530-d6b2-426c-9f24-70c1929c6aea]633;C===== SmithingScreen.kt: lines 79-140 (full header through material button) =====
+fun SmithingScreen(
+    state: SmithingState,
+    onBack: () -> Unit,
+    onStartAction: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var materialDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedMaterialId by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(text = "Level " + state.level, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        SmithingXpBar(state.currentXp, state.xpToNextLevel)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Box {
+            Button(
+                onClick = { materialDropdownExpanded = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "Select Material")
+            }
+            DropdownMenu(
+                expanded = materialDropdownExpanded,
+                onDismissRequest = { materialDropdownExpanded = false }
+            ) {
+                state.materials.forEach { entry ->
+                    DropdownMenuItem(
+                        text = { Text(text = entry.material.displayName) },
+                        onClick = {
+                            materialDropdownExpanded = false
+                            selectedMaterialId = entry.material.materialId
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    val selectedEntry = state.materials.find { it.material.materialId == selectedMaterialId }
+    if (selectedEntry != null) {
+        SmithingMaterialPickerDialog(
+            entry = selectedEntry,
+            playerLevel = state.level,
+            onItemSelected = { itemId ->
+                selectedMaterialId = null
+                onStartAction(itemId)
+            },
+
+===== full SkillsScreen.kt =====
+package com.yourname.idlerpg.ui.screens
+
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+
+enum class SkillsViewMode { LIST, GRID }
+
+private const val PREFS_NAME = "idlerpg_prefs"
+private const val KEY_SKILLS_VIEW_MODE = "skills_view_mode"
+
+private fun loadSavedViewMode(context: Context): SkillsViewMode {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val saved = prefs.getString(KEY_SKILLS_VIEW_MODE, SkillsViewMode.LIST.name)
+    return runCatching { SkillsViewMode.valueOf(saved ?: SkillsViewMode.LIST.name) }
+        .getOrDefault(SkillsViewMode.LIST)
+}
+
+private fun saveViewMode(context: Context, mode: SkillsViewMode) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_SKILLS_VIEW_MODE, mode.name).apply()
+}
+
+data class SkillSummary(
+    val skillId: String,
+    val displayName: String,
+    val level: Int,
+    val currentXp: Long,
+    val xpToNextLevel: Long
+)
+
+data class SkillGroupSection(
+    val title: String,
+    val skills: List<SkillSummary>
+)
+
+fun buildSkillGroupSections(allSkills: Map<String, SkillSummary>): List<SkillGroupSection> {
+    fun skill(id: String): SkillSummary? = allSkills[id]
+
+    val pairedSections = listOf(
+        "Mining & Smithing" to listOf("MINING", "SMITHING"),
+        "Fishing & Cooking" to listOf("FISHING", "COOKING"),
+        "Woodcutting & Fletching" to listOf("WOODCUTTING", "FLETCHING"),
+        "Farming & Alchemy" to listOf("FARMING", "ALCHEMY"),
+        "Thieving & Crafting" to listOf("THIEVING", "CRAFTING")
+    ).map { (title, ids) ->
+        SkillGroupSection(title, ids.mapNotNull { skill(it) })
+    }
+
+    val combatSection = SkillGroupSection(
+        title = "Combat",
+        skills = listOf("ATTACK", "STRENGTH", "DEFENSE", "ARCHERY", "PRAYER", "MAGIC").mapNotNull { skill(it) }
+    )
+
+    return pairedSections + combatSection
+}
+
+@Composable
+fun SkillsScreen(
+    allSkills: Map<String, SkillSummary>,
+    onSkillSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var viewMode by remember { mutableStateOf(loadSavedViewMode(context)) }
+    val sections = remember(allSkills) { buildSkillGroupSections(allSkills) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Skills", style = MaterialTheme.typography.headlineMedium)
+            ViewModeToggle(
+                current = viewMode,
+                onChange = {
+                    viewMode = it
+                    saveViewMode(context, it)
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (viewMode) {
+            SkillsViewMode.LIST -> SkillsListView(sections, onSkillSelected)
+            SkillsViewMode.GRID -> SkillsGridView(sections, onSkillSelected)
+        }
+    }
+}
+
+@Composable
+private fun ViewModeToggle(current: SkillsViewMode, onChange: (SkillsViewMode) -> Unit) {
+    Row {
+        IconButton(onClick = { onChange(SkillsViewMode.LIST) }) {
+            Icon(
+                imageVector = Icons.Filled.ViewList,
+                contentDescription = "List view",
+                tint = if (current == SkillsViewMode.LIST) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+        IconButton(onClick = { onChange(SkillsViewMode.GRID) }) {
+            Icon(
+                imageVector = Icons.Filled.GridView,
+                contentDescription = "Grid view",
+                tint = if (current == SkillsViewMode.GRID) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun SkillsListView(sections: List<SkillGroupSection>, onSkillSelected: (String) -> Unit) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        sections.forEach { section ->
+            item { SectionHeader(section.title) }
+            items(section.skills) { skill ->
+                SkillListRow(skill, onClick = { onSkillSelected(skill.skillId) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkillsGridView(sections: List<SkillGroupSection>, onSkillSelected: (String) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        sections.forEach { section ->
+            item(span = { GridItemSpan(maxLineSpan) }) { SectionHeader(section.title) }
+            items(section.skills) { skill ->
+                SkillGridTile(skill, onClick = { onSkillSelected(skill.skillId) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+private fun SkillListRow(skill: SkillSummary, onClick: () -> Unit) {
+    val progressFraction = skillProgressFraction(skill)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Text(text = skill.displayName, style = MaterialTheme.typography.titleMedium)
+                Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            ThinProgressBar(progressFraction)
+        }
+    }
+}
+
+@Composable
+private fun SkillGridTile(skill: SkillSummary, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(12.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = skill.displayName, style = MaterialTheme.typography.labelSmall)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun ThinProgressBar(fraction: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }
+}
+
+private fun skillProgressFraction(skill: SkillSummary): Float {
+    val total = skill.currentXp + skill.xpToNextLevel
+    if (total <= 0) return 0f
+    return (skill.currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+}
+
+===== UnlockTable structure =====
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:101:object UnlockTable {
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:103:        SkillUnlock(SkillType.MINING, 10, listOf(Effect.AccessUnlock("Iron Ore node"))),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:104:        SkillUnlock(SkillType.MINING, 25, listOf(
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:108:        SkillUnlock(SkillType.ATTACK, 30, listOf(
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:112:        SkillUnlock(SkillType.MAGIC, 40, listOf(
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:118:    fun unlocksEarnedAt(skill: SkillType, level: Int): List<SkillUnlock> =
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:121:    fun allUnlocksFor(skill: SkillType): List<SkillUnlock> =
