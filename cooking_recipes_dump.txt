@@ -1,0 +1,198 @@
+983-            ingredients = listOf(RecipeIngredient("copper_bar", 1)),
+984-            skillRequired = "SMITHING",
+985-            levelRequired = 1
+986-        ),
+987-        Recipe(
+988-            outputItemId = "cooked_shrimp",
+989-            outputQuantity = 1,
+990-            ingredients = listOf(RecipeIngredient("raw_shrimp", 1)),
+991:            skillRequired = "COOKING",
+992-            levelRequired = 1
+993-        ),
+994-        Recipe(
+995-            outputItemId = "cooked_anchovies",
+996-            outputQuantity = 1,
+997-            ingredients = listOf(RecipeIngredient("raw_anchovies", 1)),
+998:            skillRequired = "COOKING",
+999-            levelRequired = 1
+1000-        ),
+1001-        Recipe(
+1002-            outputItemId = "cooked_sardine",
+1003-            outputQuantity = 1,
+1004-            ingredients = listOf(RecipeIngredient("raw_sardine", 1)),
+1005:            skillRequired = "COOKING",
+1006-            levelRequired = 5
+1007-        ),
+1008-        Recipe(
+1009-            outputItemId = "cooked_chicken",
+1010-            outputQuantity = 1,
+1011-            ingredients = listOf(RecipeIngredient("raw_chicken", 1)),
+1012:            skillRequired = "COOKING",
+1013-            levelRequired = 8
+1014-        ),
+1015-        Recipe(
+1016-            outputItemId = "cooked_herring",
+1017-            outputQuantity = 1,
+1018-            ingredients = listOf(RecipeIngredient("raw_herring", 1)),
+1019:            skillRequired = "COOKING",
+1020-            levelRequired = 10
+1021-        ),
+1022-        Recipe(
+1023-            outputItemId = "cooked_beef",
+1024-            outputQuantity = 1,
+1025-            ingredients = listOf(RecipeIngredient("raw_beef", 1)),
+1026:            skillRequired = "COOKING",
+1027-            levelRequired = 12
+1028-        ),
+1029-        Recipe(
+1030-            outputItemId = "cooked_crayfish",
+1031-            outputQuantity = 1,
+1032-            ingredients = listOf(RecipeIngredient("raw_crayfish", 1)),
+1033:            skillRequired = "COOKING",
+1034-            levelRequired = 15
+1035-        ),
+1036-        Recipe(
+1037-            outputItemId = "cooked_trout",
+1038-            outputQuantity = 1,
+1039-            ingredients = listOf(RecipeIngredient("raw_trout", 1)),
+1040:            skillRequired = "COOKING",
+1041-            levelRequired = 20
+1042-        ),
+1043-        Recipe(
+1044-            outputItemId = "cooked_salmon",
+1045-            outputQuantity = 1,
+1046-            ingredients = listOf(RecipeIngredient("raw_salmon", 1)),
+1047:            skillRequired = "COOKING",
+1048-            levelRequired = 25
+1049-        ),
+1050-        Recipe(
+1051-            outputItemId = "cooked_tuna",
+1052-            outputQuantity = 1,
+1053-            ingredients = listOf(RecipeIngredient("raw_tuna", 1)),
+1054:            skillRequired = "COOKING",
+1055-            levelRequired = 30
+1056-        ),
+1057-        Recipe(
+1058-            outputItemId = "cooked_mackerel",
+1059-            outputQuantity = 1,
+1060-            ingredients = listOf(RecipeIngredient("raw_mackerel", 1)),
+1061:            skillRequired = "COOKING",
+1062-            levelRequired = 35
+1063-        ),
+1064-        Recipe(
+1065-            outputItemId = "cooked_swordfish",
+1066-            outputQuantity = 1,
+1067-            ingredients = listOf(RecipeIngredient("raw_swordfish", 1)),
+1068:            skillRequired = "COOKING",
+1069-            levelRequired = 40
+1070-        ),
+1071-        Recipe(
+1072-            outputItemId = "cooked_lobster",
+1073-            outputQuantity = 1,
+1074-            ingredients = listOf(RecipeIngredient("raw_lobster", 1)),
+1075:            skillRequired = "COOKING",
+1076-            levelRequired = 45
+1077-        ),
+1078-        Recipe(
+1079-            outputItemId = "cooked_crab",
+1080-            outputQuantity = 1,
+1081-            ingredients = listOf(RecipeIngredient("raw_crab", 1)),
+1082:            skillRequired = "COOKING",
+1083-            levelRequired = 50
+1084-        ),
+1085-        Recipe(
+1086-            outputItemId = "cooked_shark",
+1087-            outputQuantity = 1,
+1088-            ingredients = listOf(RecipeIngredient("raw_shark", 1)),
+1089:            skillRequired = "COOKING",
+1090-            levelRequired = 55
+1091-        ),
+1092-        Recipe(
+1093-            outputItemId = "cooked_monkfish",
+1094-            outputQuantity = 1,
+1095-            ingredients = listOf(RecipeIngredient("raw_monkfish", 1)),
+1096:            skillRequired = "COOKING",
+1097-            levelRequired = 60
+1098-        ),
+1099-        Recipe(
+1100-            outputItemId = "cooked_manta_ray",
+1101-            outputQuantity = 1,
+1102-            ingredients = listOf(RecipeIngredient("raw_manta_ray", 1)),
+1103:            skillRequired = "COOKING",
+1104-            levelRequired = 65
+1105-        ),
+1106-        Recipe(
+1107-            outputItemId = "cooked_eel",
+1108-            outputQuantity = 1,
+1109-            ingredients = listOf(RecipeIngredient("raw_eel", 1)),
+1110:            skillRequired = "COOKING",
+1111-            levelRequired = 70
+1112-        ),
+1113-        Recipe(
+1114-            outputItemId = "cooked_deep_sea_cod",
+1115-            outputQuantity = 1,
+1116-            ingredients = listOf(RecipeIngredient("raw_deep_sea_cod", 1)),
+1117:            skillRequired = "COOKING",
+1118-            levelRequired = 75
+1119-        ),
+1120-        Recipe(
+1121-            outputItemId = "cooked_anglerfish",
+1122-            outputQuantity = 1,
+1123-            ingredients = listOf(RecipeIngredient("raw_anglerfish", 1)),
+1124:            skillRequired = "COOKING",
+1125-            levelRequired = 80
+1126-        ),
+1127-        Recipe(
+1128-            outputItemId = "bread_dough",
+1129-            outputQuantity = 1,
+1130-            ingredients = listOf(RecipeIngredient("flour", 2), RecipeIngredient("vial_of_water", 1)),
+1131:            skillRequired = "COOKING",
+1132-            levelRequired = 28
+1133-        ),
+1134-        Recipe(
+1135-            outputItemId = "bread",
+1136-            outputQuantity = 1,
+1137-            ingredients = listOf(RecipeIngredient("bread_dough", 1)),
+1138:            skillRequired = "COOKING",
+1139-            levelRequired = 28
+1140-        ),
+1141-        Recipe(
+1142-            outputItemId = "meat_pie",
+1143-            outputQuantity = 1,
+1144-            ingredients = listOf(RecipeIngredient("pie_shell", 1), RecipeIngredient("cooked_beef", 1)),
+1145:            skillRequired = "COOKING",
+1146-            levelRequired = 34
+1147-        ),
+1148-        Recipe(
+1149-            outputItemId = "cake",
+1150-            outputQuantity = 1,
+1151-            ingredients = listOf(RecipeIngredient("cake_mix", 1), RecipeIngredient("vial_of_water", 1)),
+1152:            skillRequired = "COOKING",
+1153-            levelRequired = 42
+1154-        ),
+1155-        Recipe(
+1156-            outputItemId = "stew",
+1157-            outputQuantity = 1,
+1158-            ingredients = listOf(RecipeIngredient("potato", 1), RecipeIngredient("cooked_beef", 1)),
+1159:            skillRequired = "COOKING",
+1160-            levelRequired = 58
+1161-        ),
+1162-        Recipe(
+1163-            outputItemId = "gourmet_feast",
+1164-            outputQuantity = 1,
+1165-            ingredients = listOf(RecipeIngredient("cooked_shark", 1), RecipeIngredient("cooked_monkfish", 1), RecipeIngredient("cake", 1)),
+1166:            skillRequired = "COOKING",
+1167-            levelRequired = 85
+1168-        ),
+1169-        Recipe(
+1170-            outputItemId = "leviathan_steak",
+1171-            outputQuantity = 1,
+1172-            ingredients = listOf(RecipeIngredient("leviathan_spawn", 1)),
+1173:            skillRequired = "COOKING",
+1174-            levelRequired = 90
+1175-        ),
+1176-        Recipe(
+1177-            outputItemId = "ambrosia_banquet",
+1178-            outputQuantity = 1,
+1179-            ingredients = listOf(RecipeIngredient("cooked_anglerfish", 1), RecipeIngredient("gourmet_feast", 1), RecipeIngredient("celestial_herb", 1)),
+1180:            skillRequired = "COOKING",
