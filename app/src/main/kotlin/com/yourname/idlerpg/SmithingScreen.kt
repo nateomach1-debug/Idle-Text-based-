@@ -2,6 +2,7 @@ package com.yourname.idlerpg
 
 import com.yourname.idlerpg.ui.screens.MissingIngredientSummary
 import com.yourname.idlerpg.ui.screens.MissingIngredientsDialog
+import com.yourname.idlerpg.ui.screens.SkillUnlockSummary
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -68,7 +69,9 @@ data class SmithingState(
     val level: Int,
     val currentXp: Long,
     val xpToNextLevel: Long,
-    val materials: List<SmithingMaterialCatalogEntry>
+    val materials: List<SmithingMaterialCatalogEntry>,
+    val earnedUnlocks: List<SkillUnlockSummary> = emptyList(),
+    val nextUnlock: SkillUnlockSummary? = null
 )
 
 // =========================================================
@@ -84,6 +87,7 @@ fun SmithingScreen(
 ) {
     var materialDropdownExpanded by remember { mutableStateOf(false) }
     var selectedMaterialId by remember { mutableStateOf<String?>(null) }
+    var showAdvanced by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -103,7 +107,28 @@ fun SmithingScreen(
         Spacer(modifier = Modifier.height(8.dp))
         SmithingXpBar(state.currentXp, state.xpToNextLevel)
 
-        Spacer(modifier = Modifier.height(24.dp))
+        if (showAdvanced) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "XP: " + state.currentXp + "  |  " + state.xpToNextLevel + " to next level",
+                style = MaterialTheme.typography.labelSmall
+            )
+            state.nextUnlock?.let {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Next unlock at level " + it.levelRequired + ": " + it.description,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        TextButton(onClick = { showAdvanced = !showAdvanced }) {
+            Text(text = if (showAdvanced) "Hide details" else "Show details")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Box {
             Button(
@@ -125,6 +150,19 @@ fun SmithingScreen(
                         }
                     )
                 }
+            }
+        }
+
+        if (state.earnedUnlocks.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(text = "Unlocks earned", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            state.earnedUnlocks.forEach { unlock ->
+                Text(
+                    text = "\u2022 " + unlock.description + " (Lv. " + unlock.levelRequired + ")",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
             }
         }
     }

@@ -6,10 +6,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GridView
@@ -77,7 +81,9 @@ fun buildSkillGroupSections(allSkills: Map<String, SkillSummary>): List<SkillGro
 fun SkillsScreen(
     allSkills: Map<String, SkillSummary>,
     onSkillSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
+    gridState: LazyGridState = rememberLazyGridState()
 ) {
     val context = LocalContext.current
     var viewMode by remember { mutableStateOf(loadSavedViewMode(context)) }
@@ -102,8 +108,8 @@ fun SkillsScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         when (viewMode) {
-            SkillsViewMode.LIST -> SkillsListView(sections, onSkillSelected)
-            SkillsViewMode.GRID -> SkillsGridView(sections, onSkillSelected)
+            SkillsViewMode.LIST -> SkillsListView(sections, onSkillSelected, listState)
+            SkillsViewMode.GRID -> SkillsGridView(sections, onSkillSelected, gridState)
         }
     }
 }
@@ -129,8 +135,12 @@ private fun ViewModeToggle(current: SkillsViewMode, onChange: (SkillsViewMode) -
 }
 
 @Composable
-private fun SkillsListView(sections: List<SkillGroupSection>, onSkillSelected: (String) -> Unit) {
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+private fun SkillsListView(
+    sections: List<SkillGroupSection>,
+    onSkillSelected: (String) -> Unit,
+    listState: LazyListState
+) {
+    LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         sections.forEach { section ->
             item { SectionHeader(section.title) }
             items(section.skills) { skill ->
@@ -141,8 +151,13 @@ private fun SkillsListView(sections: List<SkillGroupSection>, onSkillSelected: (
 }
 
 @Composable
-private fun SkillsGridView(sections: List<SkillGroupSection>, onSkillSelected: (String) -> Unit) {
+private fun SkillsGridView(
+    sections: List<SkillGroupSection>,
+    onSkillSelected: (String) -> Unit,
+    gridState: LazyGridState
+) {
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Fixed(3),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)

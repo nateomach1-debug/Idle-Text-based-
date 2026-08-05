@@ -25,6 +25,10 @@ import com.yourname.idlerpg.ui.navigation.AppDestination
 import com.yourname.idlerpg.ui.navigation.SideRail
 import com.yourname.idlerpg.ui.screens.*
 import com.yourname.idlerpg.ui.theme.IdleRpgTheme
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import java.time.Instant
 
 class MainActivity : ComponentActivity() {
@@ -151,6 +155,23 @@ private fun recipeToSmithingSummary(recipe: Recipe): SmithingRecipeSummary {
 }
 
 private fun buildSmithingState(summary: SkillSummary, inventoryQuantities: Map<String, Int>): SmithingState {
+    val skillType = SkillType.SMITHING
+    val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
+        SkillUnlockSummary(
+            description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+            levelRequired = unlock.levelRequired
+        )
+    }
+    val next = UnlockTable.allUnlocksFor(skillType)
+        .filter { it.levelRequired > summary.level }
+        .minByOrNull { it.levelRequired }
+        ?.let { unlock ->
+            SkillUnlockSummary(
+                description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+                levelRequired = unlock.levelRequired
+            )
+        }
+
     val materials = SMITHING_METALS.map { (materialId, displayName, barItemId) ->
         val barRecipe = RecipeCatalog.forOutput(barItemId)?.let {
             recipeToSmithingSummary(it).copy(
@@ -176,7 +197,9 @@ private fun buildSmithingState(summary: SkillSummary, inventoryQuantities: Map<S
         level = summary.level,
         currentXp = summary.currentXp,
         xpToNextLevel = summary.xpToNextLevel,
-        materials = materials
+        materials = materials,
+        earnedUnlocks = earned,
+        nextUnlock = next
     )
 }
 
@@ -412,6 +435,8 @@ fun AppRoot(gameViewModel: GameViewModel) {
         inventoryItemEntries.associate { it.itemId to it.quantity }
     }
     val equipped = remember { demoEquipped() }
+    val skillsListScrollState = rememberLazyListState()
+    val skillsGridScrollState = rememberLazyGridState()
 
     val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
     val currency by gameViewModel.currency.collectAsState()
@@ -584,7 +609,9 @@ fun AppRoot(gameViewModel: GameViewModel) {
                             AppDestination.SKILLS -> when (val screen = skillsScreenState) {
                                 is SkillsScreenState.List -> SkillsScreen(
                                     allSkills = allSkills,
-                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) }
+                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) },
+                                    listState = skillsListScrollState,
+                                    gridState = skillsGridScrollState
                                 )
                                 is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
                                     when (screen.skillId) {

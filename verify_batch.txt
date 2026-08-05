@@ -1,0 +1,83 @@
+]633;E;echo "===== ItemsEquipmentSystem.kt: InventorySlotEntry + bronze_bar =====";d67bd8a0-097f-4bf8-a8bc-439271f9db77]633;C===== ItemsEquipmentSystem.kt: InventorySlotEntry + bronze_bar =====
+    fun xpFor(level: Int): Int = tierXp[tierIndexFor(level)]
+    fun secondsFor(level: Int): Long = tierSeconds[tierIndexFor(level)]
+}
+
+// =========================================================
+// INVENTORY
+// (ServiceResult now comes from SharedTypes.kt.)
+// =========================================================
+
+data class InventorySlotEntry(val itemId: String, val quantity: Int)
+
+class Inventory(
+    var maxSlots: Int = 100,
+    private val entries: MutableMap<String, InventorySlotEntry> = mutableMapOf(),
+    private val equipped: MutableMap<EquipSlot, String> = mutableMapOf()
+) {
+    fun usedSlots(): Int = entries.size
+
+    fun addItem(itemId: String, quantity: Int): ServiceResult<Unit> {
+        val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+        if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+
+        val existing = entries[itemId]
+        if (existing != null) {
+            if (!definition.isStackable) return ServiceResult.Failure("Item is not stackable and already present.")
+            entries[itemId] = existing.copy(quantity = existing.quantity + quantity)
+            return ServiceResult.Success(Unit)
+        }
+
+        if (usedSlots() >= maxSlots) return ServiceResult.Failure("Inventory is full.")
+        entries[itemId] = InventorySlotEntry(itemId, quantity)
+        return ServiceResult.Success(Unit)
+    }
+
+    fun removeItem(itemId: String, quantity: Int): ServiceResult<Unit> {
+        val entry = entries[itemId] ?: return ServiceResult.Failure("Item not in inventory.")
+        if (entry.quantity < quantity) return ServiceResult.Failure("Not enough quantity to remove.")
+
+        val newQuantity = entry.quantity - quantity
+        if (newQuantity <= 0) {
+            entries.remove(itemId)
+        } else {
+            entries[itemId] = entry.copy(quantity = newQuantity)
+        }
+        return ServiceResult.Success(Unit)
+    }
+911:            outputItemId = "bronze_bar",
+912-            outputQuantity = 1,
+913-            ingredients = listOf(RecipeIngredient("copper_ore", 1), RecipeIngredient("tin_ore", 1)),
+914-            skillRequired = "SMITHING",
+915-            levelRequired = 1
+916-        ),
+917-        Recipe(
+
+===== SkillsScreen.kt: scroll state signatures =====
+85:    listState: LazyListState = rememberLazyListState(),
+86:    gridState: LazyGridState = rememberLazyGridState()
+111:            SkillsViewMode.LIST -> SkillsListView(sections, onSkillSelected, listState)
+112:            SkillsViewMode.GRID -> SkillsGridView(sections, onSkillSelected, gridState)
+141:    listState: LazyListState
+143:    LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+157:    gridState: LazyGridState
+160:        state = gridState,
+
+===== SmithingScreen.kt: showAdvanced + unlocks =====
+73:    val earnedUnlocks: List<SkillUnlockSummary> = emptyList(),
+74:    val nextUnlock: SkillUnlockSummary? = null
+90:    var showAdvanced by remember { mutableStateOf(false) }
+110:        if (showAdvanced) {
+116:            state.nextUnlock?.let {
+127:        TextButton(onClick = { showAdvanced = !showAdvanced }) {
+128:            Text(text = if (showAdvanced) "Hide details" else "Show details")
+156:        if (state.earnedUnlocks.isNotEmpty()) {
+160:            state.earnedUnlocks.forEach { unlock ->
+
+===== MainActivity.kt: scroll state + smithing unlocks =====
+157:private fun buildSmithingState(summary: SkillSummary, inventoryQuantities: Map<String, Int>): SmithingState {
+438:    val skillsListScrollState = rememberLazyListState()
+439:    val skillsGridScrollState = rememberLazyGridState()
+613:                                    listState = skillsListScrollState,
+614:                                    gridState = skillsGridScrollState
+619:                                            buildSmithingState(it, inventoryQuantities),
