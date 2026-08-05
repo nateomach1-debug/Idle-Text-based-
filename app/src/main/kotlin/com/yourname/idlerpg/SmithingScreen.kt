@@ -1,5 +1,7 @@
 package com.yourname.idlerpg
 
+import com.yourname.idlerpg.ui.screens.MissingIngredientSummary
+import com.yourname.idlerpg.ui.screens.MissingIngredientsDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +53,8 @@ data class SmithingRecipeSummary(
     val itemId: String,
     val displayName: String,
     val levelRequired: Int,
-    val ingredients: List<SmithingIngredientSummary>
+    val ingredients: List<SmithingIngredientSummary>,
+    val missingIngredients: List<MissingIngredientSummary> = emptyList()
 )
 
 data class SmithingMaterialCatalogEntry(
@@ -268,7 +271,10 @@ private fun SmithingRecipeRow(
     showIngredients: Boolean,
     onClick: () -> Unit
 ) {
-    val eligible = playerLevel >= recipe.levelRequired
+    var showMissingDialog by remember { mutableStateOf(false) }
+    val levelOk = playerLevel >= recipe.levelRequired
+    val ingredientsOk = recipe.missingIngredients.isEmpty()
+    val eligible = levelOk && ingredientsOk
     val contentColor = if (eligible) {
         MaterialTheme.colorScheme.onSurface
     } else {
@@ -279,7 +285,10 @@ private fun SmithingRecipeRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .then(if (eligible) Modifier.clickable { onClick() } else Modifier)
+            .clickable {
+                if (!levelOk) return@clickable
+                if (!ingredientsOk) showMissingDialog = true else onClick()
+            }
             .padding(vertical = 10.dp, horizontal = 8.dp)
     ) {
         Row(
@@ -297,5 +306,13 @@ private fun SmithingRecipeRow(
                 color = contentColor
             )
         }
+    }
+
+    if (showMissingDialog) {
+        MissingIngredientsDialog(
+            itemName = recipe.displayName,
+            missing = recipe.missingIngredients,
+            onDismiss = { showMissingDialog = false }
+        )
     }
 }

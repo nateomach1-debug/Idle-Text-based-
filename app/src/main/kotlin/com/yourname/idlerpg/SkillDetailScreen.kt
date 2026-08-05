@@ -26,7 +26,14 @@ import androidx.compose.ui.unit.dp
 
 data class SkillUnlockSummary(val description: String, val levelRequired: Int)
 
-data class SkillActionSummary(val actionId: String, val displayName: String, val levelRequired: Int)
+data class MissingIngredientSummary(val displayName: String, val required: Int, val have: Int)
+
+data class SkillActionSummary(
+    val actionId: String,
+    val displayName: String,
+    val levelRequired: Int,
+    val missingIngredients: List<MissingIngredientSummary> = emptyList()
+)
 
 data class SkillDetailState(
     val skillId: String,
@@ -140,17 +147,7 @@ private fun ActionPickerSheet(
 
                 LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                     items(actions) { action ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable { onActionSelected(action.actionId) }
-                                .padding(vertical = 12.dp, horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium)
-                            Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall)
-                        }
+                        ActionRow(action = action, onActionSelected = onActionSelected)
                     }
                 }
             }
@@ -158,6 +155,71 @@ private fun ActionPickerSheet(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text(text = "Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> Unit) {
+    var showMissingDialog by remember { mutableStateOf(false) }
+    val affordable = action.missingIngredients.isEmpty()
+    val contentColor = if (affordable) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable {
+                if (affordable) onActionSelected(action.actionId) else showMissingDialog = true
+            }
+            .padding(vertical = 12.dp, horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium, color = contentColor)
+        Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall, color = contentColor)
+    }
+
+    if (showMissingDialog) {
+        MissingIngredientsDialog(
+            itemName = action.displayName,
+            missing = action.missingIngredients,
+            onDismiss = { showMissingDialog = false }
+        )
+    }
+}
+
+@Composable
+fun MissingIngredientsDialog(
+    itemName: String,
+    missing: List<MissingIngredientSummary>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Missing materials", style = MaterialTheme.typography.titleMedium) },
+        text = {
+            Column {
+                Text(
+                    text = "You need the following to craft " + itemName + ":",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                missing.forEach {
+                    Text(
+                        text = "\u2022 " + it.displayName + ": have " + it.have + " / need " + it.required,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "OK")
             }
         }
     )
