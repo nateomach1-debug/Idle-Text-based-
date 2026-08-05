@@ -1,0 +1,11 @@
+]633;E;echo "===== InventoryScreen route/call site in MainActivity.kt =====";7ea733e9-5a04-4ba2-85dd-bbe8a7c954a8]633;C===== InventoryScreen route/call site in MainActivity.kt =====
+631:                            AppDestination.INVENTORY -> when (inventoryScreenState) {
+632:                                InventoryScreenState.Items -> InventoryScreen(
+
+===== inventoryItems / equipped declarations =====
+409:    val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
+410:    val inventoryItems = remember(inventoryItemEntries) { buildInventoryItemSummaries(inventoryItemEntries) }
+414:    val equipped = remember { demoEquipped() }
+
+===== InventoryScreen.kt (or wherever it lives) =====
+app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt
