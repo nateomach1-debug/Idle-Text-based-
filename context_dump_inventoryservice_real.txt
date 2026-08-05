@@ -1,0 +1,8 @@
+]633;E;echo "===== InventoryService class in ItemsEquipmentSystem.kt =====";7ea733e9-5a04-4ba2-85dd-bbe8a7c954a8]633;C===== InventoryService class in ItemsEquipmentSystem.kt =====
+1911:class Inventory(
+1918:    fun addItem(itemId: String, quantity: Int): ServiceResult<Unit> {
+1995:    fun allItems(): List<InventorySlotEntry> = entries.values.toList()
+2046:class InventoryService {
+2049:    fun inventoryFor(characterId: String): Inventory =
+
+--- full InventoryService + Inventory class bodies ---
