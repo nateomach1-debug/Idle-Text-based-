@@ -1,0 +1,6 @@
+]633;E;echo "===== which file defines InventoryService? =====";7ea733e9-5a04-4ba2-85dd-bbe8a7c954a8]633;C===== which file defines InventoryService? =====
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt
+
+===== which file defines allItems()/addItem() for inventory? =====
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt
