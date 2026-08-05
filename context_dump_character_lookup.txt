@@ -1,0 +1,8 @@
+]633;E;echo "===== Character class + AccountService character lookup =====";5b7e5730-a0e9-419f-a084-5033a17b2b48]633;C===== Character class + AccountService character lookup =====
+38:data class Character(
+40:    val accountId: String,
+60:data class CharacterExport(
+61:    val id: String, val accountId: String, val displayName: String, val avatarId: String,
+214:    fun charactersFor(accountId: String): List<Character> =
+219:        val accountId = accountsByEmail[normalizedEmail]
+--- Character class body ---
