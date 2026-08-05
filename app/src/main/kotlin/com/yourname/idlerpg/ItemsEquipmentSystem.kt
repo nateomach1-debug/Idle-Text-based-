@@ -912,7 +912,7 @@ object RecipeCatalog {
             outputQuantity = 1,
             ingredients = listOf(RecipeIngredient("copper_ore", 1), RecipeIngredient("tin_ore", 1)),
             skillRequired = "SMITHING",
-            levelRequired = 5
+            levelRequired = 1
         ),
         Recipe(
             outputItemId = "iron_bar",
