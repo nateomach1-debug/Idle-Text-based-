@@ -1,0 +1,26 @@
+]633;E;echo "===== MarketTabButton composable definition =====";5b7e5730-a0e9-419f-a084-5033a17b2b48]633;C===== MarketTabButton composable definition =====
+89:private fun MarketTabButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
+--- full body ---
+
+===== full tab row context (lines 60-80) =====
+    myBuyOrders: List<MarketOrderSummary>,
+    mySellOrders: List<MarketOrderSummary>,
+    onCancelOrder: (String) -> Unit,
+    // Sell to Vendor
+    vendorSellableItems: List<InventoryItemSummary>,
+    onSellToVendor: (String, Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MarketTabButton("Browse", currentTab == MarketTab.BROWSE) { onTabSelected(MarketTab.BROWSE) }
+            MarketTabButton("My Orders", currentTab == MarketTab.MY_ORDERS) { onTabSelected(MarketTab.MY_ORDERS) }
+            MarketTabButton("Vendor", currentTab == MarketTab.SELL_TO_VENDOR) { onTabSelected(MarketTab.SELL_TO_VENDOR) }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (currentTab) {
