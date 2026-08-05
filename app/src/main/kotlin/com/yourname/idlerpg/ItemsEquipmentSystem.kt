@@ -1906,7 +1906,7 @@ object CraftingTierCurve {
 // (ServiceResult now comes from SharedTypes.kt.)
 // =========================================================
 
-data class InventorySlotEntry(val itemId: String, var quantity: Int)
+data class InventorySlotEntry(val itemId: String, val quantity: Int)
 
 class Inventory(
     var maxSlots: Int = 100,
@@ -1922,7 +1922,7 @@ class Inventory(
         val existing = entries[itemId]
         if (existing != null) {
             if (!definition.isStackable) return ServiceResult.Failure("Item is not stackable and already present.")
-            existing.quantity += quantity
+            entries[itemId] = existing.copy(quantity = existing.quantity + quantity)
             return ServiceResult.Success(Unit)
         }
 
@@ -1935,8 +1935,12 @@ class Inventory(
         val entry = entries[itemId] ?: return ServiceResult.Failure("Item not in inventory.")
         if (entry.quantity < quantity) return ServiceResult.Failure("Not enough quantity to remove.")
 
-        entry.quantity -= quantity
-        if (entry.quantity <= 0) entries.remove(itemId)
+        val newQuantity = entry.quantity - quantity
+        if (newQuantity <= 0) {
+            entries.remove(itemId)
+        } else {
+            entries[itemId] = entry.copy(quantity = newQuantity)
+        }
         return ServiceResult.Success(Unit)
     }
 
