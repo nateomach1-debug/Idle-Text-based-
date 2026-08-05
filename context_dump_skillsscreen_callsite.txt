@@ -1,0 +1,16 @@
+
+                        when (currentDestination) {
+                            AppDestination.HOME -> HomeScreen(state = homeState)
+
+                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+                                is SkillsScreenState.List -> SkillsScreen(
+                                    allSkills = allSkills,
+                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) }
+                                )
+                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+                                    when (screen.skillId) {
+                                        "SMITHING" -> SmithingScreen(
+                                            buildSmithingState(it, inventoryQuantities),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { itemId -> gameViewModel.startCraftingAction(itemId) }
+                                        )
