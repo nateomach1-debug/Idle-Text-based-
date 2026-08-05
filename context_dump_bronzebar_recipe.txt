@@ -1,0 +1,31 @@
+        ),
+        Recipe(
+            outputItemId = "copper_bar",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("copper_ore", 1)),
+            skillRequired = "SMITHING",
+            levelRequired = 1
+        ),
+        Recipe(
+            outputItemId = "tin_bar",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("tin_ore", 1)),
+            skillRequired = "SMITHING",
+            levelRequired = 1
+        ),
+        Recipe(
+            outputItemId = "bronze_bar",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("copper_ore", 1), RecipeIngredient("tin_ore", 1)),
+            skillRequired = "SMITHING",
+            levelRequired = 5
+        ),
+        Recipe(
+            outputItemId = "iron_bar",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("iron_ore", 1)),
+            skillRequired = "SMITHING",
+            levelRequired = 15
+        ),
+        Recipe(
+            outputItemId = "silver_bar",
