@@ -1,0 +1,30 @@
+package com.yourname.idlerpg
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yourname.idlerpg.data.GameViewModel
+import com.yourname.idlerpg.ui.components.RecoveryBar
+import com.yourname.idlerpg.ui.components.ChatBanner
+import com.yourname.idlerpg.ui.components.ChatChannelUi
+import com.yourname.idlerpg.ui.components.ChatMessageUi
+import com.yourname.idlerpg.ui.components.DmConversationSummary
+import com.yourname.idlerpg.ui.components.ChatMessageAction
+import com.yourname.idlerpg.ui.navigation.AppDestination
+import com.yourname.idlerpg.ui.navigation.SideRail
+import com.yourname.idlerpg.ui.screens.*
+import com.yourname.idlerpg.ui.theme.IdleRpgTheme
+import java.time.Instant
+
+class MainActivity : ComponentActivity() {
