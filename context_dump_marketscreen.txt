@@ -1,0 +1,8 @@
+]633;E;echo "===== Market/Vendor screen file(s) =====";5b7e5730-a0e9-419f-a084-5033a17b2b48]633;C===== Market/Vendor screen file(s) =====
+app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt
+
+===== full content of matching file(s) around the button row =====
+--- app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt ---
+73:            MarketTabButton("Browse", currentTab == MarketTab.BROWSE) { onTabSelected(MarketTab.BROWSE) }
+74:            MarketTabButton("My Orders", currentTab == MarketTab.MY_ORDERS) { onTabSelected(MarketTab.MY_ORDERS) }
+75:            MarketTabButton("Vendor", currentTab == MarketTab.SELL_TO_VENDOR) { onTabSelected(MarketTab.SELL_TO_VENDOR) }
