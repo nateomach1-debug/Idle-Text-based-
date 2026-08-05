@@ -69,10 +69,25 @@ fun MarketScreen(
         Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MarketTabButton("Browse", currentTab == MarketTab.BROWSE) { onTabSelected(MarketTab.BROWSE) }
-            MarketTabButton("My Orders", currentTab == MarketTab.MY_ORDERS) { onTabSelected(MarketTab.MY_ORDERS) }
-            MarketTabButton("Vendor", currentTab == MarketTab.SELL_TO_VENDOR) { onTabSelected(MarketTab.SELL_TO_VENDOR) }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MarketTabButton(
+                label = "Browse",
+                isSelected = currentTab == MarketTab.BROWSE,
+                modifier = Modifier.weight(1f)
+            ) { onTabSelected(MarketTab.BROWSE) }
+            MarketTabButton(
+                label = "My Orders",
+                isSelected = currentTab == MarketTab.MY_ORDERS,
+                modifier = Modifier.weight(1f)
+            ) { onTabSelected(MarketTab.MY_ORDERS) }
+            MarketTabButton(
+                label = "Vendor",
+                isSelected = currentTab == MarketTab.SELL_TO_VENDOR,
+                modifier = Modifier.weight(1f)
+            ) { onTabSelected(MarketTab.SELL_TO_VENDOR) }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -86,11 +101,16 @@ fun MarketScreen(
 }
 
 @Composable
-private fun MarketTabButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
+private fun MarketTabButton(
+    label: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     if (isSelected) {
-        Button(onClick = onClick) { Text(text = label) }
+        Button(onClick = onClick, modifier = modifier) { Text(text = label) }
     } else {
-        OutlinedButton(onClick = onClick) { Text(text = label) }
+        OutlinedButton(onClick = onClick, modifier = modifier) { Text(text = label) }
     }
 }
 
