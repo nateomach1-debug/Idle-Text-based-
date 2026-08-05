@@ -61,7 +61,29 @@ private val RECIPE_BASED_SKILL_LABELS: Map<String, String> = mapOf(
     "ALCHEMY" to "Select Potion"
 )
 
-private fun buildSkillDetailState(skillId: String, summary: SkillSummary): SkillDetailState {
+private fun missingIngredientsFor(
+    ingredients: List<RecipeIngredient>,
+    inventoryQuantities: Map<String, Int>
+): List<MissingIngredientSummary> {
+    return ingredients.mapNotNull { ingredient ->
+        val have = inventoryQuantities[ingredient.itemId] ?: 0
+        if (have < ingredient.quantity) {
+            MissingIngredientSummary(
+                displayName = ItemCatalog.find(ingredient.itemId)?.name ?: ingredient.itemId,
+                required = ingredient.quantity,
+                have = have
+            )
+        } else {
+            null
+        }
+    }
+}
+
+private fun buildSkillDetailState(
+    skillId: String,
+    summary: SkillSummary,
+    inventoryQuantities: Map<String, Int>
+): SkillDetailState {
     val skillType = SkillType.valueOf(skillId)
 
     val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
@@ -84,7 +106,14 @@ private fun buildSkillDetailState(skillId: String, summary: SkillSummary): Skill
     val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
         RecipeCatalog.recipes
             .filter { it.skillRequired == skillId && it.levelRequired <= summary.level }
-            .map { SkillActionSummary(it.outputItemId, ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId, it.levelRequired) }
+            .map {
+                SkillActionSummary(
+                    actionId = it.outputItemId,
+                    displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
+                    levelRequired = it.levelRequired,
+                    missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+                )
+            }
             .sortedBy { it.levelRequired }
     } else {
         ActionCatalog.allFor(skillType)
@@ -121,12 +150,20 @@ private fun recipeToSmithingSummary(recipe: Recipe): SmithingRecipeSummary {
     return SmithingRecipeSummary(recipe.outputItemId, displayName, recipe.levelRequired, ingredients)
 }
 
-private fun buildSmithingState(summary: SkillSummary): SmithingState {
+private fun buildSmithingState(summary: SkillSummary, inventoryQuantities: Map<String, Int>): SmithingState {
     val materials = SMITHING_METALS.map { (materialId, displayName, barItemId) ->
-        val barRecipe = RecipeCatalog.forOutput(barItemId)?.let { recipeToSmithingSummary(it) }
+        val barRecipe = RecipeCatalog.forOutput(barItemId)?.let {
+            recipeToSmithingSummary(it).copy(
+                missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+            )
+        }
         val gearRecipes = RecipeCatalog.recipes
             .filter { it.skillRequired == "SMITHING" && it.ingredients.any { ing -> ing.itemId == barItemId } }
-            .map { recipeToSmithingSummary(it) }
+            .map {
+                recipeToSmithingSummary(it).copy(
+                    missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+                )
+            }
             .sortedBy { it.levelRequired }
         SmithingMaterialCatalogEntry(
             material = SmithingMaterialOption(materialId, displayName),
@@ -371,6 +408,9 @@ fun AppRoot(gameViewModel: GameViewModel) {
     val zones = remember { demoZones() }
     val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
     val inventoryItems = remember(inventoryItemEntries) { buildInventoryItemSummaries(inventoryItemEntries) }
+    val inventoryQuantities = remember(inventoryItemEntries) {
+        inventoryItemEntries.associate { it.itemId to it.quantity }
+    }
     val equipped = remember { demoEquipped() }
 
     val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
@@ -549,18 +589,18 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
                                     when (screen.skillId) {
                                         "SMITHING" -> SmithingScreen(
-                                            buildSmithingState(it),
+                                            buildSmithingState(it, inventoryQuantities),
                                             { skillsScreenState = SkillsScreenState.List },
                                             { itemId -> gameViewModel.startCraftingAction(itemId) }
                                         )
                                         in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
-                                            buildSkillDetailState(screen.skillId, it),
+                                            buildSkillDetailState(screen.skillId, it, inventoryQuantities),
                                             { skillsScreenState = SkillsScreenState.List },
                                             { itemId -> gameViewModel.startCraftingAction(itemId) },
                                             startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
                                         )
                                         else -> SkillDetailScreen(
-                                            buildSkillDetailState(screen.skillId, it),
+                                            buildSkillDetailState(screen.skillId, it, inventoryQuantities),
                                             { skillsScreenState = SkillsScreenState.List },
                                             { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
                                         )
