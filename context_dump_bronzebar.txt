@@ -1,0 +1,31 @@
+]633;E;echo "===== bronze bar recipe entries =====";7ea733e9-5a04-4ba2-85dd-bbe8a7c954a8]633;C===== bronze bar recipe entries =====
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:39:        SkillActionDefinition(SkillType.SMITHING, "bronze_bar", "Smelt Bronze Bar", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:856:        id = "bronze_bar",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:857:        name = "Bronze Bar",
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:2606:    "bronze_bar" to 12L,
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:31:            ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:38:            ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:45:            ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:52:            ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:59:            ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:66:            ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:73:            ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:80:            ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:87:            ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:94:            ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:101:            ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:108:            ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:115:            ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:122:            ingredients = listOf(RecipeIngredient("bronze_bar", 5)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:129:            ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:911:            outputItemId = "bronze_bar",
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:134:    Triple("bronze", "Bronze", "bronze_bar"),
+
+===== SMITHING_METALS definition (metal tier list) =====
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:133:private val SMITHING_METALS = listOf(
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:154:    val materials = SMITHING_METALS.map { (materialId, displayName, barItemId) ->
+
+===== metal base level / tier formula =====
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:144:private fun recipeToSmithingSummary(recipe: Recipe): SmithingRecipeSummary {
+app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt:11:object MetalTierItemCatalog {
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:81:   ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
