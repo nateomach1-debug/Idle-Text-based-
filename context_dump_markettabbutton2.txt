@@ -1,0 +1,27 @@
+private fun MarketTabButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    if (isSelected) {
+        Button(onClick = onClick) { Text(text = label) }
+    } else {
+        OutlinedButton(onClick = onClick) { Text(text = label) }
+    }
+}
+
+// ---------------- Browse ----------------
+
+@Composable
+private fun BrowseTab(
+    listings: List<MarketListingSummary>,
+    showingBuyOrders: Boolean,
+    onToggleMode: () -> Unit,
+    onItemSelected: (String) -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (showingBuyOrders) "Wanted (Buy Orders)" else "For Sale",
+                style = MaterialTheme.typography.titleMedium
+            )
