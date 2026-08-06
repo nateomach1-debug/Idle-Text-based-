@@ -1,0 +1,15 @@
+]633;E;echo "===== EconomyMarketSystem.kt: allListings =====";17719cb2-4e34-4fae-8034-a366c79ce74c]633;C===== EconomyMarketSystem.kt: allListings =====
+307:    fun allListings(): List<MarketPriceSummary> {
+319:            MarketPriceSummary(itemId, bestBuy, bestSell)
+324:data class MarketPriceSummary(val itemId: String, val bestBuyPrice: Long?, val bestSellPrice: Long?)
+
+===== GameViewModel.kt: market wiring =====
+
+===== MainActivity.kt: market call site =====
+282:private fun formatTimeAgo(instant: Instant): String {
+674:                                val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
+722:                                                .map { PriceHistoryRow(it.pricePerUnit, it.quantity, formatTimeAgo(it.executedAt)) }
+731:                                                gameViewModel.placeBuyOrder(itemId, qty, price)
+733:                                                gameViewModel.placeSellOrder(itemId, qty, price)
+749:                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+752:                                            gameViewModel.sellItemToVendor(sellItemId, quantity)

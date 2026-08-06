@@ -29,6 +29,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import java.time.Duration
 import java.time.Instant
 
 class MainActivity : ComponentActivity() {
@@ -278,34 +279,15 @@ private fun demoEquipped(): Map<EquipSlotUi, EquippedItemInfo?> = mapOf(
     EquipSlotUi.TOOL to EquippedItemInfo("pickaxe_bronze", "Bronze Pickaxe")
 )
 
-private fun demoMarketListings(): List<MarketListingSummary> = listOf(
-    MarketListingSummary("iron_ore", "Iron Ore", bestBuyPrice = 9, bestSellPrice = 11),
-    MarketListingSummary("steel_bar", "Steel Bar", bestBuyPrice = 40, bestSellPrice = 48),
-    MarketListingSummary("minor_healing_potion", "Minor Healing Potion", bestBuyPrice = 4, bestSellPrice = 6)
-)
-
-private fun demoOrderBook(itemId: String): ItemOrderBookDetail {
-    val listing = demoMarketListings().find { it.itemId == itemId }
-    return ItemOrderBookDetail(
-        itemId = itemId,
-        displayName = listing?.displayName ?: itemId,
-        bestBuyPrice = listing?.bestBuyPrice,
-        bestSellPrice = listing?.bestSellPrice,
-        recentTrades = listOf(
-            PriceHistoryRow(11, 20, "5m ago"),
-            PriceHistoryRow(10, 15, "22m ago"),
-            PriceHistoryRow(12, 5, "1h ago")
-        )
-    )
+private fun formatTimeAgo(instant: Instant): String {
+    val seconds = Duration.between(instant, Instant.now()).seconds.coerceAtLeast(0)
+    return when {
+        seconds < 60 -> seconds.toString() + "s ago"
+        seconds < 3600 -> (seconds / 60).toString() + "m ago"
+        seconds < 86400 -> (seconds / 3600).toString() + "h ago"
+        else -> (seconds / 86400).toString() + "d ago"
+    }
 }
-
-private fun demoMyBuyOrders(): List<MarketOrderSummary> = listOf(
-    MarketOrderSummary("order1", "iron_ore", "Iron Ore", 9, 30)
-)
-
-private fun demoMySellOrders(): List<MarketOrderSummary> = listOf(
-    MarketOrderSummary("order2", "steel_bar", "Steel Bar", 48, 8)
-)
 
 private fun demoGuildMembers(): List<GuildMemberSummary> = listOf(
     GuildMemberSummary("char1", "Lyra", GuildMemberRole.LEADER),
@@ -689,27 +671,86 @@ fun AppRoot(gameViewModel: GameViewModel) {
                             }
 
                             AppDestination.MARKET -> {
+                                val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
+                                val myBuyOrdersRaw by gameViewModel.myBuyOrders.collectAsState()
+                                val mySellOrdersRaw by gameViewModel.mySellOrders.collectAsState()
+                                val marketListingsUi = remember(marketPriceSummaries) {
+                                    marketPriceSummaries.map {
+                                        MarketListingSummary(
+                                            itemId = it.itemId,
+                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+                                            bestBuyPrice = it.bestBuyPrice,
+                                            bestSellPrice = it.bestSellPrice
+                                        )
+                                    }
+                                }
+                                val myBuyOrdersUi = remember(myBuyOrdersRaw) {
+                                    myBuyOrdersRaw.map {
+                                        MarketOrderSummary(
+                                            orderId = it.id,
+                                            itemId = it.itemId,
+                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+                                            pricePerUnit = it.pricePerUnit,
+                                            remainingQuantity = it.remainingQuantity
+                                        )
+                                    }
+                                }
+                                val mySellOrdersUi = remember(mySellOrdersRaw) {
+                                    mySellOrdersRaw.map {
+                                        MarketOrderSummary(
+                                            orderId = it.id,
+                                            itemId = it.itemId,
+                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+                                            pricePerUnit = it.pricePerUnit,
+                                            remainingQuantity = it.remainingQuantity
+                                        )
+                                    }
+                                }
+
                                 val itemId = selectedMarketItemId
                                 if (itemId != null) {
+                                    val orderBookDetail = remember(itemId, marketPriceSummaries) {
+                                        val summary = marketPriceSummaries.find { it.itemId == itemId }
+                                        ItemOrderBookDetail(
+                                            itemId = itemId,
+                                            displayName = ItemCatalog.find(itemId)?.name ?: itemId,
+                                            bestBuyPrice = summary?.bestBuyPrice,
+                                            bestSellPrice = summary?.bestSellPrice,
+                                            recentTrades = gameViewModel.marketService.priceHistoryFor(itemId)
+                                                .sortedByDescending { it.executedAt }
+                                                .take(10)
+                                                .map { PriceHistoryRow(it.pricePerUnit, it.quantity, formatTimeAgo(it.executedAt)) }
+                                        )
+                                    }
                                     OrderBookScreen(
-                                        detail = demoOrderBook(itemId),
+                                        detail = orderBookDetail,
                                         prefilledQuantity = prefilledSellQuantity,
                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
-                                        onPlaceOrder = { _, _, _ -> selectedMarketItemId = null; prefilledSellQuantity = null }
+                                        onPlaceOrder = { side, qty, price ->
+                                            if (side == OrderSideUi.BUY) {
+                                                gameViewModel.placeBuyOrder(itemId, qty, price)
+                                            } else {
+                                                gameViewModel.placeSellOrder(itemId, qty, price)
+                                            }
+                                            selectedMarketItemId = null
+                                            prefilledSellQuantity = null
+                                        }
                                     )
                                 } else {
                                     MarketScreen(
                                         currentTab = marketTab,
                                         onTabSelected = { marketTab = it },
-                                        listings = demoMarketListings(),
+                                        listings = marketListingsUi,
                                         showingBuyOrders = showingBuyOrders,
                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
                                         onItemSelected = { selectedMarketItemId = it },
-                                        myBuyOrders = demoMyBuyOrders(),
-                                        mySellOrders = demoMySellOrders(),
-                                        onCancelOrder = { },
+                                        myBuyOrders = myBuyOrdersUi,
+                                        mySellOrders = mySellOrdersUi,
+                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
                                         vendorSellableItems = inventoryItems,
-                                        onSellToVendor = { _, _ -> }
+                                        onSellToVendor = { sellItemId, quantity ->
+                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
+                                        }
                                     )
                                 }
                             }

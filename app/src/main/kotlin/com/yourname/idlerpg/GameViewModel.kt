@@ -62,6 +62,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
     val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
 
+    val economyMonitoring = EconomyMonitoringService()
+    val marketService = MarketService(economyMonitoring)
+
+    private val _marketListings = MutableStateFlow<List<MarketPriceSummary>>(emptyList())
+    val marketListings: StateFlow<List<MarketPriceSummary>> = _marketListings.asStateFlow()
+
+    private val _myBuyOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+    val myBuyOrders: StateFlow<List<MarketOrder>> = _myBuyOrders.asStateFlow()
+
+    private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+    val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
+
     private val _activeQueueInfo = MutableStateFlow<ActiveQueueInfo?>(null)
     val activeQueueInfo: StateFlow<ActiveQueueInfo?> = _activeQueueInfo.asStateFlow()
 
@@ -200,6 +212,22 @@ fun logout() {
         refreshSkills()
         refreshInventory()
         refreshActiveQueue()
+
+        if (marketService.accountFor(characterId) == null) {
+            val character = accountService.charactersFor(_currentAccountId.value ?: "")
+                .find { it.id == characterId }
+            marketService.registerAccount(
+                PlayerEconomyAccount(
+                    characterId = characterId,
+                    accountId = _currentAccountId.value ?: "",
+                    isMainCharacter = character?.isMainCharacter ?: true,
+                    currencyBalance = 0L
+                )
+            )
+        }
+        refreshCurrency()
+        refreshMarketListings()
+        refreshMyOrders()
     }
 
     fun startSkillAction(skillType: SkillType, itemId: String) {
@@ -379,6 +407,116 @@ fun logout() {
     fun refreshCurrency() {
         val accountId = _currentAccountId.value ?: return
         val account = accountService.accountById(accountId) ?: return
-        _currency.value = account.softCurrency to account.premiumCurrency
+        val characterId = _currentCharacterId.value
+        val gold = characterId?.let { marketService.accountFor(it)?.currencyBalance } ?: 0L
+        _currency.value = gold to account.premiumCurrency
+    }
+
+    // =========================================================
+    // MARKET
+    // =========================================================
+
+    fun refreshMarketListings() {
+        _marketListings.value = marketService.allListings()
+    }
+
+    fun refreshMyOrders() {
+        val characterId = _currentCharacterId.value ?: return
+        val open = marketService.openOrdersFor(characterId)
+        _myBuyOrders.value = open.filter { it.side == OrderSide.BUY }
+        _mySellOrders.value = open.filter { it.side == OrderSide.SELL }
+    }
+
+    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long): ServiceResult<MarketOrder> {
+        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+        val account = marketService.accountFor(characterId)
+            ?: return ServiceResult.Failure("Market account not registered.")
+        val before = account.inventory[itemId] ?: 0
+
+        val result = marketService.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
+        if (result is ServiceResult.Success) {
+            val after = account.inventory[itemId] ?: 0
+            val filled = after - before
+            if (filled > 0) {
+                inventoryService.inventoryFor(characterId).addItem(itemId, filled)
+                account.removeItem(itemId, filled)
+                refreshInventory()
+            }
+            refreshCurrency()
+            refreshMarketListings()
+            refreshMyOrders()
+        }
+        return result
+    }
+
+    fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long): ServiceResult<MarketOrder> {
+        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+        val account = marketService.accountFor(characterId)
+            ?: return ServiceResult.Failure("Market account not registered.")
+        val realInventory = inventoryService.inventoryFor(characterId)
+
+        if (realInventory.quantityOf(itemId) < quantity) {
+            return ServiceResult.Failure("Insufficient item quantity to escrow this order.")
+        }
+        realInventory.removeItem(itemId, quantity)
+        account.addItem(itemId, quantity)
+
+        val result = marketService.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
+        if (result is ServiceResult.Failure) {
+            realInventory.addItem(itemId, quantity)
+            account.removeItem(itemId, quantity)
+        } else {
+            refreshCurrency()
+            refreshMarketListings()
+            refreshMyOrders()
+        }
+        refreshInventory()
+        return result
+    }
+
+    fun cancelMarketOrder(orderId: String): ServiceResult<MarketOrder> {
+        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+        val account = marketService.accountFor(characterId)
+            ?: return ServiceResult.Failure("Market account not registered.")
+        val before = account.inventory.toMap()
+
+        val result = marketService.cancelOrder(orderId)
+        if (result is ServiceResult.Success) {
+            for ((itemId, afterQty) in account.inventory.toMap()) {
+                val delta = afterQty - (before[itemId] ?: 0)
+                if (delta > 0) {
+                    inventoryService.inventoryFor(characterId).addItem(itemId, delta)
+                    account.removeItem(itemId, delta)
+                }
+            }
+            refreshInventory()
+            refreshCurrency()
+            refreshMarketListings()
+            refreshMyOrders()
+        }
+        return result
+    }
+
+    fun sellItemToVendor(itemId: String, quantity: Int): ServiceResult<Long> {
+        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+        val account = marketService.accountFor(characterId)
+            ?: return ServiceResult.Failure("Market account not registered.")
+        val realInventory = inventoryService.inventoryFor(characterId)
+
+        if (realInventory.quantityOf(itemId) < quantity) {
+            return ServiceResult.Failure("Insufficient item quantity to sell.")
+        }
+        realInventory.removeItem(itemId, quantity)
+        account.addItem(itemId, quantity)
+
+        val result = marketService.sellToVendor(characterId, itemId, quantity)
+        if (result is ServiceResult.Failure) {
+            realInventory.addItem(itemId, quantity)
+            account.removeItem(itemId, quantity)
+        } else {
+            refreshCurrency()
+        }
+        refreshInventory()
+        return result
     }
 }

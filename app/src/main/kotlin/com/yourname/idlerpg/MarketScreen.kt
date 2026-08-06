@@ -79,7 +79,7 @@ fun MarketScreen(
                 modifier = Modifier.weight(1f)
             ) { onTabSelected(MarketTab.BROWSE) }
             MarketTabButton(
-                label = "My Orders",
+                label = "Orders",
                 isSelected = currentTab == MarketTab.MY_ORDERS,
                 modifier = Modifier.weight(1f)
             ) { onTabSelected(MarketTab.MY_ORDERS) }
@@ -108,9 +108,13 @@ private fun MarketTabButton(
     onClick: () -> Unit
 ) {
     if (isSelected) {
-        Button(onClick = onClick, modifier = modifier) { Text(text = label) }
+        Button(onClick = onClick, modifier = modifier) {
+            Text(text = label, style = MaterialTheme.typography.labelMedium)
+        }
     } else {
-        OutlinedButton(onClick = onClick, modifier = modifier) { Text(text = label) }
+        OutlinedButton(onClick = onClick, modifier = modifier) {
+            Text(text = label, style = MaterialTheme.typography.labelMedium)
+        }
     }
 }
 

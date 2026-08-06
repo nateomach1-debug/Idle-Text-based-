@@ -303,4 +303,22 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
 
     fun openOrdersFor(characterId: String): List<MarketOrder> =
         (buyOrders + sellOrders).filter { it.characterId == characterId && it.status != OrderStatus.CANCELLED }
+
+    fun allListings(): List<MarketPriceSummary> {
+        val itemIds = (buyOrders + sellOrders)
+            .filter { it.remainingQuantity > 0 }
+            .map { it.itemId }
+            .distinct()
+        return itemIds.map { itemId ->
+            val bestBuy = buyOrders
+                .filter { it.itemId == itemId && it.remainingQuantity > 0 }
+                .maxOfOrNull { it.pricePerUnit }
+            val bestSell = sellOrders
+                .filter { it.itemId == itemId && it.remainingQuantity > 0 }
+                .minOfOrNull { it.pricePerUnit }
+            MarketPriceSummary(itemId, bestBuy, bestSell)
+        }
+    }
 }
+
+data class MarketPriceSummary(val itemId: String, val bestBuyPrice: Long?, val bestSellPrice: Long?)
