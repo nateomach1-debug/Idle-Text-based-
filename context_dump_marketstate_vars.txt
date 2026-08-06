@@ -1,0 +1,17 @@
+]633;E;echo "===== InventoryItemSummary definition =====";17719cb2-4e34-4fae-8034-a366c79ce74c]633;C===== InventoryItemSummary definition =====
+app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:53:data class InventoryItemSummary(
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:230:private fun buildInventoryItemSummaries(entries: List<InventorySlotEntry>): List<InventoryItemSummary> {
+--- InventoryItemSummary body ---
+data class InventoryItemSummary(
+    val itemId: String,
+    val displayName: String,
+    val category: InventoryCategory,
+    val quantity: Int,
+    val isEquippable: Boolean,
+    val isConsumable: Boolean,
+
+===== market-related state var declarations in MainActivity.kt =====
+493:    var marketTab by remember { mutableStateOf(MarketTab.BROWSE) }
+494:    var showingBuyOrders by remember { mutableStateOf(false) }
+495:    var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
+496:    var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
