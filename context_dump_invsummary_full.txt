@@ -1,0 +1,34 @@
+data class InventoryItemSummary(
+    val itemId: String,
+    val displayName: String,
+    val category: InventoryCategory,
+    val quantity: Int,
+    val isEquippable: Boolean,
+    val isConsumable: Boolean,
+    val npcValuePerUnit: Long,
+    val statsDescription: String? = null // e.g. "ATK +5, ACC +10" -- only for equippable items
+)
+
+@Composable
+fun InventoryScreen(
+private fun buildInventoryItemSummaries(entries: List<InventorySlotEntry>): List<InventoryItemSummary> {
+    return entries.map { entry ->
+        val definition = ItemCatalog.find(entry.itemId)
+        if (definition != null) {
+            val statsText = if (!definition.stats.isAllZero()) {
+                listOfNotNull(
+                    definition.stats.attackBonus.takeIf { it != 0 }?.let { "ATK +" + it },
+                    definition.stats.accuracyBonus.takeIf { it != 0 }?.let { "ACC +" + it },
+                    definition.stats.maxHitBonus.takeIf { it != 0 }?.let { "Max Hit +" + it },
+                    definition.stats.defenseBonus.takeIf { it != 0 }?.let { "DEF +" + it },
+                    definition.stats.strengthBonus.takeIf { it != 0 }?.let { "STR +" + it }
+                ).joinToString(", ")
+            } else null
+
+            InventoryItemSummary(
+                itemId = entry.itemId,
+                displayName = definition.name,
+                category = mapItemCategory(definition.category),
+                quantity = entry.quantity,
+                isEquippable = definition.equipSlot != null,
+                isConsumable = definition.category == ItemCategory.CONSUMABLE,
