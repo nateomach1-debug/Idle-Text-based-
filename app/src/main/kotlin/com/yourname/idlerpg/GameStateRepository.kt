@@ -17,7 +17,10 @@ class GameStateRepository(private val context: Context) {
         craftingQueues: List<CraftingQueueExport>,
         lastSeen: List<LastSeenExport>,
         inventoryItems: List<InventorySlotExport>,
-        equippedSlots: List<EquippedSlotExport>
+        equippedSlots: List<EquippedSlotExport>,
+        marketAccounts: List<PlayerEconomyAccountExport>,
+        marketOrders: List<MarketOrderExport>,
+        marketPriceHistory: List<PriceHistoryExport>
     ) {
         val root = JSONObject()
 
@@ -120,6 +123,47 @@ class GameStateRepository(private val context: Context) {
             equippedArray.put(obj)
         }
         root.put("equippedSlots", equippedArray)
+
+        val marketAccountsArray = JSONArray()
+        marketAccounts.forEach { acc ->
+            val obj = JSONObject()
+            obj.put("characterId", acc.characterId)
+            obj.put("accountId", acc.accountId)
+            obj.put("isMainCharacter", acc.isMainCharacter)
+            obj.put("currencyBalance", acc.currencyBalance)
+            val inventoryObj = JSONObject()
+            acc.inventory.forEach { (itemId, qty) -> inventoryObj.put(itemId, qty) }
+            obj.put("inventory", inventoryObj)
+            marketAccountsArray.put(obj)
+        }
+        root.put("marketAccounts", marketAccountsArray)
+
+        val marketOrdersArray = JSONArray()
+        marketOrders.forEach { order ->
+            val obj = JSONObject()
+            obj.put("id", order.id)
+            obj.put("characterId", order.characterId)
+            obj.put("itemId", order.itemId)
+            obj.put("side", order.side)
+            obj.put("pricePerUnit", order.pricePerUnit)
+            obj.put("originalQuantity", order.originalQuantity)
+            obj.put("remainingQuantity", order.remainingQuantity)
+            obj.put("status", order.status)
+            obj.put("createdAt", order.createdAt)
+            marketOrdersArray.put(obj)
+        }
+        root.put("marketOrders", marketOrdersArray)
+
+        val marketPriceHistoryArray = JSONArray()
+        marketPriceHistory.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("itemId", entry.itemId)
+            obj.put("pricePerUnit", entry.pricePerUnit)
+            obj.put("quantity", entry.quantity)
+            obj.put("executedAt", entry.executedAt)
+            marketPriceHistoryArray.put(obj)
+        }
+        root.put("marketPriceHistory", marketPriceHistoryArray)
 
         saveFile.writeText(root.toString())
     }
@@ -241,7 +285,61 @@ class GameStateRepository(private val context: Context) {
             )
         }
 
-        return SavedGameState(accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots)
+        val marketAccounts = mutableListOf<PlayerEconomyAccountExport>()
+        val marketAccountsArray = root.optJSONArray("marketAccounts") ?: JSONArray()
+        for (i in 0 until marketAccountsArray.length()) {
+            val obj = marketAccountsArray.getJSONObject(i)
+            val inventoryObj = obj.optJSONObject("inventory") ?: JSONObject()
+            val inventory = mutableMapOf<String, Int>()
+            inventoryObj.keys().forEach { key -> inventory[key] = inventoryObj.getInt(key) }
+            marketAccounts.add(
+                PlayerEconomyAccountExport(
+                    characterId = obj.getString("characterId"),
+                    accountId = obj.getString("accountId"),
+                    isMainCharacter = obj.getBoolean("isMainCharacter"),
+                    currencyBalance = obj.getLong("currencyBalance"),
+                    inventory = inventory
+                )
+            )
+        }
+
+        val marketOrders = mutableListOf<MarketOrderExport>()
+        val marketOrdersArray = root.optJSONArray("marketOrders") ?: JSONArray()
+        for (i in 0 until marketOrdersArray.length()) {
+            val obj = marketOrdersArray.getJSONObject(i)
+            marketOrders.add(
+                MarketOrderExport(
+                    id = obj.getString("id"),
+                    characterId = obj.getString("characterId"),
+                    itemId = obj.getString("itemId"),
+                    side = obj.getString("side"),
+                    pricePerUnit = obj.getLong("pricePerUnit"),
+                    originalQuantity = obj.getInt("originalQuantity"),
+                    remainingQuantity = obj.getInt("remainingQuantity"),
+                    status = obj.getString("status"),
+                    createdAt = obj.getString("createdAt")
+                )
+            )
+        }
+
+        val marketPriceHistory = mutableListOf<PriceHistoryExport>()
+        val marketPriceHistoryArray = root.optJSONArray("marketPriceHistory") ?: JSONArray()
+        for (i in 0 until marketPriceHistoryArray.length()) {
+            val obj = marketPriceHistoryArray.getJSONObject(i)
+            marketPriceHistory.add(
+                PriceHistoryExport(
+                    itemId = obj.getString("itemId"),
+                    pricePerUnit = obj.getLong("pricePerUnit"),
+                    quantity = obj.getInt("quantity"),
+                    executedAt = obj.getString("executedAt")
+                )
+            )
+        }
+
+        return SavedGameState(
+            accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
+            marketAccounts, marketOrders, marketPriceHistory
+        )
     }
 }
 
@@ -253,5 +351,8 @@ data class SavedGameState(
     val craftingQueues: List<CraftingQueueExport>,
     val lastSeen: List<LastSeenExport>,
     val inventoryItems: List<InventorySlotExport>,
-    val equippedSlots: List<EquippedSlotExport>
+    val equippedSlots: List<EquippedSlotExport>,
+    val marketAccounts: List<PlayerEconomyAccountExport>,
+    val marketOrders: List<MarketOrderExport>,
+    val marketPriceHistory: List<PriceHistoryExport>
 )

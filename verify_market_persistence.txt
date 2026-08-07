@@ -1,0 +1,50 @@
+]633;E;echo "===== EconomyMarketSystem.kt: export/import =====";fcb433da-9a1c-46aa-ab7e-66ab956f0cb4]633;C===== EconomyMarketSystem.kt: export/import =====
+325:    fun exportAccounts(): List<PlayerEconomyAccountExport> = accounts.values.map {
+335:    fun restoreAccount(export: PlayerEconomyAccountExport) {
+345:    fun exportOrders(): List<MarketOrderExport> = (buyOrders + sellOrders).map {
+359:    fun restoreOrder(export: MarketOrderExport) {
+374:    fun exportPriceHistory(): List<PriceHistoryExport> = priceHistory.map {
+
+===== GameStateRepository.kt: market fields =====
+21:        marketAccounts: List<PlayerEconomyAccountExport>,
+22:        marketOrders: List<MarketOrderExport>,
+23:        marketPriceHistory: List<PriceHistoryExport>
+127:        val marketAccountsArray = JSONArray()
+128:        marketAccounts.forEach { acc ->
+137:            marketAccountsArray.put(obj)
+139:        root.put("marketAccounts", marketAccountsArray)
+141:        val marketOrdersArray = JSONArray()
+142:        marketOrders.forEach { order ->
+153:            marketOrdersArray.put(obj)
+155:        root.put("marketOrders", marketOrdersArray)
+157:        val marketPriceHistoryArray = JSONArray()
+158:        marketPriceHistory.forEach { entry ->
+164:            marketPriceHistoryArray.put(obj)
+166:        root.put("marketPriceHistory", marketPriceHistoryArray)
+288:        val marketAccounts = mutableListOf<PlayerEconomyAccountExport>()
+289:        val marketAccountsArray = root.optJSONArray("marketAccounts") ?: JSONArray()
+290:        for (i in 0 until marketAccountsArray.length()) {
+291:            val obj = marketAccountsArray.getJSONObject(i)
+295:            marketAccounts.add(
+306:        val marketOrders = mutableListOf<MarketOrderExport>()
+307:        val marketOrdersArray = root.optJSONArray("marketOrders") ?: JSONArray()
+308:        for (i in 0 until marketOrdersArray.length()) {
+309:            val obj = marketOrdersArray.getJSONObject(i)
+310:            marketOrders.add(
+325:        val marketPriceHistory = mutableListOf<PriceHistoryExport>()
+326:        val marketPriceHistoryArray = root.optJSONArray("marketPriceHistory") ?: JSONArray()
+327:        for (i in 0 until marketPriceHistoryArray.length()) {
+328:            val obj = marketPriceHistoryArray.getJSONObject(i)
+329:            marketPriceHistory.add(
+341:            marketAccounts, marketOrders, marketPriceHistory
+355:    val marketAccounts: List<PlayerEconomyAccountExport>,
+356:    val marketOrders: List<MarketOrderExport>,
+357:    val marketPriceHistory: List<PriceHistoryExport>
+
+===== GameViewModel.kt: market save/load wiring =====
+119:        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+120:        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+121:        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+168:            marketService.exportAccounts(),
+169:            marketService.exportOrders(),
+170:            marketService.exportPriceHistory()
