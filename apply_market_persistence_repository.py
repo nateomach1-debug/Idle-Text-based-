@@ -13,7 +13,7 @@ Run from repo root:
 import sys
 from pathlib import Path
 
-TARGET = Path("app/src/main/kotlin/com/yourname/idlerpg/data/GameStateRepository.kt")
+TARGET = Path("app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt")
 
 
 def fail(msg):
