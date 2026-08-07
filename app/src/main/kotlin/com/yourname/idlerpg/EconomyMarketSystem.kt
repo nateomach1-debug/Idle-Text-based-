@@ -319,6 +319,104 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
             MarketPriceSummary(itemId, bestBuy, bestSell)
         }
     }
+
+    // ---------------- Persistence ----------------
+
+    fun exportAccounts(): List<PlayerEconomyAccountExport> = accounts.values.map {
+        PlayerEconomyAccountExport(
+            characterId = it.characterId,
+            accountId = it.accountId,
+            isMainCharacter = it.isMainCharacter,
+            currencyBalance = it.currencyBalance,
+            inventory = it.inventory.toMap()
+        )
+    }
+
+    fun restoreAccount(export: PlayerEconomyAccountExport) {
+        accounts[export.characterId] = PlayerEconomyAccount(
+            characterId = export.characterId,
+            accountId = export.accountId,
+            isMainCharacter = export.isMainCharacter,
+            currencyBalance = export.currencyBalance,
+            inventory = export.inventory.toMutableMap()
+        )
+    }
+
+    fun exportOrders(): List<MarketOrderExport> = (buyOrders + sellOrders).map {
+        MarketOrderExport(
+            id = it.id,
+            characterId = it.characterId,
+            itemId = it.itemId,
+            side = it.side.name,
+            pricePerUnit = it.pricePerUnit,
+            originalQuantity = it.originalQuantity,
+            remainingQuantity = it.remainingQuantity,
+            status = it.status.name,
+            createdAt = it.createdAt.toString()
+        )
+    }
+
+    fun restoreOrder(export: MarketOrderExport) {
+        val order = MarketOrder(
+            id = export.id,
+            characterId = export.characterId,
+            itemId = export.itemId,
+            side = OrderSide.valueOf(export.side),
+            pricePerUnit = export.pricePerUnit,
+            originalQuantity = export.originalQuantity,
+            remainingQuantity = export.remainingQuantity,
+            status = OrderStatus.valueOf(export.status),
+            createdAt = Instant.parse(export.createdAt)
+        )
+        if (order.side == OrderSide.BUY) buyOrders.add(order) else sellOrders.add(order)
+    }
+
+    fun exportPriceHistory(): List<PriceHistoryExport> = priceHistory.map {
+        PriceHistoryExport(
+            itemId = it.itemId,
+            pricePerUnit = it.pricePerUnit,
+            quantity = it.quantity,
+            executedAt = it.executedAt.toString()
+        )
+    }
+
+    fun restorePriceHistoryEntry(export: PriceHistoryExport) {
+        priceHistory.add(
+            PriceHistoryEntry(
+                itemId = export.itemId,
+                pricePerUnit = export.pricePerUnit,
+                quantity = export.quantity,
+                executedAt = Instant.parse(export.executedAt)
+            )
+        )
+    }
 }
 
 data class MarketPriceSummary(val itemId: String, val bestBuyPrice: Long?, val bestSellPrice: Long?)
+
+data class PlayerEconomyAccountExport(
+    val characterId: String,
+    val accountId: String,
+    val isMainCharacter: Boolean,
+    val currencyBalance: Long,
+    val inventory: Map<String, Int>
+)
+
+data class MarketOrderExport(
+    val id: String,
+    val characterId: String,
+    val itemId: String,
+    val side: String,
+    val pricePerUnit: Long,
+    val originalQuantity: Int,
+    val remainingQuantity: Int,
+    val status: String,
+    val createdAt: String
+)
+
+data class PriceHistoryExport(
+    val itemId: String,
+    val pricePerUnit: Long,
+    val quantity: Int,
+    val executedAt: String
+)

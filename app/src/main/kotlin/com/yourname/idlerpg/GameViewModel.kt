@@ -116,6 +116,9 @@ override fun onCleared() {
         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
         saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
     }
 fun login(email: String, password: String): ServiceResult<Account> {
     val result = accountService.login(email, password)
@@ -161,7 +164,10 @@ fun logout() {
             offlineIdleService.exportCraftingQueues(),
             offlineIdleService.exportLastSeen(),
             inventoryService.exportAllItems(),
-            inventoryService.exportAllEquipped()
+            inventoryService.exportAllEquipped(),
+            marketService.exportAccounts(),
+            marketService.exportOrders(),
+            marketService.exportPriceHistory()
         )
     }
 
