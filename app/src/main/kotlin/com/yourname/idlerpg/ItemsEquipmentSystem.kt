@@ -1921,7 +1921,6 @@ class Inventory(
 
         val existing = entries[itemId]
         if (existing != null) {
-            if (!definition.isStackable) return ServiceResult.Failure("Item is not stackable and already present.")
             entries[itemId] = existing.copy(quantity = existing.quantity + quantity)
             return ServiceResult.Success(Unit)
         }
