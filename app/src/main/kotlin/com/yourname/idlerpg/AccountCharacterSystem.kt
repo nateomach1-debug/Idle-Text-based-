@@ -27,7 +27,6 @@ private var passwordSalt: String, // Base64-encoded
     var banReason: String? = null,
     var mutedUntil: Instant? = null,
     var subscriptionTier: SubscriptionTier = SubscriptionTier.NONE,
-    var softCurrency: Long = 0,
     var premiumCurrency: Long = 0
 ) {
     fun isMuted(now: Instant = Instant.now()): Boolean = mutedUntil?.isAfter(now) == true
@@ -54,7 +53,7 @@ data class AccountExport(
     val id: String, val email: String, val username: String, val passwordHash: String, val passwordSalt: String,
     val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
     val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
-    val subscriptionTier: String, val softCurrency: Long, val premiumCurrency: Long
+    val subscriptionTier: String, val premiumCurrency: Long
 )
 
 data class CharacterExport(
@@ -203,10 +202,9 @@ class AccountService {
         return ServiceResult.Success(account)
     }
 
-    fun addCurrency(accountId: String, soft: Long = 0, premium: Long = 0): ServiceResult<Account> {
+    fun addCurrency(accountId: String, premium: Long = 0): ServiceResult<Account> {
         val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
-        if (soft < 0 || premium < 0) return ServiceResult.Failure("Currency amounts cannot be negative.")
-        account.softCurrency += soft
+        if (premium < 0) return ServiceResult.Failure("Currency amounts cannot be negative.")
         account.premiumCurrency += premium
         return ServiceResult.Success(account)
     }
@@ -256,7 +254,7 @@ private fun verifyPassword(password: String, salt: ByteArray, expectedHash: Stri
             it.id, it.email, it.username, it.exposePasswordHashForExport(), it.exposePasswordSaltForExport(),
             it.createdAt.toString(), it.lastLoginAt.toString(), it.ageBracket.name, it.region,
             it.isBanned, it.banReason, it.mutedUntil?.toString(),
-            it.subscriptionTier.name, it.softCurrency, it.premiumCurrency
+            it.subscriptionTier.name, it.premiumCurrency
         )
     }
 
@@ -276,7 +274,7 @@ private fun verifyPassword(password: String, salt: ByteArray, expectedHash: Stri
             isBanned = export.isBanned, banReason = export.banReason,
             mutedUntil = export.mutedUntil?.let { Instant.parse(it) },
             subscriptionTier = SubscriptionTier.valueOf(export.subscriptionTier),
-            softCurrency = export.softCurrency, premiumCurrency = export.premiumCurrency
+            premiumCurrency = export.premiumCurrency
         )
         accountsById[account.id] = account
         accountsByUsername[account.username.lowercase()] = account.id
