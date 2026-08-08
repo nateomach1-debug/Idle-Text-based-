@@ -388,6 +388,23 @@ fun logout() {
         _equippedItems.value = inv.allEquipped()
     }
 
+    fun equipItem(itemId: String): ServiceResult<Unit> {
+        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+        val playerSkillLevels = progressionService.skillBookFor(characterId).all()
+            .associate { it.type.name to LevelCurve.levelForXp(it.xp) }
+        val playerLevel = playerSkillLevels.values.maxOrNull() ?: 1
+        val result = inventoryService.inventoryFor(characterId).equip(itemId, playerLevel, playerSkillLevels) { true }
+        if (result is ServiceResult.Success) refreshInventory()
+        return result
+    }
+
+    fun unequipSlot(slot: EquipSlot): ServiceResult<Unit> {
+        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+        val result = inventoryService.inventoryFor(characterId).unequip(slot) { true }
+        if (result is ServiceResult.Success) refreshInventory()
+        return result
+    }
+
     fun refreshActiveQueue() {
         val characterId = _currentCharacterId.value
         val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }

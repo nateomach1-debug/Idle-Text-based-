@@ -270,17 +270,6 @@ private fun buildInventoryItemSummaries(
     }
 }
 
-private fun demoEquipped(): Map<EquipSlotUi, EquippedItemInfo?> = mapOf(
-    EquipSlotUi.WEAPON to EquippedItemInfo("bronze_sword", "Bronze Sword"),
-    EquipSlotUi.HELMET to null,
-    EquipSlotUi.CHESTPLATE to null,
-    EquipSlotUi.GLOVES to null,
-    EquipSlotUi.BOOTS to EquippedItemInfo("leather_boots_common", "Leather Boots"),
-    EquipSlotUi.NECKLACE to null,
-    EquipSlotUi.RING_1 to null,
-    EquipSlotUi.RING_2 to null,
-    EquipSlotUi.TOOL to EquippedItemInfo("pickaxe_bronze", "Bronze Pickaxe")
-)
 
 private fun formatTimeAgo(instant: Instant): String {
     val seconds = Duration.between(instant, Instant.now()).seconds.coerceAtLeast(0)
@@ -421,7 +410,14 @@ fun AppRoot(gameViewModel: GameViewModel) {
     val inventoryQuantities = remember(inventoryItemEntries) {
         inventoryItemEntries.associate { it.itemId to it.quantity }
     }
-    val equipped = remember { demoEquipped() }
+    val equippedBackend by gameViewModel.equippedItems.collectAsState()
+    val equipped = remember(equippedBackend) {
+        EquipSlotUi.values().associateWith { uiSlot ->
+            equippedBackend[EquipSlot.valueOf(uiSlot.name)]?.let { itemId ->
+                ItemCatalog.find(itemId)?.let { def -> EquippedItemInfo(itemId, def.name) }
+            }
+        }
+    }
     val skillsListScrollState = rememberLazyListState()
     val skillsGridScrollState = rememberLazyGridState()
 
@@ -654,13 +650,13 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                         prefilledSellQuantity = item?.quantity
                                         currentDestination = AppDestination.MARKET
                                     },
-                                    onEquipItem = { },
+                                    onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
                                     canEquip = ::canEquip
                                 )
                                 InventoryScreenState.Equipment -> EquipmentScreen(
                                     state = EquipmentScreenState(equipped, lockedEquipSlots),
                                     onBack = { inventoryScreenState = InventoryScreenState.Items },
-                                    onSlotTapped = { }
+                                    onSlotTapped = { slot -> gameViewModel.unequipSlot(EquipSlot.valueOf(slot.name)) }
                                 )
                                 InventoryScreenState.Loadout -> LoadoutScreen(
                                     state = LoadoutState(
