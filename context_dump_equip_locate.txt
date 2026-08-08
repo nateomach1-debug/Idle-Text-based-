@@ -1,0 +1,9 @@
+]633;E;echo "===== grep: locate equip/unequip backend + equippedItems =====";c52c334a-ceb5-4b08-9958-457fd9c9656c]633;C===== grep: locate equip/unequip backend + equippedItems =====
+1914:    private val equipped: MutableMap<EquipSlot, String> = mutableMapOf()
+1954:    fun equippedItemIn(slot: EquipSlot): String? = equipped[slot]
+1956:    fun equip(itemId: String, playerLevel: Int, playerSkillLevels: Map<String, Int>, canChangeSlot: (EquipmentSlot) -> Boolean): ServiceResult<Unit> {
+1984:    fun unequip(slot: EquipSlot, canChangeSlot: (EquipmentSlot) -> Boolean): ServiceResult<Unit> {
+1996:    fun allEquipped(): Map<EquipSlot, String> = equipped.toMap()
+2004:    fun restoreEquipped(slot: EquipSlot, itemId: String) {
+2049:class InventoryService {
+2068:        inventoryFor(export.characterId).restoreEquipped(EquipSlot.valueOf(export.slot), export.itemId)
