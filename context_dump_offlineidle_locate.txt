@@ -1,0 +1,7 @@
+]633;E;echo "===== grep: locate OfflineIdleService / ActiveQueue.CraftingQueue =====";831d9caf-8b22-4528-810b-9895f7d8f5fc]633;C===== grep: locate OfflineIdleService / ActiveQueue.CraftingQueue =====
+app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:24:data class ActiveQueueInfo(
+app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:12:sealed class ActiveQueue {
+app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:36:        fun isTargetReached(): Boolean = targetQuantity != null && quantityCompleted >= targetQuantity
+app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:157:class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
+app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:172:    fun startCraftingQueue(
+app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:210:    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
