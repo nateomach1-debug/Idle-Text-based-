@@ -1,0 +1,12 @@
+]633;E;echo "===== grep: GameStateRepository.kt softCurrency context =====";5b909571-c24f-4ec0-b702-03afdfd7a7eb]633;C===== grep: GameStateRepository.kt softCurrency context =====
+41-            obj.put("mutedUntil", acc.mutedUntil)
+42-            obj.put("subscriptionTier", acc.subscriptionTier)
+43:            obj.put("softCurrency", acc.softCurrency)
+44-            obj.put("premiumCurrency", acc.premiumCurrency)
+45-            accountsArray.put(obj)
+--
+189-                    mutedUntil = if (obj.isNull("mutedUntil")) null else obj.getString("mutedUntil"),
+190-                    subscriptionTier = obj.getString("subscriptionTier"),
+191:                    softCurrency = obj.getLong("softCurrency"), premiumCurrency = obj.getLong("premiumCurrency")
+192-                )
+193-            )
