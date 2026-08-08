@@ -1,0 +1,6 @@
+]633;E;echo "===== grep: ItemCatalog baseValueFor definition and surrounding context =====";831d9caf-8b22-4528-810b-9895f7d8f5fc]633;C===== grep: ItemCatalog baseValueFor definition and surrounding context =====
+87:    fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
+88-        "oak_log" -> 8L
+89-        else -> 5L
+90-    }
+91-}

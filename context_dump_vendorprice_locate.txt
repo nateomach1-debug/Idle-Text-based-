@@ -1,0 +1,5 @@
+]633;E;echo "===== grep: locate baseValueFor + sellToVendor pricing =====";831d9caf-8b22-4528-810b-9895f7d8f5fc]633;C===== grep: locate baseValueFor + sellToVendor pricing =====
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:87:    fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:121:    private val vendorPayoutPercent: Double = 40.0
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:282:    fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:293:        val payout = ((baseValue * vendorPayoutPercent) / 100.0).toLong() * quantity
