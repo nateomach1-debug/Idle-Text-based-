@@ -1,0 +1,5 @@
+]633;E;echo "===== grep: locate crafting system definitions =====";831d9caf-8b22-4528-810b-9895f7d8f5fc]633;C===== grep: locate crafting system definitions =====
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:26:object RecipeCatalog {
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1887:object CraftingTierCurve {
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:2016:class CraftingService {
+app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:2017:    fun craftOnce(inventory: Inventory, itemId: String, playerSkillLevel: Int): ServiceResult<CraftingResult> {
