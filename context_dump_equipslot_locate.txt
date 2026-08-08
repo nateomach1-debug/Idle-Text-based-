@@ -1,0 +1,5 @@
+]633;E;echo "===== grep: locate EquipSlot enum, EquipmentSlot/SlotLockMapping, overall player level helper =====";c52c334a-ceb5-4b08-9958-457fd9c9656c]633;C===== grep: locate EquipSlot enum, EquipmentSlot/SlotLockMapping, overall player level helper =====
+app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt:22:enum class EquipSlotUi { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL, LEGS, SHIELD, CAPE, AMMO }
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:10:enum class EquipmentSlot { WEAPON, ARMOR, ACCESSORY, TOOL }
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:14:enum class EquipSlot { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL, LEGS, SHIELD, CAPE, AMMO }
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:16:object SlotLockMapping {
