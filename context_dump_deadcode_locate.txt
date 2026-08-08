@@ -1,0 +1,47 @@
+]633;E;echo "===== grep: any remaining references to Account.softCurrency =====";5b909571-c24f-4ec0-b702-03afdfd7a7eb]633;C===== grep: any remaining references to Account.softCurrency =====
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:30:    var softCurrency: Long = 0,
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:57:    val subscriptionTier: String, val softCurrency: Long, val premiumCurrency: Long
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:209:        account.softCurrency += soft
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:259:            it.subscriptionTier.name, it.softCurrency, it.premiumCurrency
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:279:            softCurrency = export.softCurrency, premiumCurrency = export.premiumCurrency
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:31:    val softCurrency: Long,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:56:        CurrencyRow(soft = state.softCurrency, premium = state.premiumCurrency)
+app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:43:            obj.put("softCurrency", acc.softCurrency)
+app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:191:                    softCurrency = obj.getLong("softCurrency"), premiumCurrency = obj.getLong("premiumCurrency")
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:428:        softCurrency = currency.first,
+
+===== grep: any remaining references to the dead SMITHING ActionCatalog entries =====
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:37:        SkillActionDefinition(SkillType.SMITHING, "copper_bar", "Smelt Copper Bar", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:38:        SkillActionDefinition(SkillType.SMITHING, "tin_bar", "Smelt Tin Bar", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:39:        SkillActionDefinition(SkillType.SMITHING, "bronze_bar", "Smelt Bronze Bar", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:40:        SkillActionDefinition(SkillType.SMITHING, "iron_bar", "Smelt Iron Bar", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:41:        SkillActionDefinition(SkillType.SMITHING, "silver_bar", "Smelt Silver Bar", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:42:        SkillActionDefinition(SkillType.SMITHING, "steel_bar", "Smelt Steel Bar", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:43:        SkillActionDefinition(SkillType.SMITHING, "gold_bar", "Smelt Gold Bar", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:44:        SkillActionDefinition(SkillType.SMITHING, "mithril_bar", "Smelt Mithril Bar", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:45:        SkillActionDefinition(SkillType.SMITHING, "adamantite_bar", "Smelt Adamantite Bar", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:46:        SkillActionDefinition(SkillType.SMITHING, "runite_bar", "Smelt Runite Bar", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:47:        SkillActionDefinition(SkillType.SMITHING, "orichalcum_bar", "Smelt Orichalcum Bar", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:48:        SkillActionDefinition(SkillType.SMITHING, "celestial_alloy_bar", "Smelt Celestial Alloy Bar", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:49:        SkillActionDefinition(SkillType.SMITHING, "dagger", "Forge Dagger", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:50:        SkillActionDefinition(SkillType.SMITHING, "nails", "Forge Nails", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:51:        SkillActionDefinition(SkillType.SMITHING, "sword", "Forge Sword", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:52:        SkillActionDefinition(SkillType.SMITHING, "mace", "Forge Mace", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:53:        SkillActionDefinition(SkillType.SMITHING, "warhammer", "Forge Warhammer", xpPerAction = 41, secondsPerAction = 3, levelRequired = 15),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:54:        SkillActionDefinition(SkillType.SMITHING, "chainmail_body", "Forge Chainmail Body", xpPerAction = 52, secondsPerAction = 3, levelRequired = 20),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:55:        SkillActionDefinition(SkillType.SMITHING, "full_helm", "Forge Full Helm", xpPerAction = 63, secondsPerAction = 4, levelRequired = 25),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:56:        SkillActionDefinition(SkillType.SMITHING, "platelegs", "Forge Platelegs", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:57:        SkillActionDefinition(SkillType.SMITHING, "platebody", "Forge Platebody", xpPerAction = 85, secondsPerAction = 4, levelRequired = 35),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:58:        SkillActionDefinition(SkillType.SMITHING, "kiteshield", "Forge Kiteshield", xpPerAction = 96, secondsPerAction = 4, levelRequired = 40),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:59:        SkillActionDefinition(SkillType.SMITHING, "battleaxe", "Forge Battleaxe", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:60:        SkillActionDefinition(SkillType.SMITHING, "two_handed_sword", "Forge Two-Handed Sword", xpPerAction = 118, secondsPerAction = 5, levelRequired = 50),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:61:        SkillActionDefinition(SkillType.SMITHING, "arrowheads", "Forge Arrowheads", xpPerAction = 129, secondsPerAction = 5, levelRequired = 55),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:62:        SkillActionDefinition(SkillType.SMITHING, "throwing_knives", "Forge Throwing Knives", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:63:        SkillActionDefinition(SkillType.SMITHING, "full_plate_armor_set", "Forge Full Plate Armor Set", xpPerAction = 151, secondsPerAction = 5, levelRequired = 65),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:64:        SkillActionDefinition(SkillType.SMITHING, "claws", "Forge Claws", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:65:        SkillActionDefinition(SkillType.SMITHING, "halberd", "Forge Halberd", xpPerAction = 173, secondsPerAction = 6, levelRequired = 75),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:66:        SkillActionDefinition(SkillType.SMITHING, "ceremonial_armor", "Forge Ceremonial Armor", xpPerAction = 184, secondsPerAction = 6, levelRequired = 80),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:67:        SkillActionDefinition(SkillType.SMITHING, "masterwork_weapon", "Forge Masterwork Weapon", xpPerAction = 195, secondsPerAction = 6, levelRequired = 85),
+app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:68:        SkillActionDefinition(SkillType.SMITHING, "legendary_blade", "Forge Legendary Blade", xpPerAction = 206, secondsPerAction = 6, levelRequired = 90),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:106:            Effect.CostDiscount(EffectScope.SingleSkill(SkillType.SMITHING), 10.0)
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:159:    val skillType = SkillType.SMITHING
