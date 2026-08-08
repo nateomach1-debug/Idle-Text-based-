@@ -279,6 +279,11 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
 
     // ---------------- NPC vendor fallback ----------------
 
+    fun vendorPayoutPerUnit(itemId: String): Long {
+        val baseValue = ItemCatalog.baseValueFor(itemId)
+        return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
+    }
+
     fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
         val account = accounts.getValue(characterId)
@@ -289,8 +294,7 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
             return ServiceResult.Failure("Insufficient item quantity to sell.")
         }
 
-        val baseValue = ItemCatalog.baseValueFor(item.id)
-        val payout = ((baseValue * vendorPayoutPercent) / 100.0).toLong() * quantity
+        val payout = vendorPayoutPerUnit(item.id) * quantity
         account.currencyBalance += payout
         monitoring.recordVendorPayout(payout)
 

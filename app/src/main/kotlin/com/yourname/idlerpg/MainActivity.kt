@@ -228,7 +228,10 @@ private fun mapItemCategory(category: ItemCategory): InventoryCategory = when (c
     ItemCategory.COSMETIC -> InventoryCategory.MATERIAL
 }
 
-private fun buildInventoryItemSummaries(entries: List<InventorySlotEntry>): List<InventoryItemSummary> {
+private fun buildInventoryItemSummaries(
+    entries: List<InventorySlotEntry>,
+    vendorPayoutFor: (String) -> Long
+): List<InventoryItemSummary> {
     return entries.map { entry ->
         val definition = ItemCatalog.find(entry.itemId)
         if (definition != null) {
@@ -249,7 +252,7 @@ private fun buildInventoryItemSummaries(entries: List<InventorySlotEntry>): List
                 quantity = entry.quantity,
                 isEquippable = definition.equipSlot != null,
                 isConsumable = definition.category == ItemCategory.CONSUMABLE,
-                npcValuePerUnit = ItemCatalog.baseValueFor(entry.itemId),
+                npcValuePerUnit = vendorPayoutFor(entry.itemId),
                 statsDescription = statsText
             )
         } else {
@@ -261,7 +264,7 @@ private fun buildInventoryItemSummaries(entries: List<InventorySlotEntry>): List
                 quantity = entry.quantity,
                 isEquippable = false,
                 isConsumable = false,
-                npcValuePerUnit = ItemCatalog.baseValueFor(entry.itemId)
+                npcValuePerUnit = vendorPayoutFor(entry.itemId)
             )
         }
     }
@@ -412,7 +415,9 @@ fun AppRoot(gameViewModel: GameViewModel) {
     val allSkills by gameViewModel.skills.collectAsState()
     val zones = remember { demoZones() }
     val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
-    val inventoryItems = remember(inventoryItemEntries) { buildInventoryItemSummaries(inventoryItemEntries) }
+    val inventoryItems = remember(inventoryItemEntries) {
+        buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
+    }
     val inventoryQuantities = remember(inventoryItemEntries) {
         inventoryItemEntries.associate { it.itemId to it.quantity }
     }

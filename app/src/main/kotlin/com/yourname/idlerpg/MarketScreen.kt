@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 // =========================================================
@@ -232,6 +234,10 @@ private fun SellToVendorTab(items: List<InventoryItemSummary>, onSell: (String, 
 
 @Composable
 private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
+    var quantityText by remember(item.itemId, item.quantity) { mutableStateOf(item.quantity.toString()) }
+    val enteredQuantity = quantityText.toIntOrNull()
+    val isValidQuantity = enteredQuantity != null && enteredQuantity in 1..item.quantity
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -241,15 +247,28 @@ private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> U
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(text = item.displayName, style = MaterialTheme.typography.titleMedium)
             Text(
                 text = "x" + item.quantity + " — " + item.npcValuePerUnit + " each",
                 style = MaterialTheme.typography.labelSmall
             )
         }
-        Button(onClick = { onSell(item.itemId, item.quantity) }) {
-            Text(text = "Sell All")
+        Spacer(modifier = Modifier.width(8.dp))
+        OutlinedTextField(
+            value = quantityText,
+            onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
+            modifier = Modifier.width(64.dp),
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Button(
+            onClick = { enteredQuantity?.let { onSell(item.itemId, it) } },
+            enabled = isValidQuantity
+        ) {
+            Text(text = "Sell")
         }
     }
 }
