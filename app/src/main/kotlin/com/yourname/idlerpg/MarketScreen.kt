@@ -284,7 +284,6 @@ private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> U
                 modifier = Modifier.width(56.dp),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyMedium,
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             Button(
