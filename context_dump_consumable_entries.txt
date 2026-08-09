@@ -1,0 +1,370 @@
+]633;E;echo "===== GeneratedItemCatalog.kt consumable entries (first block, lines 1160-1360) =====";3487f3c0-a908-4848-a88a-070da5907720]633;C===== GeneratedItemCatalog.kt consumable entries (first block, lines 1160-1360) =====
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cake_mix",
+        name = "Cake Mix",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_shrimp",
+        name = "Cooked Shrimp",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_anchovies",
+        name = "Cooked Anchovies",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_sardine",
+        name = "Cooked Sardine",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+        ItemDefinition(
+        id = "cooked_chicken",
+        name = "Cooked Chicken",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_herring",
+        name = "Cooked Herring",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_beef",
+        name = "Cooked Beef",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_crayfish",
+        name = "Cooked Crayfish",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_trout",
+        name = "Cooked Trout",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_salmon",
+        name = "Cooked Salmon",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "bread",
+        name = "Bread",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_tuna",
+        name = "Cooked Tuna",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "meat_pie",
+        name = "Meat Pie",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_mackerel",
+        name = "Cooked Mackerel",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_swordfish",
+        name = "Cooked Swordfish",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cake",
+        name = "Cake",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_lobster",
+        name = "Cooked Lobster",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_crab",
+        name = "Cooked Crab",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_shark",
+        name = "Cooked Shark",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "stew",
+        name = "Stew",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_monkfish",
+        name = "Cooked Monkfish",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_manta_ray",
+        name = "Cooked Manta Ray",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_eel",
+        name = "Cooked Eel",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_deep_sea_cod",
+        name = "Cooked Deep Sea Cod",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cooked_anglerfish",
+        name = "Cooked Anglerfish",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "gourmet_feast",
+        name = "Gourmet Feast",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "leviathan_steak",
+        name = "Leviathan Steak",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "ambrosia_banquet",
+        name = "Ambrosia Banquet",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "arrow_shafts",
+        name = "Arrow Shafts",
+
+===== GeneratedItemCatalog.kt consumable entries (second block, lines 1700-1865) =====
+    ),
+    ItemDefinition(
+        id = "vial_of_water",
+        name = "Vial of Water",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "attack_potion",
+        name = "Attack Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "antipoison",
+        name = "Antipoison",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "strength_potion",
+        name = "Strength Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "defense_potion",
+        name = "Defense Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "restore_potion",
+        name = "Restore Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "energy_potion",
+        name = "Energy Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "combat_potion",
+        name = "Combat Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "prayer_potion",
+        name = "Prayer Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "super_attack_potion",
+        name = "Super Attack Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "super_strength_potion",
+        name = "Super Strength Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "super_defense_potion",
+        name = "Super Defense Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "ranging_potion",
+        name = "Ranging Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "magic_potion",
+        name = "Magic Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "super_restore_potion",
+        name = "Super Restore Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "antidote_plus",
+        name = "Antidote+",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "brew_of_vigor",
+        name = "Brew of Vigor",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "antifire_potion",
+        name = "Antifire Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "extreme_attack_potion",
+        name = "Extreme Attack Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "extreme_strength_potion",
+        name = "Extreme Strength Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "overload_potion",
+        name = "Overload Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "divine_potion",
+        name = "Divine Potion",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "elixir_of_the_ancients",
+        name = "Elixir of the Ancients",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "cowhide",
+        name = "Cowhide",
+        category = ItemCategory.MATERIAL,
