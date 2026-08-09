@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 // =========================================================
@@ -109,13 +110,26 @@ private fun MarketTabButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val tabPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
     if (isSelected) {
-        Button(onClick = onClick, modifier = modifier) {
-            Text(text = label, style = MaterialTheme.typography.labelMedium)
+        Button(onClick = onClick, modifier = modifier, contentPadding = tabPadding) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     } else {
-        OutlinedButton(onClick = onClick, modifier = modifier) {
-            Text(text = label, style = MaterialTheme.typography.labelMedium)
+        OutlinedButton(onClick = onClick, modifier = modifier, contentPadding = tabPadding) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -248,10 +262,19 @@ private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> U
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = item.displayName, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = item.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
+            )
             Text(
                 text = "x" + item.quantity + " — " + item.npcValuePerUnit + " each",
-                style = MaterialTheme.typography.labelSmall
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
             )
         }
         Spacer(modifier = Modifier.width(8.dp))

@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 // =========================================================
@@ -117,8 +118,12 @@ fun InventoryScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onOpenEquipment) { Text(text = "Equipment") }
-            OutlinedButton(onClick = onOpenLoadout) { Text(text = "Loadout") }
+            OutlinedButton(onClick = onOpenEquipment, modifier = Modifier.weight(1f)) {
+                Text(text = "Equipment", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+            }
+            OutlinedButton(onClick = onOpenLoadout, modifier = Modifier.weight(1f)) {
+                Text(text = "Loadout", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
