@@ -586,6 +586,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                             badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
                         )
 
+                        Box(modifier = Modifier.weight(1f)) {
                         when (currentDestination) {
                             AppDestination.HOME -> HomeScreen(state = homeState)
 
@@ -784,6 +785,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 text = currentDestination.label + " screen coming soon",
                                 modifier = Modifier.fillMaxSize()
                             )
+                        }
                         }
                     }
 

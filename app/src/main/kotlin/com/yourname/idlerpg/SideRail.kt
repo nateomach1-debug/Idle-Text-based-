@@ -49,7 +49,7 @@ fun SideRail(
             .fillMaxHeight()
             .background(MaterialTheme.colorScheme.surface)
             .animateContentSize()
-            .width(if (expanded) 180.dp else 64.dp)
+            .width(if (expanded) 140.dp else 64.dp)
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.Start
     ) {
