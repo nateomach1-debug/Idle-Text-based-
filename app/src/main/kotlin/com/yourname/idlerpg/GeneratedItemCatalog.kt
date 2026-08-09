@@ -1171,189 +1171,243 @@ object GeneratedItemCatalog {
         name = "Cooked Shrimp",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 3
     ),
     ItemDefinition(
         id = "cooked_anchovies",
         name = "Cooked Anchovies",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 4
     ),
     ItemDefinition(
         id = "cooked_sardine",
         name = "Cooked Sardine",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 5
     ),
         ItemDefinition(
         id = "cooked_chicken",
         name = "Cooked Chicken",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 6
     ),
     ItemDefinition(
         id = "cooked_herring",
         name = "Cooked Herring",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 7
     ),
     ItemDefinition(
         id = "cooked_beef",
         name = "Cooked Beef",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 8
     ),
     ItemDefinition(
         id = "cooked_crayfish",
         name = "Cooked Crayfish",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 9
     ),
     ItemDefinition(
         id = "cooked_trout",
         name = "Cooked Trout",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 10
     ),
     ItemDefinition(
         id = "cooked_salmon",
         name = "Cooked Salmon",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 11
     ),
     ItemDefinition(
         id = "bread",
         name = "Bread",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 12
     ),
     ItemDefinition(
         id = "cooked_tuna",
         name = "Cooked Tuna",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 13
     ),
     ItemDefinition(
         id = "meat_pie",
         name = "Meat Pie",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 14
     ),
     ItemDefinition(
         id = "cooked_mackerel",
         name = "Cooked Mackerel",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 15
     ),
     ItemDefinition(
         id = "cooked_swordfish",
         name = "Cooked Swordfish",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 16
     ),
     ItemDefinition(
         id = "cake",
         name = "Cake",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 17
     ),
     ItemDefinition(
         id = "cooked_lobster",
         name = "Cooked Lobster",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 18
     ),
     ItemDefinition(
         id = "cooked_crab",
         name = "Cooked Crab",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 19
     ),
     ItemDefinition(
         id = "cooked_shark",
         name = "Cooked Shark",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 20
     ),
     ItemDefinition(
         id = "stew",
         name = "Stew",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 21
     ),
     ItemDefinition(
         id = "cooked_monkfish",
         name = "Cooked Monkfish",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 22
     ),
     ItemDefinition(
         id = "cooked_manta_ray",
         name = "Cooked Manta Ray",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 23
     ),
     ItemDefinition(
         id = "cooked_eel",
         name = "Cooked Eel",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 24
     ),
     ItemDefinition(
         id = "cooked_deep_sea_cod",
         name = "Cooked Deep Sea Cod",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 25
     ),
     ItemDefinition(
         id = "cooked_anglerfish",
         name = "Cooked Anglerfish",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 26
     ),
     ItemDefinition(
         id = "gourmet_feast",
         name = "Gourmet Feast",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 40
     ),
     ItemDefinition(
         id = "leviathan_steak",
         name = "Leviathan Steak",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 55
     ),
     ItemDefinition(
         id = "ambrosia_banquet",
         name = "Ambrosia Banquet",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 75
     ),
     ItemDefinition(
         id = "arrow_shafts",
@@ -1710,154 +1764,198 @@ object GeneratedItemCatalog {
         name = "Attack Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "antipoison",
         name = "Antipoison",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "strength_potion",
         name = "Strength Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "defense_potion",
         name = "Defense Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "restore_potion",
         name = "Restore Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        healAmount = 30
     ),
     ItemDefinition(
         id = "energy_potion",
         name = "Energy Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "combat_potion",
         name = "Combat Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "prayer_potion",
         name = "Prayer Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "super_attack_potion",
         name = "Super Attack Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 240
     ),
     ItemDefinition(
         id = "super_strength_potion",
         name = "Super Strength Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 240
     ),
     ItemDefinition(
         id = "super_defense_potion",
         name = "Super Defense Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 240
     ),
     ItemDefinition(
         id = "ranging_potion",
         name = "Ranging Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "magic_potion",
         name = "Magic Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "super_restore_potion",
         name = "Super Restore Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        healAmount = 50
     ),
     ItemDefinition(
         id = "antidote_plus",
         name = "Antidote+",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "brew_of_vigor",
         name = "Brew of Vigor",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 240
     ),
     ItemDefinition(
         id = "antifire_potion",
         name = "Antifire Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 180
     ),
     ItemDefinition(
         id = "extreme_attack_potion",
         name = "Extreme Attack Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 300
     ),
     ItemDefinition(
         id = "extreme_strength_potion",
         name = "Extreme Strength Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 300
     ),
     ItemDefinition(
         id = "overload_potion",
         name = "Overload Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 420
     ),
     ItemDefinition(
         id = "divine_potion",
         name = "Divine Potion",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 480
     ),
     ItemDefinition(
         id = "elixir_of_the_ancients",
         name = "Elixir of the Ancients",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
-        isStackable = true
+        isStackable = true,
+        consumableType = ConsumableType.POTION,
+        buffDurationSeconds = 600
     ),
     ItemDefinition(
         id = "cowhide",

@@ -34,6 +34,8 @@ data class ItemStats(
         attackBonus == 0 && strengthBonus == 0 && defenseBonus == 0 && accuracyBonus == 0 && maxHitBonus == 0
 }
 
+enum class ConsumableType { FOOD, POTION }
+
 data class ItemDefinition(
     val id: String,
     val name: String,
@@ -46,7 +48,10 @@ data class ItemDefinition(
     val combatStyle: CombatStyle? = null,
     val levelRequired: Int = 1,
     val skillRequired: String? = null,
-    val stats: ItemStats = ItemStats()
+    val stats: ItemStats = ItemStats(),
+    val consumableType: ConsumableType? = null,
+    val healAmount: Int? = null,
+    val buffDurationSeconds: Int? = null
 )
 
 object ItemCatalog {
@@ -71,7 +76,11 @@ object ItemCatalog {
             equipSlot = EquipSlot.BOOTS, levelRequired = 1,
             stats = ItemStats(defenseBonus = 3)
         ),
-        ItemDefinition(id = "minor_healing_potion", name = "Minor Healing Potion", category = ItemCategory.CONSUMABLE, isTradeable = true, isStackable = true),
+        ItemDefinition(
+            id = "minor_healing_potion", name = "Minor Healing Potion", category = ItemCategory.CONSUMABLE,
+            isTradeable = true, isStackable = true,
+            consumableType = ConsumableType.POTION, healAmount = 20
+        ),
         ItemDefinition(
             id = "smiths_hammer", name = "Smith's Hammer", category = ItemCategory.WEAPON,
             rarity = Rarity.UNCOMMON, isTradeable = false, isStackable = false,
