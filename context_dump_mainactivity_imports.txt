@@ -1,46 +1,10 @@
-]633;E;echo "===== MainActivity.kt: package + imports =====";1ff832ac-8c8c-4f4f-a18a-27a2d4c66967]633;C===== MainActivity.kt: package + imports =====
-package com.yourname.idlerpg
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.yourname.idlerpg.data.GameViewModel
-import com.yourname.idlerpg.ui.components.RecoveryBar
-import com.yourname.idlerpg.ui.components.ChatBanner
-import com.yourname.idlerpg.ui.components.ChatChannelUi
-import com.yourname.idlerpg.ui.components.ChatMessageUi
-import com.yourname.idlerpg.ui.components.DmConversationSummary
-import com.yourname.idlerpg.ui.components.ChatMessageAction
-import com.yourname.idlerpg.ui.navigation.AppDestination
-import com.yourname.idlerpg.ui.navigation.SideRail
-import com.yourname.idlerpg.ui.screens.*
-import com.yourname.idlerpg.ui.theme.IdleRpgTheme
-import java.time.Instant
-
-class MainActivity : ComponentActivity() {
-    private val gameViewModel: GameViewModel by viewModels()
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            IdleRpgTheme {
-                AppRoot(gameViewModel)
-            }
-        }
-    }
-override fun onPause() {
-
-===== inventoryItemEntries declaration context =====
-370:    val allSkills by gameViewModel.skills.collectAsState()
-372:    val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
-373:    val inventoryItems = remember(inventoryItemEntries) { buildInventoryItemSummaries(inventoryItemEntries) }
+]633;E;echo "===== grep: current foundation.layout imports in MainActivity.kt =====";fe47bb6f-1922-4282-8d18-2fcaf8b83538]633;C===== grep: current foundation.layout imports in MainActivity.kt =====
+7:import androidx.compose.foundation.layout.Column
+8:import androidx.compose.foundation.layout.Row
+9:import androidx.compose.foundation.layout.fillMaxSize
+10:import androidx.compose.foundation.layout.fillMaxWidth
+11:import androidx.compose.foundation.layout.padding
+28:import androidx.compose.foundation.lazy.LazyListState
+29:import androidx.compose.foundation.lazy.rememberLazyListState
+30:import androidx.compose.foundation.lazy.grid.LazyGridState
+31:import androidx.compose.foundation.lazy.grid.rememberLazyGridState
