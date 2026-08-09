@@ -252,46 +252,46 @@ private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> U
     val enteredQuantity = quantityText.toIntOrNull()
     val isValidQuantity = enteredQuantity != null && enteredQuantity in 1..item.quantity
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(14.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = item.displayName,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "x" + item.quantity + " — " + item.npcValuePerUnit + " each",
-                style = MaterialTheme.typography.labelSmall,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        OutlinedTextField(
-            value = quantityText,
-            onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
-            modifier = Modifier.width(64.dp),
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyMedium,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        Text(
+            text = item.displayName,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Button(
-            onClick = { enteredQuantity?.let { onSell(item.itemId, it) } },
-            enabled = isValidQuantity
+        Text(
+            text = "x" + item.quantity + " — " + item.npcValuePerUnit + " each",
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Sell")
+            OutlinedTextField(
+                value = quantityText,
+                onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
+                modifier = Modifier.width(80.dp),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            Button(
+                onClick = { enteredQuantity?.let { onSell(item.itemId, it) } },
+                enabled = isValidQuantity
+            ) {
+                Text(text = "Sell")
+            }
         }
     }
 }
