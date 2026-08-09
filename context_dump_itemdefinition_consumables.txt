@@ -1,0 +1,29 @@
+]633;E;echo "===== ItemDefinition class + consumable entries context =====";3487f3c0-a908-4848-a88a-070da5907720]633;C===== ItemDefinition class + consumable entries context =====
+37:data class ItemDefinition(
+38-    val id: String,
+39-    val name: String,
+40-    val category: ItemCategory,
+
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-130-        SkillActionOption("CRAFTING", "leather_boots", levelRequired = 1),
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-131-        SkillActionOption("FLETCHING", "wooden_arrows", levelRequired = 1),
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:132:        SkillActionOption("ALCHEMY", "minor_healing_potion", levelRequired = 1),
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-133-        SkillActionOption("MAGIC", "enchanted_rune", levelRequired = 1)
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-134-    )
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-135-
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-136-    fun availableFor(skillId: String, playerLevel: Int): List<SkillActionOption> =
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-137-        options.filter { it.skillId == skillId && it.levelRequired <= playerLevel }
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-138-}
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-139-
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt-140-data class CombatTaskOption(val monsterId: String, val levelRequired: Int)
+--
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-72-            stats = ItemStats(defenseBonus = 3)
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-73-        ),
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:74:        ItemDefinition(id = "minor_healing_potion", name = "Minor Healing Potion", category = ItemCategory.CONSUMABLE, isTradeable = true, isStackable = true),
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-75-        ItemDefinition(
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-76-            id = "smiths_hammer", name = "Smith's Hammer", category = ItemCategory.WEAPON,
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-77-            rarity = Rarity.UNCOMMON, isTradeable = false, isStackable = false,
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-78-            equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE, levelRequired = 1,
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-79-            stats = ItemStats(attackBonus = 2, maxHitBonus = 2)
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-80-        )
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-81-   ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-82-
