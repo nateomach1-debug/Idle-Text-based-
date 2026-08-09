@@ -281,16 +281,18 @@ private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> U
             OutlinedTextField(
                 value = quantityText,
                 onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
-                modifier = Modifier.width(80.dp),
+                modifier = Modifier.width(56.dp),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyMedium,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             Button(
                 onClick = { enteredQuantity?.let { onSell(item.itemId, it) } },
-                enabled = isValidQuantity
+                enabled = isValidQuantity,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                Text(text = "Sell")
+                Text(text = "Sell", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             }
         }
     }
