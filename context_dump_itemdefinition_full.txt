@@ -1,0 +1,22 @@
+]633;E;echo "===== ItemDefinition full class + ConsumableType/enum check =====";3487f3c0-a908-4848-a88a-070da5907720]633;C===== ItemDefinition full class + ConsumableType/enum check =====
+37:data class ItemDefinition(
+38-    val id: String,
+39-    val name: String,
+40-    val category: ItemCategory,
+41-    val rarity: Rarity = Rarity.COMMON,
+42-    val isTradeable: Boolean,
+43-    val isStackable: Boolean,
+44-    val isRealMoneyPurchasable: Boolean = false,
+45-    val equipSlot: EquipSlot? = null,
+46-    val combatStyle: CombatStyle? = null,
+47-    val levelRequired: Int = 1,
+48-    val skillRequired: String? = null,
+49-    val stats: ItemStats = ItemStats()
+50-)
+51-
+52-object ItemCatalog {
+53-    val items = mutableListOf(
+54-        ItemDefinition(
+55-            id = "iron_sword_common", name = "Iron Sword", category = ItemCategory.WEAPON,
+56-            rarity = Rarity.COMMON, isTradeable = true, isStackable = false,
+57-            equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE,
