@@ -1,0 +1,70 @@
+]633;E;echo "===== grep: consumable item data (heal amount, buff duration) =====";3487f3c0-a908-4848-a88a-070da5907720]633;C===== grep: consumable item data (heal amount, buff duration) =====
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:128:    var currentHp: Int,
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:129:    var maxHp: Int,
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:146:    fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:147:        states.getOrPut(characterId) { CharacterCombatState(currentHp = maxHp, maxHp = maxHp) }
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:279:        state.currentHp = (state.currentHp - damage).coerceAtLeast(0)
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:281:        if (state.currentHp <= 0) {
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:295:        state.currentHp = (state.maxHp * 0.5).toInt()
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1172:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1179:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1186:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1193:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1200:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1207:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1214:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1221:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1228:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1235:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1242:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1249:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1256:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1263:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1270:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1277:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1284:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1291:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1298:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1305:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1312:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1319:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1326:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1333:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1340:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1347:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1354:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1711:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1718:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1725:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1732:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1739:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1746:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1753:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1760:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1767:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1774:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1781:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1788:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1795:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1802:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1809:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1816:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1823:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1830:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1837:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1844:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1851:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt:1858:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:33:    val currentHp: Int?,              // null if not in/near combat -- hides the HP bar entirely
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:34:    val maxHp: Int?,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:60:        if (state.currentHp != null && state.maxHp != null) {
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:61:            HpBar(current = state.currentHp, max = state.maxHp, isRecovering = state.isRecovering)
+app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:52:enum class InventoryCategory { WEAPON, ARMOR, ACCESSORY, TOOL, MATERIAL, CONSUMABLE }
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:228:    ItemCategory.CONSUMABLE -> InventoryCategory.CONSUMABLE
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:255:                isConsumable = definition.category == ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:431:        currentHp = null,
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:432:        maxHp = null,
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:71:        category = ItemCategory.CONSUMABLE,
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:12:enum class ItemCategory { WEAPON, ARMOR, ACCESSORY, MATERIAL, CONSUMABLE, COSMETIC }
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:37:data class ItemDefinition(
+app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:74:        ItemDefinition(id = "minor_healing_potion", name = "Minor Healing Potion", category = ItemCategory.CONSUMABLE, isTradeable = true, isStackable = true),
