@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 // =========================================================
@@ -151,7 +152,10 @@ private fun StyleChip(style: CombatStyleOption, isSelected: Boolean, enabled: Bo
             text = style.name,
             style = MaterialTheme.typography.labelSmall.copy(
                 color = MaterialTheme.typography.labelSmall.color.copy(alpha = contentAlpha)
-            )
+            ),
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
