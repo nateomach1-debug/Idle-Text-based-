@@ -1,0 +1,17 @@
+]633;E;echo "===== context around line 788 (suspected Row close) =====";fe47bb6f-1922-4282-8d18-2fcaf8b83538]633;C===== context around line 788 (suspected Row close) =====
+                                }
+                            }
+
+                            else -> androidx.compose.material3.Text(
+                                text = currentDestination.label + " screen coming soon",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+
+                    ChatBanner(
+                        selectedChannel = selectedChatChannel,
+                        onChannelSelected = {
+                            selectedChatChannel = it
+                            if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
+                        },
