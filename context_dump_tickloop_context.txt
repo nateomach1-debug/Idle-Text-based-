@@ -1,0 +1,62 @@
+]633;E;echo "===== GameViewModel.kt lines 40-100 (fields + tick loop launch) =====";1066bf62-82ac-4891-856c-d49fd4656d58]633;C===== GameViewModel.kt lines 40-100 (fields + tick loop launch) =====
+    val sessionManager = SessionManager(application)
+    // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
+    // Skilling queues don't consume materials, only crafting does, so this is unused for now.
+    val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
+
+    private var skillActionProgressSeconds: Long = 0
+
+    private val _currentAccountId = MutableStateFlow<String?>(null)
+    val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
+
+    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+
+    private val _currentCharacterId = MutableStateFlow<String?>(null)
+    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+
+    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+
+    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+
+    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+
+    val economyMonitoring = EconomyMonitoringService()
+    val marketService = MarketService(economyMonitoring)
+
+    private val _marketListings = MutableStateFlow<List<MarketPriceSummary>>(emptyList())
+    val marketListings: StateFlow<List<MarketPriceSummary>> = _marketListings.asStateFlow()
+
+    private val _myBuyOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+    val myBuyOrders: StateFlow<List<MarketOrder>> = _myBuyOrders.asStateFlow()
+
+    private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+    val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
+
+    private val _activeQueueInfo = MutableStateFlow<ActiveQueueInfo?>(null)
+    val activeQueueInfo: StateFlow<ActiveQueueInfo?> = _activeQueueInfo.asStateFlow()
+
+    private val _currency = MutableStateFlow(0L to 0L)
+    val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
+
+    init {
+        viewModelScope.launch(Dispatchers.Default) {
+            while (true) {
+                delay(1000L)
+                tickSkilling()
+            tickCrafting()
+            }
+        }
+    }
+    init {
+    viewModelScope.launch(Dispatchers.Default) {
+        while (true) {
+            delay(30_000L)
+            saveGame()
+        }
+    }
+}
+
