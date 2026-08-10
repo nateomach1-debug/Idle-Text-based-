@@ -1,0 +1,32 @@
+]633;E;echo "===== grep: locate inventory save/load in GameStateRepository.kt =====";1066bf62-82ac-4891-856c-d49fd4656d58]633;C===== grep: locate inventory save/load in GameStateRepository.kt =====
+19:        inventoryItems: List<InventorySlotExport>,
+20:        equippedSlots: List<EquippedSlotExport>,
+106:        val inventoryArray = JSONArray()
+107:        inventoryItems.forEach { entry ->
+112:            inventoryArray.put(obj)
+114:        root.put("inventoryItems", inventoryArray)
+116:        val equippedArray = JSONArray()
+117:        equippedSlots.forEach { entry ->
+122:            equippedArray.put(obj)
+124:        root.put("equippedSlots", equippedArray)
+133:            val inventoryObj = JSONObject()
+134:            acc.inventory.forEach { (itemId, qty) -> inventoryObj.put(itemId, qty) }
+135:            obj.put("inventory", inventoryObj)
+261:        val inventoryItems = mutableListOf<InventorySlotExport>()
+262:        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+263:        for (i in 0 until inventoryArray.length()) {
+264:            val obj = inventoryArray.getJSONObject(i)
+265:            inventoryItems.add(
+266:                InventorySlotExport(
+274:        val equippedSlots = mutableListOf<EquippedSlotExport>()
+275:        val equippedArray = root.optJSONArray("equippedSlots") ?: JSONArray()
+276:        for (i in 0 until equippedArray.length()) {
+277:            val obj = equippedArray.getJSONObject(i)
+278:            equippedSlots.add(
+291:            val inventoryObj = obj.optJSONObject("inventory") ?: JSONObject()
+292:            val inventory = mutableMapOf<String, Int>()
+293:            inventoryObj.keys().forEach { key -> inventory[key] = inventoryObj.getInt(key) }
+300:                    inventory = inventory
+339:            accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
+352:    val inventoryItems: List<InventorySlotExport>,
+353:    val equippedSlots: List<EquippedSlotExport>,
