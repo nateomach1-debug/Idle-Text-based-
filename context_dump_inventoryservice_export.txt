@@ -1,0 +1,44 @@
+]633;E;echo "===== grep: InventorySlotExport/EquippedSlotExport definitions + InventoryService export/restore functions =====";ffdc2624-bc70-41fb-8485-032158aaed7f]633;C===== grep: InventorySlotExport/EquippedSlotExport definitions + InventoryService export/restore functions =====
+2001-    fun allItems(): List<InventorySlotEntry> = entries.values.toList()
+2002-
+2003:    fun restoreItem(itemId: String, quantity: Int) {
+2004-        entries[itemId] = InventorySlotEntry(itemId, quantity)
+2005-    }
+2006-
+2007:    fun restoreEquipped(slot: EquipSlot, itemId: String) {
+2008-        equipped[slot] = itemId
+2009-    }
+2010-
+2011-    // ---------------- Food / Potion selection ----------------
+2012-
+2013-    fun selectFood(itemId: String?): ServiceResult<Unit> {
+2014-        if (itemId != null) {
+2015-            val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+--
+2084-// =========================================================
+2085-
+2086:data class InventorySlotExport(val characterId: String, val itemId: String, val quantity: Int)
+2087:data class EquippedSlotExport(val characterId: String, val slot: String, val itemId: String)
+2088-
+2089-class InventoryService {
+2090-    private val inventories: MutableMap<String, Inventory> = mutableMapOf()
+2091-
+2092-    fun inventoryFor(characterId: String): Inventory =
+2093-        inventories.getOrPut(characterId) { Inventory() }
+2094-
+2095:    fun exportAllItems(): List<InventorySlotExport> = inventories.flatMap { (characterId, inv) ->
+2096-        inv.allItems().map { InventorySlotExport(characterId, it.itemId, it.quantity) }
+2097-    }
+2098-
+2099:    fun exportAllEquipped(): List<EquippedSlotExport> = inventories.flatMap { (characterId, inv) ->
+2100-        inv.allEquipped().map { (slot, itemId) -> EquippedSlotExport(characterId, slot.name, itemId) }
+2101-    }
+2102-
+2103:    fun restoreItem(export: InventorySlotExport) {
+2104-        inventoryFor(export.characterId).restoreItem(export.itemId, export.quantity)
+2105-    }
+2106-
+2107:    fun restoreEquipped(export: EquippedSlotExport) {
+2108-        inventoryFor(export.characterId).restoreEquipped(EquipSlot.valueOf(export.slot), export.itemId)
+2109-    }
+2110-}
