@@ -1,0 +1,5 @@
+]633;E;echo "===== grep: locate load/restore logic in GameViewModel.kt =====";ffdc2624-bc70-41fb-8485-032158aaed7f]633;C===== grep: locate load/restore logic in GameViewModel.kt =====
+163:    fun loadGame() {
+166:        val saved = repository.load() ?: return
+173:        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+174:        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
