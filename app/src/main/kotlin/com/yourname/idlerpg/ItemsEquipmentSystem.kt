@@ -1911,7 +1911,10 @@ data class InventorySlotEntry(val itemId: String, val quantity: Int)
 class Inventory(
     var maxSlots: Int = 100,
     private val entries: MutableMap<String, InventorySlotEntry> = mutableMapOf(),
-    private val equipped: MutableMap<EquipSlot, String> = mutableMapOf()
+    private val equipped: MutableMap<EquipSlot, String> = mutableMapOf(),
+    var selectedFoodId: String? = null,
+    var selectedPotionId: String? = null,
+    var potionTimerRemainingSeconds: Int = 0
 ) {
     fun usedSlots(): Int = entries.size
 
@@ -2003,6 +2006,43 @@ class Inventory(
 
     fun restoreEquipped(slot: EquipSlot, itemId: String) {
         equipped[slot] = itemId
+    }
+
+    // ---------------- Food / Potion selection ----------------
+
+    fun selectFood(itemId: String?): ServiceResult<Unit> {
+        if (itemId != null) {
+            val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+            if (definition.consumableType != ConsumableType.FOOD) return ServiceResult.Failure("Not a food item.")
+        }
+        selectedFoodId = itemId
+        return ServiceResult.Success(Unit)
+    }
+
+    fun selectPotion(itemId: String?): ServiceResult<Unit> {
+        if (itemId != null) {
+            val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+            if (definition.consumableType != ConsumableType.POTION) return ServiceResult.Failure("Not a potion item.")
+        }
+        selectedPotionId = itemId
+        potionTimerRemainingSeconds = 0
+        return ServiceResult.Success(Unit)
+    }
+
+    fun consumeSelectedFood(): ItemDefinition? {
+        val foodId = selectedFoodId ?: return null
+        val definition = ItemCatalog.find(foodId) ?: return null
+        if (quantityOf(foodId) <= 0) return null
+        removeItem(foodId, 1)
+        return definition
+    }
+
+    fun consumeSelectedPotion(): ItemDefinition? {
+        val potionId = selectedPotionId ?: return null
+        val definition = ItemCatalog.find(potionId) ?: return null
+        if (quantityOf(potionId) <= 0) return null
+        removeItem(potionId, 1)
+        return definition
     }
 }
 

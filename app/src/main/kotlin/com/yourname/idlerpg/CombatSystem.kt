@@ -285,6 +285,12 @@ class CombatService {
         return ServiceResult.Success(state)
     }
 
+    fun healCharacter(characterId: String, amount: Int): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp + amount).coerceAtMost(state.maxHp)
+        return ServiceResult.Success(state)
+    }
+
     fun resolveRecoveryIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
         val state = stateFor(characterId)
         val until = state.recovery.recoveringUntil
