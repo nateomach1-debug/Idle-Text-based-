@@ -1,0 +1,17 @@
+]633;E;echo "===== grep: autoHealThresholdPercent / autoFleeThresholdPercent storage =====";6607588a-a29c-4504-972a-39bfc9f1d1df]633;C===== grep: autoHealThresholdPercent / autoFleeThresholdPercent storage =====
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:34:    val autoHealThresholdPercent: Int,
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:35:    val autoFleeThresholdPercent: Int,
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:46:    onAutoHealChanged: (Int) -> Unit,
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:47:    onAutoFleeChanged: (Int) -> Unit,
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:98:        Text(text = "Auto-Heal Threshold: " + state.autoHealThresholdPercent + "%", style = MaterialTheme.typography.titleMedium)
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:100:            value = state.autoHealThresholdPercent.toFloat(),
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:101:            onValueChange = { onAutoHealChanged(it.toInt()) },
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:108:        Text(text = "Auto-Flee Threshold: " + state.autoFleeThresholdPercent + "%", style = MaterialTheme.typography.titleMedium)
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:110:            value = state.autoFleeThresholdPercent.toFloat(),
+app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:111:            onValueChange = { onAutoFleeChanged(it.toInt()) },
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:638:                                    onAutoHealChanged = { autoHeal = it },
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:639:                                    onAutoFleeChanged = { autoFlee = it }
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:671:                                    onAutoHealChanged = { autoHeal = it },
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:672:                                    onAutoFleeChanged = { autoFlee = it }
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:104:    val autoHealThresholdPercent: Int,
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:105:    val autoFleeThresholdPercent: Int
