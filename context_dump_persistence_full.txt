@@ -1,0 +1,167 @@
+]633;E;echo "===== GameStateRepository.kt lines 1-30 (data classes) =====";1066bf62-82ac-4891-856c-d49fd4656d58]633;C===== GameStateRepository.kt lines 1-30 (data classes) =====
+package com.yourname.idlerpg.data
+
+import android.content.Context
+import com.yourname.idlerpg.*
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+
+class GameStateRepository(private val context: Context) {
+    private val saveFile: File get() = File(context.filesDir, "game_state.json")
+
+    fun save(
+        accounts: List<AccountExport>,
+        characters: List<CharacterExport>,
+        skills: List<SkillExport>,
+        skillingQueues: List<SkillingQueueExport>,
+        craftingQueues: List<CraftingQueueExport>,
+        lastSeen: List<LastSeenExport>,
+        inventoryItems: List<InventorySlotExport>,
+        equippedSlots: List<EquippedSlotExport>,
+        marketAccounts: List<PlayerEconomyAccountExport>,
+        marketOrders: List<MarketOrderExport>,
+        marketPriceHistory: List<PriceHistoryExport>
+    ) {
+        val root = JSONObject()
+
+        val accountsArray = JSONArray()
+        accounts.forEach { acc ->
+            val obj = JSONObject()
+            obj.put("id", acc.id)
+
+===== GameStateRepository.kt lines 95-140 (save: inventory/equipped/acc.inventory) =====
+        root.put("craftingQueues", craftingQueuesArray)
+
+        val lastSeenArray = JSONArray()
+        lastSeen.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
+
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("itemId", entry.itemId)
+            obj.put("quantity", entry.quantity)
+            inventoryArray.put(obj)
+        }
+        root.put("inventoryItems", inventoryArray)
+
+        val equippedArray = JSONArray()
+        equippedSlots.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("slot", entry.slot)
+            obj.put("itemId", entry.itemId)
+            equippedArray.put(obj)
+        }
+        root.put("equippedSlots", equippedArray)
+
+        val marketAccountsArray = JSONArray()
+        marketAccounts.forEach { acc ->
+            val obj = JSONObject()
+            obj.put("characterId", acc.characterId)
+            obj.put("accountId", acc.accountId)
+            obj.put("isMainCharacter", acc.isMainCharacter)
+            obj.put("currencyBalance", acc.currencyBalance)
+            val inventoryObj = JSONObject()
+            acc.inventory.forEach { (itemId, qty) -> inventoryObj.put(itemId, qty) }
+            obj.put("inventory", inventoryObj)
+            marketAccountsArray.put(obj)
+        }
+        root.put("marketAccounts", marketAccountsArray)
+
+        val marketOrdersArray = JSONArray()
+
+===== GameStateRepository.kt lines 255,305 (load: inventory/equipped) =====
+        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+        for (i in 0 until inventoryArray.length()) {
+            val obj = inventoryArray.getJSONObject(i)
+            inventoryItems.add(
+                InventorySlotExport(
+                    characterId = obj.getString("characterId"),
+                    itemId = obj.getString("itemId"),
+                    quantity = obj.getInt("quantity")
+                )
+            )
+        }
+
+        val equippedSlots = mutableListOf<EquippedSlotExport>()
+        val equippedArray = root.optJSONArray("equippedSlots") ?: JSONArray()
+        for (i in 0 until equippedArray.length()) {
+            val obj = equippedArray.getJSONObject(i)
+            equippedSlots.add(
+                EquippedSlotExport(
+                    characterId = obj.getString("characterId"),
+                    slot = obj.getString("slot"),
+                    itemId = obj.getString("itemId")
+                )
+            )
+        }
+
+        val marketAccounts = mutableListOf<PlayerEconomyAccountExport>()
+        val marketAccountsArray = root.optJSONArray("marketAccounts") ?: JSONArray()
+        for (i in 0 until marketAccountsArray.length()) {
+            val obj = marketAccountsArray.getJSONObject(i)
+            val inventoryObj = obj.optJSONObject("inventory") ?: JSONObject()
+            val inventory = mutableMapOf<String, Int>()
+            inventoryObj.keys().forEach { key -> inventory[key] = inventoryObj.getInt(key) }
+            marketAccounts.add(
+                PlayerEconomyAccountExport(
+                    characterId = obj.getString("characterId"),
+                    accountId = obj.getString("accountId"),
+                    isMainCharacter = obj.getBoolean("isMainCharacter"),
+                    currencyBalance = obj.getLong("currencyBalance"),
+                    inventory = inventory
+                )
+            )
+        }
+
+        val marketOrders = mutableListOf<MarketOrderExport>()
+
+===== GameStateRepository.kt lines 345,360 (snapshot class) =====
+data class SavedGameState(
+    val accounts: List<AccountExport>,
+    val characters: List<CharacterExport>,
+    val skills: List<SkillExport>,
+    val skillingQueues: List<SkillingQueueExport>,
+    val craftingQueues: List<CraftingQueueExport>,
+    val lastSeen: List<LastSeenExport>,
+    val inventoryItems: List<InventorySlotExport>,
+    val equippedSlots: List<EquippedSlotExport>,
+    val marketAccounts: List<PlayerEconomyAccountExport>,
+    val marketOrders: List<MarketOrderExport>,
+    val marketPriceHistory: List<PriceHistoryExport>
+)
+
+===== grep: InventorySlotExport / EquippedSlotExport definitions =====
+
+===== grep: saveGame in GameViewModel.kt =====
+214:    fun saveGame() {
+215-        repository.save(
+216-            accountService.exportAllAccounts(),
+217-            accountService.exportAllCharacters(),
+218-            progressionService.exportAllSkills(),
+219-            offlineIdleService.exportSkillingQueues(),
+220-            offlineIdleService.exportCraftingQueues(),
+221-            offlineIdleService.exportLastSeen(),
+222-            inventoryService.exportAllItems(),
+223-            inventoryService.exportAllEquipped(),
+224-            marketService.exportAccounts(),
+225-            marketService.exportOrders(),
+226-            marketService.exportPriceHistory()
+227-        )
+228-    }
+229-
