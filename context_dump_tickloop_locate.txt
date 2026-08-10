@@ -1,4 +1,4 @@
-]633;E;echo "===== grep: locate the tick loop and currency/currentCharacterId StateFlows =====";6607588a-a29c-4504-972a-39bfc9f1d1df]633;C===== grep: locate the tick loop and currency/currentCharacterId StateFlows =====
+]633;E;echo "===== grep: locate the tick loop and currency/currentCharacterId StateFlows =====";63025f92-a0df-44fd-b39c-0c69bc8799ce]633;C===== grep: locate the tick loop and currency/currentCharacterId StateFlows =====
 53:    private val _currentCharacterId = MutableStateFlow<String?>(null)
 54:    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
 84:        viewModelScope.launch(Dispatchers.Default) {
