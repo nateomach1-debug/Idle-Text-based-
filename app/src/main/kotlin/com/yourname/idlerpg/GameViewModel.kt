@@ -64,6 +64,61 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     val economyMonitoring = EconomyMonitoringService()
     val marketService = MarketService(economyMonitoring)
+    val combatService = CombatService()
+
+    private val _autoHealThresholdPercent = MutableStateFlow(30)
+    val autoHealThresholdPercent: StateFlow<Int> = _autoHealThresholdPercent.asStateFlow()
+
+    private val _autoFleeThresholdPercent = MutableStateFlow(10)
+    val autoFleeThresholdPercent: StateFlow<Int> = _autoFleeThresholdPercent.asStateFlow()
+
+    fun setAutoHealThreshold(percent: Int) {
+        _autoHealThresholdPercent.value = percent.coerceIn(0, 100)
+    }
+
+    fun setAutoFleeThreshold(percent: Int) {
+        _autoFleeThresholdPercent.value = percent.coerceIn(0, 100)
+    }
+
+    fun selectFood(itemId: String?) {
+        val characterId = _currentCharacterId.value ?: return
+        inventoryService.inventoryFor(characterId).selectFood(itemId)
+        refreshInventory()
+    }
+
+    fun selectPotion(itemId: String?) {
+        val characterId = _currentCharacterId.value ?: return
+        inventoryService.inventoryFor(characterId).selectPotion(itemId)
+        refreshInventory()
+    }
+
+    private fun tickConsumables() {
+        val characterId = _currentCharacterId.value ?: return
+        val inventory = inventoryService.inventoryFor(characterId)
+        val combatState = combatService.stateFor(characterId)
+
+        if (combatState.maxHp > 0) {
+            val hpPercent = (combatState.currentHp * 100) / combatState.maxHp
+            if (hpPercent <= _autoHealThresholdPercent.value) {
+                inventory.consumeSelectedFood()?.let { food ->
+                    combatService.healCharacter(characterId, food.healAmount ?: 0)
+                }
+            }
+        }
+
+        if (inventory.selectedPotionId != null) {
+            if (inventory.potionTimerRemainingSeconds > 0) {
+                inventory.potionTimerRemainingSeconds -= 1
+            }
+            if (inventory.potionTimerRemainingSeconds <= 0) {
+                inventory.consumeSelectedPotion()?.let { potion ->
+                    inventory.potionTimerRemainingSeconds = potion.buffDurationSeconds ?: 0
+                }
+            }
+        }
+
+        refreshInventory()
+    }
 
     private val _marketListings = MutableStateFlow<List<MarketPriceSummary>>(emptyList())
     val marketListings: StateFlow<List<MarketPriceSummary>> = _marketListings.asStateFlow()
@@ -86,6 +141,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 delay(1000L)
                 tickSkilling()
             tickCrafting()
+            tickConsumables()
             }
         }
     }
