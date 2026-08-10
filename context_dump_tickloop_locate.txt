@@ -1,0 +1,27 @@
+]633;E;echo "===== grep: locate the tick loop and currency/currentCharacterId StateFlows =====";6607588a-a29c-4504-972a-39bfc9f1d1df]633;C===== grep: locate the tick loop and currency/currentCharacterId StateFlows =====
+53:    private val _currentCharacterId = MutableStateFlow<String?>(null)
+54:    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+84:        viewModelScope.launch(Dispatchers.Default) {
+86:                delay(1000L)
+93:    viewModelScope.launch(Dispatchers.Default) {
+152:    _currentCharacterId.value = null
+175:        _currentCharacterId.value = characterId
+240:        val characterId = _currentCharacterId.value ?: return
+250:        val characterId = _currentCharacterId.value ?: return
+256:    private fun tickSkilling() {
+257:        val characterId = _currentCharacterId.value ?: return
+320:        val characterId = _currentCharacterId.value ?: return
+335:        val characterId = _currentCharacterId.value ?: return
+341:    private fun tickCrafting() {
+342:        val characterId = _currentCharacterId.value ?: return
+367:        val characterId = _currentCharacterId.value ?: return
+385:        val characterId = _currentCharacterId.value ?: return
+392:        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+402:        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+409:        val characterId = _currentCharacterId.value
+433:        val characterId = _currentCharacterId.value
+447:        val characterId = _currentCharacterId.value ?: return
+454:        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+476:        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+501:        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+524:        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
