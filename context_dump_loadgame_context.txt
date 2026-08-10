@@ -1,0 +1,27 @@
+]633;E;echo "===== GameViewModel.kt lines 160-185 (loadGame full context) =====";ffdc2624-bc70-41fb-8485-032158aaed7f]633;C===== GameViewModel.kt lines 160-185 (loadGame full context) =====
+}
+    private var hasLoaded = false
+
+    fun loadGame() {
+        if (hasLoaded) return
+        hasLoaded = true
+        val saved = repository.load() ?: return
+        saved.accounts.forEach { accountService.restoreAccount(it) }
+        saved.characters.forEach { accountService.restoreCharacter(it) }
+        saved.skills.forEach { progressionService.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
+            refreshCurrency()
+    }
