@@ -1,0 +1,82 @@
+]633;E;echo "===== GameStateRepository.kt full load() function =====";22b1e048-0a80-467f-99bc-35197617eeea]633;C===== GameStateRepository.kt full load() function =====
+170:    fun load(): SavedGameState? {
+171-        if (!saveFile.exists()) return null
+172-
+173-        val root = JSONObject(saveFile.readText())
+174-
+175-        val accounts = mutableListOf<AccountExport>()
+176-        val accountsArray = root.optJSONArray("accounts") ?: JSONArray()
+177-        for (i in 0 until accountsArray.length()) {
+178-            val obj = accountsArray.getJSONObject(i)
+179-            accounts.add(
+180-                AccountExport(
+181-                    id = obj.getString("id"), email = obj.getString("email"),
+182-                    username = obj.getString("username"), passwordHash = obj.getString("passwordHash"),
+183-                    passwordSalt = obj.getString("passwordSalt"),
+184-                    createdAt = obj.getString("createdAt"), lastLoginAt = obj.getString("lastLoginAt"),
+185-                    ageBracket = obj.getString("ageBracket"), region = obj.getString("region"),
+186-                    isBanned = obj.getBoolean("isBanned"),
+187-                    banReason = if (obj.isNull("banReason")) null else obj.getString("banReason"),
+188-                    mutedUntil = if (obj.isNull("mutedUntil")) null else obj.getString("mutedUntil"),
+189-                    subscriptionTier = obj.getString("subscriptionTier"),
+190-                    premiumCurrency = obj.getLong("premiumCurrency")
+191-                )
+192-            )
+193-        }
+194-
+195-        val characters = mutableListOf<CharacterExport>()
+196-        val charactersArray = root.optJSONArray("characters") ?: JSONArray()
+197-        for (i in 0 until charactersArray.length()) {
+198-            val obj = charactersArray.getJSONObject(i)
+199-            characters.add(
+200-                CharacterExport(
+201-                    id = obj.getString("id"), accountId = obj.getString("accountId"),
+202-                    displayName = obj.getString("displayName"), avatarId = obj.getString("avatarId"),
+203-                    createdAt = obj.getString("createdAt"),
+204-                    displayNameLastChangedAt = obj.getString("displayNameLastChangedAt"),
+205-                    isMainCharacter = obj.getBoolean("isMainCharacter")
+206-                )
+207-            )
+208-        }
+209-
+210-        val skills = mutableListOf<SkillExport>()
+211-        val skillsArray = root.optJSONArray("skills") ?: JSONArray()
+212-        for (i in 0 until skillsArray.length()) {
+213-            val obj = skillsArray.getJSONObject(i)
+214-            skills.add(
+215-                SkillExport(
+216-                    characterId = obj.getString("characterId"),
+217-                    skillId = obj.getString("skillId"),
+218-                    xp = obj.getLong("xp")
+219-                )
+220-            )
+221-        }
+222-
+223-        val skillingQueues = mutableListOf<SkillingQueueExport>()
+224-        val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+225-        for (i in 0 until queuesArray.length()) {
+226-            val obj = queuesArray.getJSONObject(i)
+227-            skillingQueues.add(
+228-                SkillingQueueExport(
+229-                    characterId = obj.getString("characterId"),
+230-                    skillId = obj.getString("skillId"),
+231-                    itemId = obj.getString("itemId"),
+232-                    secondsPerAction = obj.getLong("secondsPerAction"),
+233-                    startedAt = obj.getString("startedAt")
+234-                )
+235-            )
+236-        }
+237-
+238-        val craftingQueues = mutableListOf<CraftingQueueExport>()
+239-        val craftingQueuesArray = root.optJSONArray("craftingQueues") ?: JSONArray()
+240-        for (i in 0 until craftingQueuesArray.length()) {
+241-            val obj = craftingQueuesArray.getJSONObject(i)
+242-            craftingQueues.add(
+243-                CraftingQueueExport(
+244-                    characterId = obj.getString("characterId"),
+245-                    itemId = obj.getString("itemId"),
+246-                    secondsPerAction = obj.getLong("secondsPerAction"),
+247-                    targetQuantity = if (obj.isNull("targetQuantity")) null else obj.getInt("targetQuantity"),
+248-                    quantityCompleted = obj.getInt("quantityCompleted"),
+249-                    startedAt = obj.getString("startedAt")
+250-                )

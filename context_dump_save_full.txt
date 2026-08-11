@@ -1,0 +1,82 @@
+]633;E;echo "===== GameStateRepository.kt full save() function =====";22b1e048-0a80-467f-99bc-35197617eeea]633;C===== GameStateRepository.kt full save() function =====
+12:    fun save(
+13-        accounts: List<AccountExport>,
+14-        characters: List<CharacterExport>,
+15-        skills: List<SkillExport>,
+16-        skillingQueues: List<SkillingQueueExport>,
+17-        craftingQueues: List<CraftingQueueExport>,
+18-        lastSeen: List<LastSeenExport>,
+19-        inventoryItems: List<InventorySlotExport>,
+20-        equippedSlots: List<EquippedSlotExport>,
+21-        marketAccounts: List<PlayerEconomyAccountExport>,
+22-        marketOrders: List<MarketOrderExport>,
+23-        marketPriceHistory: List<PriceHistoryExport>
+24-    ) {
+25-        val root = JSONObject()
+26-
+27-        val accountsArray = JSONArray()
+28-        accounts.forEach { acc ->
+29-            val obj = JSONObject()
+30-            obj.put("id", acc.id)
+31-            obj.put("email", acc.email)
+32-            obj.put("username", acc.username)
+33-            obj.put("passwordHash", acc.passwordHash)
+34-            obj.put("passwordSalt", acc.passwordSalt)
+35-            obj.put("createdAt", acc.createdAt)
+36-            obj.put("lastLoginAt", acc.lastLoginAt)
+37-            obj.put("ageBracket", acc.ageBracket)
+38-            obj.put("region", acc.region)
+39-            obj.put("isBanned", acc.isBanned)
+40-            obj.put("banReason", acc.banReason)
+41-            obj.put("mutedUntil", acc.mutedUntil)
+42-            obj.put("subscriptionTier", acc.subscriptionTier)
+43-            obj.put("premiumCurrency", acc.premiumCurrency)
+44-            accountsArray.put(obj)
+45-        }
+46-        root.put("accounts", accountsArray)
+47-
+48-        val charactersArray = JSONArray()
+49-        characters.forEach { char ->
+50-            val obj = JSONObject()
+51-            obj.put("id", char.id)
+52-            obj.put("accountId", char.accountId)
+53-            obj.put("displayName", char.displayName)
+54-            obj.put("avatarId", char.avatarId)
+55-            obj.put("createdAt", char.createdAt)
+56-            obj.put("displayNameLastChangedAt", char.displayNameLastChangedAt)
+57-            obj.put("isMainCharacter", char.isMainCharacter)
+58-            charactersArray.put(obj)
+59-        }
+60-        root.put("characters", charactersArray)
+61-
+62-        val skillsArray = JSONArray()
+63-        skills.forEach { skill ->
+64-            val obj = JSONObject()
+65-            obj.put("characterId", skill.characterId)
+66-            obj.put("skillId", skill.skillId)
+67-            obj.put("xp", skill.xp)
+68-            skillsArray.put(obj)
+69-        }
+70-        root.put("skills", skillsArray)
+71-
+72-        val queuesArray = JSONArray()
+73-        skillingQueues.forEach { queue ->
+74-            val obj = JSONObject()
+75-            obj.put("characterId", queue.characterId)
+76-            obj.put("skillId", queue.skillId)
+77-            obj.put("itemId", queue.itemId)
+78-            obj.put("secondsPerAction", queue.secondsPerAction)
+79-            obj.put("startedAt", queue.startedAt)
+80-            queuesArray.put(obj)
+81-        }
+82-        root.put("skillingQueues", queuesArray)
+83-
+84-        val craftingQueuesArray = JSONArray()
+85-        craftingQueues.forEach { queue ->
+86-            val obj = JSONObject()
+87-            obj.put("characterId", queue.characterId)
+88-            obj.put("itemId", queue.itemId)
+89-            obj.put("secondsPerAction", queue.secondsPerAction)
+90-            obj.put("targetQuantity", queue.targetQuantity)
+91-            obj.put("quantityCompleted", queue.quantityCompleted)
+92-            obj.put("startedAt", queue.startedAt)
