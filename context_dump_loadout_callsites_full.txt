@@ -1,0 +1,62 @@
+]633;E;echo "===== MainActivity.kt lines 620-680 (both LoadoutScreen call sites) =====";efb81b57-5b25-4680-a406-e6a15d756842]633;C===== MainActivity.kt lines 620-680 (both LoadoutScreen call sites) =====
+                                }
+                            }
+
+                            AppDestination.COMBAT -> when (combatScreenState) {
+                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+                                    zones = zones, playerLevel = 24,
+                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
+                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+                                )
+                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
+                                CombatScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
+                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+                                    ),
+                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
+                                    onWeaponSelected = { loadoutWeaponId = it },
+                                    onAutoHealChanged = { autoHeal = it },
+                                    onAutoFleeChanged = { autoFlee = it }
+                                )
+                            }
+
+                            AppDestination.INVENTORY -> when (inventoryScreenState) {
+                                InventoryScreenState.Items -> InventoryScreen(
+                                    items = inventoryItems,
+                                    onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
+                                    onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
+                                    onUseItem = { },
+                                    onSellOnMarket = { itemId ->
+                                        val item = inventoryItems.find { it.itemId == itemId }
+                                        selectedMarketItemId = itemId
+                                        prefilledSellQuantity = item?.quantity
+                                        currentDestination = AppDestination.MARKET
+                                    },
+                                    onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
+                                    canEquip = ::canEquip
+                                )
+                                InventoryScreenState.Equipment -> EquipmentScreen(
+                                    state = EquipmentScreenState(equipped, lockedEquipSlots),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onSlotTapped = { slot -> gameViewModel.unequipSlot(EquipSlot.valueOf(slot.name)) }
+                                )
+                                InventoryScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
+                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+                                    ),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
+                                    onWeaponSelected = { loadoutWeaponId = it },
+                                    onAutoHealChanged = { autoHeal = it },
+                                    onAutoFleeChanged = { autoFlee = it }
+                                )
+                            }
+
+                            AppDestination.MARKET -> {
+                                val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
+                                val myBuyOrdersRaw by gameViewModel.myBuyOrders.collectAsState()
+                                val mySellOrdersRaw by gameViewModel.mySellOrders.collectAsState()
+                                val marketListingsUi = remember(marketPriceSummaries) {
