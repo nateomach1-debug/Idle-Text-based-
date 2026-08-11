@@ -1,0 +1,110 @@
+]633;E;echo "===== GameStateRepository.kt lines 92-200 (rest of save function) =====";efb81b57-5b25-4680-a406-e6a15d756842]633;C===== GameStateRepository.kt lines 92-200 (rest of save function) =====
+            obj.put("startedAt", queue.startedAt)
+            craftingQueuesArray.put(obj)
+        }
+        root.put("craftingQueues", craftingQueuesArray)
+
+        val lastSeenArray = JSONArray()
+        lastSeen.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
+
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("itemId", entry.itemId)
+            obj.put("quantity", entry.quantity)
+            inventoryArray.put(obj)
+        }
+        root.put("inventoryItems", inventoryArray)
+
+        val equippedArray = JSONArray()
+        equippedSlots.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("slot", entry.slot)
+            obj.put("itemId", entry.itemId)
+            equippedArray.put(obj)
+        }
+        root.put("equippedSlots", equippedArray)
+
+        val marketAccountsArray = JSONArray()
+        marketAccounts.forEach { acc ->
+            val obj = JSONObject()
+            obj.put("characterId", acc.characterId)
+            obj.put("accountId", acc.accountId)
+            obj.put("isMainCharacter", acc.isMainCharacter)
+            obj.put("currencyBalance", acc.currencyBalance)
+            val inventoryObj = JSONObject()
+            acc.inventory.forEach { (itemId, qty) -> inventoryObj.put(itemId, qty) }
+            obj.put("inventory", inventoryObj)
+            marketAccountsArray.put(obj)
+        }
+        root.put("marketAccounts", marketAccountsArray)
+
+        val marketOrdersArray = JSONArray()
+        marketOrders.forEach { order ->
+            val obj = JSONObject()
+            obj.put("id", order.id)
+            obj.put("characterId", order.characterId)
+            obj.put("itemId", order.itemId)
+            obj.put("side", order.side)
+            obj.put("pricePerUnit", order.pricePerUnit)
+            obj.put("originalQuantity", order.originalQuantity)
+            obj.put("remainingQuantity", order.remainingQuantity)
+            obj.put("status", order.status)
+            obj.put("createdAt", order.createdAt)
+            marketOrdersArray.put(obj)
+        }
+        root.put("marketOrders", marketOrdersArray)
+
+        val marketPriceHistoryArray = JSONArray()
+        marketPriceHistory.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("itemId", entry.itemId)
+            obj.put("pricePerUnit", entry.pricePerUnit)
+            obj.put("quantity", entry.quantity)
+            obj.put("executedAt", entry.executedAt)
+            marketPriceHistoryArray.put(obj)
+        }
+        root.put("marketPriceHistory", marketPriceHistoryArray)
+
+        saveFile.writeText(root.toString())
+    }
+
+    fun load(): SavedGameState? {
+        if (!saveFile.exists()) return null
+
+        val root = JSONObject(saveFile.readText())
+
+        val accounts = mutableListOf<AccountExport>()
+        val accountsArray = root.optJSONArray("accounts") ?: JSONArray()
+        for (i in 0 until accountsArray.length()) {
+            val obj = accountsArray.getJSONObject(i)
+            accounts.add(
+                AccountExport(
+                    id = obj.getString("id"), email = obj.getString("email"),
+                    username = obj.getString("username"), passwordHash = obj.getString("passwordHash"),
+                    passwordSalt = obj.getString("passwordSalt"),
+                    createdAt = obj.getString("createdAt"), lastLoginAt = obj.getString("lastLoginAt"),
+                    ageBracket = obj.getString("ageBracket"), region = obj.getString("region"),
+                    isBanned = obj.getBoolean("isBanned"),
+                    banReason = if (obj.isNull("banReason")) null else obj.getString("banReason"),
+                    mutedUntil = if (obj.isNull("mutedUntil")) null else obj.getString("mutedUntil"),
+                    subscriptionTier = obj.getString("subscriptionTier"),
+                    premiumCurrency = obj.getLong("premiumCurrency")
+                )
+            )
+        }
+
+        val characters = mutableListOf<CharacterExport>()
+        val charactersArray = root.optJSONArray("characters") ?: JSONArray()
+        for (i in 0 until charactersArray.length()) {
+            val obj = charactersArray.getJSONObject(i)
+            characters.add(
+                CharacterExport(
