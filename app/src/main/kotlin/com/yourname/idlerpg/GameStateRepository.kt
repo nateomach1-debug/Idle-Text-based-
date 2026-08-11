@@ -18,6 +18,7 @@ class GameStateRepository(private val context: Context) {
         lastSeen: List<LastSeenExport>,
         inventoryItems: List<InventorySlotExport>,
         equippedSlots: List<EquippedSlotExport>,
+        loadoutSettings: List<LoadoutSettingsExport>,
         marketAccounts: List<PlayerEconomyAccountExport>,
         marketOrders: List<MarketOrderExport>,
         marketPriceHistory: List<PriceHistoryExport>
@@ -122,6 +123,19 @@ class GameStateRepository(private val context: Context) {
             equippedArray.put(obj)
         }
         root.put("equippedSlots", equippedArray)
+
+        val loadoutSettingsArray = JSONArray()
+        loadoutSettings.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("selectedFoodId", entry.selectedFoodId ?: JSONObject.NULL)
+            obj.put("selectedPotionId", entry.selectedPotionId ?: JSONObject.NULL)
+            obj.put("potionTimerRemainingSeconds", entry.potionTimerRemainingSeconds)
+            obj.put("autoHealThresholdPercent", entry.autoHealThresholdPercent)
+            obj.put("autoFleeThresholdPercent", entry.autoFleeThresholdPercent)
+            loadoutSettingsArray.put(obj)
+        }
+        root.put("loadoutSettings", loadoutSettingsArray)
 
         val marketAccountsArray = JSONArray()
         marketAccounts.forEach { acc ->
@@ -335,9 +349,25 @@ class GameStateRepository(private val context: Context) {
             )
         }
 
+        val loadoutSettings = mutableListOf<LoadoutSettingsExport>()
+        val loadoutSettingsArray = root.optJSONArray("loadoutSettings") ?: JSONArray()
+        for (i in 0 until loadoutSettingsArray.length()) {
+            val obj = loadoutSettingsArray.getJSONObject(i)
+            loadoutSettings.add(
+                LoadoutSettingsExport(
+                    characterId = obj.getString("characterId"),
+                    selectedFoodId = if (obj.isNull("selectedFoodId")) null else obj.getString("selectedFoodId"),
+                    selectedPotionId = if (obj.isNull("selectedPotionId")) null else obj.getString("selectedPotionId"),
+                    potionTimerRemainingSeconds = obj.getInt("potionTimerRemainingSeconds"),
+                    autoHealThresholdPercent = obj.getInt("autoHealThresholdPercent"),
+                    autoFleeThresholdPercent = obj.getInt("autoFleeThresholdPercent")
+                )
+            )
+        }
+
         return SavedGameState(
             accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
-            marketAccounts, marketOrders, marketPriceHistory
+            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
         )
     }
 }
@@ -351,6 +381,7 @@ data class SavedGameState(
     val lastSeen: List<LastSeenExport>,
     val inventoryItems: List<InventorySlotExport>,
     val equippedSlots: List<EquippedSlotExport>,
+    val loadoutSettings: List<LoadoutSettingsExport>,
     val marketAccounts: List<PlayerEconomyAccountExport>,
     val marketOrders: List<MarketOrderExport>,
     val marketPriceHistory: List<PriceHistoryExport>
