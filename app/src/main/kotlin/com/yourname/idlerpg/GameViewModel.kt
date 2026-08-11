@@ -66,18 +66,27 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val marketService = MarketService(economyMonitoring)
     val combatService = CombatService()
 
-    private val _autoHealThresholdPercent = MutableStateFlow(30)
-    val autoHealThresholdPercent: StateFlow<Int> = _autoHealThresholdPercent.asStateFlow()
+    data class LoadoutSettingsSnapshot(
+        val selectedFoodId: String?,
+        val selectedPotionId: String?,
+        val potionTimerRemainingSeconds: Int,
+        val autoHealThresholdPercent: Int,
+        val autoFleeThresholdPercent: Int
+    )
 
-    private val _autoFleeThresholdPercent = MutableStateFlow(10)
-    val autoFleeThresholdPercent: StateFlow<Int> = _autoFleeThresholdPercent.asStateFlow()
+    private val _loadoutSettings = MutableStateFlow(LoadoutSettingsSnapshot(null, null, 0, 30, 10))
+    val loadoutSettings: StateFlow<LoadoutSettingsSnapshot> = _loadoutSettings.asStateFlow()
 
     fun setAutoHealThreshold(percent: Int) {
-        _autoHealThresholdPercent.value = percent.coerceIn(0, 100)
+        val characterId = _currentCharacterId.value ?: return
+        inventoryService.inventoryFor(characterId).autoHealThresholdPercent = percent.coerceIn(0, 100)
+        refreshInventory()
     }
 
     fun setAutoFleeThreshold(percent: Int) {
-        _autoFleeThresholdPercent.value = percent.coerceIn(0, 100)
+        val characterId = _currentCharacterId.value ?: return
+        inventoryService.inventoryFor(characterId).autoFleeThresholdPercent = percent.coerceIn(0, 100)
+        refreshInventory()
     }
 
     fun selectFood(itemId: String?) {
@@ -99,7 +108,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         if (combatState.maxHp > 0) {
             val hpPercent = (combatState.currentHp * 100) / combatState.maxHp
-            if (hpPercent <= _autoHealThresholdPercent.value) {
+            if (hpPercent <= inventory.autoHealThresholdPercent) {
                 inventory.consumeSelectedFood()?.let { food ->
                     combatService.healCharacter(characterId, food.healAmount ?: 0)
                 }
@@ -172,6 +181,7 @@ override fun onCleared() {
         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
         saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
         saved.marketAccounts.forEach { marketService.restoreAccount(it) }
         saved.marketOrders.forEach { marketService.restoreOrder(it) }
         saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
@@ -221,6 +231,7 @@ fun logout() {
             offlineIdleService.exportLastSeen(),
             inventoryService.exportAllItems(),
             inventoryService.exportAllEquipped(),
+            inventoryService.exportAllLoadoutSettings(),
             marketService.exportAccounts(),
             marketService.exportOrders(),
             marketService.exportPriceHistory()
@@ -442,6 +453,10 @@ fun logout() {
         val inv = inventoryService.inventoryFor(characterId)
         _inventoryItems.value = inv.allItems()
         _equippedItems.value = inv.allEquipped()
+        _loadoutSettings.value = LoadoutSettingsSnapshot(
+            inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
+            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
+        )
     }
 
     fun equipItem(itemId: String): ServiceResult<Unit> {

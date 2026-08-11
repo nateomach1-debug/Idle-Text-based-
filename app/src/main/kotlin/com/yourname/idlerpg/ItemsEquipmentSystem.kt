@@ -1914,7 +1914,9 @@ class Inventory(
     private val equipped: MutableMap<EquipSlot, String> = mutableMapOf(),
     var selectedFoodId: String? = null,
     var selectedPotionId: String? = null,
-    var potionTimerRemainingSeconds: Int = 0
+    var potionTimerRemainingSeconds: Int = 0,
+    var autoHealThresholdPercent: Int = 30,
+    var autoFleeThresholdPercent: Int = 10
 ) {
     fun usedSlots(): Int = entries.size
 
@@ -2085,6 +2087,14 @@ class CraftingService {
 
 data class InventorySlotExport(val characterId: String, val itemId: String, val quantity: Int)
 data class EquippedSlotExport(val characterId: String, val slot: String, val itemId: String)
+data class LoadoutSettingsExport(
+    val characterId: String,
+    val selectedFoodId: String?,
+    val selectedPotionId: String?,
+    val potionTimerRemainingSeconds: Int,
+    val autoHealThresholdPercent: Int,
+    val autoFleeThresholdPercent: Int
+)
 
 class InventoryService {
     private val inventories: MutableMap<String, Inventory> = mutableMapOf()
@@ -2106,5 +2116,21 @@ class InventoryService {
 
     fun restoreEquipped(export: EquippedSlotExport) {
         inventoryFor(export.characterId).restoreEquipped(EquipSlot.valueOf(export.slot), export.itemId)
+    }
+
+    fun exportAllLoadoutSettings(): List<LoadoutSettingsExport> = inventories.map { (characterId, inv) ->
+        LoadoutSettingsExport(
+            characterId, inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
+            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
+        )
+    }
+
+    fun restoreLoadoutSettings(export: LoadoutSettingsExport) {
+        val inv = inventoryFor(export.characterId)
+        inv.selectedFoodId = export.selectedFoodId
+        inv.selectedPotionId = export.selectedPotionId
+        inv.potionTimerRemainingSeconds = export.potionTimerRemainingSeconds
+        inv.autoHealThresholdPercent = export.autoHealThresholdPercent
+        inv.autoFleeThresholdPercent = export.autoFleeThresholdPercent
     }
 }
