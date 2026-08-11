@@ -1,0 +1,5 @@
+]633;E;echo "===== grep: locate both LoadoutScreen call sites =====";efb81b57-5b25-4680-a406-e6a15d756842]633;C===== grep: locate both LoadoutScreen call sites =====
+630:                                CombatScreenState.Loadout -> LoadoutScreen(
+631:                                    state = LoadoutState(
+663:                                InventoryScreenState.Loadout -> LoadoutScreen(
+664:                                    state = LoadoutState(
