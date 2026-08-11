@@ -1,0 +1,17 @@
+]633;E;echo "===== GameStateRepository.kt lines 330-345 (SavedGameState constructor call) =====";a877d4e9-2593-4ded-a601-d7eb5ce9825d]633;C===== GameStateRepository.kt lines 330-345 (SavedGameState constructor call) =====
+                    itemId = obj.getString("itemId"),
+                    pricePerUnit = obj.getLong("pricePerUnit"),
+                    quantity = obj.getInt("quantity"),
+                    executedAt = obj.getString("executedAt")
+                )
+            )
+        }
+
+        return SavedGameState(
+            accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
+            marketAccounts, marketOrders, marketPriceHistory
+        )
+    }
+}
+
+data class SavedGameState(
