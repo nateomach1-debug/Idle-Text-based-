@@ -1,0 +1,3 @@
+]633;E;echo "===== XP granting function(s) in GameViewModel =====";187a995d-c0db-4aa5-8579-080866e274f1]633;C===== XP granting function(s) in GameViewModel =====
+
+===== Where an existing skill action (e.g. Mining) grants XP end-to-end =====
