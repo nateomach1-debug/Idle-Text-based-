@@ -30,6 +30,17 @@ object SpellBook {
     fun availableSpells(magicLevel: Int): List<Spell> = spells.filter { it.levelRequired <= magicLevel }
 }
 
+// Which combat skills a character can select to train, based on the equipped
+// weapon's style. Defense is always trainable regardless of weapon style,
+// matching the classic "defensive style still uses your main weapon" model.
+object CombatSkillRules {
+    fun allowedTrainingSkills(style: CombatStyle): List<SkillType> = when (style) {
+        CombatStyle.MELEE -> listOf(SkillType.ATTACK, SkillType.STRENGTH, SkillType.DEFENSE)
+        CombatStyle.RANGED -> listOf(SkillType.ARCHERY, SkillType.DEFENSE)
+        CombatStyle.MAGIC -> listOf(SkillType.MAGIC, SkillType.DEFENSE)
+    }
+}
+
 data class LootEntry(val itemId: String, val minQty: Int, val maxQty: Int, val dropChancePercent: Double)
 
 data class Monster(
@@ -99,6 +110,7 @@ object ZoneCatalog {
 
 data class CombatLoadout(
     val style: CombatStyle,
+    val trainingSkill: SkillType,
     val equippedWeapon: Weapon?,
     val equippedSpell: Spell?,
     val autoHealThresholdPercent: Int,
@@ -146,14 +158,17 @@ class CombatService {
     fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
         states.getOrPut(characterId) { CharacterCombatState(currentHp = maxHp, maxHp = maxHp) }
 
-    fun enterZone(characterId: String, zoneId: String, characterLevel: Int): ServiceResult<CombatSession> {
+    // trainingSkillLevel must be the level of whichever SkillType the character
+    // currently has selected to train (loadout.trainingSkill) - NOT a blended
+    // "character level". Each combat skill unlocks zones independently.
+    fun enterZone(characterId: String, zoneId: String, trainingSkillLevel: Int): ServiceResult<CombatSession> {
         val state = stateFor(characterId)
         if (state.recovery.isRecovering()) {
             return ServiceResult.Failure("Cannot enter combat while recovering.")
         }
         val zone = ZoneCatalog.zones.find { it.id == zoneId }
             ?: return ServiceResult.Failure("Zone not found.")
-        if (zone.levelRequirement > characterLevel) {
+        if (zone.levelRequirement > trainingSkillLevel) {
             return ServiceResult.Failure("Requires level " + zone.levelRequirement + " to enter " + zone.name + ".")
         }
 
