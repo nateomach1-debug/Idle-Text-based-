@@ -1,0 +1,115 @@
+]633;E;echo "===== CombatStyle enum =====";187a995d-c0db-4aa5-8579-080866e274f1]633;C===== CombatStyle enum =====
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-6-}
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-7-
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:8:enum class CombatStyle { MELEE, RANGED, MAGIC }
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-9-
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-10-enum class EquipmentSlot { WEAPON, ARMOR, ACCESSORY, TOOL }
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-11-
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-12-enum class ItemCategory { WEAPON, ARMOR, ACCESSORY, MATERIAL, CONSUMABLE, COSMETIC }
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-13-enum class Rarity { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-14-enum class EquipSlot { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL, LEGS, SHIELD, CAPE, AMMO }
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-15-
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-16-object SlotLockMapping {
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-17-    fun lockCategoryFor(slot: EquipSlot): EquipmentSlot = when (slot) {
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt-18-        EquipSlot.WEAPON, EquipSlot.AMMO -> EquipmentSlot.WEAPON
+
+===== Weapon data class (style field + weapon types) =====
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-5-import kotlin.random.Random
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-6-
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:7:data class Weapon(
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-8-    val name: String,
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-9-    val style: CombatStyle,
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-10-    val attackSpeedSeconds: Double,
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-11-    val baseAccuracy: Int,
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-12-    val baseMaxHit: Int
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-13-)
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-14-
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-15-data class Spell(
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-16-    val name: String,
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-17-    val levelRequired: Int,
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-18-    val attackSpeedSeconds: Double,
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-19-    val baseAccuracy: Int,
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-20-    val baseMaxHit: Int
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-21-)
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt-22-
+
+===== SkillType enum =====
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-8-enum class SkillGroup { GATHERING, PRODUCTION, COMBAT }
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-9-
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:10:enum class SkillType(val groups: Set<SkillGroup>) {
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-11-    MINING(setOf(SkillGroup.GATHERING)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-12-    WOODCUTTING(setOf(SkillGroup.GATHERING)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-13-    FISHING(setOf(SkillGroup.GATHERING)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-14-    FARMING(setOf(SkillGroup.GATHERING)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-15-    THIEVING(setOf(SkillGroup.GATHERING)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-16-    SMITHING(setOf(SkillGroup.PRODUCTION)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-17-    COOKING(setOf(SkillGroup.PRODUCTION)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-18-    CRAFTING(setOf(SkillGroup.PRODUCTION)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-19-    FLETCHING(setOf(SkillGroup.PRODUCTION)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-20-    ALCHEMY(setOf(SkillGroup.PRODUCTION)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-21-    MAGIC(setOf(SkillGroup.PRODUCTION, SkillGroup.COMBAT)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-22-    ATTACK(setOf(SkillGroup.COMBAT)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-23-    STRENGTH(setOf(SkillGroup.COMBAT)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-24-    DEFENSE(setOf(SkillGroup.COMBAT)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-25-    PRAYER(setOf(SkillGroup.COMBAT)),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-26-    ARCHERY(setOf(SkillGroup.COMBAT))
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-27-}
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-28-
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-29-data class Skill(val type: SkillType, var xp: Long = 0)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-30-
+
+===== Existing combat-related skills (Attack/Strength/Defense/Magic/Ranged) already present? =====
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:96:        SkillActionDefinition(SkillType.WOODCUTTING, "magic_logs", "Chop Magic Logs", xpPerAction = 140, secondsPerAction = 5, levelRequired = 60),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:119:        SkillActionDefinition(SkillType.FLETCHING, "magic_shortbow", "Craft Magic Shortbow", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:120:        SkillActionDefinition(SkillType.FLETCHING, "magic_longbow", "Craft Magic Longbow", xpPerAction = 173, secondsPerAction = 6, levelRequired = 75),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:143:        SkillActionDefinition(SkillType.ALCHEMY, "attack_potion", "Brew Attack Potion", xpPerAction = 10, secondsPerAction = 3, levelRequired = 1),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:145:        SkillActionDefinition(SkillType.ALCHEMY, "strength_potion", "Brew Strength Potion", xpPerAction = 19, secondsPerAction = 3, levelRequired = 5),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:146:        SkillActionDefinition(SkillType.ALCHEMY, "defense_potion", "Brew Defense Potion", xpPerAction = 30, secondsPerAction = 3, levelRequired = 10),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:151:        SkillActionDefinition(SkillType.ALCHEMY, "super_attack_potion", "Brew Super Attack Potion", xpPerAction = 74, secondsPerAction = 4, levelRequired = 30),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:152:        SkillActionDefinition(SkillType.ALCHEMY, "super_strength_potion", "Brew Super Strength Potion", xpPerAction = 83, secondsPerAction = 4, levelRequired = 34),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:153:        SkillActionDefinition(SkillType.ALCHEMY, "super_defense_potion", "Brew Super Defense Potion", xpPerAction = 92, secondsPerAction = 4, levelRequired = 38),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:155:        SkillActionDefinition(SkillType.ALCHEMY, "magic_potion", "Brew Magic Potion", xpPerAction = 107, secondsPerAction = 4, levelRequired = 45),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:160:        SkillActionDefinition(SkillType.ALCHEMY, "extreme_attack_potion", "Brew Extreme Attack Potion", xpPerAction = 166, secondsPerAction = 5, levelRequired = 72),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:161:        SkillActionDefinition(SkillType.ALCHEMY, "extreme_strength_potion", "Brew Extreme Strength Potion", xpPerAction = 180, secondsPerAction = 6, levelRequired = 78),
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt:249:        SkillActionDefinition(SkillType.FARMING, "magic_sapling", "Plant/Harvest Magic Tree Sapling", xpPerAction = 162, secondsPerAction = 5, levelRequired = 70),
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:108:        SkillUnlock(SkillType.ATTACK, 30, listOf(
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:112:        SkillUnlock(SkillType.MAGIC, 40, listOf(
+
+===== Skill data class / SkillSummary =====
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-44-}
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-45-
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt:46:data class SkillSummary(
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-47-    val skillId: String,
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-48-    val displayName: String,
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-49-    val level: Int,
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-50-    val currentXp: Long,
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-51-    val xpToNextLevel: Long
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-52-)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-53-
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-54-data class SkillGroupSection(
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-55-    val title: String,
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-56-    val skills: List<SkillSummary>
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-57-)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-58-
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-59-fun buildSkillGroupSections(allSkills: Map<String, SkillSummary>): List<SkillGroupSection> {
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-60-    fun skill(id: String): SkillSummary? = allSkills[id]
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt-61-
+--
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-27-}
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-28-
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:29:data class Skill(val type: SkillType, var xp: Long = 0)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-30-
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-31-class SkillBook {
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-32-    private val skills: MutableMap<SkillType, Skill> = SkillType.values()
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-33-        .associateWith { Skill(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-34-        .toMutableMap()
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-35-
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-36-    fun get(type: SkillType): Skill = skills.getValue(type)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-37-    fun all(): List<Skill> = skills.values.toList()
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-38-    fun inGroup(group: SkillGroup): List<Skill> = skills.values.filter { group in it.type.groups }
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-39-}
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-40-
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-41-object LevelCurve {
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-42-    private const val BASE = 100.0
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-43-    private const val EXPONENT = 2.1
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-44-    const val SOFT_CAP_LEVEL = 99
