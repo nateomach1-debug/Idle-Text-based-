@@ -211,15 +211,6 @@ private fun demoZones(): List<ZoneSummary> = listOf(
     ZoneSummary("frost_peak", "Frost Peak", 40, listOf("Ice Troll", "Frost Wolf"))
 )
 
-private fun demoWeapons(style: CombatStyleOption): List<WeaponOption> = when (style) {
-    CombatStyleOption.MELEE -> listOf(
-        WeaponOption("bronze_sword", "Bronze Sword", CombatStyleOption.MELEE),
-        WeaponOption("iron_sword_common", "Iron Sword", CombatStyleOption.MELEE)
-    )
-    CombatStyleOption.RANGED -> listOf(WeaponOption("shortbow", "Shortbow", CombatStyleOption.RANGED))
-    CombatStyleOption.MAGIC -> listOf(WeaponOption("spark_bolt", "Spark Bolt Staff", CombatStyleOption.MAGIC))
-}
-
 private fun mapItemCategory(category: ItemCategory): InventoryCategory = when (category) {
     ItemCategory.WEAPON -> InventoryCategory.WEAPON
     ItemCategory.ARMOR -> InventoryCategory.ARMOR
@@ -453,7 +444,6 @@ fun AppRoot(gameViewModel: GameViewModel) {
 
     val recoveringUntil = remember { mutableStateOf<Instant?>(null) }
 
-    var loadoutStyle by remember { mutableStateOf(CombatStyleOption.MELEE) }
     var loadoutWeaponId by remember { mutableStateOf<String?>("bronze_sword") }
     var autoHeal by remember { mutableStateOf(30) }
     var autoFlee by remember { mutableStateOf(10) }
