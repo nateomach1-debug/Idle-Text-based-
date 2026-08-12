@@ -1,0 +1,666 @@
+]633;E;echo "===== CombatSystem.kt =====";a95b2ea9-3118-4927-84a9-a0e1330e829b]633;C===== CombatSystem.kt =====
+package com.yourname.idlerpg
+
+import java.time.Duration
+import java.time.Instant
+import kotlin.random.Random
+
+data class Weapon(
+    val name: String,
+    val style: CombatStyle,
+    val attackSpeedSeconds: Double,
+    val baseAccuracy: Int,
+    val baseMaxHit: Int
+)
+
+data class Spell(
+    val name: String,
+    val levelRequired: Int,
+    val attackSpeedSeconds: Double,
+    val baseAccuracy: Int,
+    val baseMaxHit: Int
+)
+
+object SpellBook {
+    private val spells = listOf(
+        Spell("Spark Bolt", levelRequired = 1, attackSpeedSeconds = 2.4, baseAccuracy = 20, baseMaxHit = 4),
+        Spell("Flame Lance", levelRequired = 15, attackSpeedSeconds = 2.8, baseAccuracy = 28, baseMaxHit = 8),
+        Spell("Frost Spike", levelRequired = 30, attackSpeedSeconds = 3.0, baseAccuracy = 35, baseMaxHit = 12)
+    )
+
+    fun availableSpells(magicLevel: Int): List<Spell> = spells.filter { it.levelRequired <= magicLevel }
+}
+
+data class LootEntry(val itemId: String, val minQty: Int, val maxQty: Int, val dropChancePercent: Double)
+
+data class Monster(
+    val id: String,
+    val name: String,
+    val levelRequirement: Int,
+    val maxHealth: Int,
+    val defenseRating: Int,
+    val mainLootTable: List<LootEntry>,
+    val rareLootTable: List<LootEntry>
+)
+
+data class Zone(
+    val id: String,
+    val name: String,
+    val levelRequirement: Int,
+    val monsters: List<Monster>
+)
+
+object ZoneCatalog {
+    val zones = listOf(
+        Zone(
+            id = "goblin_camp",
+            name = "Goblin Camp",
+            levelRequirement = 1,
+            monsters = listOf(
+                Monster(
+                    id = "goblin_grunt",
+                    name = "Goblin Grunt",
+                    levelRequirement = 1,
+                    maxHealth = 25,
+                    defenseRating = 5,
+                    mainLootTable = listOf(
+                        LootEntry("bone", 1, 1, 60.0),
+                        LootEntry("goblin_ear", 1, 2, 40.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("rusty_dagger", 1, 1, 2.0)
+                    )
+                )
+            )
+        ),
+        Zone(
+            id = "shadow_ruins",
+            name = "Shadow Ruins",
+            levelRequirement = 20,
+            monsters = listOf(
+                Monster(
+                    id = "wraith",
+                    name = "Wraith",
+                    levelRequirement = 20,
+                    maxHealth = 80,
+                    defenseRating = 25,
+                    mainLootTable = listOf(
+                        LootEntry("ectoplasm", 1, 3, 55.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("wraith_essence", 1, 1, 0.5)
+                    )
+                )
+            )
+        )
+    )
+
+    fun zonesAvailableAt(level: Int): List<Zone> = zones.filter { it.levelRequirement <= level }
+}
+
+data class CombatLoadout(
+    val style: CombatStyle,
+    val equippedWeapon: Weapon?,
+    val equippedSpell: Spell?,
+    val autoHealThresholdPercent: Int,
+    val autoFleeThresholdPercent: Int
+)
+
+enum class SessionState { SEARCHING, PAUSED, IN_COMBAT }
+
+class CombatSession(
+    val zone: Zone,
+    var state: SessionState = SessionState.SEARCHING,
+    var searchEndsAt: Instant? = null,
+    var currentMonster: Monster? = null,
+    var currentMonsterHealth: Int = 0
+)
+
+class RecoveryStatus {
+    var recoveringUntil: Instant? = null
+
+    fun isRecovering(now: Instant = Instant.now()): Boolean {
+        val until = recoveringUntil ?: return false
+        return now.isBefore(until)
+    }
+}
+
+class CharacterCombatState(
+    var currentHp: Int,
+    var maxHp: Int,
+    val recovery: RecoveryStatus = RecoveryStatus(),
+    var session: CombatSession? = null,
+    val lootPool: MutableList<LootEntry> = mutableListOf()
+)
+
+data class AttackResult(
+    val didHit: Boolean,
+    val damageDealt: Int,
+    val monsterHpRemaining: Int,
+    val monsterDefeated: Boolean
+)
+
+class CombatService {
+    private val recoveryDuration: Duration = Duration.ofSeconds(600)
+    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()
+
+    fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
+        states.getOrPut(characterId) { CharacterCombatState(currentHp = maxHp, maxHp = maxHp) }
+
+    fun enterZone(characterId: String, zoneId: String, characterLevel: Int): ServiceResult<CombatSession> {
+        val state = stateFor(characterId)
+        if (state.recovery.isRecovering()) {
+            return ServiceResult.Failure("Cannot enter combat while recovering.")
+        }
+        val zone = ZoneCatalog.zones.find { it.id == zoneId }
+            ?: return ServiceResult.Failure("Zone not found.")
+        if (zone.levelRequirement > characterLevel) {
+            return ServiceResult.Failure("Requires level " + zone.levelRequirement + " to enter " + zone.name + ".")
+        }
+
+        val session = CombatSession(zone = zone)
+        state.session = session
+        return startSearching(characterId)
+    }
+
+    fun startSearching(characterId: String, now: Instant = Instant.now()): ServiceResult<CombatSession> {
+        val state = stateFor(characterId)
+        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
+        if (state.recovery.isRecovering(now)) {
+            return ServiceResult.Failure("Cannot search while recovering.")
+        }
+
+        val searchSeconds = Random.nextInt(3, 11)
+        session.state = SessionState.SEARCHING
+        session.searchEndsAt = now.plusSeconds(searchSeconds.toLong())
+        session.currentMonster = null
+        return ServiceResult.Success(session)
+    }
+
+    fun pauseSearching(characterId: String): ServiceResult<CombatSession> {
+        val state = stateFor(characterId)
+        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
+        if (session.state != SessionState.SEARCHING) {
+            return ServiceResult.Failure("Can only pause while searching.")
+        }
+        session.state = SessionState.PAUSED
+        return ServiceResult.Success(session)
+    }
+
+    fun resolveSearchIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<Monster> {
+        val state = stateFor(characterId)
+        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
+        if (session.state != SessionState.SEARCHING) {
+            return ServiceResult.Failure("Not currently searching.")
+        }
+        val endsAt = session.searchEndsAt ?: return ServiceResult.Failure("No active search timer.")
+        if (now.isBefore(endsAt)) {
+            return ServiceResult.Failure("Search still in progress.")
+        }
+
+        val monster = session.zone.monsters.random()
+        session.currentMonster = monster
+        session.currentMonsterHealth = monster.maxHealth
+        session.state = SessionState.IN_COMBAT
+        return ServiceResult.Success(monster)
+    }
+
+    fun leaveZone(characterId: String): ServiceResult<Unit> {
+        val state = stateFor(characterId)
+        state.session = null
+        return ServiceResult.Success(Unit)
+    }
+
+    fun canChangeEquipment(characterId: String, slot: EquipmentSlot, now: Instant = Instant.now()): Boolean {
+        if (slot == EquipmentSlot.TOOL) return true
+
+        val state = stateFor(characterId)
+
+        if (state.recovery.isRecovering(now) && slot == EquipmentSlot.WEAPON) return false
+
+        val session = state.session ?: return true
+        return session.state != SessionState.IN_COMBAT
+    }
+
+    fun resolveAttack(
+        characterId: String,
+        loadout: CombatLoadout,
+        attackerAccuracy: Int,
+        attackerMaxHit: Int
+    ): ServiceResult<AttackResult> {
+        val state = stateFor(characterId)
+        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
+        if (session.state != SessionState.IN_COMBAT) {
+            return ServiceResult.Failure("Not currently in combat.")
+        }
+        val monster = session.currentMonster ?: return ServiceResult.Failure("No active target.")
+
+        val hitChancePercent = (attackerAccuracy.toDouble() / (attackerAccuracy + monster.defenseRating)) * 100.0
+        val didHit = Random.nextDouble(0.0, 100.0) < hitChancePercent
+
+        if (!didHit) {
+            return ServiceResult.Success(
+                AttackResult(didHit = false, damageDealt = 0, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = false)
+            )
+        }
+
+        val damage = Random.nextInt(0, attackerMaxHit + 1)
+        session.currentMonsterHealth = (session.currentMonsterHealth - damage).coerceAtLeast(0)
+        val defeated = session.currentMonsterHealth <= 0
+
+        if (defeated) {
+            rollLoot(state, monster)
+            session.currentMonster = null
+            startSearching(characterId)
+        }
+
+        return ServiceResult.Success(
+            AttackResult(didHit = true, damageDealt = damage, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = defeated)
+        )
+    }
+
+    private fun rollLoot(state: CharacterCombatState, monster: Monster) {
+        (monster.mainLootTable + monster.rareLootTable).forEach { entry ->
+            if (Random.nextDouble(0.0, 100.0) < entry.dropChancePercent) {
+                val qty = Random.nextInt(entry.minQty, entry.maxQty + 1)
+                state.lootPool.add(entry.copy(minQty = qty, maxQty = qty))
+            }
+        }
+    }
+
+    fun collectLoot(characterId: String): ServiceResult<List<LootEntry>> {
+        val state = stateFor(characterId)
+        val collected = state.lootPool.toList()
+        state.lootPool.clear()
+        return ServiceResult.Success(collected)
+    }
+
+    fun applyDamageToCharacter(characterId: String, damage: Int, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp - damage).coerceAtLeast(0)
+
+        if (state.currentHp <= 0) {
+            state.recovery.recoveringUntil = now.plus(recoveryDuration)
+            state.session = null
+        }
+        return ServiceResult.Success(state)
+    }
+
+    fun healCharacter(characterId: String, amount: Int): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp + amount).coerceAtMost(state.maxHp)
+        return ServiceResult.Success(state)
+    }
+
+    fun resolveRecoveryIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        val until = state.recovery.recoveringUntil
+            ?: return ServiceResult.Failure("Character is not recovering.")
+        if (now.isBefore(until)) {
+            return ServiceResult.Failure("Recovery still in progress.")
+        }
+        state.currentHp = (state.maxHp * 0.5).toInt()
+        state.recovery.recoveringUntil = null
+        return ServiceResult.Success(state)
+    }
+}
+
+===== ZoneSelectScreen.kt =====
+package com.yourname.idlerpg.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+
+// =========================================================
+// ZONE SELECT SCREEN
+// All zones visible; locked ones (above the player's level)
+// shown greyed out with their requirement displayed instead
+// of being hidden entirely.
+// =========================================================
+
+data class ZoneSummary(
+    val zoneId: String,
+    val name: String,
+    val levelRequirement: Int,
+    val monsterNames: List<String>
+)
+
+@Composable
+fun ZoneSelectScreen(
+    zones: List<ZoneSummary>,
+    playerLevel: Int,
+    onZoneSelected: (String) -> Unit,
+    onOpenLoadout: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Combat", style = MaterialTheme.typography.headlineMedium)
+            TextButton(onClick = onOpenLoadout) {
+                Text(text = "Loadout")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(zones) { zone ->
+                ZoneCard(
+                    zone = zone,
+                    isUnlocked = playerLevel >= zone.levelRequirement,
+                    onClick = { if (playerLevel >= zone.levelRequirement) onZoneSelected(zone.zoneId) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ZoneCard(zone: ZoneSummary, isUnlocked: Boolean, onClick: () -> Unit) {
+    val backgroundColor = if (isUnlocked) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+    val contentAlpha = if (isUnlocked) 1f else 0.5f
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(backgroundColor)
+            .clickable(enabled = isUnlocked) { onClick() }
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = zone.name,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = MaterialTheme.typography.titleMedium.color.copy(alpha = contentAlpha)
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = zone.monsterNames.joinToString(", "),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = MaterialTheme.typography.labelSmall.color.copy(alpha = contentAlpha)
+                )
+            )
+        }
+
+        if (!isUnlocked) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Lock,
+                    contentDescription = "Locked",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Lv. " + zone.levelRequirement,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+}
+
+===== CombatViewScreen (file location + content) =====
+./app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt
+./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt
+---
+--- ./app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt ---
+package com.yourname.idlerpg.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import java.time.Duration
+import java.time.Instant
+
+// =========================================================
+// COMBAT VIEW SCREEN
+// Two live states: SEARCHING (timer only) and IN_COMBAT
+// (monster + player HP). Advanced toggle adds hit chance,
+// exact damage, and a scrolling combat log in either state.
+// =========================================================
+
+enum class CombatViewState { SEARCHING, IN_COMBAT }
+
+data class CombatLogEntry(
+    val text: String,
+    val timestamp: Instant = Instant.now()
+)
+
+data class CombatViewData(
+    val zoneName: String,
+    val viewState: CombatViewState,
+    val searchEndsAt: Instant?,          // set only when SEARCHING
+    val monsterName: String?,            // set only when IN_COMBAT
+    val monsterCurrentHp: Int?,
+    val monsterMaxHp: Int?,
+    val playerCurrentHp: Int,
+    val playerMaxHp: Int,
+    val lastHitChancePercent: Double?,   // advanced view only
+    val lastDamageDealt: Int?,           // advanced view only
+    val combatLog: List<CombatLogEntry>
+)
+
+@Composable
+fun CombatViewScreen(
+    data: CombatViewData,
+    onLeaveZone: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showAdvanced by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onLeaveZone) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Leave zone")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = data.zoneName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        when (data.viewState) {
+            CombatViewState.SEARCHING -> SearchingView(data.searchEndsAt)
+            CombatViewState.IN_COMBAT -> InCombatView(data)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextButton(onClick = { showAdvanced = !showAdvanced }) {
+            Text(text = if (showAdvanced) "Hide details" else "Show details")
+        }
+
+        if (showAdvanced) {
+            Spacer(modifier = Modifier.height(8.dp))
+            AdvancedDetails(data)
+        }
+    }
+}
+
+@Composable
+private fun SearchingView(searchEndsAt: Instant?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Searching for an enemy...", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        if (searchEndsAt != null) {
+            LiveCountdownText(searchEndsAt)
+        }
+    }
+}
+
+@Composable
+private fun InCombatView(data: CombatViewData) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(20.dp)
+    ) {
+        Text(text = data.monsterName ?: "Unknown", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(6.dp))
+        HpBarRow(
+            label = "Enemy",
+            current = data.monsterCurrentHp ?: 0,
+            max = data.monsterMaxHp ?: 1,
+            color = MaterialTheme.colorScheme.error
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(text = "You", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(6.dp))
+        HpBarRow(
+            label = "HP",
+            current = data.playerCurrentHp,
+            max = data.playerMaxHp,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun HpBarRow(label: String, current: Int, max: Int, color: androidx.compose.ui.graphics.Color) {
+    val fraction = (current.toFloat() / max.toFloat()).coerceIn(0f, 1f)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(10.dp)
+            .clip(RoundedCornerShape(5.dp))
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(5.dp))
+                .background(color)
+        )
+    }
+    Spacer(modifier = Modifier.height(2.dp))
+    Text(text = "$current / $max", style = MaterialTheme.typography.labelSmall)
+}
+
+@Composable
+private fun AdvancedDetails(data: CombatViewData) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(16.dp)
+    ) {
+        data.lastHitChancePercent?.let {
+            Text(text = "Hit chance: " + String.format("%.1f", it) + "%", style = MaterialTheme.typography.labelSmall)
+        }
+        data.lastDamageDealt?.let {
+            Text(text = "Last hit: " + it + " damage", style = MaterialTheme.typography.labelSmall)
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(text = "Combat Log", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(6.dp))
+
+        LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
+            items(data.combatLog.reversed()) { entry ->
+                Text(
+                    text = entry.text,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LiveCountdownText(endsAt: Instant) {
+    var remaining by remember(endsAt) { mutableStateOf(Duration.between(Instant.now(), endsAt)) }
+
+    LaunchedEffect(endsAt) {
+        while (true) {
+            remaining = Duration.between(Instant.now(), endsAt)
+            if (remaining.isNegative || remaining.isZero) break
+            delay(1000)
+        }
+    }
+
+    val text = if (remaining.isNegative || remaining.isZero) {
+        "Encounter starting..."
+    } else {
+        remaining.seconds.toString() + "s remaining"
+    }
+
+    Text(text = text, style = MaterialTheme.typography.bodyMedium)
+}
+
+===== MainActivity Combat tab routing =====
+326:private sealed class CombatScreenState {
+327:    object ZoneSelect : CombatScreenState()
+328:    object InZone : CombatScreenState()
+329:    object Loadout : CombatScreenState()
+393:    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
+451:    var combatViewState by remember { mutableStateOf(CombatViewState.SEARCHING) }
+452:    val demoCombatLog = remember {
+453:        mutableStateListOf(CombatLogEntry("You entered Goblin Camp."), CombatLogEntry("Searching for an enemy..."))
+456:    val combatViewData = CombatViewData(
+457:        zoneName = "Goblin Camp", viewState = combatViewState,
+458:        searchEndsAt = if (combatViewState == CombatViewState.SEARCHING) Instant.now().plusSeconds(7) else null,
+459:        monsterName = if (combatViewState == CombatViewState.IN_COMBAT) "Goblin Grunt" else null,
+460:        monsterCurrentHp = if (combatViewState == CombatViewState.IN_COMBAT) 15 else null,
+461:        monsterMaxHp = if (combatViewState == CombatViewState.IN_COMBAT) 25 else null,
+463:        lastHitChancePercent = if (combatViewState == CombatViewState.IN_COMBAT) 62.5 else null,
+464:        lastDamageDealt = if (combatViewState == CombatViewState.IN_COMBAT) 4 else null,
+465:        combatLog = demoCombatLog
+470:        val locked = combatViewState == CombatViewState.IN_COMBAT
+471:        return if (locked) false to "Locked during combat" else true to null
+474:    val lockedEquipSlots = remember(combatViewState) {
+475:        if (combatViewState == CombatViewState.IN_COMBAT) {
+589:                                combatScreenState = CombatScreenState.ZoneSelect
+630:                            AppDestination.COMBAT -> when (combatScreenState) {
+631:                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+633:                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
+634:                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+636:                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
+637:                                CombatScreenState.Loadout -> LoadoutScreen(
+644:                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
