@@ -1,0 +1,11 @@
+]633;E;echo "===== grep: locate demoWeapons function and any other CombatStyleOption/WeaponOption references =====";d57e666e-07fa-4df2-9f80-b8ea45fbd1c5]633;C===== grep: locate demoWeapons function and any other CombatStyleOption/WeaponOption references =====
+214:private fun demoWeapons(style: CombatStyleOption): List<WeaponOption> = when (style) {
+215:    CombatStyleOption.MELEE -> listOf(
+216:        WeaponOption("bronze_sword", "Bronze Sword", CombatStyleOption.MELEE),
+217:        WeaponOption("iron_sword_common", "Iron Sword", CombatStyleOption.MELEE)
+219:    CombatStyleOption.RANGED -> listOf(WeaponOption("shortbow", "Shortbow", CombatStyleOption.RANGED))
+220:    CombatStyleOption.MAGIC -> listOf(WeaponOption("spark_bolt", "Spark Bolt Staff", CombatStyleOption.MAGIC))
+456:    var loadoutStyle by remember { mutableStateOf(CombatStyleOption.MELEE) }
+457:    var loadoutWeaponId by remember { mutableStateOf<String?>("bronze_sword") }
+458:    var autoHeal by remember { mutableStateOf(30) }
+459:    var autoFlee by remember { mutableStateOf(10) }
