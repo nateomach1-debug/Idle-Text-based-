@@ -1,0 +1,419 @@
+]633;E;echo "===== MainActivity.kt lines 300-660 =====";25828f0a-9601-4ccb-928d-e11f3f1d23cc]633;C===== MainActivity.kt lines 300-660 =====
+    GuildLeaderboardEntry("Quinn", 4200)
+)
+
+private fun demoChatMessages(): List<ChatMessageUi> = listOf(
+    ChatMessageUi("m1", "Bram", "anyone selling steel bars?", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m2", "Sable", "check the market, saw some at 48 each", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m3", "Quinn", "gl on the hunt everyone", ChatChannelUi.GLOBAL)
+)
+
+private fun demoDmConversations(): List<DmConversationSummary> = listOf(
+    DmConversationSummary("char2", "Bram", "hey, got a minute?"),
+    DmConversationSummary("char3", "Sable", "thanks for the help earlier!")
+)
+
+private sealed class AppFlowState {
+    object Login : AppFlowState()
+    object CharacterSelect : AppFlowState()
+    object CharacterCreate : AppFlowState()
+    object InGame : AppFlowState()
+}
+
+private sealed class SkillsScreenState {
+    object List : SkillsScreenState()
+    data class Detail(val skillId: String) : SkillsScreenState()
+}
+
+private sealed class CombatScreenState {
+    object ZoneSelect : CombatScreenState()
+    object InZone : CombatScreenState()
+    object Loadout : CombatScreenState()
+}
+
+private sealed class InventoryScreenState {
+    object Items : InventoryScreenState()
+    object Equipment : InventoryScreenState()
+    object Loadout : InventoryScreenState()
+}
+
+@Composable
+fun AppRoot(gameViewModel: GameViewModel) {
+    val currentAccountId by gameViewModel.currentAccountId.collectAsState()
+    val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
+    var isCreatingAccount by remember { mutableStateOf(false) }
+    var loginError by remember { mutableStateOf<String?>(null) }
+    var flowState by remember {
+        val accountIdSnapshot = currentAccountId
+        mutableStateOf(
+            when {
+                currentCharacterId != null -> AppFlowState.InGame
+                accountIdSnapshot != null -> {
+                    val chars = gameViewModel.accountService.charactersFor(accountIdSnapshot)
+                    if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                }
+                else -> AppFlowState.Login
+            }
+        )
+    }
+    LaunchedEffect(Unit) {
+        gameViewModel.loadGame()
+        if (flowState == AppFlowState.Login) {
+            val autoAccount = gameViewModel.tryAutoLogin()
+            if (autoAccount != null) {
+                val chars = gameViewModel.accountService.charactersFor(autoAccount.id)
+                flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+            }
+        }
+    }
+
+    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
+    offlineSummary?.let { summary ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+            title = { androidx.compose.material3.Text("Welcome back!") },
+            text = {
+                val minutes = summary.awaySeconds / 60
+                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
+                androidx.compose.material3.Text(
+                    "You were away for " + awayText + ".\n\n" +
+                    "While gone, you were " + summary.skillActionName + ":\n" +
+                    "+" + summary.xpEarned + " XP\n" +
+                    "Gathered " + summary.quantity + "x " + summary.itemName
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
+    var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
+    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
+    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
+    var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
+
+    val allSkills by gameViewModel.skills.collectAsState()
+    val zones = remember { demoZones() }
+    val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
+    val inventoryItems = remember(inventoryItemEntries) {
+        buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
+    }
+    val inventoryQuantities = remember(inventoryItemEntries) {
+        inventoryItemEntries.associate { it.itemId to it.quantity }
+    }
+    val equippedBackend by gameViewModel.equippedItems.collectAsState()
+    val equipped = remember(equippedBackend) {
+        EquipSlotUi.values().associateWith { uiSlot ->
+            equippedBackend[EquipSlot.valueOf(uiSlot.name)]?.let { itemId ->
+                ItemCatalog.find(itemId)?.let { def -> EquippedItemInfo(itemId, def.name) }
+            }
+        }
+    }
+    val loadoutSettings by gameViewModel.loadoutSettings.collectAsState()
+    val availableFoodOptions = remember(inventoryItemEntries) {
+        inventoryItemEntries.mapNotNull { entry ->
+            val definition = ItemCatalog.find(entry.itemId)
+            if (definition?.consumableType == ConsumableType.FOOD) {
+                ConsumableOption(entry.itemId, definition.name, entry.quantity)
+            } else null
+        }
+    }
+    val availablePotionOptions = remember(inventoryItemEntries) {
+        inventoryItemEntries.mapNotNull { entry ->
+            val definition = ItemCatalog.find(entry.itemId)
+            if (definition?.consumableType == ConsumableType.POTION) {
+                ConsumableOption(entry.itemId, definition.name, entry.quantity)
+            } else null
+        }
+    }
+    val skillsListScrollState = rememberLazyListState()
+    val skillsGridScrollState = rememberLazyGridState()
+
+    val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
+    val currency by gameViewModel.currency.collectAsState()
+    val homeState = HomeScreenState(
+        activeQueue = activeQueue,
+        softCurrency = currency.first,
+        premiumCurrency = currency.second,
+        currentHp = null,
+        maxHp = null,
+        isRecovering = false,
+        unreadNotificationCount = 2
+    )
+
+    val recoveringUntil = remember { mutableStateOf<Instant?>(null) }
+
+    var loadoutWeaponId by remember { mutableStateOf<String?>("bronze_sword") }
+    var autoHeal by remember { mutableStateOf(30) }
+    var autoFlee by remember { mutableStateOf(10) }
+
+    var combatViewState by remember { mutableStateOf(CombatViewState.SEARCHING) }
+    val demoCombatLog = remember {
+        mutableStateListOf(CombatLogEntry("You entered Goblin Camp."), CombatLogEntry("Searching for an enemy..."))
+    }
+
+    val combatViewData = CombatViewData(
+        zoneName = "Goblin Camp", viewState = combatViewState,
+        searchEndsAt = if (combatViewState == CombatViewState.SEARCHING) Instant.now().plusSeconds(7) else null,
+        monsterName = if (combatViewState == CombatViewState.IN_COMBAT) "Goblin Grunt" else null,
+        monsterCurrentHp = if (combatViewState == CombatViewState.IN_COMBAT) 15 else null,
+        monsterMaxHp = if (combatViewState == CombatViewState.IN_COMBAT) 25 else null,
+        playerCurrentHp = 80, playerMaxHp = 100,
+        lastHitChancePercent = if (combatViewState == CombatViewState.IN_COMBAT) 62.5 else null,
+        lastDamageDealt = if (combatViewState == CombatViewState.IN_COMBAT) 4 else null,
+        combatLog = demoCombatLog
+    )
+
+    fun canEquip(item: InventoryItemSummary): Pair<Boolean, String?> {
+        if (item.category == InventoryCategory.TOOL) return true to null
+        val locked = combatViewState == CombatViewState.IN_COMBAT
+        return if (locked) false to "Locked during combat" else true to null
+    }
+
+    val lockedEquipSlots = remember(combatViewState) {
+        if (combatViewState == CombatViewState.IN_COMBAT) {
+            setOf(
+                EquipSlotUi.WEAPON, EquipSlotUi.HELMET, EquipSlotUi.CHESTPLATE, EquipSlotUi.GLOVES,
+                EquipSlotUi.BOOTS, EquipSlotUi.NECKLACE, EquipSlotUi.RING_1, EquipSlotUi.RING_2,
+                EquipSlotUi.LEGS, EquipSlotUi.SHIELD, EquipSlotUi.CAPE, EquipSlotUi.AMMO
+            )
+        } else emptySet()
+    }
+
+    var marketTab by remember { mutableStateOf(MarketTab.BROWSE) }
+    var showingBuyOrders by remember { mutableStateOf(false) }
+    var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
+    var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
+
+    var leaderboardShowingDaily by remember { mutableStateOf(false) }
+    var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) }
+
+    var selectedChatChannel by remember { mutableStateOf(ChatChannelUi.GLOBAL) }
+    var selectedDmCharacterId by remember { mutableStateOf<String?>(null) }
+    var chatMessageInput by remember { mutableStateOf("") }
+    val chatMessages = remember { mutableStateListOf(*demoChatMessages().toTypedArray()) }
+
+    when (flowState) {
+        AppFlowState.Login -> {
+            LoginScreen(
+                isCreatingAccount = isCreatingAccount,
+                onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
+                errorMessage = loginError,
+                onLogin = { email, password ->
+                    val result = gameViewModel.login(email, password)
+                    when (result) {
+                        is ServiceResult.Success -> {
+                            val chars = gameViewModel.accountService.charactersFor(result.value.id)
+                            flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                            loginError = null
+                        }
+                        is ServiceResult.Failure -> loginError = result.reason
+                    }
+                },
+                onCreateAccount = { email, username, password ->
+                    val result = gameViewModel.createAccount(email, username, password)
+                    when (result) {
+                        is ServiceResult.Success -> {
+                            gameViewModel.saveGame()
+                            loginError = null
+                            flowState = AppFlowState.CharacterCreate
+                        }
+                        is ServiceResult.Failure -> loginError = result.reason
+                    }
+                }
+            )
+        }
+
+        AppFlowState.CharacterCreate -> {
+            CharacterCreateScreen(
+                errorMessage = loginError,
+                onCreate = { displayName, avatarId ->
+                    val accountId = currentAccountId
+                    if (accountId != null) {
+                        val result = gameViewModel.accountService.createCharacter(accountId, displayName, avatarId)
+                        when (result) {
+                            is ServiceResult.Success -> {
+    gameViewModel.accountService.setMainCharacter(result.value.id)
+    gameViewModel.selectCharacter(result.value.id)
+    gameViewModel.saveGame()
+    loginError = null
+    flowState = AppFlowState.InGame
+}
+                            is ServiceResult.Failure -> loginError = result.reason
+                        }
+                    }
+                }
+            )
+        }
+
+        AppFlowState.CharacterSelect -> {
+            val accountId = currentAccountId
+            if (accountId != null) {
+                val chars = gameViewModel.accountService.charactersFor(accountId).map {
+                    CharacterSummaryUi(it.id, it.displayName, it.avatarId)
+                }
+                CharacterSelectScreen(
+                    characters = chars,
+                    onCharacterSelected = {
+    gameViewModel.selectCharacter(it)
+    flowState = AppFlowState.InGame
+},
+                    onCreateNew = { flowState = AppFlowState.CharacterCreate }
+                )
+            }
+        }
+
+        AppFlowState.InGame -> {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = {
+                            gameViewModel.logout()
+                            flowState = AppFlowState.Login
+                        }) {
+                            androidx.compose.material3.Text("Log Out")
+                        }
+                    }
+                    RecoveryBar(recoveringUntil = recoveringUntil.value)
+
+                    Row(modifier = Modifier.fillMaxSize().weight(1f)) {
+                        SideRail(
+                            currentDestination = currentDestination,
+                            onDestinationSelected = {
+                                currentDestination = it
+                                skillsScreenState = SkillsScreenState.List
+                                combatScreenState = CombatScreenState.ZoneSelect
+                                inventoryScreenState = InventoryScreenState.Items
+                                marketTab = MarketTab.BROWSE
+                                selectedMarketItemId = null
+                            },
+                            badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
+                        )
+
+                        Box(modifier = Modifier.weight(1f)) {
+                        when (currentDestination) {
+                            AppDestination.HOME -> HomeScreen(state = homeState)
+
+                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+                                is SkillsScreenState.List -> SkillsScreen(
+                                    allSkills = allSkills,
+                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) },
+                                    listState = skillsListScrollState,
+                                    gridState = skillsGridScrollState
+                                )
+                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+                                    when (screen.skillId) {
+                                        "SMITHING" -> SmithingScreen(
+                                            buildSmithingState(it, inventoryQuantities),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { itemId -> gameViewModel.startCraftingAction(itemId) }
+                                        )
+                                        in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
+                                            buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { itemId -> gameViewModel.startCraftingAction(itemId) },
+                                            startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
+                                        )
+                                        else -> SkillDetailScreen(
+                                            buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                            { skillsScreenState = SkillsScreenState.List },
+                                            { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+                                        )
+                                    }
+                                }
+                            }
+
+                            AppDestination.COMBAT -> when (combatScreenState) {
+                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+                                    zones = zones, playerLevel = 24,
+                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
+                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+                                )
+                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
+                                CombatScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                    ),
+                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+                                )
+                            }
+
+                            AppDestination.INVENTORY -> when (inventoryScreenState) {
+                                InventoryScreenState.Items -> InventoryScreen(
+                                    items = inventoryItems,
+                                    onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
+                                    onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
+                                    onUseItem = { },
+                                    onSellOnMarket = { itemId ->
+                                        val item = inventoryItems.find { it.itemId == itemId }
+                                        selectedMarketItemId = itemId
+
+===== EquipmentSlot / EquipSlot definitions =====
+./app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt:25:enum class EquipSlotUi { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL, LEGS, SHIELD, CAPE, AMMO }
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:10:enum class EquipmentSlot { WEAPON, ARMOR, ACCESSORY, TOOL }
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:14:enum class EquipSlot { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL, LEGS, SHIELD, CAPE, AMMO }
+
+===== CombatService instantiation =====
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:67:    val combatService = CombatService()
+
+===== HomeScreen HP bar =====
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-30-    val activeQueue: ActiveQueueInfo?, // null if no active queue
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-31-    val softCurrency: Long,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-32-    val premiumCurrency: Long,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:33:    val currentHp: Int?,              // null if not in/near combat -- hides the HP bar entirely
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-34-    val maxHp: Int?,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-35-    val isRecovering: Boolean,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-36-    val unreadNotificationCount: Int
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-37-)
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-38-
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-39-@Composable
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-40-fun HomeScreen(
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-41-    state: HomeScreenState,
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-42-    modifier: Modifier = Modifier
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-43-) {
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-44-    Column(
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-45-        modifier = modifier
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-46-            .fillMaxSize()
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-47-            .padding(20.dp)
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-48-    ) {
+--
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-57-
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-58-        Spacer(modifier = Modifier.height(16.dp))
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-59-
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:60:        if (state.currentHp != null && state.maxHp != null) {
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:61:            HpBar(current = state.currentHp, max = state.maxHp, isRecovering = state.isRecovering)
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-62-            Spacer(modifier = Modifier.height(16.dp))
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-63-        }
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-64-
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-65-        QueueCard(queue = state.activeQueue)
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-66-
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-67-        Spacer(modifier = Modifier.height(16.dp))
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-68-
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-69-        if (state.unreadNotificationCount > 0) {
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-70-            NotificationSummary(count = state.unreadNotificationCount)
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-71-        }
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-72-    }
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-73-}
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-74-
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-75-@Composable
+app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt-76-private fun CurrencyRow(soft: Long, premium: Long) {
+
+===== GameViewModel combat-related =====
+67:    val combatService = CombatService()
+107:        val combatState = combatService.stateFor(characterId)
+109:        if (combatState.maxHp > 0) {
+110:            val hpPercent = (combatState.currentHp * 100) / combatState.maxHp
+113:                    combatService.healCharacter(characterId, food.healAmount ?: 0)
