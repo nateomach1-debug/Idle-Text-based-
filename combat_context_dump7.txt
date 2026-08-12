@@ -1,0 +1,350 @@
+]633;E;echo "===== GameViewModel: character/currentCharacterId + tick loop =====";b58fd196-4d0b-46a6-8774-7645396446d6]633;C===== GameViewModel: character/currentCharacterId + tick loop =====
+31-    itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+32-
+33:class GameViewModel(application: Application) : AndroidViewModel(application) {
+34-
+35-    private val repository = GameStateRepository(application)
+36-
+37-    val accountService = AccountService()
+38-    val progressionService = ProgressionService()
+39-    val inventoryService = InventoryService()
+40-    val sessionManager = SessionManager(application)
+41-    // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
+42-    // Skilling queues don't consume materials, only crafting does, so this is unused for now.
+43-    val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
+44-
+45-    private var skillActionProgressSeconds: Long = 0
+46-
+47-    private val _currentAccountId = MutableStateFlow<String?>(null)
+48-    val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
+49-
+50-    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+51-    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+52-
+53:    private val _currentCharacterId = MutableStateFlow<String?>(null)
+54:    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+55-
+56-    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+57-    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+58-
+59-    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+60-    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+61-
+62-    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+63-    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+64-
+65-    val economyMonitoring = EconomyMonitoringService()
+66-    val marketService = MarketService(economyMonitoring)
+67-    val combatService = CombatService()
+68-
+69-    data class LoadoutSettingsSnapshot(
+70-        val selectedFoodId: String?,
+71-        val selectedPotionId: String?,
+72-        val potionTimerRemainingSeconds: Int,
+73-        val autoHealThresholdPercent: Int,
+74-        val autoFleeThresholdPercent: Int
+--
+79-
+80-    fun setAutoHealThreshold(percent: Int) {
+81:        val characterId = _currentCharacterId.value ?: return
+82-        inventoryService.inventoryFor(characterId).autoHealThresholdPercent = percent.coerceIn(0, 100)
+83-        refreshInventory()
+84-    }
+85-
+86-    fun setAutoFleeThreshold(percent: Int) {
+87:        val characterId = _currentCharacterId.value ?: return
+88-        inventoryService.inventoryFor(characterId).autoFleeThresholdPercent = percent.coerceIn(0, 100)
+89-        refreshInventory()
+90-    }
+91-
+92-    fun selectFood(itemId: String?) {
+93:        val characterId = _currentCharacterId.value ?: return
+94-        inventoryService.inventoryFor(characterId).selectFood(itemId)
+95-        refreshInventory()
+96-    }
+97-
+98-    fun selectPotion(itemId: String?) {
+99:        val characterId = _currentCharacterId.value ?: return
+100-        inventoryService.inventoryFor(characterId).selectPotion(itemId)
+101-        refreshInventory()
+102-    }
+103-
+104:    private fun tickConsumables() {
+105:        val characterId = _currentCharacterId.value ?: return
+106-        val inventory = inventoryService.inventoryFor(characterId)
+107-        val combatState = combatService.stateFor(characterId)
+108-
+109-        if (combatState.maxHp > 0) {
+110-            val hpPercent = (combatState.currentHp * 100) / combatState.maxHp
+111-            if (hpPercent <= inventory.autoHealThresholdPercent) {
+112-                inventory.consumeSelectedFood()?.let { food ->
+113-                    combatService.healCharacter(characterId, food.healAmount ?: 0)
+114-                }
+115-            }
+116-        }
+117-
+118-        if (inventory.selectedPotionId != null) {
+119-            if (inventory.potionTimerRemainingSeconds > 0) {
+120-                inventory.potionTimerRemainingSeconds -= 1
+121-            }
+122-            if (inventory.potionTimerRemainingSeconds <= 0) {
+123-                inventory.consumeSelectedPotion()?.let { potion ->
+124-                    inventory.potionTimerRemainingSeconds = potion.buffDurationSeconds ?: 0
+125-                }
+--
+216-    sessionManager.clearSession()
+217-    _currentAccountId.value = null
+218:    _currentCharacterId.value = null
+219-}
+220-
+221-    fun clearOfflineSummary() {
+222-        _offlineSummary.value = null
+223-    }
+224-    fun saveGame() {
+225-        repository.save(
+226-            accountService.exportAllAccounts(),
+227-            accountService.exportAllCharacters(),
+228-            progressionService.exportAllSkills(),
+229-            offlineIdleService.exportSkillingQueues(),
+230-            offlineIdleService.exportCraftingQueues(),
+231-            offlineIdleService.exportLastSeen(),
+232-            inventoryService.exportAllItems(),
+233-            inventoryService.exportAllEquipped(),
+234-            inventoryService.exportAllLoadoutSettings(),
+235-            marketService.exportAccounts(),
+236-            marketService.exportOrders(),
+237-            marketService.exportPriceHistory()
+238-        )
+--
+240-
+241-    fun selectCharacter(characterId: String) {
+242:        _currentCharacterId.value = characterId
+243-
+244-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+245-        if (queue != null) {
+246-            val result = offlineIdleService.resolveOfflineProgress(characterId)
+247-            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+248-                val skillType = SkillType.valueOf(queue.skillId)
+249-                val action = ActionCatalog.find(skillType, queue.itemId)
+250-                if (action != null) {
+251-                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+252-                    progressionService.grantXp(characterId, skillType, xpEarned)
+253-                    inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+254-                    _offlineSummary.value = OfflineSummary(
+255-                        awaySeconds = result.value.claimedElapsed.seconds,
+256-                        skillActionName = action.displayName,
+257-                        itemName = formatItemName(queue.itemId),
+258-                        quantity = result.value.actionsCompleted,
+259-                        xpEarned = xpEarned
+260-                    )
+261-                }
+262-            }
+--
+305-
+306-    fun startSkillAction(skillType: SkillType, itemId: String) {
+307:        val characterId = _currentCharacterId.value ?: return
+308-        val action = ActionCatalog.find(skillType, itemId) ?: return
+309-        offlineIdleService.stopQueue(characterId)
+310-        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+311-        offlineIdleService.recordLastSeen(characterId)
+312-        skillActionProgressSeconds = 0
+313-        refreshActiveQueue()
+
+===== LoadoutScreen.kt full content =====
+package com.yourname.idlerpg.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+
+// =========================================================
+// LOADOUT SCREEN
+// Auto-heal/flee thresholds, plus Food/Potion selection.
+// Accessible from both Combat and Inventory via a push button
+// (per spec). Combat Style/Weapon sections were dropped since
+// they're meaningless until real combat is wired up.
+// =========================================================
+
+data class ConsumableOption(val itemId: String, val displayName: String, val quantity: Int)
+
+data class LoadoutState(
+    val availableFood: List<ConsumableOption>,
+    val selectedFoodId: String?,
+    val availablePotions: List<ConsumableOption>,
+    val selectedPotionId: String?,
+    val potionTimerRemainingSeconds: Int,
+    val autoHealThresholdPercent: Int,
+    val autoFleeThresholdPercent: Int
+)
+
+@Composable
+fun LoadoutScreen(
+    state: LoadoutState,
+    onBack: () -> Unit,
+    onFoodSelected: (String) -> Unit,
+    onPotionSelected: (String) -> Unit,
+    onAutoHealChanged: (Int) -> Unit,
+    onAutoFleeChanged: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = "Loadout", style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(text = "Auto-Heal Threshold: " + state.autoHealThresholdPercent + "%", style = MaterialTheme.typography.titleMedium)
+        Slider(
+            value = state.autoHealThresholdPercent.toFloat(),
+            onValueChange = { onAutoHealChanged(it.toInt()) },
+            valueRange = 0f..100f
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(text = "Auto-Flee Threshold: " + state.autoFleeThresholdPercent + "%", style = MaterialTheme.typography.titleMedium)
+        Slider(
+            value = state.autoFleeThresholdPercent.toFloat(),
+            onValueChange = { onAutoFleeChanged(it.toInt()) },
+            valueRange = 0f..100f
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(text = "Food", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        if (state.availableFood.isEmpty()) {
+            Text(text = "No food in inventory.", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            state.availableFood.forEach { food ->
+                ConsumableRow(
+                    option = food,
+                    isSelected = food.itemId == state.selectedFoodId,
+                    onClick = { onFoodSelected(food.itemId) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(text = "Potion", style = MaterialTheme.typography.titleMedium)
+        if (state.selectedPotionId != null && state.potionTimerRemainingSeconds > 0) {
+            Text(
+                text = "Refreshes in " + state.potionTimerRemainingSeconds + "s",
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        if (state.availablePotions.isEmpty()) {
+            Text(text = "No potions in inventory.", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            state.availablePotions.forEach { potion ->
+                ConsumableRow(
+                    option = potion,
+                    isSelected = potion.itemId == state.selectedPotionId,
+                    onClick = { onPotionSelected(potion.itemId) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConsumableRow(option: ConsumableOption, isSelected: Boolean, onClick: () -> Unit) {
+    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(backgroundColor)
+            .clickable { onClick() }
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = option.displayName,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(text = "x" + option.quantity, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+===== HomeScreen HP bar (broader search) =====
+28-
+29-data class HomeScreenState(
+30-    val activeQueue: ActiveQueueInfo?, // null if no active queue
+31-    val softCurrency: Long,
+32-    val premiumCurrency: Long,
+33:    val currentHp: Int?,              // null if not in/near combat -- hides the HP bar entirely
+34:    val maxHp: Int?,
+35-    val isRecovering: Boolean,
+36-    val unreadNotificationCount: Int
+37-)
+38-
+39-@Composable
+40-fun HomeScreen(
+41-    state: HomeScreenState,
+42-    modifier: Modifier = Modifier
+43-) {
+44-    Column(
+45-        modifier = modifier
+46-            .fillMaxSize()
+47-            .padding(20.dp)
+48-    ) {
+49-        Text(
+50-            text = "Home",
+51-            style = MaterialTheme.typography.headlineMedium
+52-        )
+53-
+54-        Spacer(modifier = Modifier.height(20.dp))
+55-
+56-        CurrencyRow(soft = state.softCurrency, premium = state.premiumCurrency)
+57-
+58-        Spacer(modifier = Modifier.height(16.dp))
+59-
+60:        if (state.currentHp != null && state.maxHp != null) {
+61:            HpBar(current = state.currentHp, max = state.maxHp, isRecovering = state.isRecovering)
+62-            Spacer(modifier = Modifier.height(16.dp))
+63-        }
+64-
+65-        QueueCard(queue = state.activeQueue)
+66-
+67-        Spacer(modifier = Modifier.height(16.dp))
+68-
+69-        if (state.unreadNotificationCount > 0) {
+70-            NotificationSummary(count = state.unreadNotificationCount)
+71-        }
+72-    }
+73-}
+74-
+75-@Composable
+76-private fun CurrencyRow(soft: Long, premium: Long) {
+77-    Row(
+78-        modifier = Modifier.fillMaxWidth(),
+79-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+80-    ) {
+81-        CurrencyPill(label = "Gold", amount = soft)
+./app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt
