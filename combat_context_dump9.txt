@@ -1,0 +1,54 @@
+]633;E;echo "===== Where tickConsumables() is called - the per-second tick loop =====";b58fd196-4d0b-46a6-8774-7645396446d6]633;C===== Where tickConsumables() is called - the per-second tick loop =====
+89-        refreshInventory()
+90-    }
+91-
+92-    fun selectFood(itemId: String?) {
+93-        val characterId = _currentCharacterId.value ?: return
+94-        inventoryService.inventoryFor(characterId).selectFood(itemId)
+95-        refreshInventory()
+96-    }
+97-
+98-    fun selectPotion(itemId: String?) {
+99-        val characterId = _currentCharacterId.value ?: return
+100-        inventoryService.inventoryFor(characterId).selectPotion(itemId)
+101-        refreshInventory()
+102-    }
+103-
+104:    private fun tickConsumables() {
+--
+138-    private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+139-    val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
+140-
+141-    private val _activeQueueInfo = MutableStateFlow<ActiveQueueInfo?>(null)
+142-    val activeQueueInfo: StateFlow<ActiveQueueInfo?> = _activeQueueInfo.asStateFlow()
+143-
+144-    private val _currency = MutableStateFlow(0L to 0L)
+145-    val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
+146-
+147-    init {
+148-        viewModelScope.launch(Dispatchers.Default) {
+149-            while (true) {
+150-                delay(1000L)
+151-                tickSkilling()
+152-            tickCrafting()
+153:            tickConsumables()
+
+===== ItemStats full definition =====
+24-}
+25-
+26:data class ItemStats(
+27-    val attackBonus: Int = 0,
+28-    val strengthBonus: Int = 0,
+29-    val defenseBonus: Int = 0,
+30-    val accuracyBonus: Int = 0,
+31-    val maxHitBonus: Int = 0
+32-) {
+33-    fun isAllZero(): Boolean =
+34-        attackBonus == 0 && strengthBonus == 0 && defenseBonus == 0 && accuracyBonus == 0 && maxHitBonus == 0
+35-}
+36-
+37-enum class ConsumableType { FOOD, POTION }
+38-
+39-data class ItemDefinition(
+40-    val id: String,
+41-    val name: String,
