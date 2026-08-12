@@ -1,0 +1,136 @@
+]633;E;echo "===== ProgressionService: grantXp, level lookup, LevelCurve.levelForXp =====";b58fd196-4d0b-46a6-8774-7645396446d6]633;C===== ProgressionService: grantXp, level lookup, LevelCurve.levelForXp =====
+48-        return floor(BASE * (level - 1).toDouble().pow(EXPONENT)).toLong()
+49-    }
+50-
+51:    fun levelForXp(xp: Long): Int {
+52-        var level = 1
+53-        while (xpRequiredForLevel(level + 1) <= xp) { level++ }
+54-        return level
+55-    }
+56-
+57-    fun xpToNextLevel(xp: Long): Long {
+58-        val currentLevel = levelForXp(xp)
+59-        return xpRequiredForLevel(currentLevel + 1) - xp
+60-    }
+61-}
+62-
+63-sealed class EffectScope {
+64-    data class SingleSkill(val skill: SkillType) : EffectScope()
+65-    data class Group(val group: SkillGroup) : EffectScope()
+66-}
+67-
+68-sealed class Effect {
+69-    data class XpBoost(val scope: EffectScope, val percent: Double) : Effect()
+70-    data class DropRateBoost(val scope: EffectScope, val percent: Double) : Effect()
+71-    data class CostDiscount(val scope: EffectScope, val percent: Double) : Effect()
+72-    data class AccessUnlock(val description: String) : Effect()
+73-    data class FlatStatBonus(val statName: String, val amount: Int) : Effect()
+74-    data class TimerReduction(val scope: EffectScope, val percent: Double) : Effect()
+75-}
+76-
+--
+125-        unlocks.filter { it.skill == skill && it.levelRequired in (levelBefore + 1)..levelAfter }
+126-
+127-    fun allActiveEffects(skillBook: SkillBook): List<Effect> = skillBook.all().flatMap { skill ->
+128:        val level = LevelCurve.levelForXp(skill.xp)
+129-        unlocksEarnedAt(skill.type, level).flatMap { it.grantedEffects }
+130-    }
+131-}
+132-
+133-data class XpGrantResult(
+134-    val skillType: SkillType, val xpGained: Long, val newTotalXp: Long,
+135-    val levelBefore: Int, val levelAfter: Int
+136-) {
+137-    val didLevelUp: Boolean get() = levelAfter > levelBefore
+138-    val levelsGained: Int get() = levelAfter - levelBefore
+139-}
+140-
+141-class CharacterResetState {
+142-    var lastSingleSkillResetAt: Instant? = null
+143-    var lastFullCharacterResetAt: Instant? = null
+144-}
+145-
+146-data class SkillExport(val characterId: String, val skillId: String, val xp: Long)
+147-
+148:class ProgressionService {
+149-    private val skillBooks: MutableMap<String, SkillBook> = mutableMapOf()
+150-    private val resetStates: MutableMap<String, CharacterResetState> = mutableMapOf()
+151-
+152-    private val singleSkillResetCooldown: Duration = Duration.ofHours(24)
+153-    private val fullCharacterResetCooldown: Duration = Duration.ofDays(30)
+154-
+155-    fun skillBookFor(characterId: String): SkillBook =
+156-        skillBooks.getOrPut(characterId) { SkillBook() }
+157-
+158-    private fun resetStateFor(characterId: String): CharacterResetState =
+159-        resetStates.getOrPut(characterId) { CharacterResetState() }
+160-
+161-    fun grantXp(
+162-        characterId: String,
+163-        skillType: SkillType,
+164-        baseXp: Long,
+165-        extraEffects: List<Effect> = emptyList()
+166-    ): ServiceResult<XpGrantResult> {
+167-        if (baseXp < 0) {
+168-            return ServiceResult.Failure("XP amount cannot be negative.")
+169-        }
+170-
+171-        val book = skillBookFor(characterId)
+172-        val skill = book.get(skillType)
+173:        val levelBefore = LevelCurve.levelForXp(skill.xp)
+174-
+175-        val activeEffects = UnlockTable.allActiveEffects(book) + extraEffects
+176-        val boostPercent = EffectStacker.totalXpBoostPercent(activeEffects, skillType)
+177-        val multiplier = 1.0 + (boostPercent / 100.0)
+178-
+179-        val xpGained = floor(baseXp * multiplier).toLong()
+180-        skill.xp += xpGained
+181:        val levelAfter = LevelCurve.levelForXp(skill.xp)
+182-
+183-        return ServiceResult.Success(
+184-            XpGrantResult(skillType, xpGained, skill.xp, levelBefore, levelAfter)
+185-        )
+186-    }
+187-
+188-    fun resetSkill(characterId: String, skillType: SkillType, now: Instant = Instant.now()): ServiceResult<Skill> {
+189-        val state = resetStateFor(characterId)
+190-        val lastReset = state.lastSingleSkillResetAt
+191-        if (lastReset != null) {
+192-            val elapsed = Duration.between(lastReset, now)
+193-            if (elapsed < singleSkillResetCooldown) {
+194-                val hoursRemaining = (singleSkillResetCooldown - elapsed).toHours() + 1
+195-                return ServiceResult.Failure("Skill reset is on cooldown. Try again in " + hoursRemaining + " hour(s).")
+196-            }
+197-        }
+198-
+199-        val skill = skillBookFor(characterId).get(skillType)
+200-        skill.xp = 0
+201-        state.lastSingleSkillResetAt = now
+202-        return ServiceResult.Success(skill)
+203-    }
+204-
+205-    fun resetCharacter(characterId: String, now: Instant = Instant.now()): ServiceResult<SkillBook> {
+206-        val state = resetStateFor(characterId)
+
+===== How _skills StateFlow gets populated (skillId key format) =====
+431-    }
+432-
+433-    fun refreshSkills() {
+434-        val characterId = _currentCharacterId.value ?: return
+435-        val book = progressionService.skillBookFor(characterId)
+436:        _skills.value = book.all().associate { skill ->
+437-            val level = LevelCurve.levelForXp(skill.xp)
+438-            val xpAtLevelStart = LevelCurve.xpRequiredForLevel(level)
+439-            val xpAtNextLevel = LevelCurve.xpRequiredForLevel(level + 1)
+440-            val displayName = skill.type.name.lowercase().replaceFirstChar { it.uppercase() }
+441-            skill.type.name to SkillSummary(
+442-                skillId = skill.type.name,
+443-                displayName = displayName,
+444-                level = level,
+445-                currentXp = skill.xp - xpAtLevelStart,
+446-                xpToNextLevel = xpAtNextLevel - skill.xp
+447-            )
+448-        }
+449-    }
+450-
+451-    fun refreshInventory() {
