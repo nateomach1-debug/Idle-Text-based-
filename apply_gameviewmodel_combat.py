@@ -1,6 +1,6 @@
 import re
 
-path = "app/src/main/kotlin/com/yourname/idlerpg/data/GameViewModel.kt"
+path = "app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt"
 with open(path, "r") as f:
     content = f.read()
 
