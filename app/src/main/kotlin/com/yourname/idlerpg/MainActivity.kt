@@ -419,6 +419,23 @@ fun AppRoot(gameViewModel: GameViewModel) {
             }
         }
     }
+    val loadoutSettings by gameViewModel.loadoutSettings.collectAsState()
+    val availableFoodOptions = remember(inventoryItemEntries) {
+        inventoryItemEntries.mapNotNull { entry ->
+            val definition = ItemCatalog.find(entry.itemId)
+            if (definition?.consumableType == ConsumableType.FOOD) {
+                ConsumableOption(entry.itemId, definition.name, entry.quantity)
+            } else null
+        }
+    }
+    val availablePotionOptions = remember(inventoryItemEntries) {
+        inventoryItemEntries.mapNotNull { entry ->
+            val definition = ItemCatalog.find(entry.itemId)
+            if (definition?.consumableType == ConsumableType.POTION) {
+                ConsumableOption(entry.itemId, definition.name, entry.quantity)
+            } else null
+        }
+    }
     val skillsListScrollState = rememberLazyListState()
     val skillsGridScrollState = rememberLazyGridState()
 
@@ -629,14 +646,16 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
                                 CombatScreenState.Loadout -> LoadoutScreen(
                                     state = LoadoutState(
-                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
-                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
                                     ),
                                     onBack = { combatScreenState = CombatScreenState.ZoneSelect },
-                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
-                                    onWeaponSelected = { loadoutWeaponId = it },
-                                    onAutoHealChanged = { autoHeal = it },
-                                    onAutoFleeChanged = { autoFlee = it }
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
                                 )
                             }
 
@@ -662,14 +681,16 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 )
                                 InventoryScreenState.Loadout -> LoadoutScreen(
                                     state = LoadoutState(
-                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
-                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
                                     ),
                                     onBack = { inventoryScreenState = InventoryScreenState.Items },
-                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
-                                    onWeaponSelected = { loadoutWeaponId = it },
-                                    onAutoHealChanged = { autoHeal = it },
-                                    onAutoFleeChanged = { autoFlee = it }
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
                                 )
                             }
 

@@ -3,10 +3,11 @@ package com.yourname.idlerpg.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,37 +18,35 @@ import androidx.compose.ui.unit.dp
 
 // =========================================================
 // LOADOUT SCREEN
-// Style, weapon/spell, auto-heal/flee thresholds. Accessible
-// from both Combat and Inventory via a push button (per spec).
-// When locked (e.g. mid-combat), fields show WHY they're
-// disabled rather than just appearing greyed out silently.
+// Auto-heal/flee thresholds, plus Food/Potion selection.
+// Accessible from both Combat and Inventory via a push button
+// (per spec). Combat Style/Weapon sections were dropped since
+// they're meaningless until real combat is wired up.
 // =========================================================
 
-enum class CombatStyleOption { MELEE, RANGED, MAGIC }
-
-data class WeaponOption(val itemId: String, val displayName: String, val style: CombatStyleOption)
+data class ConsumableOption(val itemId: String, val displayName: String, val quantity: Int)
 
 data class LoadoutState(
-    val selectedStyle: CombatStyleOption,
-    val availableWeapons: List<WeaponOption>,   // filtered to the selected style
-    val selectedWeaponId: String?,
+    val availableFood: List<ConsumableOption>,
+    val selectedFoodId: String?,
+    val availablePotions: List<ConsumableOption>,
+    val selectedPotionId: String?,
+    val potionTimerRemainingSeconds: Int,
     val autoHealThresholdPercent: Int,
-    val autoFleeThresholdPercent: Int,
-    val isLocked: Boolean,       // true if equipment can't change right now
-    val lockReason: String?      // e.g. "Locked during combat" -- shown when isLocked
+    val autoFleeThresholdPercent: Int
 )
 
 @Composable
 fun LoadoutScreen(
     state: LoadoutState,
     onBack: () -> Unit,
-    onStyleSelected: (CombatStyleOption) -> Unit,
-    onWeaponSelected: (String) -> Unit,
+    onFoodSelected: (String) -> Unit,
+    onPotionSelected: (String) -> Unit,
     onAutoHealChanged: (Int) -> Unit,
     onAutoFleeChanged: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+    Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
                 Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -56,51 +55,13 @@ fun LoadoutScreen(
             Text(text = "Loadout", style = MaterialTheme.typography.headlineMedium)
         }
 
-        if (state.isLocked && state.lockReason != null) {
-            Spacer(modifier = Modifier.height(12.dp))
-            LockedBanner(reason = state.lockReason)
-        }
-
         Spacer(modifier = Modifier.height(20.dp))
-
-        Text(text = "Combat Style", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CombatStyleOption.values().forEach { style ->
-                StyleChip(
-                    style = style,
-                    isSelected = style == state.selectedStyle,
-                    enabled = !state.isLocked,
-                    onClick = { onStyleSelected(style) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(text = "Weapon", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        if (state.availableWeapons.isEmpty()) {
-            Text(text = "No weapons available for this style.", style = MaterialTheme.typography.bodyMedium)
-        } else {
-            state.availableWeapons.forEach { weapon ->
-                WeaponRow(
-                    weapon = weapon,
-                    isSelected = weapon.itemId == state.selectedWeaponId,
-                    enabled = !state.isLocked,
-                    onClick = { onWeaponSelected(weapon.itemId) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         Text(text = "Auto-Heal Threshold: " + state.autoHealThresholdPercent + "%", style = MaterialTheme.typography.titleMedium)
         Slider(
             value = state.autoHealThresholdPercent.toFloat(),
             onValueChange = { onAutoHealChanged(it.toInt()) },
-            valueRange = 0f..100f,
-            enabled = true // auto-heal/flee thresholds are NOT locked -- pure config, not equipment
+            valueRange = 0f..100f
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -109,61 +70,52 @@ fun LoadoutScreen(
         Slider(
             value = state.autoFleeThresholdPercent.toFloat(),
             onValueChange = { onAutoFleeChanged(it.toInt()) },
-            valueRange = 0f..100f,
-            enabled = true
+            valueRange = 0f..100f
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(text = "Food", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        if (state.availableFood.isEmpty()) {
+            Text(text = "No food in inventory.", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            state.availableFood.forEach { food ->
+                ConsumableRow(
+                    option = food,
+                    isSelected = food.itemId == state.selectedFoodId,
+                    onClick = { onFoodSelected(food.itemId) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(text = "Potion", style = MaterialTheme.typography.titleMedium)
+        if (state.selectedPotionId != null && state.potionTimerRemainingSeconds > 0) {
+            Text(
+                text = "Refreshes in " + state.potionTimerRemainingSeconds + "s",
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        if (state.availablePotions.isEmpty()) {
+            Text(text = "No potions in inventory.", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            state.availablePotions.forEach { potion ->
+                ConsumableRow(
+                    option = potion,
+                    isSelected = potion.itemId == state.selectedPotionId,
+                    onClick = { onPotionSelected(potion.itemId) }
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun LockedBanner(reason: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.15f))
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Lock,
-            contentDescription = "Locked",
-            tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = reason, style = MaterialTheme.typography.labelSmall)
-    }
-}
-
-@Composable
-private fun StyleChip(style: CombatStyleOption, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit) {
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
-    val contentAlpha = if (enabled) 1f else 0.4f
-
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(backgroundColor)
-            .clickable(enabled = enabled) { onClick() }
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-    ) {
-        Text(
-            text = style.name,
-            style = MaterialTheme.typography.labelSmall.copy(
-                color = MaterialTheme.typography.labelSmall.color.copy(alpha = contentAlpha)
-            ),
-            maxLines = 1,
-            softWrap = false,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun WeaponRow(weapon: WeaponOption, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+private fun ConsumableRow(option: ConsumableOption, isSelected: Boolean, onClick: () -> Unit) {
     val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface
-    val contentAlpha = if (enabled) 1f else 0.4f
 
     Row(
         modifier = Modifier
@@ -171,14 +123,18 @@ private fun WeaponRow(weapon: WeaponOption, isSelected: Boolean, enabled: Boolea
             .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(backgroundColor)
-            .clickable(enabled = enabled) { onClick() }
-            .padding(12.dp)
+            .clickable { onClick() }
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = weapon.displayName,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = MaterialTheme.typography.bodyMedium.color.copy(alpha = contentAlpha)
-            )
+            text = option.displayName,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
         )
+        Text(text = "x" + option.quantity, style = MaterialTheme.typography.labelSmall)
     }
 }
