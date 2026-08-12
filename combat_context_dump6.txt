@@ -1,0 +1,12 @@
+]633;E;echo "===== grep for xp mutation across all files =====";187a995d-c0db-4aa5-8579-080866e274f1]633;C===== grep for xp mutation across all files =====
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:252:                    progressionService.grantXp(characterId, skillType, xpEarned)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:336:            progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:381:            progressionService.grantXp(characterId, skillType, xpGranted)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:161:    fun grantXp(
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:180:        skill.xp += xpGained
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:200:        skill.xp = 0
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:217:        book.all().forEach { it.xp = 0 }
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:229:        book.get(skillType).xp = export.xp
+
+===== files that reference SkillBook =====
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt
