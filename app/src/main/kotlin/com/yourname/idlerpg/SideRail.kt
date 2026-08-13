@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.yourname.idlerpg.ui.theme.railPatternBackground
 
 // =========================================================
 // COLLAPSIBLE SIDE RAIL
@@ -48,7 +47,6 @@ fun SideRail(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .railPatternBackground()
             .animateContentSize()
             .width(if (expanded) 140.dp else 64.dp)
             .padding(vertical = 12.dp),

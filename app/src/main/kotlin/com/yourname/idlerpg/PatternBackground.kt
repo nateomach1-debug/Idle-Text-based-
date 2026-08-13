@@ -19,8 +19,8 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 // =========================================================
 
 private const val PATTERN_LINE_SPACING_DP = 22f
-private const val PATTERN_LINE_ALPHA = 0.06f
-private const val GRADIENT_BOTTOM_ALPHA = 0.30f
+private const val PATTERN_LINE_ALPHA = 0.045f
+private const val GRADIENT_BOTTOM_ALPHA = 0.20f
 
 private fun DrawScope.drawDiagonalHatch(lineColor: Color, spacingPx: Float) {
     val w = size.width

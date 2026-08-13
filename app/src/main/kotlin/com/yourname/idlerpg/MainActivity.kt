@@ -550,7 +550,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
         }
 
         AppFlowState.InGame -> {
-            Surface(modifier = Modifier.fillMaxSize()) {
+            Surface(modifier = Modifier.fillMaxSize().appPatternBackground()) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
@@ -579,7 +579,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                             badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
                         )
 
-                        Box(modifier = Modifier.weight(1f).appPatternBackground()) {
+                        Box(modifier = Modifier.weight(1f)) {
                         when (currentDestination) {
                             AppDestination.HOME -> HomeScreen(state = homeState)
 
