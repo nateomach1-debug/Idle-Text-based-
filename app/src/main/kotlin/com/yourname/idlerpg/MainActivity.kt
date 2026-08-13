@@ -205,12 +205,6 @@ private fun buildSmithingState(summary: SkillSummary, inventoryQuantities: Map<S
     )
 }
 
-private fun demoZones(): List<ZoneSummary> = listOf(
-    ZoneSummary("goblin_camp", "Goblin Camp", 1, listOf("Goblin Grunt")),
-    ZoneSummary("shadow_ruins", "Shadow Ruins", 20, listOf("Wraith")),
-    ZoneSummary("frost_peak", "Frost Peak", 40, listOf("Ice Troll", "Frost Wolf"))
-)
-
 private fun mapItemCategory(category: ItemCategory): InventoryCategory = when (category) {
     ItemCategory.WEAPON -> InventoryCategory.WEAPON
     ItemCategory.ARMOR -> InventoryCategory.ARMOR
@@ -394,7 +388,9 @@ fun AppRoot(gameViewModel: GameViewModel) {
     var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
 
     val allSkills by gameViewModel.skills.collectAsState()
-    val zones = remember { demoZones() }
+    val zones = gameViewModel.zoneSummaries
+    val trainingSkill by gameViewModel.trainingSkill.collectAsState()
+    val trainingSkillLevel by gameViewModel.trainingSkillLevel.collectAsState()
     val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
     val inventoryItems = remember(inventoryItemEntries) {
         buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
@@ -432,12 +428,13 @@ fun AppRoot(gameViewModel: GameViewModel) {
 
     val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
     val currency by gameViewModel.currency.collectAsState()
+    val combatHp by gameViewModel.combatHp.collectAsState()
     val homeState = HomeScreenState(
         activeQueue = activeQueue,
         softCurrency = currency.first,
         premiumCurrency = currency.second,
-        currentHp = null,
-        maxHp = null,
+        currentHp = combatHp?.first,
+        maxHp = combatHp?.second,
         isRecovering = false,
         unreadNotificationCount = 2
     )
@@ -448,31 +445,16 @@ fun AppRoot(gameViewModel: GameViewModel) {
     var autoHeal by remember { mutableStateOf(30) }
     var autoFlee by remember { mutableStateOf(10) }
 
-    var combatViewState by remember { mutableStateOf(CombatViewState.SEARCHING) }
-    val demoCombatLog = remember {
-        mutableStateListOf(CombatLogEntry("You entered Goblin Camp."), CombatLogEntry("Searching for an enemy..."))
-    }
-
-    val combatViewData = CombatViewData(
-        zoneName = "Goblin Camp", viewState = combatViewState,
-        searchEndsAt = if (combatViewState == CombatViewState.SEARCHING) Instant.now().plusSeconds(7) else null,
-        monsterName = if (combatViewState == CombatViewState.IN_COMBAT) "Goblin Grunt" else null,
-        monsterCurrentHp = if (combatViewState == CombatViewState.IN_COMBAT) 15 else null,
-        monsterMaxHp = if (combatViewState == CombatViewState.IN_COMBAT) 25 else null,
-        playerCurrentHp = 80, playerMaxHp = 100,
-        lastHitChancePercent = if (combatViewState == CombatViewState.IN_COMBAT) 62.5 else null,
-        lastDamageDealt = if (combatViewState == CombatViewState.IN_COMBAT) 4 else null,
-        combatLog = demoCombatLog
-    )
+    val combatViewData by gameViewModel.combatViewData.collectAsState()
 
     fun canEquip(item: InventoryItemSummary): Pair<Boolean, String?> {
         if (item.category == InventoryCategory.TOOL) return true to null
-        val locked = combatViewState == CombatViewState.IN_COMBAT
+        val locked = combatViewData?.viewState == CombatViewState.IN_COMBAT
         return if (locked) false to "Locked during combat" else true to null
     }
 
-    val lockedEquipSlots = remember(combatViewState) {
-        if (combatViewState == CombatViewState.IN_COMBAT) {
+    val lockedEquipSlots = remember(combatViewData) {
+        if (combatViewData?.viewState == CombatViewState.IN_COMBAT) {
             setOf(
                 EquipSlotUi.WEAPON, EquipSlotUi.HELMET, EquipSlotUi.CHESTPLATE, EquipSlotUi.GLOVES,
                 EquipSlotUi.BOOTS, EquipSlotUi.NECKLACE, EquipSlotUi.RING_1, EquipSlotUi.RING_2,
@@ -629,11 +611,29 @@ fun AppRoot(gameViewModel: GameViewModel) {
 
                             AppDestination.COMBAT -> when (combatScreenState) {
                                 CombatScreenState.ZoneSelect -> ZoneSelectScreen(
-                                    zones = zones, playerLevel = 24,
-                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
+                                    zones = zones, playerLevel = trainingSkillLevel,
+                                    onZoneSelected = { zoneId ->
+                                        val result = gameViewModel.enterCombatZone(zoneId)
+                                        if (result is ServiceResult.Success) {
+                                            combatScreenState = CombatScreenState.InZone
+                                        }
+                                    },
                                     onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
                                 )
-                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
+                                CombatScreenState.InZone -> {
+                                    val currentCombatData = combatViewData
+                                    if (currentCombatData != null) {
+                                        CombatViewScreen(
+                                            data = currentCombatData,
+                                            onLeaveZone = {
+                                                gameViewModel.leaveCombatZone()
+                                                combatScreenState = CombatScreenState.ZoneSelect
+                                            }
+                                        )
+                                    } else {
+                                        combatScreenState = CombatScreenState.ZoneSelect
+                                    }
+                                }
                                 CombatScreenState.Loadout -> LoadoutScreen(
                                     state = LoadoutState(
                                         availableFoodOptions, loadoutSettings.selectedFoodId,
@@ -641,6 +641,9 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                         loadoutSettings.potionTimerRemainingSeconds,
                                         loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
                                     ),
+                                    trainingSkill = trainingSkill,
+                                    allowedTrainingSkills = gameViewModel.allowedTrainingSkills,
+                                    onTrainingSkillSelected = { gameViewModel.setTrainingSkill(it) },
                                     onBack = { combatScreenState = CombatScreenState.ZoneSelect },
                                     onFoodSelected = { gameViewModel.selectFood(it) },
                                     onPotionSelected = { gameViewModel.selectPotion(it) },
