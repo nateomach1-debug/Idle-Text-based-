@@ -1,0 +1,4 @@
+]633;E;echo "===== currentDestination / skillsScreenState declarations + Surface line, with context =====";4aa64b28-3646-4408-88e4-3dff569bb795]633;C===== currentDestination / skillsScreenState declarations + Surface line, with context =====
+389:    var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
+390:    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
+554:            Surface(modifier = Modifier.fillMaxSize().appPatternBackground(), color = Color.Transparent) {
