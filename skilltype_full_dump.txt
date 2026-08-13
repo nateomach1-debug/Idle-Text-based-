@@ -1,0 +1,32 @@
+]633;E;echo "===== Full SkillType enum =====";e13402da-325f-4e94-8d26-69bfdc84c8e8]633;C===== Full SkillType enum =====
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:10:enum class SkillType(val groups: Set<SkillGroup>) {
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-11-    MINING(setOf(SkillGroup.GATHERING)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-12-    WOODCUTTING(setOf(SkillGroup.GATHERING)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-13-    FISHING(setOf(SkillGroup.GATHERING)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-14-    FARMING(setOf(SkillGroup.GATHERING)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-15-    THIEVING(setOf(SkillGroup.GATHERING)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-16-    SMITHING(setOf(SkillGroup.PRODUCTION)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-17-    COOKING(setOf(SkillGroup.PRODUCTION)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-18-    CRAFTING(setOf(SkillGroup.PRODUCTION)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-19-    FLETCHING(setOf(SkillGroup.PRODUCTION)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-20-    ALCHEMY(setOf(SkillGroup.PRODUCTION)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-21-    MAGIC(setOf(SkillGroup.PRODUCTION, SkillGroup.COMBAT)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-22-    ATTACK(setOf(SkillGroup.COMBAT)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-23-    STRENGTH(setOf(SkillGroup.COMBAT)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-24-    DEFENSE(setOf(SkillGroup.COMBAT)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-25-    PRAYER(setOf(SkillGroup.COMBAT)),
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-26-    ARCHERY(setOf(SkillGroup.COMBAT))
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-27-}
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-28-
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-29-data class Skill(val type: SkillType, var xp: Long = 0)
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-30-
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-31-class SkillBook {
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-32-    private val skills: MutableMap<SkillType, Skill> = SkillType.values()
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-33-        .associateWith { Skill(it) }
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-34-        .toMutableMap()
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-35-
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-36-    fun get(type: SkillType): Skill = skills.getValue(type)
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-37-    fun all(): List<Skill> = skills.values.toList()
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-38-    fun inGroup(group: SkillGroup): List<Skill> = skills.values.filter { group in it.type.groups }
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-39-}
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt-40-
