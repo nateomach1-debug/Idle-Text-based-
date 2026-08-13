@@ -26,6 +26,8 @@ import com.yourname.idlerpg.ui.navigation.AppDestination
 import com.yourname.idlerpg.ui.navigation.SideRail
 import com.yourname.idlerpg.ui.screens.*
 import com.yourname.idlerpg.ui.theme.IdleRpgTheme
+import com.yourname.idlerpg.ui.theme.skillThemeBackground
+import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -588,23 +590,31 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     gridState = skillsGridScrollState
                                 )
                                 is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-                                    when (screen.skillId) {
-                                        "SMITHING" -> SmithingScreen(
-                                            buildSmithingState(it, inventoryQuantities),
-                                            { skillsScreenState = SkillsScreenState.List },
-                                            { itemId -> gameViewModel.startCraftingAction(itemId) }
-                                        )
-                                        in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
-                                            buildSkillDetailState(screen.skillId, it, inventoryQuantities),
-                                            { skillsScreenState = SkillsScreenState.List },
-                                            { itemId -> gameViewModel.startCraftingAction(itemId) },
-                                            startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
-                                        )
-                                        else -> SkillDetailScreen(
-                                            buildSkillDetailState(screen.skillId, it, inventoryQuantities),
-                                            { skillsScreenState = SkillsScreenState.List },
-                                            { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
-                                        )
+                                    val skillBackground = skillThemeBackground(screen.skillId)
+                                    val skillBoxModifier = if (skillBackground != null) {
+                                        Modifier.fillMaxSize().background(skillBackground)
+                                    } else {
+                                        Modifier.fillMaxSize()
+                                    }
+                                    Box(modifier = skillBoxModifier) {
+                                        when (screen.skillId) {
+                                            "SMITHING" -> SmithingScreen(
+                                                buildSmithingState(it, inventoryQuantities),
+                                                { skillsScreenState = SkillsScreenState.List },
+                                                { itemId -> gameViewModel.startCraftingAction(itemId) }
+                                            )
+                                            in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
+                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                                { skillsScreenState = SkillsScreenState.List },
+                                                { itemId -> gameViewModel.startCraftingAction(itemId) },
+                                                startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
+                                            )
+                                            else -> SkillDetailScreen(
+                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                                { skillsScreenState = SkillsScreenState.List },
+                                                { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+                                            )
+                                        }
                                     }
                                 }
                             }
