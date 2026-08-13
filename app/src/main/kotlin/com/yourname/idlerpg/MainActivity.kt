@@ -26,7 +26,8 @@ import com.yourname.idlerpg.ui.navigation.AppDestination
 import com.yourname.idlerpg.ui.navigation.SideRail
 import com.yourname.idlerpg.ui.screens.*
 import com.yourname.idlerpg.ui.theme.IdleRpgTheme
-import com.yourname.idlerpg.ui.theme.skillThemeBackground
+import com.yourname.idlerpg.ui.theme.skillPatternBackground
+import com.yourname.idlerpg.ui.theme.appPatternBackground
 import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -578,7 +579,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                             badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
                         )
 
-                        Box(modifier = Modifier.weight(1f)) {
+                        Box(modifier = Modifier.weight(1f).appPatternBackground()) {
                         when (currentDestination) {
                             AppDestination.HOME -> HomeScreen(state = homeState)
 
@@ -590,13 +591,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     gridState = skillsGridScrollState
                                 )
                                 is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-                                    val skillBackground = skillThemeBackground(screen.skillId)
-                                    val skillBoxModifier = if (skillBackground != null) {
-                                        Modifier.fillMaxSize().background(skillBackground)
-                                    } else {
-                                        Modifier.fillMaxSize()
-                                    }
-                                    Box(modifier = skillBoxModifier) {
+                                    Box(modifier = Modifier.fillMaxSize().skillPatternBackground(screen.skillId)) {
                                         when (screen.skillId) {
                                             "SMITHING" -> SmithingScreen(
                                                 buildSmithingState(it, inventoryQuantities),
