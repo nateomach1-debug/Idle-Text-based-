@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application' version '8.5.0'
+    id 'com.android.application' version '8.9.1'
     id 'org.jetbrains.kotlin.android' version '2.1.10'
     id 'org.jetbrains.kotlin.plugin.compose' version '2.1.10'
     id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.10'
@@ -13,7 +13,7 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace 'com.yourname.idlerpg'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId 'com.yourname.idlerpg'
