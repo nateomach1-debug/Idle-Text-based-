@@ -1,0 +1,69 @@
+path = "app/build.gradle"
+
+new_content = '''plugins {
+    id 'com.android.application' version '8.5.0'
+    id 'org.jetbrains.kotlin.android' version '2.1.10'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.1.10'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.10'
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+
+android {
+    namespace 'com.yourname.idlerpg'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.yourname.idlerpg'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+
+        buildConfigField "String", "SUPABASE_URL", "\\"${localProperties.getProperty('SUPABASE_URL', '')}\\""
+        buildConfigField "String", "SUPABASE_ANON_KEY", "\\"${localProperties.getProperty('SUPABASE_ANON_KEY', '')}\\""
+    }
+
+    buildFeatures {
+        compose true
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+
+    kotlinOptions {
+        jvmTarget = '21'
+    }
+}
+
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2026.06.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.activity:activity-compose:1.9.0'
+    implementation 'androidx.activity:activity-ktx:1.9.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.1'
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1"
+    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+
+    // Supabase - guild/chat multiplayer backend.
+    implementation platform('io.github.jan-tennert.supabase:bom:3.5.0')
+    implementation 'io.github.jan-tennert.supabase:auth-kt'
+    implementation 'io.github.jan-tennert.supabase:postgrest-kt'
+    implementation 'io.github.jan-tennert.supabase:realtime-kt'
+    implementation 'io.ktor:ktor-client-android:3.1.1'
+}
+'''
+
+with open(path, "w") as f:
+    f.write(new_content)
+
+print("OK: rewrote " + path + " (Kotlin 2.1.10, Compose Compiler plugin, Compose BOM 2026.06.01, supabase-kt 3.5.0).")
