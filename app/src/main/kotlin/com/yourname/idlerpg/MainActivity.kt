@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -550,7 +551,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
         }
 
         AppFlowState.InGame -> {
-            Surface(modifier = Modifier.fillMaxSize().appPatternBackground()) {
+            Surface(modifier = Modifier.fillMaxSize().appPatternBackground(), color = Color.Transparent) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
