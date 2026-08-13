@@ -1,6 +1,14 @@
 plugins {
     id 'com.android.application' version '8.5.0'
-    id 'org.jetbrains.kotlin.android' version '1.9.24'
+    id 'org.jetbrains.kotlin.android' version '2.1.10'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.1.10'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.10'
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
 }
 
 android {
@@ -13,14 +21,14 @@ android {
         targetSdk 34
         versionCode 1
         versionName '1.0'
+
+        buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('SUPABASE_URL', '')}\""
+        buildConfigField "String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty('SUPABASE_ANON_KEY', '')}\""
     }
 
     buildFeatures {
         compose true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.5.14'
+        buildConfig true
     }
 
     compileOptions {
@@ -34,7 +42,7 @@ android {
 }
 
 dependencies {
-    implementation platform('androidx.compose:compose-bom:2024.06.00')
+    implementation platform('androidx.compose:compose-bom:2026.06.01')
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.material:material-icons-extended'
@@ -43,4 +51,11 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.1'
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1"
     implementation "androidx.security:security-crypto:1.1.0-alpha06"
+
+    // Supabase - guild/chat multiplayer backend.
+    implementation platform('io.github.jan-tennert.supabase:bom:3.5.0')
+    implementation 'io.github.jan-tennert.supabase:auth-kt'
+    implementation 'io.github.jan-tennert.supabase:postgrest-kt'
+    implementation 'io.github.jan-tennert.supabase:realtime-kt'
+    implementation 'io.ktor:ktor-client-android:3.1.1'
 }
