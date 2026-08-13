@@ -5,6 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.yourname.idlerpg.*
 import com.yourname.idlerpg.ui.screens.SkillSummary
+import com.yourname.idlerpg.ui.screens.CombatViewData
+import com.yourname.idlerpg.ui.screens.CombatViewState
+import com.yourname.idlerpg.ui.screens.CombatLogEntry
+import com.yourname.idlerpg.ui.screens.ZoneSummary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
