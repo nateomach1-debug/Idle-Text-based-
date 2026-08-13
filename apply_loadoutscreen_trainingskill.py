@@ -1,4 +1,4 @@
-path = "app/src/main/kotlin/com/yourname/idlerpg/ui/screens/LoadoutScreen.kt"
+path = "app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt"
 with open(path, "r") as f:
     content = f.read()
 
