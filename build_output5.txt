@@ -1,0 +1,170 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.4.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:compileDebugKotlin
+> Task :app:mergeExtDexDebug
+
+> Task :app:compileDebugKotlin
+e: org.jetbrains.kotlin.util.FileAnalysisException: While analysing /workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:268:5: java.lang.IllegalArgumentException: source must not be null
+	at org.jetbrains.kotlin.util.AnalysisExceptionsKt.wrapIntoFileAnalysisExceptionIfNeeded(AnalysisExceptions.kt:57)
+	at org.jetbrains.kotlin.fir.FirCliExceptionHandler.handleExceptionOnFileAnalysis(Utils.kt:249)
+	at org.jetbrains.kotlin.fir.pipeline.AnalyseKt.runCheckers(analyse.kt:68)
+	at org.jetbrains.kotlin.fir.pipeline.FirUtilsKt.resolveAndCheckFir(firUtils.kt:77)
+	at org.jetbrains.kotlin.fir.pipeline.FirUtilsKt.buildResolveAndCheckFirViaLightTree(firUtils.kt:88)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileModuleToAnalyzedFirViaLightTreeIncrementally(jvmCompilerPipelineLightTree.kt:347)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileModuleToAnalyzedFirViaLightTree(jvmCompilerPipelineLightTree.kt:272)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileModule(jvmCompilerPipelineLightTree.kt:250)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileSingleModuleUsingFrontendIrAndLightTree(jvmCompilerPipelineLightTree.kt:231)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileModulesUsingFrontendIrAndLightTree(jvmCompilerPipelineLightTree.kt:86)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:146)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:43)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:102)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:316)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:464)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:73)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:506)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:423)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileNonIncrementally(IncrementalCompilerRunner.kt:301)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:129)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:683)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:91)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1811)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:360)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:200)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:197)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:712)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Transport.java:196)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:587)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:828)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(TCPTransport.java:705)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:399)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:704)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+Caused by: java.lang.IllegalArgumentException: source must not be null
+	at org.jetbrains.kotlin.diagnostics.KtDiagnosticReportHelpersKt.requireNotNull(KtDiagnosticReportHelpers.kt:68)
+	at org.jetbrains.kotlin.diagnostics.KtDiagnosticReportHelpersKt.reportOn(KtDiagnosticReportHelpers.kt:39)
+	at org.jetbrains.kotlin.diagnostics.KtDiagnosticReportHelpersKt.reportOn$default(KtDiagnosticReportHelpers.kt:31)
+	at org.jetbrains.kotlin.fir.analysis.checkers.expression.FirIncompatibleClassExpressionChecker.checkSourceElement(FirIncompatibleClassExpressionChecker.kt:50)
+	at org.jetbrains.kotlin.fir.analysis.checkers.expression.FirIncompatibleClassExpressionChecker.checkType$checkers(FirIncompatibleClassExpressionChecker.kt:42)
+	at org.jetbrains.kotlin.fir.analysis.checkers.type.FirIncompatibleClassTypeChecker.check(FirIncompatibleClassTypeChecker.kt:17)
+	at org.jetbrains.kotlin.fir.analysis.checkers.type.FirIncompatibleClassTypeChecker.check(FirIncompatibleClassTypeChecker.kt:15)
+	at org.jetbrains.kotlin.fir.analysis.collectors.components.TypeCheckersDiagnosticComponent.visitResolvedTypeRef(TypeCheckersDiagnosticComponent.kt:99)
+	at org.jetbrains.kotlin.fir.analysis.collectors.components.TypeCheckersDiagnosticComponent.visitResolvedTypeRef(TypeCheckersDiagnosticComponent.kt:19)
+	at org.jetbrains.kotlin.fir.types.FirResolvedTypeRef.accept(FirResolvedTypeRef.kt:28)
+	at org.jetbrains.kotlin.fir.analysis.collectors.CheckerRunningDiagnosticCollectorVisitor.checkElement(CheckerRunningDiagnosticCollectorVisitor.kt:24)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitResolvedTypeRef(AbstractDiagnosticCollectorVisitor.kt:248)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitResolvedTypeRef(AbstractDiagnosticCollectorVisitor.kt:30)
+	at org.jetbrains.kotlin.fir.types.FirResolvedTypeRef.accept(FirResolvedTypeRef.kt:28)
+	at org.jetbrains.kotlin.fir.declarations.impl.FirSimpleFunctionImpl.acceptChildren(FirSimpleFunctionImpl.kt:63)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitNestedElements(AbstractDiagnosticCollectorVisitor.kt:38)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitWithDeclarationAndReceiver(AbstractDiagnosticCollectorVisitor.kt:311)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitSimpleFunction(AbstractDiagnosticCollectorVisitor.kt:118)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitSimpleFunction(AbstractDiagnosticCollectorVisitor.kt:30)
+	at org.jetbrains.kotlin.fir.declarations.FirSimpleFunction.accept(FirSimpleFunction.kt:51)
+	at org.jetbrains.kotlin.fir.declarations.impl.FirRegularClassImpl.acceptChildren(FirRegularClassImpl.kt:63)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitNestedElements(AbstractDiagnosticCollectorVisitor.kt:38)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitWithDeclarationAndReceiver(AbstractDiagnosticCollectorVisitor.kt:311)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitClassAndChildren(AbstractDiagnosticCollectorVisitor.kt:87)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitRegularClass(AbstractDiagnosticCollectorVisitor.kt:92)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitRegularClass(AbstractDiagnosticCollectorVisitor.kt:30)
+	at org.jetbrains.kotlin.fir.declarations.FirRegularClass.accept(FirRegularClass.kt:48)
+	at org.jetbrains.kotlin.fir.declarations.impl.FirFileImpl.acceptChildren(FirFileImpl.kt:57)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitNestedElements(AbstractDiagnosticCollectorVisitor.kt:38)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitFile(AbstractDiagnosticCollectorVisitor.kt:1151)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitFile(AbstractDiagnosticCollectorVisitor.kt:30)
+	at org.jetbrains.kotlin.fir.declarations.FirFile.accept(FirFile.kt:42)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollector.collectDiagnostics(AbstractDiagnosticCollector.kt:36)
+	at org.jetbrains.kotlin.fir.pipeline.AnalyseKt.runCheckers(analyse.kt:37)
+	... 37 more
+
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/0df581e26ce09cb6fa38dc09b4a07bae/transformed/jetified-postgrest-kt-api.jar!/META-INF/postgrest-kt.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/14609a15dccef48b46274fe6067c3d80/transformed/jetified-ktor-client-websockets-jvm-3.4.2.jar!/META-INF/ktor-client-websockets.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/19fe88c3f6b15d91e5a109545f3aa43d/transformed/jetified-kotlin-stdlib-2.3.20.jar!/META-INF/kotlin-stdlib-jdk7.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/19fe88c3f6b15d91e5a109545f3aa43d/transformed/jetified-kotlin-stdlib-2.3.20.jar!/META-INF/kotlin-stdlib-jdk8.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/19fe88c3f6b15d91e5a109545f3aa43d/transformed/jetified-kotlin-stdlib-2.3.20.jar!/META-INF/kotlin-stdlib.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/1f43d1638b1e1d2c9c3195ca3e1741be/transformed/jetified-ktor-serialization-kotlinx-jvm-3.4.2.jar!/META-INF/ktor-serialization-kotlinx.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/29102f8a42bb69be005456340a506cf7/transformed/jetified-ktor-network-jvm-3.4.2.jar!/META-INF/ktor-network.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/2d4fca19450547bb1899753f06f05a49/transformed/jetified-kotlinx-serialization-json-io-jvm-1.10.0.jar!/META-INF/kotlinx-serialization-json-io.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/2d59c1ec3ab0724dca946feeb1fd3ea2/transformed/jetified-realtime-kt-api.jar!/META-INF/realtime-kt.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/2e66b00e553744facbca7215d65be88b/transformed/jetified-ktor-io-jvm-3.4.2.jar!/META-INF/ktor-io.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/31382a1f0838ae253bf686ca12c920a7/transformed/jetified-kotlinx-serialization-json-jvm-1.10.0.jar!/META-INF/kotlinx-serialization-json.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/3b5e5e25aaf594678c9b77b68cd3aee2/transformed/jetified-ktor-events-jvm-3.4.2.jar!/META-INF/ktor-events.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/4656b99791480459d077c8ef3bfd4530/transformed/jetified-ktor-client-content-negotiation-jvm-3.4.2.jar!/META-INF/ktor-client-content-negotiation.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/4d9ceb7f6355f38f5243c47e0463296f/transformed/jetified-supabase-kt-api.jar!/META-INF/supabase-kt.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/64bfca3c3cff24e80658bf26cb6a6db2/transformed/jetified-ktor-sse-jvm-3.4.2.jar!/META-INF/ktor-sse.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/8352c7864b12ac109d43a56f8d161714/transformed/jetified-ktor-serialization-kotlinx-json-jvm-3.4.2.jar!/META-INF/ktor-serialization-kotlinx-json.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/8b98f3224af2561e5095c8f1b0f422c0/transformed/jetified-ktor-utils-jvm-3.4.2.jar!/META-INF/ktor-utils.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/8c84f9d073b1137cbda2cddca40bc8ed/transformed/jetified-ktor-websockets-jvm-3.4.2.jar!/META-INF/ktor-websockets.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/96a0f6a1b85c82e7b8e7cc2bf1f2cc63/transformed/jetified-kotlinx-serialization-core-jvm-1.10.0.jar!/META-INF/kotlinx-serialization-core.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/a12b8977db58dca887a4e85d97fc2c70/transformed/jetified-ktor-websocket-serialization-jvm-3.4.2.jar!/META-INF/ktor-websocket-serialization.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/b69d84d0ea84e2b443464f3bc07d7745/transformed/jetified-ktor-http-cio-jvm-3.4.2.jar!/META-INF/ktor-http-cio.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/c595c5b0b5a5ad576957f1e7ee4a7d3a/transformed/jetified-auth-kt-api.jar!/META-INF/auth-kt.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/d386cf0f848725408e5a8114a53223a6/transformed/jetified-ktor-http-jvm-3.4.2.jar!/META-INF/ktor-http.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/e93188497c94b4023de26ae900365a9e/transformed/jetified-kotlin-reflect-2.3.20.jar!/META-INF/descriptors.jvm.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/e93188497c94b4023de26ae900365a9e/transformed/jetified-kotlin-reflect-2.3.20.jar!/META-INF/descriptors.runtime.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/e93188497c94b4023de26ae900365a9e/transformed/jetified-kotlin-reflect-2.3.20.jar!/META-INF/deserialization.common.jvm.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/e93188497c94b4023de26ae900365a9e/transformed/jetified-kotlin-reflect-2.3.20.jar!/META-INF/deserialization.common.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/e93188497c94b4023de26ae900365a9e/transformed/jetified-kotlin-reflect-2.3.20.jar!/META-INF/deserialization.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/e93188497c94b4023de26ae900365a9e/transformed/jetified-kotlin-reflect-2.3.20.jar!/META-INF/kotlin-metadata-jvm.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/e93188497c94b4023de26ae900365a9e/transformed/jetified-kotlin-reflect-2.3.20.jar!/META-INF/kotlin-metadata.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/e93188497c94b4023de26ae900365a9e/transformed/jetified-kotlin-reflect-2.3.20.jar!/META-INF/kotlin-reflection.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/e93188497c94b4023de26ae900365a9e/transformed/jetified-kotlin-reflect-2.3.20.jar!/META-INF/metadata.jvm.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/efd80bd41a7a6e124846b0b4c648cb77/transformed/jetified-ktor-serialization-jvm-3.4.2.jar!/META-INF/ktor-serialization.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+e: file:///home/codespace/.gradle/caches/9.4.0/transforms/f1e6a0fc8c51cb4e0ee73e42d18e4970/transformed/jetified-ktor-client-core-jvm-3.4.2.jar!/META-INF/ktor-client-core.kotlin_module Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.3.0, expected version is 2.1.0.
+
+> Task :app:compileDebugKotlin FAILED
+
+[Incubating] Problems report is available at: file:///workspaces/Idle-Text-based-/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Internal compiler error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.4.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 4m 42s
+22 actionable tasks: 2 executed, 20 up-to-date
