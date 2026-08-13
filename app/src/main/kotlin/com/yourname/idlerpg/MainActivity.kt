@@ -551,7 +551,13 @@ fun AppRoot(gameViewModel: GameViewModel) {
         }
 
         AppFlowState.InGame -> {
-            Surface(modifier = Modifier.fillMaxSize().appPatternBackground(), color = Color.Transparent) {
+            val activeSkillId = (skillsScreenState as? SkillsScreenState.Detail)?.skillId
+            val screenBackgroundModifier = if (currentDestination == AppDestination.SKILLS && activeSkillId != null) {
+                Modifier.fillMaxSize().skillPatternBackground(activeSkillId)
+            } else {
+                Modifier.fillMaxSize().appPatternBackground()
+            }
+            Surface(modifier = screenBackgroundModifier, color = Color.Transparent) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
@@ -592,7 +598,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     gridState = skillsGridScrollState
                                 )
                                 is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-                                    Box(modifier = Modifier.fillMaxSize().skillPatternBackground(screen.skillId)) {
+                                    Box(modifier = Modifier.fillMaxSize()) {
                                         when (screen.skillId) {
                                             "SMITHING" -> SmithingScreen(
                                                 buildSmithingState(it, inventoryQuantities),
