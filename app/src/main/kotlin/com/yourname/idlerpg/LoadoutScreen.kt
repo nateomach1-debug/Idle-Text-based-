@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.yourname.idlerpg.SkillType
 
 // =========================================================
 // LOADOUT SCREEN
@@ -44,6 +45,9 @@ fun LoadoutScreen(
     onPotionSelected: (String) -> Unit,
     onAutoHealChanged: (Int) -> Unit,
     onAutoFleeChanged: (Int) -> Unit,
+    trainingSkill: SkillType? = null,
+    allowedTrainingSkills: List<SkillType> = emptyList(),
+    onTrainingSkillSelected: (SkillType) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
@@ -74,6 +78,31 @@ fun LoadoutScreen(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        if (trainingSkill != null && allowedTrainingSkills.isNotEmpty()) {
+            Text(text = "Training", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                allowedTrainingSkills.forEach { skill ->
+                    val selected = skill == trainingSkill
+                    val background = if (selected) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    }
+                    Text(
+                        text = skill.name.lowercase().replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(background)
+                            .clickable { onTrainingSkillSelected(skill) }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         Text(text = "Food", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
