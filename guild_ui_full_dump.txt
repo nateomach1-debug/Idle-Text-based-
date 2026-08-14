@@ -1,0 +1,58 @@
+]633;E;echo "===== full GUILD destination block =====";93309d02-99c8-480f-bc30-378adced208c]633;C===== full GUILD destination block =====
+                            AppDestination.GUILD -> {
+                                GuildHomeScreen(
+                                    state = demoGuildState(),
+                                    leaderboardEntries = demoLeaderboard(),
+                                    leaderboardShowingDaily = leaderboardShowingDaily,
+                                    onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+                                    onMemberTapped = { selectedGuildMember = it },
+                                    onContributeToEvent = { },
+                                    onCastVote = { }
+                                )
+
+                                selectedGuildMember?.let { member ->
+                                    MemberActionPopup(
+                                        member = member,
+                                        viewerRole = GuildMemberRole.LEADER,
+                                        onDismiss = { selectedGuildMember = null },
+                                        onKick = { selectedGuildMember = null },
+                                        onPromote = { selectedGuildMember = null },
+                                        onDemote = { selectedGuildMember = null },
+                                        onInitiateVote = { selectedGuildMember = null }
+                                    )
+                                }
+                            }
+
+                            else -> androidx.compose.material3.Text(
+                                text = currentDestination.label + " screen coming soon",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        }
+                    }
+
+                    ChatBanner(
+                        selectedChannel = selectedChatChannel,
+                        onChannelSelected = {
+                            selectedChatChannel = it
+                            if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
+                        },
+                        messages = chatMessages.filter { it.channel == selectedChatChannel },
+                        dmConversations = demoDmConversations(),
+                        selectedDmCharacterId = selectedDmCharacterId,
+                        onDmSelected = { selectedDmCharacterId = it },
+                        hasUnread = true,
+                        messageInput = chatMessageInput,
+
+===== selectedGuildMember / leaderboardShowingDaily declarations =====
+475:    var leaderboardShowingDaily by remember { mutableStateOf(false) }
+476:    var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) }
+791:                                    leaderboardShowingDaily = leaderboardShowingDaily,
+792:                                    onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+793:                                    onMemberTapped = { selectedGuildMember = it },
+798:                                selectedGuildMember?.let { member ->
+802:                                        onDismiss = { selectedGuildMember = null },
+803:                                        onKick = { selectedGuildMember = null },
+804:                                        onPromote = { selectedGuildMember = null },
+805:                                        onDemote = { selectedGuildMember = null },
+806:                                        onInitiateVote = { selectedGuildMember = null }
