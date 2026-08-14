@@ -1,0 +1,39 @@
+]633;E;echo "===== Guild UI data classes =====";93309d02-99c8-480f-bc30-378adced208c]633;C===== Guild UI data classes =====
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-23-// =========================================================
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-24-
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt:25:enum class GuildMemberRole { LEADER, OFFICER, MEMBER }
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-26-
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt:27:data class GuildMemberSummary(
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-28-    val characterId: String,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-29-    val displayName: String,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-30-    val role: GuildMemberRole
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-31-)
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-32-
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt:33:data class GuildEventSummary(
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-34-    val name: String,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-35-    val progressCurrent: Int,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-36-    val progressTarget: Int
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-37-)
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-38-
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt:39:data class GuildVoteSummary(
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-40-    val targetLeaderName: String,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-41-    val hoursRemaining: Int,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-42-    val removeVotes: Int,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-43-    val keepVotes: Int
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-44-)
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-45-
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt:46:data class GuildQuestSummary(val name: String, val description: String)
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-47-
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt:48:data class GuildLeaderboardEntry(val displayName: String, val value: Long)
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-49-
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt:50:data class GuildHomeState(
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-51-    val guildName: String,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-52-    val activeEvent: GuildEventSummary?,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-53-    val activeVote: GuildVoteSummary?,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-54-    val tier: Int,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-55-    val activeBonusPercent: Double,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-56-    val members: List<GuildMemberSummary>,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-57-    val quests: List<GuildQuestSummary>,
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-58-    val viewerRole: GuildMemberRole
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-59-)
+app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt-60-
