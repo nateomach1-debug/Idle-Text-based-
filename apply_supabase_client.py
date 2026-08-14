@@ -19,6 +19,16 @@ object SupabaseClientProvider {
         install(Realtime)
     }
 }
+
+// Tracks whether guild/chat multiplayer features are currently usable. Local
+// gameplay never depends on this - it's purely informational for gating
+// multiplayer UI until a real session exists.
+enum class SupabaseAuthState {
+    SIGNED_OUT,
+    SIGNING_IN,
+    SIGNED_IN,
+    ERROR
+}
 '''
 
 with open(path, "w") as f:
