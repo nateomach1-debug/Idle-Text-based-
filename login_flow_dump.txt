@@ -1,0 +1,105 @@
+]633;E;echo "===== Login flow state handling, lines 340-400 =====";3ea31294-f82b-412b-b57c-0ba1daf1814e]633;C===== Login flow state handling, lines 340-400 =====
+    var isCreatingAccount by remember { mutableStateOf(false) }
+    var loginError by remember { mutableStateOf<String?>(null) }
+    var flowState by remember {
+        val accountIdSnapshot = currentAccountId
+        mutableStateOf(
+            when {
+                currentCharacterId != null -> AppFlowState.InGame
+                accountIdSnapshot != null -> {
+                    val chars = gameViewModel.accountService.charactersFor(accountIdSnapshot)
+                    if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                }
+                else -> AppFlowState.Login
+            }
+        )
+    }
+    LaunchedEffect(Unit) {
+        gameViewModel.loadGame()
+        if (flowState == AppFlowState.Login) {
+            val autoAccount = gameViewModel.tryAutoLogin()
+            if (autoAccount != null) {
+                val chars = gameViewModel.accountService.charactersFor(autoAccount.id)
+                flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+            }
+        }
+    }
+
+    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
+    offlineSummary?.let { summary ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+            title = { androidx.compose.material3.Text("Welcome back!") },
+            text = {
+                val minutes = summary.awaySeconds / 60
+                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
+                androidx.compose.material3.Text(
+                    "You were away for " + awayText + ".\n\n" +
+                    "While gone, you were " + summary.skillActionName + ":\n" +
+                    "+" + summary.xpEarned + " XP\n" +
+                    "Gathered " + summary.quantity + "x " + summary.itemName
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
+    var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
+    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
+    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
+    var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
+
+    val allSkills by gameViewModel.skills.collectAsState()
+    val zones = gameViewModel.zoneSummaries
+    val trainingSkill by gameViewModel.trainingSkill.collectAsState()
+    val trainingSkillLevel by gameViewModel.trainingSkillLevel.collectAsState()
+    val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
+    val inventoryItems = remember(inventoryItemEntries) {
+        buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
+
+===== Login destination + logout, lines 480-520 =====
+    var chatMessageInput by remember { mutableStateOf("") }
+    val chatMessages = remember { mutableStateListOf(*demoChatMessages().toTypedArray()) }
+
+    when (flowState) {
+        AppFlowState.Login -> {
+            LoginScreen(
+                isCreatingAccount = isCreatingAccount,
+                onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
+                errorMessage = loginError,
+                onLogin = { email, password ->
+                    val result = gameViewModel.login(email, password)
+                    when (result) {
+                        is ServiceResult.Success -> {
+                            val chars = gameViewModel.accountService.charactersFor(result.value.id)
+                            flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                            loginError = null
+                        }
+                        is ServiceResult.Failure -> loginError = result.reason
+                    }
+                },
+                onCreateAccount = { email, username, password ->
+                    val result = gameViewModel.createAccount(email, username, password)
+                    when (result) {
+                        is ServiceResult.Success -> {
+                            gameViewModel.saveGame()
+                            loginError = null
+                            flowState = AppFlowState.CharacterCreate
+                        }
+                        is ServiceResult.Failure -> loginError = result.reason
+                    }
+                }
+            )
+        }
+
+        AppFlowState.CharacterCreate -> {
+            CharacterCreateScreen(
+                errorMessage = loginError,
+                onCreate = { displayName, avatarId ->
+                    val accountId = currentAccountId
+                    if (accountId != null) {
+                        val result = gameViewModel.accountService.createCharacter(accountId, displayName, avatarId)
