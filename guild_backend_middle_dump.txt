@@ -1,0 +1,95 @@
+]633;E;echo "===== GuildClanSystem.kt lines 172-265 (Guild class, join/leave/invite) =====";5c0e9f6b-1974-48f6-9690-8b4c584fd1d9]633;C===== GuildClanSystem.kt lines 172-265 (Guild class, join/leave/invite) =====
+
+class Guild(
+    val id: String = UUID.randomUUID().toString(),
+    var name: String,
+    val createdAt: Instant = Instant.now(),
+    val members: MutableMap<String, GuildMember> = mutableMapOf(),
+    val tierState: GuildTierState = GuildTierState(),
+    val itemPool: MutableMap<String, Int> = mutableMapOf(),
+    var activeEvent: GuildEventInstance? = null,
+    val activeBonuses: MutableList<ActiveGuildBonus> = mutableListOf(),
+    val voteHistory: MutableList<LeaderRemovalVote> = mutableListOf(),
+    var lastFailedVoteAt: Instant? = null,
+    val lastVoteAgainstTarget: MutableMap<String, Instant> = mutableMapOf()
+) {
+    companion object {
+        const val MAX_MEMBERS = 20
+        const val MAX_LEADERS = 2
+    }
+
+    fun leaderCount(): Int = members.values.count { it.role == GuildRole.LEADER }
+
+    fun currentActiveBonusPercent(now: Instant = Instant.now()): Double =
+        activeBonuses.filter { it.isActive(now) }.sumOf { it.bonusPercent }
+}
+
+// =========================================================
+// GUILD SERVICE
+// (ServiceResult now comes from SharedTypes.kt.)
+// =========================================================
+
+class GuildService {
+    private val guilds: MutableMap<String, Guild> = mutableMapOf()
+    private val accountsWithFreeCreationUsed: MutableSet<String> = mutableSetOf()
+    private val creationCost: Long = 100_000
+
+    private val failedVoteCooldown: Duration = Duration.ofDays(7)
+    private val sameTargetVoteCooldown: Duration = Duration.ofDays(14)
+
+    fun createGuild(accountId: String, founderCharacterId: String, name: String, currencyBalance: Long): ServiceResult<Guild> {
+        val isFree = !accountsWithFreeCreationUsed.contains(accountId)
+        if (!isFree && currencyBalance < creationCost) {
+            return ServiceResult.Failure("Guild creation costs " + creationCost + " currency; insufficient balance.")
+        }
+        if (name.isBlank() || name.length < 3 || name.length > 24) {
+            return ServiceResult.Failure("Guild name must be between 3 and 24 characters.")
+        }
+
+        val guild = Guild(name = name)
+        guild.members[founderCharacterId] = GuildMember(founderCharacterId, GuildRole.LEADER)
+        guilds[guild.id] = guild
+        accountsWithFreeCreationUsed.add(accountId)
+
+        return ServiceResult.Success(guild)
+    }
+
+    fun guild(guildId: String): Guild? = guilds[guildId]
+
+    fun inviteMember(guildId: String, invitingCharacterId: String, invitedCharacterId: String): ServiceResult<Unit> {
+        val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
+        val inviter = guild.members[invitingCharacterId] ?: return ServiceResult.Failure("Inviter is not a guild member.")
+        if (!Permissions.canInvite(inviter.role)) return ServiceResult.Failure("Not permitted to invite.")
+        if (guild.members.size >= Guild.MAX_MEMBERS) return ServiceResult.Failure("Guild is at max capacity (" + Guild.MAX_MEMBERS + ").")
+        if (guild.members.containsKey(invitedCharacterId)) return ServiceResult.Failure("Character is already a member.")
+
+        guild.members[invitedCharacterId] = GuildMember(invitedCharacterId, GuildRole.MEMBER)
+        return ServiceResult.Success(Unit)
+    }
+
+    fun approveApplication(guildId: String, approverCharacterId: String, applicantCharacterId: String): ServiceResult<Unit> {
+        val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
+        val approver = guild.members[approverCharacterId] ?: return ServiceResult.Failure("Approver is not a guild member.")
+        if (!Permissions.canApproveApplications(approver.role)) return ServiceResult.Failure("Not permitted to approve applications.")
+        if (guild.members.size >= Guild.MAX_MEMBERS) return ServiceResult.Failure("Guild is at max capacity.")
+
+        guild.members[applicantCharacterId] = GuildMember(applicantCharacterId, GuildRole.MEMBER)
+        return ServiceResult.Success(Unit)
+    }
+
+    fun kickMember(guildId: String, actingCharacterId: String, targetCharacterId: String): ServiceResult<Unit> {
+        val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
+        val actor = guild.members[actingCharacterId] ?: return ServiceResult.Failure("Actor is not a guild member.")
+        if (!Permissions.canKick(actor.role)) return ServiceResult.Failure("Only Leaders can kick members.")
+        if (!guild.members.containsKey(targetCharacterId)) return ServiceResult.Failure("Target is not a guild member.")
+
+        guild.members.remove(targetCharacterId)
+        return ServiceResult.Success(Unit)
+    }
+
+    fun promoteToOfficer(guildId: String, actingCharacterId: String, targetCharacterId: String): ServiceResult<Unit> {
+        val guild = guilds[guildId] ?: return ServiceResult.Failure("Guild not found.")
+        val actor = guild.members[actingCharacterId] ?: return ServiceResult.Failure("Actor is not a guild member.")
+        if (!Permissions.canPromoteDemote(actor.role)) return ServiceResult.Failure("Only Leaders can promote members.")
+        val target = guild.members[targetCharacterId] ?: return ServiceResult.Failure("Target is not a guild member.")
+        if (target.role != GuildRole.MEMBER) return ServiceResult.Failure("Only Members can be promoted to Officer.")
