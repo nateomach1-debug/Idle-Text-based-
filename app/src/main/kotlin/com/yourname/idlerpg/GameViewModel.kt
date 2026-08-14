@@ -72,6 +72,39 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val combatService = CombatService()
 
     // =========================================================
+    // SUPABASE AUTH (guild/chat multiplayer only - local play never depends on this)
+    // =========================================================
+
+    private val _supabaseAuthState = MutableStateFlow(SupabaseAuthState.SIGNED_OUT)
+    val supabaseAuthState: StateFlow<SupabaseAuthState> = _supabaseAuthState.asStateFlow()
+
+    // Fire-and-forget: runs in the background after a successful LOCAL login/account
+    // creation. If this fails (no network, Supabase down, etc.) local gameplay is
+    // completely unaffected - only guild/chat multiplayer stays unavailable.
+    private fun syncSupabaseAuth(email: String, password: String, isNewAccount: Boolean) {
+        viewModelScope.launch {
+            _supabaseAuthState.value = SupabaseAuthState.SIGNING_IN
+            try {
+                val auth = SupabaseClientProvider.client.auth
+                if (isNewAccount) {
+                    auth.signUpWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+                        this.email = email
+                        this.password = password
+                    }
+                } else {
+                    auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+                        this.email = email
+                        this.password = password
+                    }
+                }
+                _supabaseAuthState.value = SupabaseAuthState.SIGNED_IN
+            } catch (e: Exception) {
+                _supabaseAuthState.value = SupabaseAuthState.ERROR
+            }
+        }
+    }
+
+        // =========================================================
     // COMBAT
     // =========================================================
 
@@ -424,6 +457,7 @@ fun login(email: String, password: String): ServiceResult<Account> {
         sessionManager.saveSession(result.value.id)
             _currentAccountId.value = result.value.id
             refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = false)
     }
     return result
 }
@@ -433,6 +467,7 @@ fun login(email: String, password: String): ServiceResult<Account> {
         sessionManager.saveSession(result.value.id)
             _currentAccountId.value = result.value.id
             refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = true)
     }
     return result
   }
