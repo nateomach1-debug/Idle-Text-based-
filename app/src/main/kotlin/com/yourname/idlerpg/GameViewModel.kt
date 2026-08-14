@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.random.Random
+import io.github.jan.supabase.auth.auth
 
 data class OfflineSummary(
     val awaySeconds: Long,
