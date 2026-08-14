@@ -1,0 +1,76 @@
+]633;E;echo "===== demoGuildState / demoLeaderboard / Guild routing in MainActivity.kt =====";93309d02-99c8-480f-bc30-378adced208c]633;C===== demoGuildState / demoLeaderboard / Guild routing in MainActivity.kt =====
+278-    GuildMemberSummary("char4", "Quinn", GuildMemberRole.MEMBER)
+279-)
+280-
+281:private fun demoGuildState(): GuildHomeState = GuildHomeState(
+282-    guildName = "Iron Wolves",
+283-    activeEvent = GuildEventSummary("Beast Hunt", progressCurrent = 78, progressTarget = 120),
+284-    activeVote = null,
+285-    tier = 2,
+286-    activeBonusPercent = 5.0,
+287-    members = demoGuildMembers(),
+288-    quests = listOf(
+289-        GuildQuestSummary("Weekly Contribution", "Donate items toward this week's guild goal.")
+290-    ),
+291-    viewerRole = GuildMemberRole.LEADER
+292-)
+293-
+294:private fun demoLeaderboard(): List<GuildLeaderboardEntry> = listOf(
+295-    GuildLeaderboardEntry("Lyra", 15200),
+296-    GuildLeaderboardEntry("Bram", 9800),
+297-    GuildLeaderboardEntry("Sable", 6100),
+298-    GuildLeaderboardEntry("Quinn", 4200)
+299-)
+300-
+301-private fun demoChatMessages(): List<ChatMessageUi> = listOf(
+302-    ChatMessageUi("m1", "Bram", "anyone selling steel bars?", ChatChannelUi.GLOBAL),
+303-    ChatMessageUi("m2", "Sable", "check the market, saw some at 48 each", ChatChannelUi.GLOBAL),
+304-    ChatMessageUi("m3", "Quinn", "gl on the hunt everyone", ChatChannelUi.GLOBAL)
+305-)
+306-
+307-private fun demoDmConversations(): List<DmConversationSummary> = listOf(
+308-    DmConversationSummary("char2", "Bram", "hey, got a minute?"),
+309-    DmConversationSummary("char3", "Sable", "thanks for the help earlier!")
+--
+583-                                marketTab = MarketTab.BROWSE
+584-                                selectedMarketItemId = null
+585-                            },
+586:                            badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
+587-                        )
+588-
+589-                        Box(modifier = Modifier.weight(1f)) {
+590-                        when (currentDestination) {
+591-                            AppDestination.HOME -> HomeScreen(state = homeState)
+592-
+593-                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+594-                                is SkillsScreenState.List -> SkillsScreen(
+595-                                    allSkills = allSkills,
+596-                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) },
+597-                                    listState = skillsListScrollState,
+598-                                    gridState = skillsGridScrollState
+599-                                )
+600-                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+601-                                    Box(modifier = Modifier.fillMaxSize()) {
+--
+784-                                }
+785-                            }
+786-
+787:                            AppDestination.GUILD -> {
+788-                                GuildHomeScreen(
+789:                                    state = demoGuildState(),
+790:                                    leaderboardEntries = demoLeaderboard(),
+791-                                    leaderboardShowingDaily = leaderboardShowingDaily,
+792-                                    onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+793-                                    onMemberTapped = { selectedGuildMember = it },
+794-                                    onContributeToEvent = { },
+795-                                    onCastVote = { }
+796-                                )
+797-
+798-                                selectedGuildMember?.let { member ->
+799-                                    MemberActionPopup(
+800-                                        member = member,
+801-                                        viewerRole = GuildMemberRole.LEADER,
+802-                                        onDismiss = { selectedGuildMember = null },
+803-                                        onKick = { selectedGuildMember = null },
+804-                                        onPromote = { selectedGuildMember = null },
+805-                                        onDemote = { selectedGuildMember = null },
