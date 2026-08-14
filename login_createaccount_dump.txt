@@ -1,0 +1,49 @@
+]633;E;echo "===== fun login( in GameViewModel.kt =====";3ea31294-f82b-412b-b57c-0ba1daf1814e]633;C===== fun login( in GameViewModel.kt =====
+419-        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+420-    }
+421:fun login(email: String, password: String): ServiceResult<Account> {
+422-    val result = accountService.login(email, password)
+423-    if (result is ServiceResult.Success) {
+424-        sessionManager.saveSession(result.value.id)
+425-            _currentAccountId.value = result.value.id
+426-            refreshCurrency()
+427-    }
+428-    return result
+429-}
+430-  fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
+431-    val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
+432-    if (result is ServiceResult.Success) {
+433-        sessionManager.saveSession(result.value.id)
+434-            _currentAccountId.value = result.value.id
+435-            refreshCurrency()
+436-    }
+437-    return result
+438-  }
+439-  fun tryAutoLogin(): Account? {
+440-    val accountId = sessionManager.getSavedAccountId() ?: return null
+441-    val account = accountService.accountById(accountId) ?: return null
+
+===== fun createAccount( in GameViewModel.kt =====
+428-    return result
+429-}
+430:  fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
+431-    val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
+432-    if (result is ServiceResult.Success) {
+433-        sessionManager.saveSession(result.value.id)
+434-            _currentAccountId.value = result.value.id
+435-            refreshCurrency()
+436-    }
+437-    return result
+438-  }
+439-  fun tryAutoLogin(): Account? {
+440-    val accountId = sessionManager.getSavedAccountId() ?: return null
+441-    val account = accountService.accountById(accountId) ?: return null
+442-    _currentAccountId.value = account.id
+443-    refreshCurrency()
+444-    return account
+445-}
+446-
+447-fun logout() {
+448-    sessionManager.clearSession()
+449-    _currentAccountId.value = null
+450-    _currentCharacterId.value = null
