@@ -1,0 +1,4 @@
+]633;E;echo "===== ChatBanner + chat UI models =====";3aff79eb-08ab-42f7-9e6d-e7fce80cc90a]633;C===== ChatBanner + chat UI models =====
+]633;E;echo "===== chat_channels schema =====";3aff79eb-08ab-42f7-9e6d-e7fce80cc90a]633;C===== chat_channels schema =====
+Run this in Supabase SQL editor and paste output, or via psql:
+\d chat_channels
