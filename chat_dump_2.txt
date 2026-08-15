@@ -1,0 +1,168 @@
+]633;E;echo "===== MainActivity.kt chat-related sections =====";3aff79eb-08ab-42f7-9e6d-e7fce80cc90a]633;C===== MainActivity.kt chat-related sections =====
+21:import com.yourname.idlerpg.ui.components.ChatBanner
+22:import com.yourname.idlerpg.ui.components.ChatChannelUi
+23:import com.yourname.idlerpg.ui.components.ChatMessageUi
+24-import com.yourname.idlerpg.ui.components.DmConversationSummary
+25:import com.yourname.idlerpg.ui.components.ChatMessageAction
+26-import com.yourname.idlerpg.ui.navigation.AppDestination
+27-import com.yourname.idlerpg.ui.navigation.SideRail
+28-import com.yourname.idlerpg.ui.screens.*
+29-import com.yourname.idlerpg.ui.theme.IdleRpgTheme
+30-import com.yourname.idlerpg.ui.theme.skillPatternBackground
+31-import com.yourname.idlerpg.ui.theme.appPatternBackground
+32-import androidx.compose.foundation.background
+33-import androidx.compose.foundation.lazy.LazyListState
+34-import androidx.compose.foundation.lazy.rememberLazyListState
+35-import androidx.compose.foundation.lazy.grid.LazyGridState
+36-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+37-import java.time.Duration
+38-import java.time.Instant
+39-
+40-class MainActivity : ComponentActivity() {
+41-    private val gameViewModel: GameViewModel by viewModels()
+42-    override fun onCreate(savedInstanceState: Bundle?) {
+43-        super.onCreate(savedInstanceState)
+44-        setContent {
+45-            IdleRpgTheme {
+46-                AppRoot(gameViewModel)
+47-            }
+48-        }
+49-    }
+50-override fun onPause() {
+51-        super.onPause()
+52-        gameViewModel.saveGame()
+53-    }
+54-}
+55-
+--
+301:private fun demoChatMessages(): List<ChatMessageUi> = listOf(
+302:    ChatMessageUi("m1", "Bram", "anyone selling steel bars?", ChatChannelUi.GLOBAL),
+303:    ChatMessageUi("m2", "Sable", "check the market, saw some at 48 each", ChatChannelUi.GLOBAL),
+304:    ChatMessageUi("m3", "Quinn", "gl on the hunt everyone", ChatChannelUi.GLOBAL)
+305-)
+306-
+307:private fun demoDmConversations(): List<DmConversationSummary> = listOf(
+308-    DmConversationSummary("char2", "Bram", "hey, got a minute?"),
+309-    DmConversationSummary("char3", "Sable", "thanks for the help earlier!")
+310-)
+311-
+312-private sealed class AppFlowState {
+313-    object Login : AppFlowState()
+314-    object CharacterSelect : AppFlowState()
+315-    object CharacterCreate : AppFlowState()
+316-    object InGame : AppFlowState()
+317-}
+318-
+319-private sealed class SkillsScreenState {
+320-    object List : SkillsScreenState()
+321-    data class Detail(val skillId: String) : SkillsScreenState()
+322-}
+323-
+324-private sealed class CombatScreenState {
+325-    object ZoneSelect : CombatScreenState()
+326-    object InZone : CombatScreenState()
+327-    object Loadout : CombatScreenState()
+328-}
+329-
+330-private sealed class InventoryScreenState {
+331-    object Items : InventoryScreenState()
+332-    object Equipment : InventoryScreenState()
+333-    object Loadout : InventoryScreenState()
+334-}
+335-
+336-@Composable
+337-fun AppRoot(gameViewModel: GameViewModel) {
+--
+478:    var selectedChatChannel by remember { mutableStateOf(ChatChannelUi.GLOBAL) }
+479-    var selectedDmCharacterId by remember { mutableStateOf<String?>(null) }
+480:    var chatMessageInput by remember { mutableStateOf("") }
+481:    val chatMessages = remember { mutableStateListOf(*demoChatMessages().toTypedArray()) }
+482-
+483-    when (flowState) {
+484-        AppFlowState.Login -> {
+485-            LoginScreen(
+486-                isCreatingAccount = isCreatingAccount,
+487-                onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
+488-                errorMessage = loginError,
+489-                onLogin = { email, password ->
+490-                    val result = gameViewModel.login(email, password)
+491-                    when (result) {
+492-                        is ServiceResult.Success -> {
+493-                            val chars = gameViewModel.accountService.charactersFor(result.value.id)
+494-                            flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+495-                            loginError = null
+496-                        }
+497-                        is ServiceResult.Failure -> loginError = result.reason
+498-                    }
+499-                },
+500-                onCreateAccount = { email, username, password ->
+501-                    val result = gameViewModel.createAccount(email, username, password)
+502-                    when (result) {
+503-                        is ServiceResult.Success -> {
+504-                            gameViewModel.saveGame()
+505-                            loginError = null
+506-                            flowState = AppFlowState.CharacterCreate
+507-                        }
+508-                        is ServiceResult.Failure -> loginError = result.reason
+509-                    }
+510-                }
+511-            )
+--
+586:                            badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
+587-                        )
+588-
+589-                        Box(modifier = Modifier.weight(1f)) {
+590-                        when (currentDestination) {
+591-                            AppDestination.HOME -> HomeScreen(state = homeState)
+592-
+593-                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+594-                                is SkillsScreenState.List -> SkillsScreen(
+595-                                    allSkills = allSkills,
+596-                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) },
+597-                                    listState = skillsListScrollState,
+598-                                    gridState = skillsGridScrollState
+599-                                )
+600-                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+601-                                    Box(modifier = Modifier.fillMaxSize()) {
+602-                                        when (screen.skillId) {
+603-                                            "SMITHING" -> SmithingScreen(
+604-                                                buildSmithingState(it, inventoryQuantities),
+605-                                                { skillsScreenState = SkillsScreenState.List },
+606-                                                { itemId -> gameViewModel.startCraftingAction(itemId) }
+607-                                            )
+608-                                            in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
+609-                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+610-                                                { skillsScreenState = SkillsScreenState.List },
+611-                                                { itemId -> gameViewModel.startCraftingAction(itemId) },
+612-                                                startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
+613-                                            )
+614-                                            else -> SkillDetailScreen(
+615-                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+616-                                                { skillsScreenState = SkillsScreenState.List },
+--
+844:                    ChatBanner(
+845:                        selectedChannel = selectedChatChannel,
+846-                        onChannelSelected = {
+847:                            selectedChatChannel = it
+848:                            if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
+849-                        },
+850:                        messages = chatMessages.filter { it.channel == selectedChatChannel },
+851:                        dmConversations = demoDmConversations(),
+852-                        selectedDmCharacterId = selectedDmCharacterId,
+853-                        onDmSelected = { selectedDmCharacterId = it },
+854-                        hasUnread = true,
+855:                        messageInput = chatMessageInput,
+856:                        onMessageInputChanged = { chatMessageInput = it },
+857-                        onSendMessage = {
+858:                            if (chatMessageInput.isNotBlank()) {
+859:                                chatMessages.add(ChatMessageUi("m" + (chatMessages.size + 1), "You", chatMessageInput, selectedChatChannel))
+860:                                chatMessageInput = ""
+861-                            }
+862-                        },
+863-                        onMessageAction = { _, _ -> }
+864-                    )
+865-                }
+866-            }
+867-        }
+868-    }
+869-}
