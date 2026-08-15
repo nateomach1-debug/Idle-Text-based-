@@ -71,6 +71,13 @@ private data class VoteBallotRow(
 // must never depend on any of this succeeding.
 // =========================================================
 
+data class GuildBrowseEntry(
+    val id: String,
+    val name: String,
+    val tier: Int,
+    val memberCount: Int
+)
+
 object SupabaseGuildRepository {
 
     private val client get() = SupabaseClientProvider.client
@@ -226,6 +233,25 @@ object SupabaseGuildRepository {
         client.postgrest.rpc("disband_guild", buildJsonObject {
             put("p_guild_id", guildId)
             put("p_acting_character_id", actingCharacterId)
+        })
+    }
+
+    // Lists every guild so a character with no guild yet can browse and self-join.
+    suspend fun listGuilds(): List<GuildBrowseEntry> {
+        return try {
+            val guildRows = client.postgrest.from("guilds").select().decodeList<GuildRow>()
+            val memberRows = client.postgrest.from("guild_members").select().decodeList<GuildMemberRow>()
+            val countByGuild = memberRows.groupingBy { it.guildId }.eachCount()
+            guildRows.map { GuildBrowseEntry(it.id, it.name, it.tier, countByGuild[it.id] ?: 0) }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun joinGuild(guildId: String, characterId: String): Result<Unit> = runCatching {
+        client.postgrest.rpc("join_guild", buildJsonObject {
+            put("p_guild_id", guildId)
+            put("p_character_id", characterId)
         })
     }
 }
