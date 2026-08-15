@@ -1,0 +1,4 @@
+]633;E;echo "===== locate chat UI component files =====";3aff79eb-08ab-42f7-9e6d-e7fce80cc90a]633;C===== locate chat UI component files =====
+app/src/main/kotlin/com/yourname/idlerpg/ChatBanner.kt
+app/src/main/kotlin/com/yourname/idlerpg/ui_context.txt
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt
