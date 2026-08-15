@@ -2,3 +2,1580 @@
 app/src/main/kotlin/com/yourname/idlerpg/ChatBanner.kt
 app/src/main/kotlin/com/yourname/idlerpg/ui_context.txt
 app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt
+]633;E;echo "===== contents of found file(s) =====";3aff79eb-08ab-42f7-9e6d-e7fce80cc90a]633;C===== contents of found file(s) =====
+package com.yourname.idlerpg.ui.components
+
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
+
+// =========================================================
+// PERSISTENT CHAT BANNER
+// Lives in the app's shared top-level layout (like RecoveryBar).
+// Collapsed: always shows last 3 messages from selected channel.
+// Expanded: full panel with channel tabs, ~10-15% -> larger height.
+// =========================================================
+
+enum class ChatChannelUi { GLOBAL, GUILD, TRADE, HELP, DMS }
+
+data class ChatMessageUi(
+    val id: String,
+    val senderName: String,
+    val content: String,
+    val channel: ChatChannelUi
+)
+
+data class DmConversationSummary(
+    val characterId: String,
+    val displayName: String,
+    val lastMessagePreview: String
+)
+
+@Composable
+fun ChatBanner(
+    selectedChannel: ChatChannelUi,
+    onChannelSelected: (ChatChannelUi) -> Unit,
+    messages: List<ChatMessageUi>, // pre-filtered to selectedChannel by caller
+    dmConversations: List<DmConversationSummary>,
+    selectedDmCharacterId: String?,
+    onDmSelected: (String) -> Unit,
+    hasUnread: Boolean,
+    messageInput: String,
+    onMessageInputChanged: (String) -> Unit,
+    onSendMessage: () -> Unit,
+    onMessageAction: (ChatMessageUi, ChatMessageAction) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var showChannelPicker by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .animateContentSize()
+    ) {
+        // Header -- always visible, tap to expand/collapse, tap title for channel picker
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (hasUnread) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.error)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
+                Text(
+                    text = selectedChannel.name,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.clickable { showChannelPicker = true }
+                )
+            }
+            Text(text = if (expanded) "▼" else "▲", style = MaterialTheme.typography.labelSmall)
+        }
+
+        if (expanded) {
+            ExpandedChatPanel(
+                selectedChannel = selectedChannel,
+                messages = messages,
+                dmConversations = dmConversations,
+                selectedDmCharacterId = selectedDmCharacterId,
+                onDmSelected = onDmSelected,
+                messageInput = messageInput,
+                onMessageInputChanged = onMessageInputChanged,
+                onSendMessage = onSendMessage,
+                onMessageAction = onMessageAction
+            )
+        } else {
+            CollapsedMessagePreview(messages.takeLast(3))
+        }
+    }
+
+    if (showChannelPicker) {
+        ChannelPickerDialog(
+            currentChannel = selectedChannel,
+            onChannelChosen = {
+                onChannelSelected(it)
+                showChannelPicker = false
+            },
+            onDismiss = { showChannelPicker = false }
+        )
+    }
+}
+
+@Composable
+private fun CollapsedMessagePreview(lastThree: List<ChatMessageUi>) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
+        if (lastThree.isEmpty()) {
+            Text(text = "No messages yet.", style = MaterialTheme.typography.labelSmall)
+        }
+        lastThree.forEach { msg ->
+            Text(
+                text = msg.senderName + ": " + msg.content,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExpandedChatPanel(
+    selectedChannel: ChatChannelUi,
+    messages: List<ChatMessageUi>,
+    dmConversations: List<DmConversationSummary>,
+    selectedDmCharacterId: String?,
+    onDmSelected: (String) -> Unit,
+    messageInput: String,
+    onMessageInputChanged: (String) -> Unit,
+    onSendMessage: () -> Unit,
+    onMessageAction: (ChatMessageUi, ChatMessageAction) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 220.dp, max = 320.dp)
+            .padding(horizontal = 12.dp)
+    ) {
+        if (selectedChannel == ChatChannelUi.DMS && selectedDmCharacterId == null) {
+            DmConversationList(dmConversations, onDmSelected)
+        } else {
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(messages) { msg ->
+                    ChatMessageRow(msg, onMessageAction)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = messageInput,
+                    onValueChange = onMessageInputChanged,
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Message...") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                    keyboardActions = KeyboardActions(onSend = { onSendMessage() })
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = onSendMessage) { Text(text = "Send") }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun DmConversationList(conversations: List<DmConversationSummary>, onSelected: (String) -> Unit) {
+    LazyColumn {
+        items(conversations) { convo ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSelected(convo.characterId) }
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = convo.displayName, style = MaterialTheme.typography.bodyMedium)
+                Text(text = convo.lastMessagePreview, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            }
+        }
+        if (conversations.isEmpty()) {
+            item { Text(text = "No conversations yet.", style = MaterialTheme.typography.bodyMedium) }
+        }
+    }
+}
+
+enum class ChatMessageAction { REPORT, BLOCK, SELF_MUTE, MESSAGE_PLAYER }
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun ChatMessageRow(message: ChatMessageUi, onAction: (ChatMessageUi, ChatMessageAction) -> Unit) {
+    var showActionMenu by remember { mutableStateOf(false) }
+
+    Box {
+        Text(
+            text = message.senderName + ": " + message.content,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { },
+                    onLongClick = { showActionMenu = true }
+                )
+                .padding(vertical = 4.dp)
+        )
+
+        DropdownMenu(expanded = showActionMenu, onDismissRequest = { showActionMenu = false }) {
+            DropdownMenuItem(
+                text = { Text("Message " + message.senderName) },
+                onClick = { onAction(message, ChatMessageAction.MESSAGE_PLAYER); showActionMenu = false }
+            )
+            DropdownMenuItem(
+                text = { Text("Report") },
+                onClick = { onAction(message, ChatMessageAction.REPORT); showActionMenu = false }
+            )
+            DropdownMenuItem(
+                text = { Text("Block") },
+                onClick = { onAction(message, ChatMessageAction.BLOCK); showActionMenu = false }
+            )
+            DropdownMenuItem(
+                text = { Text("Self-Mute") },
+                onClick = { onAction(message, ChatMessageAction.SELF_MUTE); showActionMenu = false }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChannelPickerDialog(
+    currentChannel: ChatChannelUi,
+    onChannelChosen: (ChatChannelUi) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Select Channel") },
+        text = {
+            Column {
+                ChatChannelUi.values().forEach { channel ->
+                    Text(
+                        text = channel.name,
+                        style = if (channel == currentChannel) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onChannelChosen(channel) }
+                            .padding(vertical = 10.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+]633;E;echo "=== SkillDetailScreen.kt (full file) ===";fb60fb0f-489f-420f-99df-1d5cc2e47ca8]633;C=== SkillDetailScreen.kt (full file) ===
+package com.yourname.idlerpg.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+
+// =========================================================
+// SKILL DETAIL SCREEN
+// Simple view: level, XP bar, earned unlocks.
+// Advanced view (toggle): exact XP numbers, XP-to-next-level,
+// next unlock preview.
+// Includes "Start" action to queue a gather/craft action for
+// this skill directly from this screen.
+// =========================================================
+
+data class SkillUnlockSummary(val description: String, val levelRequired: Int)
+
+data class SkillActionSummary(val actionId: String, val displayName: String, val levelRequired: Int)
+
+data class SkillDetailState(
+    val skillId: String,
+    val displayName: String,
+    val level: Int,
+    val currentXp: Long,
+    val xpToNextLevel: Long,
+    val earnedUnlocks: List<SkillUnlockSummary>,
+    val nextUnlock: SkillUnlockSummary?,       // null if none remaining
+    val availableActions: List<SkillActionSummary>
+)
+
+@Composable
+fun SkillDetailScreen(
+    state: SkillDetailState,
+    onBack: () -> Unit,
+    onStartAction: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showAdvanced by remember { mutableStateOf(false) }
+    var showActionPicker by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(text = "Level " + state.level, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        ThinProgressBarPublic(skillProgressFractionPublic(state.currentXp, state.xpToNextLevel))
+
+        if (showAdvanced) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "XP: " + state.currentXp + "  |  " + state.xpToNextLevel + " to next level",
+                style = MaterialTheme.typography.labelSmall
+            )
+            state.nextUnlock?.let {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Next unlock at level " + it.levelRequired + ": " + it.description,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        TextButton(onClick = { showAdvanced = !showAdvanced }) {
+            Text(text = if (showAdvanced) "Hide details" else "Show details")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { showActionPicker = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Start " + state.displayName)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (state.earnedUnlocks.isNotEmpty()) {
+            Text(text = "Unlocks earned", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            state.earnedUnlocks.forEach { unlock ->
+                Text(
+                    text = "• " + unlock.description + " (Lv. " + unlock.levelRequired + ")",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
+            }
+        }
+    }
+
+    if (showActionPicker) {
+        ActionPickerSheet(
+            actions = state.availableActions,
+            onActionSelected = {
+                showActionPicker = false
+                onStartAction(it)
+            },
+            onDismiss = { showActionPicker = false }
+        )
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun ActionPickerSheet(
+    actions: List<SkillActionSummary>,
+    onActionSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Choose an action", style = MaterialTheme.typography.titleMedium) },
+        text = {
+            Column {
+                if (actions.isEmpty()) {
+                    Text(text = "No actions available at your current level.", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                    items(actions) { action ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { onActionSelected(action.actionId) }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium)
+                            Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ThinProgressBarPublic(fraction: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }
+}
+
+private fun skillProgressFractionPublic(currentXp: Long, xpToNextLevel: Long): Float {
+    val total = currentXp + xpToNextLevel
+    if (total <= 0) return 0f
+    return (currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+}
+=== SkillsScreen.kt (full file) ===
+package com.yourname.idlerpg.ui.screens
+
+import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+
+enum class SkillsViewMode { LIST, GRID }
+
+private const val PREFS_NAME = "idlerpg_prefs"
+private const val KEY_SKILLS_VIEW_MODE = "skills_view_mode"
+
+private fun loadSavedViewMode(context: Context): SkillsViewMode {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val saved = prefs.getString(KEY_SKILLS_VIEW_MODE, SkillsViewMode.LIST.name)
+    return runCatching { SkillsViewMode.valueOf(saved ?: SkillsViewMode.LIST.name) }
+        .getOrDefault(SkillsViewMode.LIST)
+}
+
+private fun saveViewMode(context: Context, mode: SkillsViewMode) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_SKILLS_VIEW_MODE, mode.name).apply()
+}
+
+data class SkillSummary(
+    val skillId: String,
+    val displayName: String,
+    val level: Int,
+    val currentXp: Long,
+    val xpToNextLevel: Long
+)
+
+data class SkillGroupSection(
+    val title: String,
+    val skills: List<SkillSummary>
+)
+
+fun buildSkillGroupSections(allSkills: Map<String, SkillSummary>): List<SkillGroupSection> {
+    fun skill(id: String): SkillSummary? = allSkills[id]
+
+    val pairedSections = listOf(
+        "Mining & Smithing" to listOf("MINING", "SMITHING"),
+        "Fishing & Cooking" to listOf("FISHING", "COOKING"),
+        "Woodcutting & Fletching" to listOf("WOODCUTTING", "FLETCHING"),
+        "Farming & Alchemy" to listOf("FARMING", "ALCHEMY"),
+        "Thieving & Crafting" to listOf("THIEVING", "CRAFTING")
+    ).map { (title, ids) ->
+        SkillGroupSection(title, ids.mapNotNull { skill(it) })
+    }
+
+    val combatSection = SkillGroupSection(
+        title = "Combat",
+        skills = listOf("ATTACK", "STRENGTH", "DEFENSE", "ARCHERY", "PRAYER", "MAGIC").mapNotNull { skill(it) }
+    )
+
+    return pairedSections + combatSection
+}
+
+@Composable
+fun SkillsScreen(
+    allSkills: Map<String, SkillSummary>,
+    onSkillSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var viewMode by remember { mutableStateOf(loadSavedViewMode(context)) }
+    val sections = remember(allSkills) { buildSkillGroupSections(allSkills) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Skills", style = MaterialTheme.typography.headlineMedium)
+            ViewModeToggle(
+                current = viewMode,
+                onChange = {
+                    viewMode = it
+                    saveViewMode(context, it)
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (viewMode) {
+            SkillsViewMode.LIST -> SkillsListView(sections, onSkillSelected)
+            SkillsViewMode.GRID -> SkillsGridView(sections, onSkillSelected)
+        }
+    }
+}
+
+@Composable
+private fun ViewModeToggle(current: SkillsViewMode, onChange: (SkillsViewMode) -> Unit) {
+    Row {
+        IconButton(onClick = { onChange(SkillsViewMode.LIST) }) {
+            Icon(
+                imageVector = Icons.Filled.ViewList,
+                contentDescription = "List view",
+                tint = if (current == SkillsViewMode.LIST) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+        IconButton(onClick = { onChange(SkillsViewMode.GRID) }) {
+            Icon(
+                imageVector = Icons.Filled.GridView,
+                contentDescription = "Grid view",
+                tint = if (current == SkillsViewMode.GRID) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun SkillsListView(sections: List<SkillGroupSection>, onSkillSelected: (String) -> Unit) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        sections.forEach { section ->
+            item { SectionHeader(section.title) }
+            items(section.skills) { skill ->
+                SkillListRow(skill, onClick = { onSkillSelected(skill.skillId) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkillsGridView(sections: List<SkillGroupSection>, onSkillSelected: (String) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        sections.forEach { section ->
+            item(span = { GridItemSpan(maxLineSpan) }) { SectionHeader(section.title) }
+            items(section.skills) { skill ->
+                SkillGridTile(skill, onClick = { onSkillSelected(skill.skillId) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+private fun SkillListRow(skill: SkillSummary, onClick: () -> Unit) {
+    val progressFraction = skillProgressFraction(skill)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Text(text = skill.displayName, style = MaterialTheme.typography.titleMedium)
+                Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            ThinProgressBar(progressFraction)
+        }
+    }
+}
+
+@Composable
+private fun SkillGridTile(skill: SkillSummary, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(12.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = skill.displayName, style = MaterialTheme.typography.labelSmall)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun ThinProgressBar(fraction: Float) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(fraction)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(3.dp))
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }
+}
+
+private fun skillProgressFraction(skill: SkillSummary): Float {
+    val total = skill.currentXp + skill.xpToNextLevel
+    if (total <= 0) return 0f
+    return (skill.currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+}
+=== Any existing Dialog/Popup composable in the app ===
+./InventoryScreen.kt
+./SkillDetailScreen.kt
+./ChatBanner.kt
+./MemberActionPopup.kt
+./MainActivity.kt
+package com.yourname.idlerpg
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yourname.idlerpg.data.GameViewModel
+import com.yourname.idlerpg.ui.components.RecoveryBar
+import com.yourname.idlerpg.ui.components.ChatBanner
+import com.yourname.idlerpg.ui.components.ChatChannelUi
+import com.yourname.idlerpg.ui.components.ChatMessageUi
+import com.yourname.idlerpg.ui.components.DmConversationSummary
+import com.yourname.idlerpg.ui.components.ChatMessageAction
+import com.yourname.idlerpg.ui.navigation.AppDestination
+import com.yourname.idlerpg.ui.navigation.SideRail
+import com.yourname.idlerpg.ui.screens.*
+import com.yourname.idlerpg.ui.theme.IdleRpgTheme
+import com.yourname.idlerpg.ui.theme.skillPatternBackground
+import com.yourname.idlerpg.ui.theme.appPatternBackground
+import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import java.time.Duration
+import java.time.Instant
+
+class MainActivity : ComponentActivity() {
+    private val gameViewModel: GameViewModel by viewModels()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            IdleRpgTheme {
+                AppRoot(gameViewModel)
+            }
+        }
+    }
+override fun onPause() {
+        super.onPause()
+        gameViewModel.saveGame()
+    }
+}
+
+
+
+private fun effectSummaryText(effect: Effect): String = when (effect) {
+    is Effect.AccessUnlock -> effect.description
+    is Effect.XpBoost -> "+" + effect.percent + "% XP"
+    is Effect.DropRateBoost -> "+" + effect.percent + "% drop rate"
+    is Effect.CostDiscount -> "-" + effect.percent + "% cost"
+    is Effect.FlatStatBonus -> "+" + effect.amount + " " + effect.statName
+    is Effect.TimerReduction -> "-" + effect.percent + "% action time"
+}
+
+private val RECIPE_BASED_SKILL_LABELS: Map<String, String> = mapOf(
+    "CRAFTING" to "Select Recipe",
+    "COOKING" to "Select Dish",
+    "FLETCHING" to "Select Item",
+    "ALCHEMY" to "Select Potion"
+)
+
+private fun missingIngredientsFor(
+    ingredients: List<RecipeIngredient>,
+    inventoryQuantities: Map<String, Int>
+): List<MissingIngredientSummary> {
+    return ingredients.mapNotNull { ingredient ->
+        val have = inventoryQuantities[ingredient.itemId] ?: 0
+        if (have < ingredient.quantity) {
+            MissingIngredientSummary(
+                displayName = ItemCatalog.find(ingredient.itemId)?.name ?: ingredient.itemId,
+                required = ingredient.quantity,
+                have = have
+            )
+        } else {
+            null
+        }
+    }
+}
+
+private fun buildSkillDetailState(
+    skillId: String,
+    summary: SkillSummary,
+    inventoryQuantities: Map<String, Int>
+): SkillDetailState {
+    val skillType = SkillType.valueOf(skillId)
+
+    val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
+        SkillUnlockSummary(
+            description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+            levelRequired = unlock.levelRequired
+        )
+    }
+
+    val next = UnlockTable.allUnlocksFor(skillType)
+        .filter { it.levelRequired > summary.level }
+        .minByOrNull { it.levelRequired }
+        ?.let { unlock ->
+            SkillUnlockSummary(
+                description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+                levelRequired = unlock.levelRequired
+            )
+        }
+
+    val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
+        RecipeCatalog.recipes
+            .filter { it.skillRequired == skillId && it.levelRequired <= summary.level }
+            .map {
+                SkillActionSummary(
+                    actionId = it.outputItemId,
+                    displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
+                    levelRequired = it.levelRequired,
+                    missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+                )
+            }
+            .sortedBy { it.levelRequired }
+    } else {
+        ActionCatalog.allFor(skillType)
+            .filter { it.levelRequired <= summary.level }
+            .map { SkillActionSummary(it.itemId, it.displayName, it.levelRequired) }
+    }
+
+    return SkillDetailState(
+        skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
+        currentXp = summary.currentXp, xpToNextLevel = summary.xpToNextLevel,
+        earnedUnlocks = earned,
+        nextUnlock = next,
+        availableActions = actions
+    )
+}
+
+private val SMITHING_METALS = listOf(
+    Triple("bronze", "Bronze", "bronze_bar"),
+    Triple("iron", "Iron", "iron_bar"),
+    Triple("steel", "Steel", "steel_bar"),
+    Triple("mithril", "Mithril", "mithril_bar"),
+    Triple("adamant", "Adamant", "adamantite_bar"),
+    Triple("rune", "Rune", "runite_bar"),
+    Triple("orichalcum", "Orichalcum", "orichalcum_bar"),
+    Triple("celestial", "Celestial", "celestial_alloy_bar")
+)
+
+private fun recipeToSmithingSummary(recipe: Recipe): SmithingRecipeSummary {
+    val displayName = ItemCatalog.find(recipe.outputItemId)?.name ?: recipe.outputItemId
+    val ingredients = recipe.ingredients.map { ing ->
+        val ingName = ItemCatalog.find(ing.itemId)?.name ?: ing.itemId
+        SmithingIngredientSummary(ing.itemId, ingName, ing.quantity)
+    }
+    return SmithingRecipeSummary(recipe.outputItemId, displayName, recipe.levelRequired, ingredients)
+}
+
+private fun buildSmithingState(summary: SkillSummary, inventoryQuantities: Map<String, Int>): SmithingState {
+    val skillType = SkillType.SMITHING
+    val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
+        SkillUnlockSummary(
+            description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+            levelRequired = unlock.levelRequired
+        )
+    }
+    val next = UnlockTable.allUnlocksFor(skillType)
+        .filter { it.levelRequired > summary.level }
+        .minByOrNull { it.levelRequired }
+        ?.let { unlock ->
+            SkillUnlockSummary(
+                description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
+                levelRequired = unlock.levelRequired
+            )
+        }
+
+    val materials = SMITHING_METALS.map { (materialId, displayName, barItemId) ->
+        val barRecipe = RecipeCatalog.forOutput(barItemId)?.let {
+            recipeToSmithingSummary(it).copy(
+                missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+            )
+        }
+        val gearRecipes = RecipeCatalog.recipes
+            .filter { it.skillRequired == "SMITHING" && it.ingredients.any { ing -> ing.itemId == barItemId } }
+            .map {
+                recipeToSmithingSummary(it).copy(
+                    missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+                )
+            }
+            .sortedBy { it.levelRequired }
+        SmithingMaterialCatalogEntry(
+            material = SmithingMaterialOption(materialId, displayName),
+            bar = barRecipe,
+            gear = gearRecipes
+        )
+    }
+    return SmithingState(
+        displayName = summary.displayName,
+        level = summary.level,
+        currentXp = summary.currentXp,
+        xpToNextLevel = summary.xpToNextLevel,
+        materials = materials,
+        earnedUnlocks = earned,
+        nextUnlock = next
+    )
+}
+
+private fun mapItemCategory(category: ItemCategory): InventoryCategory = when (category) {
+    ItemCategory.WEAPON -> InventoryCategory.WEAPON
+    ItemCategory.ARMOR -> InventoryCategory.ARMOR
+    ItemCategory.ACCESSORY -> InventoryCategory.ACCESSORY
+    ItemCategory.MATERIAL -> InventoryCategory.MATERIAL
+    ItemCategory.CONSUMABLE -> InventoryCategory.CONSUMABLE
+    ItemCategory.COSMETIC -> InventoryCategory.MATERIAL
+}
+
+private fun buildInventoryItemSummaries(
+    entries: List<InventorySlotEntry>,
+    vendorPayoutFor: (String) -> Long
+): List<InventoryItemSummary> {
+    return entries.map { entry ->
+        val definition = ItemCatalog.find(entry.itemId)
+        if (definition != null) {
+            val statsText = if (!definition.stats.isAllZero()) {
+                listOfNotNull(
+                    definition.stats.attackBonus.takeIf { it != 0 }?.let { "ATK +" + it },
+                    definition.stats.accuracyBonus.takeIf { it != 0 }?.let { "ACC +" + it },
+                    definition.stats.maxHitBonus.takeIf { it != 0 }?.let { "Max Hit +" + it },
+                    definition.stats.defenseBonus.takeIf { it != 0 }?.let { "DEF +" + it },
+                    definition.stats.strengthBonus.takeIf { it != 0 }?.let { "STR +" + it }
+                ).joinToString(", ")
+            } else null
+
+            InventoryItemSummary(
+                itemId = entry.itemId,
+                displayName = definition.name,
+                category = mapItemCategory(definition.category),
+                quantity = entry.quantity,
+                isEquippable = definition.equipSlot != null,
+                isConsumable = definition.category == ItemCategory.CONSUMABLE,
+                npcValuePerUnit = vendorPayoutFor(entry.itemId),
+                statsDescription = statsText
+            )
+        } else {
+            // Not yet defined in ItemCatalog (e.g. some gathered materials) -- graceful fallback.
+            InventoryItemSummary(
+                itemId = entry.itemId,
+                displayName = entry.itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } },
+                category = InventoryCategory.MATERIAL,
+                quantity = entry.quantity,
+                isEquippable = false,
+                isConsumable = false,
+                npcValuePerUnit = vendorPayoutFor(entry.itemId)
+            )
+        }
+    }
+}
+
+
+private fun formatTimeAgo(instant: Instant): String {
+    val seconds = Duration.between(instant, Instant.now()).seconds.coerceAtLeast(0)
+    return when {
+        seconds < 60 -> seconds.toString() + "s ago"
+        seconds < 3600 -> (seconds / 60).toString() + "m ago"
+        seconds < 86400 -> (seconds / 3600).toString() + "h ago"
+        else -> (seconds / 86400).toString() + "d ago"
+    }
+}
+
+private fun demoGuildMembers(): List<GuildMemberSummary> = listOf(
+    GuildMemberSummary("char1", "Lyra", GuildMemberRole.LEADER),
+    GuildMemberSummary("char2", "Bram", GuildMemberRole.OFFICER),
+    GuildMemberSummary("char3", "Sable", GuildMemberRole.MEMBER),
+    GuildMemberSummary("char4", "Quinn", GuildMemberRole.MEMBER)
+)
+
+private fun demoGuildState(): GuildHomeState = GuildHomeState(
+    guildName = "Iron Wolves",
+    activeEvent = GuildEventSummary("Beast Hunt", progressCurrent = 78, progressTarget = 120),
+    activeVote = null,
+    tier = 2,
+    activeBonusPercent = 5.0,
+    members = demoGuildMembers(),
+    quests = listOf(
+        GuildQuestSummary("Weekly Contribution", "Donate items toward this week's guild goal.")
+    ),
+    viewerRole = GuildMemberRole.LEADER
+)
+
+private fun demoLeaderboard(): List<GuildLeaderboardEntry> = listOf(
+    GuildLeaderboardEntry("Lyra", 15200),
+    GuildLeaderboardEntry("Bram", 9800),
+    GuildLeaderboardEntry("Sable", 6100),
+    GuildLeaderboardEntry("Quinn", 4200)
+)
+
+private fun demoChatMessages(): List<ChatMessageUi> = listOf(
+    ChatMessageUi("m1", "Bram", "anyone selling steel bars?", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m2", "Sable", "check the market, saw some at 48 each", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m3", "Quinn", "gl on the hunt everyone", ChatChannelUi.GLOBAL)
+)
+
+private fun demoDmConversations(): List<DmConversationSummary> = listOf(
+    DmConversationSummary("char2", "Bram", "hey, got a minute?"),
+    DmConversationSummary("char3", "Sable", "thanks for the help earlier!")
+)
+
+private sealed class AppFlowState {
+    object Login : AppFlowState()
+    object CharacterSelect : AppFlowState()
+    object CharacterCreate : AppFlowState()
+    object InGame : AppFlowState()
+}
+
+private sealed class SkillsScreenState {
+    object List : SkillsScreenState()
+    data class Detail(val skillId: String) : SkillsScreenState()
+}
+
+private sealed class CombatScreenState {
+    object ZoneSelect : CombatScreenState()
+    object InZone : CombatScreenState()
+    object Loadout : CombatScreenState()
+}
+
+private sealed class InventoryScreenState {
+    object Items : InventoryScreenState()
+    object Equipment : InventoryScreenState()
+    object Loadout : InventoryScreenState()
+}
+
+@Composable
+fun AppRoot(gameViewModel: GameViewModel) {
+    val currentAccountId by gameViewModel.currentAccountId.collectAsState()
+    val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
+    var isCreatingAccount by remember { mutableStateOf(false) }
+    var loginError by remember { mutableStateOf<String?>(null) }
+    var flowState by remember {
+        val accountIdSnapshot = currentAccountId
+        mutableStateOf(
+            when {
+                currentCharacterId != null -> AppFlowState.InGame
+                accountIdSnapshot != null -> {
+                    val chars = gameViewModel.accountService.charactersFor(accountIdSnapshot)
+                    if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                }
+                else -> AppFlowState.Login
+            }
+        )
+    }
+    LaunchedEffect(Unit) {
+        gameViewModel.loadGame()
+        if (flowState == AppFlowState.Login) {
+            val autoAccount = gameViewModel.tryAutoLogin()
+            if (autoAccount != null) {
+                val chars = gameViewModel.accountService.charactersFor(autoAccount.id)
+                flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+            }
+        }
+    }
+
+    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
+    offlineSummary?.let { summary ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+            title = { androidx.compose.material3.Text("Welcome back!") },
+            text = {
+                val minutes = summary.awaySeconds / 60
+                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
+                androidx.compose.material3.Text(
+                    "You were away for " + awayText + ".\n\n" +
+                    "While gone, you were " + summary.skillActionName + ":\n" +
+                    "+" + summary.xpEarned + " XP\n" +
+                    "Gathered " + summary.quantity + "x " + summary.itemName
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
+    var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
+    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
+    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
+    var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
+
+    val allSkills by gameViewModel.skills.collectAsState()
+    val zones = gameViewModel.zoneSummaries
+    val trainingSkill by gameViewModel.trainingSkill.collectAsState()
+    val trainingSkillLevel by gameViewModel.trainingSkillLevel.collectAsState()
+    val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
+    val inventoryItems = remember(inventoryItemEntries) {
+        buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
+    }
+    val inventoryQuantities = remember(inventoryItemEntries) {
+        inventoryItemEntries.associate { it.itemId to it.quantity }
+    }
+    val equippedBackend by gameViewModel.equippedItems.collectAsState()
+    val equipped = remember(equippedBackend) {
+        EquipSlotUi.values().associateWith { uiSlot ->
+            equippedBackend[EquipSlot.valueOf(uiSlot.name)]?.let { itemId ->
+                ItemCatalog.find(itemId)?.let { def -> EquippedItemInfo(itemId, def.name) }
+            }
+        }
+    }
+    val loadoutSettings by gameViewModel.loadoutSettings.collectAsState()
+    val availableFoodOptions = remember(inventoryItemEntries) {
+        inventoryItemEntries.mapNotNull { entry ->
+            val definition = ItemCatalog.find(entry.itemId)
+            if (definition?.consumableType == ConsumableType.FOOD) {
+                ConsumableOption(entry.itemId, definition.name, entry.quantity)
+            } else null
+        }
+    }
+    val availablePotionOptions = remember(inventoryItemEntries) {
+        inventoryItemEntries.mapNotNull { entry ->
+            val definition = ItemCatalog.find(entry.itemId)
+            if (definition?.consumableType == ConsumableType.POTION) {
+                ConsumableOption(entry.itemId, definition.name, entry.quantity)
+            } else null
+        }
+    }
+    val skillsListScrollState = rememberLazyListState()
+    val skillsGridScrollState = rememberLazyGridState()
+
+    val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
+    val currency by gameViewModel.currency.collectAsState()
+    val combatHp by gameViewModel.combatHp.collectAsState()
+    val homeState = HomeScreenState(
+        activeQueue = activeQueue,
+        softCurrency = currency.first,
+        premiumCurrency = currency.second,
+        currentHp = combatHp?.first,
+        maxHp = combatHp?.second,
+        isRecovering = false,
+        unreadNotificationCount = 2
+    )
+
+    val recoveringUntil = remember { mutableStateOf<Instant?>(null) }
+
+    var loadoutWeaponId by remember { mutableStateOf<String?>("bronze_sword") }
+    var autoHeal by remember { mutableStateOf(30) }
+    var autoFlee by remember { mutableStateOf(10) }
+
+    val combatViewData by gameViewModel.combatViewData.collectAsState()
+
+    fun canEquip(item: InventoryItemSummary): Pair<Boolean, String?> {
+        if (item.category == InventoryCategory.TOOL) return true to null
+        val locked = combatViewData?.viewState == CombatViewState.IN_COMBAT
+        return if (locked) false to "Locked during combat" else true to null
+    }
+
+    val lockedEquipSlots = remember(combatViewData) {
+        if (combatViewData?.viewState == CombatViewState.IN_COMBAT) {
+            setOf(
+                EquipSlotUi.WEAPON, EquipSlotUi.HELMET, EquipSlotUi.CHESTPLATE, EquipSlotUi.GLOVES,
+                EquipSlotUi.BOOTS, EquipSlotUi.NECKLACE, EquipSlotUi.RING_1, EquipSlotUi.RING_2,
+                EquipSlotUi.LEGS, EquipSlotUi.SHIELD, EquipSlotUi.CAPE, EquipSlotUi.AMMO
+            )
+        } else emptySet()
+    }
+
+    var marketTab by remember { mutableStateOf(MarketTab.BROWSE) }
+    var showingBuyOrders by remember { mutableStateOf(false) }
+    var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
+    var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
+
+    var leaderboardShowingDaily by remember { mutableStateOf(false) }
+    var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) }
+
+    var selectedChatChannel by remember { mutableStateOf(ChatChannelUi.GLOBAL) }
+    var selectedDmCharacterId by remember { mutableStateOf<String?>(null) }
+    var chatMessageInput by remember { mutableStateOf("") }
+    val chatMessages = remember { mutableStateListOf(*demoChatMessages().toTypedArray()) }
+
+    when (flowState) {
+        AppFlowState.Login -> {
+            LoginScreen(
+                isCreatingAccount = isCreatingAccount,
+                onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
+                errorMessage = loginError,
+                onLogin = { email, password ->
+                    val result = gameViewModel.login(email, password)
+                    when (result) {
+                        is ServiceResult.Success -> {
+                            val chars = gameViewModel.accountService.charactersFor(result.value.id)
+                            flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                            loginError = null
+                        }
+                        is ServiceResult.Failure -> loginError = result.reason
+                    }
+                },
+                onCreateAccount = { email, username, password ->
+                    val result = gameViewModel.createAccount(email, username, password)
+                    when (result) {
+                        is ServiceResult.Success -> {
+                            gameViewModel.saveGame()
+                            loginError = null
+                            flowState = AppFlowState.CharacterCreate
+                        }
+                        is ServiceResult.Failure -> loginError = result.reason
+                    }
+                }
+            )
+        }
+
+        AppFlowState.CharacterCreate -> {
+            CharacterCreateScreen(
+                errorMessage = loginError,
+                onCreate = { displayName, avatarId ->
+                    val accountId = currentAccountId
+                    if (accountId != null) {
+                        val result = gameViewModel.accountService.createCharacter(accountId, displayName, avatarId)
+                        when (result) {
+                            is ServiceResult.Success -> {
+    gameViewModel.accountService.setMainCharacter(result.value.id)
+    gameViewModel.selectCharacter(result.value.id)
+    gameViewModel.saveGame()
+    loginError = null
+    flowState = AppFlowState.InGame
+}
+                            is ServiceResult.Failure -> loginError = result.reason
+                        }
+                    }
+                }
+            )
+        }
+
+        AppFlowState.CharacterSelect -> {
+            val accountId = currentAccountId
+            if (accountId != null) {
+                val chars = gameViewModel.accountService.charactersFor(accountId).map {
+                    CharacterSummaryUi(it.id, it.displayName, it.avatarId)
+                }
+                CharacterSelectScreen(
+                    characters = chars,
+                    onCharacterSelected = {
+    gameViewModel.selectCharacter(it)
+    flowState = AppFlowState.InGame
+},
+                    onCreateNew = { flowState = AppFlowState.CharacterCreate }
+                )
+            }
+        }
+
+        AppFlowState.InGame -> {
+            val activeSkillId = (skillsScreenState as? SkillsScreenState.Detail)?.skillId
+            val screenBackgroundModifier = if (currentDestination == AppDestination.SKILLS && activeSkillId != null) {
+                Modifier.fillMaxSize().skillPatternBackground(activeSkillId)
+            } else {
+                Modifier.fillMaxSize().appPatternBackground()
+            }
+            Surface(modifier = screenBackgroundModifier, color = Color.Transparent) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = {
+                            gameViewModel.logout()
+                            flowState = AppFlowState.Login
+                        }) {
+                            androidx.compose.material3.Text("Log Out")
+                        }
+                    }
+                    RecoveryBar(recoveringUntil = recoveringUntil.value)
+
+                    Row(modifier = Modifier.fillMaxSize().weight(1f)) {
+                        SideRail(
+                            currentDestination = currentDestination,
+                            onDestinationSelected = {
+                                currentDestination = it
+                                skillsScreenState = SkillsScreenState.List
+                                combatScreenState = CombatScreenState.ZoneSelect
+                                inventoryScreenState = InventoryScreenState.Items
+                                marketTab = MarketTab.BROWSE
+                                selectedMarketItemId = null
+                            },
+                            badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
+                        )
+
+                        Box(modifier = Modifier.weight(1f)) {
+                        when (currentDestination) {
+                            AppDestination.HOME -> HomeScreen(state = homeState)
+
+                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+                                is SkillsScreenState.List -> SkillsScreen(
+                                    allSkills = allSkills,
+                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) },
+                                    listState = skillsListScrollState,
+                                    gridState = skillsGridScrollState
+                                )
+                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+                                    Box(modifier = Modifier.fillMaxSize()) {
+                                        when (screen.skillId) {
+                                            "SMITHING" -> SmithingScreen(
+                                                buildSmithingState(it, inventoryQuantities),
+                                                { skillsScreenState = SkillsScreenState.List },
+                                                { itemId -> gameViewModel.startCraftingAction(itemId) }
+                                            )
+                                            in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
+                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                                { skillsScreenState = SkillsScreenState.List },
+                                                { itemId -> gameViewModel.startCraftingAction(itemId) },
+                                                startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
+                                            )
+                                            else -> SkillDetailScreen(
+                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                                { skillsScreenState = SkillsScreenState.List },
+                                                { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            AppDestination.COMBAT -> when (combatScreenState) {
+                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+                                    zones = zones, playerLevel = trainingSkillLevel,
+                                    onZoneSelected = { zoneId ->
+                                        val result = gameViewModel.enterCombatZone(zoneId)
+                                        if (result is ServiceResult.Success) {
+                                            combatScreenState = CombatScreenState.InZone
+                                        }
+                                    },
+                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+                                )
+                                CombatScreenState.InZone -> {
+                                    val currentCombatData = combatViewData
+                                    if (currentCombatData != null) {
+                                        CombatViewScreen(
+                                            data = currentCombatData,
+                                            onLeaveZone = {
+                                                gameViewModel.leaveCombatZone()
+                                                combatScreenState = CombatScreenState.ZoneSelect
+                                            }
+                                        )
+                                    } else {
+                                        combatScreenState = CombatScreenState.ZoneSelect
+                                    }
+                                }
+                                CombatScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                    ),
+                                    trainingSkill = trainingSkill,
+                                    allowedTrainingSkills = gameViewModel.allowedTrainingSkills,
+                                    onTrainingSkillSelected = { gameViewModel.setTrainingSkill(it) },
+                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+                                )
+                            }
+
+                            AppDestination.INVENTORY -> when (inventoryScreenState) {
+                                InventoryScreenState.Items -> InventoryScreen(
+                                    items = inventoryItems,
+                                    onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
+                                    onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
+                                    onUseItem = { },
+                                    onSellOnMarket = { itemId ->
+                                        val item = inventoryItems.find { it.itemId == itemId }
+                                        selectedMarketItemId = itemId
+                                        prefilledSellQuantity = item?.quantity
+                                        currentDestination = AppDestination.MARKET
+                                    },
+                                    onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
+                                    canEquip = ::canEquip
+                                )
+                                InventoryScreenState.Equipment -> EquipmentScreen(
+                                    state = EquipmentScreenState(equipped, lockedEquipSlots),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onSlotTapped = { slot -> gameViewModel.unequipSlot(EquipSlot.valueOf(slot.name)) }
+                                )
+                                InventoryScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                    ),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+                                )
+                            }
+
+                            AppDestination.MARKET -> {
+                                val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
+                                val myBuyOrdersRaw by gameViewModel.myBuyOrders.collectAsState()
+                                val mySellOrdersRaw by gameViewModel.mySellOrders.collectAsState()
+                                val marketListingsUi = remember(marketPriceSummaries) {
+                                    marketPriceSummaries.map {
+                                        MarketListingSummary(
+                                            itemId = it.itemId,
+                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+                                            bestBuyPrice = it.bestBuyPrice,
+                                            bestSellPrice = it.bestSellPrice
+                                        )
+                                    }
+                                }
+                                val myBuyOrdersUi = remember(myBuyOrdersRaw) {
+                                    myBuyOrdersRaw.map {
+                                        MarketOrderSummary(
+                                            orderId = it.id,
+                                            itemId = it.itemId,
+                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+                                            pricePerUnit = it.pricePerUnit,
+                                            remainingQuantity = it.remainingQuantity
+                                        )
+                                    }
+                                }
+                                val mySellOrdersUi = remember(mySellOrdersRaw) {
+                                    mySellOrdersRaw.map {
+                                        MarketOrderSummary(
+                                            orderId = it.id,
+                                            itemId = it.itemId,
+                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+                                            pricePerUnit = it.pricePerUnit,
+                                            remainingQuantity = it.remainingQuantity
+                                        )
+                                    }
+                                }
+
+                                val itemId = selectedMarketItemId
+                                if (itemId != null) {
+                                    val orderBookDetail = remember(itemId, marketPriceSummaries) {
+                                        val summary = marketPriceSummaries.find { it.itemId == itemId }
+                                        ItemOrderBookDetail(
+                                            itemId = itemId,
+                                            displayName = ItemCatalog.find(itemId)?.name ?: itemId,
+                                            bestBuyPrice = summary?.bestBuyPrice,
+                                            bestSellPrice = summary?.bestSellPrice,
+                                            recentTrades = gameViewModel.marketService.priceHistoryFor(itemId)
+                                                .sortedByDescending { it.executedAt }
+                                                .take(10)
+                                                .map { PriceHistoryRow(it.pricePerUnit, it.quantity, formatTimeAgo(it.executedAt)) }
+                                        )
+                                    }
+                                    OrderBookScreen(
+                                        detail = orderBookDetail,
+                                        prefilledQuantity = prefilledSellQuantity,
+                                        onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+                                        onPlaceOrder = { side, qty, price ->
+                                            if (side == OrderSideUi.BUY) {
+                                                gameViewModel.placeBuyOrder(itemId, qty, price)
+                                            } else {
+                                                gameViewModel.placeSellOrder(itemId, qty, price)
+                                            }
+                                            selectedMarketItemId = null
+                                            prefilledSellQuantity = null
+                                        }
+                                    )
+                                } else {
+                                    MarketScreen(
+                                        currentTab = marketTab,
+                                        onTabSelected = { marketTab = it },
+                                        listings = marketListingsUi,
+                                        showingBuyOrders = showingBuyOrders,
+                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+                                        onItemSelected = { selectedMarketItemId = it },
+                                        myBuyOrders = myBuyOrdersUi,
+                                        mySellOrders = mySellOrdersUi,
+                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+                                        vendorSellableItems = inventoryItems,
+                                        onSellToVendor = { sellItemId, quantity ->
+                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
+                                        }
+                                    )
+                                }
+                            }
+
+                            AppDestination.GUILD -> {
+                                val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
+                                val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
+                                val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+
+                                LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+
+                                val guildState = currentGuildHomeState
+                                if (guildState == null) {
+                                    GuildCreateJoinScreen(
+                                        browsableGuilds = currentBrowsableGuilds,
+                                        onCreateGuild = { name -> gameViewModel.createGuild(name) },
+                                        onJoinGuild = { guildId -> gameViewModel.joinGuild(guildId) }
+                                    )
+                                } else {
+                                    GuildHomeScreen(
+                                        state = guildState,
+                                        leaderboardEntries = currentGuildLeaderboard,
+                                        leaderboardShowingDaily = leaderboardShowingDaily,
+                                        onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+                                        onMemberTapped = { selectedGuildMember = it },
+                                        onContributeToEvent = { },
+                                        onCastVote = { }
+                                    )
+
+                                    selectedGuildMember?.let { member ->
+                                        MemberActionPopup(
+                                            member = member,
+                                            viewerRole = guildState.viewerRole,
+                                            onDismiss = { selectedGuildMember = null },
+                                            onKick = {
+                                                gameViewModel.kickGuildMember(member.characterId)
+                                                selectedGuildMember = null
+                                            },
+                                            onPromote = {
+                                                when (member.role) {
+                                                    GuildMemberRole.MEMBER -> gameViewModel.promoteGuildMemberToOfficer(member.characterId)
+                                                    GuildMemberRole.OFFICER -> gameViewModel.promoteGuildMemberToLeader(member.characterId)
+                                                    GuildMemberRole.LEADER -> {}
+                                                }
+                                                selectedGuildMember = null
+                                            },
+                                            onDemote = { selectedGuildMember = null },
+                                            onInitiateVote = { selectedGuildMember = null }
+                                        )
+                                    }
+                                }
+                            }
+
+                            else -> androidx.compose.material3.Text(
+                                text = currentDestination.label + " screen coming soon",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        }
+                    }
+
+                    ChatBanner(
+                        selectedChannel = selectedChatChannel,
+                        onChannelSelected = {
+                            selectedChatChannel = it
+                            if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
+                        },
+                        messages = chatMessages.filter { it.channel == selectedChatChannel },
+                        dmConversations = demoDmConversations(),
+                        selectedDmCharacterId = selectedDmCharacterId,
+                        onDmSelected = { selectedDmCharacterId = it },
+                        hasUnread = true,
+                        messageInput = chatMessageInput,
+                        onMessageInputChanged = { chatMessageInput = it },
+                        onSendMessage = {
+                            if (chatMessageInput.isNotBlank()) {
+                                chatMessages.add(ChatMessageUi("m" + (chatMessages.size + 1), "You", chatMessageInput, selectedChatChannel))
+                                chatMessageInput = ""
+                            }
+                        },
+                        onMessageAction = { _, _ -> }
+                    )
+                }
+            }
+        }
+    }
+}
