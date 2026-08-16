@@ -327,6 +327,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    fun blockCharacter(targetCharacterId: String) {
+        val characterId = _currentCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseChatRepository.blockCharacter(characterId, targetCharacterId)
+            result.onFailure { _chatActionError.value = it.message }
+            refreshChatMessages()
+        }
+    }
         // =========================================================
     // COMBAT
     // =========================================================

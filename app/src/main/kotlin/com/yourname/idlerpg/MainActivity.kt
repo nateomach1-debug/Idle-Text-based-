@@ -299,9 +299,9 @@ private fun demoLeaderboard(): List<GuildLeaderboardEntry> = listOf(
 )
 
 private fun demoChatMessages(): List<ChatMessageUi> = listOf(
-    ChatMessageUi("m1", "Bram", "anyone selling steel bars?", ChatChannelUi.GLOBAL),
-    ChatMessageUi("m2", "Sable", "check the market, saw some at 48 each", ChatChannelUi.GLOBAL),
-    ChatMessageUi("m3", "Quinn", "gl on the hunt everyone", ChatChannelUi.GLOBAL)
+    ChatMessageUi("m1", "demo-bram", "Bram", "anyone selling steel bars?", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m2", "demo-sable", "Sable", "check the market, saw some at 48 each", ChatChannelUi.GLOBAL),
+    ChatMessageUi("m3", "demo-quinn", "Quinn", "gl on the hunt everyone", ChatChannelUi.GLOBAL)
 )
 
 private fun demoDmConversations(): List<DmConversationSummary> = listOf(
