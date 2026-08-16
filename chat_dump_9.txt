@@ -1,0 +1,42 @@
+]633;E;echo "===== onSendMessage context =====";39d0e9f8-a304-45c1-8e27-8072f011c2be]633;C===== onSendMessage context =====
+819-                                                selectedGuildMember = null
+820-                                            },
+821-                                            onPromote = {
+822-                                                when (member.role) {
+823-                                                    GuildMemberRole.MEMBER -> gameViewModel.promoteGuildMemberToOfficer(member.characterId)
+824-                                                    GuildMemberRole.OFFICER -> gameViewModel.promoteGuildMemberToLeader(member.characterId)
+825-                                                    GuildMemberRole.LEADER -> {}
+826-                                                }
+827-                                                selectedGuildMember = null
+828-                                            },
+829-                                            onDemote = { selectedGuildMember = null },
+830-                                            onInitiateVote = { selectedGuildMember = null }
+831-                                        )
+832-                                    }
+833-                                }
+834-                            }
+835-
+836-                            else -> androidx.compose.material3.Text(
+837-                                text = currentDestination.label + " screen coming soon",
+838-                                modifier = Modifier.fillMaxSize()
+839-                            )
+840-                        }
+841-                        }
+842-                    }
+843-
+844-                    ChatBanner(
+845-                        selectedChannel = selectedChatChannel,
+846-                        onChannelSelected = {
+847-                            selectedChatChannel = it
+848-                            if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
+849-                        },
+850-                        messages = chatMessages.filter { it.channel == selectedChatChannel },
+851-                        dmConversations = demoDmConversations(),
+852-                        selectedDmCharacterId = selectedDmCharacterId,
+853-                        onDmSelected = { selectedDmCharacterId = it },
+854-                        hasUnread = true,
+855-                        messageInput = chatMessageInput,
+856-                        onMessageInputChanged = { chatMessageInput = it },
+857-                        onSendMessage = {
+858-                            if (chatMessageInput.isNotBlank()) {
+859:                                chatMessages.add(ChatMessageUi("m" + (chatMessages.size + 1), "You", chatMessageInput, selectedChatChannel))
