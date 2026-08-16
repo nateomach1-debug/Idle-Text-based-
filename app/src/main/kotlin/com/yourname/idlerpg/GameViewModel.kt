@@ -84,6 +84,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _supabaseAuthState = MutableStateFlow(SupabaseAuthState.SIGNED_OUT)
     val supabaseAuthState: StateFlow<SupabaseAuthState> = _supabaseAuthState.asStateFlow()
 
+    private val _supabaseAuthError = MutableStateFlow<String?>(null)
+    val supabaseAuthError: StateFlow<String?> = _supabaseAuthError.asStateFlow()
+
     // Fire-and-forget: runs in the background after a successful LOCAL login/account
     // creation. If this fails (no network, Supabase down, etc.) local gameplay is
     // completely unaffected - only guild/chat multiplayer stays unavailable.
@@ -106,6 +109,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _supabaseAuthState.value = SupabaseAuthState.SIGNED_IN
             } catch (e: Exception) {
                 _supabaseAuthState.value = SupabaseAuthState.ERROR
+                _supabaseAuthError.value = e.message ?: e.toString()
             }
         }
     }
