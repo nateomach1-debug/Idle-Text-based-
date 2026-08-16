@@ -1,0 +1,42 @@
+]633;E;echo "===== when-exhaustive context around line 592 =====";ca734d36-3da7-4a94-b335-04767b62a1c8]633;C===== when-exhaustive context around line 592 =====
+                Modifier.fillMaxSize().appPatternBackground()
+            }
+            Surface(modifier = screenBackgroundModifier, color = Color.Transparent) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = {
+                            gameViewModel.logout()
+                            flowState = AppFlowState.Login
+                        }) {
+                            androidx.compose.material3.Text("Log Out")
+                        }
+                    }
+                    RecoveryBar(recoveringUntil = recoveringUntil.value)
+
+                    Row(modifier = Modifier.fillMaxSize().weight(1f)) {
+                        SideRail(
+                            currentDestination = currentDestination,
+                            onDestinationSelected = {
+                                currentDestination = it
+                                skillsScreenState = SkillsScreenState.List
+                                combatScreenState = CombatScreenState.ZoneSelect
+                                inventoryScreenState = InventoryScreenState.Items
+                                marketTab = MarketTab.BROWSE
+                                selectedMarketItemId = null
+                            },
+                            badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
+                        )
+
+                        Box(modifier = Modifier.weight(1f)) {
+                        when (currentDestination) {
+                            AppDestination.HOME -> HomeScreen(state = homeState)
+
+                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+                                is SkillsScreenState.List -> SkillsScreen(
+                                    allSkills = allSkills,
+                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) },
+                                    listState = skillsListScrollState,
+                                    gridState = skillsGridScrollState
