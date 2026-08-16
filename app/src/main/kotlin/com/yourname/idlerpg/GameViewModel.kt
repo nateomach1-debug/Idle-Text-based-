@@ -760,6 +760,14 @@ fun logout() {
     fun selectCharacter(characterId: String) {
         _currentCharacterId.value = characterId
 
+        val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
+        if (selectedCharacter != null) {
+            viewModelScope.launch {
+                val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+                _currentSupabaseCharacterId.value = result.getOrNull()
+            }
+        }
+
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
         if (queue != null) {
             val result = offlineIdleService.resolveOfflineProgress(characterId)
