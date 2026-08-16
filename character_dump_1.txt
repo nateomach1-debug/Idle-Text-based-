@@ -1,0 +1,106 @@
+]633;E;echo "===== currentCharacterId assignment + local Character model =====";956bf221-fce3-4d48-8a50-f0040c3cf833]633;C===== currentCharacterId assignment + local Character model =====
+728-fun logout() {
+729-    sessionManager.clearSession()
+730-    _currentAccountId.value = null
+731:    _currentCharacterId.value = null
+732-}
+733-
+734-    fun clearOfflineSummary() {
+735-        _offlineSummary.value = null
+736-    }
+737-    fun saveGame() {
+738-        repository.save(
+739-            accountService.exportAllAccounts(),
+740-            accountService.exportAllCharacters(),
+741-            progressionService.exportAllSkills(),
+--
+752-    }
+753-
+754-    fun selectCharacter(characterId: String) {
+755:        _currentCharacterId.value = characterId
+756-
+757-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+758-        if (queue != null) {
+759-            val result = offlineIdleService.resolveOfflineProgress(characterId)
+760-            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+761-                val skillType = SkillType.valueOf(queue.skillId)
+762-                val action = ActionCatalog.find(skillType, queue.itemId)
+763-                if (action != null) {
+764-                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+765-                    progressionService.grantXp(characterId, skillType, xpEarned)
+===== Character data class =====
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-35-}
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-36-
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:37:data class Character(
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-38-    val id: String,
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-39-    val accountId: String,
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-40-    var displayName: String,
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-41-    var avatarId: String,
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-42-    val createdAt: Instant,
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-43-    var displayNameLastChangedAt: Instant,
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-44-    var isMainCharacter: Boolean = false
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-45-)
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-46-
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-47-object AvatarCatalog {
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-48-    val presets = listOf("knight", "mage", "archer", "rogue", "cleric", "blacksmith")
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-49-    fun isValid(avatarId: String) = presets.contains(avatarId)
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-50-}
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-51-
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-52-data class AccountExport(
+--
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-57-)
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-58-
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:59:data class CharacterExport(
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-60-    val id: String, val accountId: String, val displayName: String, val avatarId: String,
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-61-    val createdAt: String, val displayNameLastChangedAt: String, val isMainCharacter: Boolean
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-62-)
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-63-
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-64-class AccountService {
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-65-    private val accountsById = mutableMapOf<String, Account>()
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-66-    private val accountsByUsername = mutableMapOf<String, String>()
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-67-    private val accountsByEmail = mutableMapOf<String, String>()
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-68-    private val charactersById = mutableMapOf<String, Character>()
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-69-    private val charactersByAccountId = mutableMapOf<String, MutableList<String>>()
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-70-
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-71-    private val bannedWords = setOf("badword1", "badword2")
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-72-
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-73-    private val displayNameChangeCooldown: Duration = Duration.ofDays(30)
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt-74-
+--
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-18-// =========================================================
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-19-
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt:20:data class CharacterSummaryUi(val characterId: String, val displayName: String, val avatarId: String)
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-21-
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-22-@Composable
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-23-fun CharacterSelectScreen(
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-24-    characters: List<CharacterSummaryUi>,
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-25-    onCharacterSelected: (String) -> Unit,
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-26-    onCreateNew: () -> Unit,
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-27-    modifier: Modifier = Modifier
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-28-) {
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-29-    Column(modifier = modifier.fillMaxSize().padding(24.dp)) {
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-30-        Text(text = "Select a Character", style = MaterialTheme.typography.headlineMedium)
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-31-        Spacer(modifier = Modifier.height(20.dp))
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-32-
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-33-        characters.forEach { character ->
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-34-            Row(
+app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt-35-                modifier = Modifier
+--
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-35-
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-36-@Serializable
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:37:private data class CharacterNameRow(
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-38-    val id: String,
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-39-    @SerialName("display_name") val displayName: String
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-40-)
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-41-
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-42-@Serializable
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-43-private data class GuildEventRow(
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-44-    val id: String,
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-45-    @SerialName("event_type") val eventType: String,
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-46-    @SerialName("bonus_tier") val bonusTier: Int,
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-47-    @SerialName("starts_at") val startsAt: String,
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-48-    @SerialName("ends_at") val endsAt: String
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-49-)
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-50-
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-51-@Serializable
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt-52-private data class GuildVoteRow(
