@@ -1,0 +1,27 @@
+]633;E;echo "===== full ChatBanner call block =====";9f3f417b-0485-4c27-a149-53e74bcc8f04]633;C===== full ChatBanner call block =====
+849:ChatBanner(
+850-    selectedChannel = selectedChatChannelFromVm,
+851-    onChannelSelected = { gameViewModel.selectChatChannel(it) },
+852-    messages = chatMessagesFromVm,
+853-    dmConversations = dmConversationsFromVm,
+854-    selectedDmCharacterId = selectedDmCharacterIdFromVm,
+855-    onDmSelected = { gameViewModel.selectDmConversation(it) },
+856-    hasUnread = true,
+857-    messageInput = chatMessageInput,
+858-    onMessageInputChanged = { chatMessageInput = it },
+859-    onSendMessage = {
+860-        if (chatMessageInput.isNotBlank()) {
+861-            gameViewModel.sendChatMessage(chatMessageInput)
+862-                                chatMessageInput = ""
+863-                            }
+864-                        },
+865-                        onMessageAction = { message, action ->
+866-                            when (action) {
+867-                                ChatMessageAction.REPORT -> gameViewModel.reportChatMessage(message, "OTHER", "Reported from chat")
+868-                                ChatMessageAction.BLOCK -> gameViewModel.blockCharacter(message.senderCharacterId)
+869-                                ChatMessageAction.SELF_MUTE -> gameViewModel.selfMuteCharacter(message.senderCharacterId)
+870-                                ChatMessageAction.MESSAGE_PLAYER -> {
+871-                                    gameViewModel.selectChatChannel(ChatChannelUi.DMS)
+872-                                    gameViewModel.selectDmConversation(message.senderCharacterId)
+873-                                }
+874-                            }
