@@ -142,8 +142,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _guildActionError = MutableStateFlow<String?>(null)
     val guildActionError: StateFlow<String?> = _guildActionError.asStateFlow()
 
+    // The Supabase characters.id for the current character - a DIFFERENT
+    // id than _currentCharacterId (which is the local Room-database id).
+    // Every Supabase RPC call needs this one, not the local id.
+    private val _currentSupabaseCharacterId = MutableStateFlow<String?>(null)
+    val currentSupabaseCharacterId: StateFlow<String?> = _currentSupabaseCharacterId.asStateFlow()
+
     fun refreshGuildHome() {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val membership = SupabaseGuildRepository.findMembership(characterId)
             _guildId.value = membership?.first
@@ -159,7 +165,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun createGuild(name: String) {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseGuildRepository.createGuild(name, characterId)
             result.onFailure { _guildActionError.value = it.message }
@@ -168,7 +174,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun joinGuild(guildId: String) {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseGuildRepository.joinGuild(guildId, characterId)
             result.onFailure { _guildActionError.value = it.message }
@@ -178,7 +184,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun kickGuildMember(targetCharacterId: String) {
         val guildId = _guildId.value ?: return
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseGuildRepository.kickMember(guildId, characterId, targetCharacterId)
             result.onFailure { _guildActionError.value = it.message }
@@ -188,7 +194,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun promoteGuildMemberToOfficer(targetCharacterId: String) {
         val guildId = _guildId.value ?: return
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseGuildRepository.promoteToOfficer(guildId, characterId, targetCharacterId)
             result.onFailure { _guildActionError.value = it.message }
@@ -198,7 +204,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun promoteGuildMemberToLeader(targetCharacterId: String) {
         val guildId = _guildId.value ?: return
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseGuildRepository.promoteToLeader(guildId, characterId, targetCharacterId)
             result.onFailure { _guildActionError.value = it.message }
@@ -252,7 +258,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refreshChatMessages() {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         val channel = _selectedChatChannel.value
         viewModelScope.launch {
             val channelId = resolveChatChannelId(channel)
@@ -266,7 +272,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun sendChatMessage(content: String) {
         if (content.isBlank()) return
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         val channel = _selectedChatChannel.value
         viewModelScope.launch {
             val channelId = resolveChatChannelId(channel)
@@ -281,7 +287,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refreshDmConversations() {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             _dmConversations.value = SupabaseChatRepository.fetchDmConversations(characterId)
         }
@@ -289,7 +295,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     // Also used by the MESSAGE_PLAYER chat action to jump into a DM.
     fun selectDmConversation(otherCharacterId: String) {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         _selectedDmCharacterId.value = otherCharacterId
         viewModelScope.launch {
             val result = SupabaseChatRepository.getOrCreateDmChannel(characterId, otherCharacterId)
@@ -303,7 +309,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun reportChatMessage(message: ChatMessageUi, category: String, reason: String) {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseChatRepository.reportMessage(characterId, message.id, category, reason)
             result.onFailure { _chatActionError.value = it.message }
@@ -312,7 +318,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selfMuteCharacter(targetCharacterId: String) {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseChatRepository.selfMute(characterId, targetCharacterId)
             result.onFailure { _chatActionError.value = it.message }
@@ -321,7 +327,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun toggleGlobalChatOptOut(optOut: Boolean) {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseChatRepository.setGlobalChatOptOut(characterId, optOut)
             result.onFailure {
@@ -334,7 +340,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadInitialChatState() {
         refreshChatMessages()
-        val characterId = _currentCharacterId.value
+        val characterId = _currentSupabaseCharacterId.value
         if (characterId != null) {
             viewModelScope.launch {
                 _globalChatOptOut.value = SupabaseChatRepository.getGlobalChatOptOut(characterId)
@@ -343,7 +349,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun blockCharacter(targetCharacterId: String) {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseChatRepository.blockCharacter(characterId, targetCharacterId)
             result.onFailure { _chatActionError.value = it.message }
