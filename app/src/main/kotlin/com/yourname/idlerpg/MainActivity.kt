@@ -862,7 +862,17 @@ ChatBanner(
                                 chatMessageInput = ""
                             }
                         },
-                        onMessageAction = { _, _ -> }
+                        onMessageAction = { message, action ->
+                            when (action) {
+                                ChatMessageAction.REPORT -> gameViewModel.reportChatMessage(message, "OTHER", "Reported from chat")
+                                ChatMessageAction.BLOCK -> gameViewModel.blockCharacter(message.senderCharacterId)
+                                ChatMessageAction.SELF_MUTE -> gameViewModel.selfMuteCharacter(message.senderCharacterId)
+                                ChatMessageAction.MESSAGE_PLAYER -> {
+                                    gameViewModel.selectChatChannel(ChatChannelUi.DMS)
+                                    gameViewModel.selectDmConversation(message.senderCharacterId)
+                                }
+                            }
+                        }
                     )
                 }
             }
