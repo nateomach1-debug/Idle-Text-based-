@@ -1,0 +1,11 @@
+]633;E;echo "===== AccountCharacterSystem property in GameViewModel =====";4ce32660-653f-4145-9e87-10ff7cef652f]633;C===== AccountCharacterSystem property in GameViewModel =====
+48:    val accountService = AccountService()
+693:        saved.accounts.forEach { accountService.restoreAccount(it) }
+694:        saved.characters.forEach { accountService.restoreCharacter(it) }
+707:    val result = accountService.login(email, password)
+717:    val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
+728:    val account = accountService.accountById(accountId) ?: return null
+745:            accountService.exportAllAccounts(),
+746:            accountService.exportAllCharacters(),
+809:            val character = accountService.charactersFor(_currentAccountId.value ?: "")
+1023:        val account = accountService.accountById(accountId) ?: return
