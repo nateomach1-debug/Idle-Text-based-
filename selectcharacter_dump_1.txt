@@ -1,0 +1,79 @@
+]633;E;echo "===== selectCharacter function =====";4ce32660-653f-4145-9e87-10ff7cef652f]633;C===== selectCharacter function =====
+758-    }
+759-
+760:    fun selectCharacter(characterId: String) {
+761-        _currentCharacterId.value = characterId
+762-
+763-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+764-        if (queue != null) {
+765-            val result = offlineIdleService.resolveOfflineProgress(characterId)
+766-            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+767-                val skillType = SkillType.valueOf(queue.skillId)
+768-                val action = ActionCatalog.find(skillType, queue.itemId)
+769-                if (action != null) {
+770-                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+771-                    progressionService.grantXp(characterId, skillType, xpEarned)
+772-                    inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+773-                    _offlineSummary.value = OfflineSummary(
+774-                        awaySeconds = result.value.claimedElapsed.seconds,
+775-                        skillActionName = action.displayName,
+776-                        itemName = formatItemName(queue.itemId),
+777-                        quantity = result.value.actionsCompleted,
+778-                        xpEarned = xpEarned
+779-                    )
+780-                }
+===== character lookup by id =====
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:68:    private val charactersById = mutableMapOf<String, Character>()
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:122:    fun createCharacter(accountId: String, displayName: String, avatarId: String): ServiceResult<Character> {
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:148:        charactersById[character.id] = character
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:159:        val character = charactersById[characterId] ?: return ServiceResult.Failure("Character not found.")
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:178:    fun setMainCharacter(characterId: String): ServiceResult<Character> {
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:179:        val character = charactersById[characterId] ?: return ServiceResult.Failure("Character not found.")
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:180:        val siblings = charactersByAccountId[character.accountId].orEmpty().mapNotNull { charactersById[it] }
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:212:    fun charactersFor(accountId: String): List<Character> =
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:213:        charactersByAccountId[accountId]?.mapNotNull { charactersById[it] } ?: emptyList()
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:261:    fun exportAllCharacters(): List<CharacterExport> = charactersById.values.map {
+app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt:291:        charactersById[character.id] = character
+app/src/main/kotlin/com/yourname/idlerpg/AntiCheatServerAuthoritySystem.kt:33:    fun allForCharacter(characterId: String): List<SuspicionFlag> = flags.filter { it.characterId == characterId }
+app/src/main/kotlin/com/yourname/idlerpg/AntiCheatServerAuthoritySystem.kt:99:    private fun key(characterId: String, group: ActionGroup) = characterId + ":" + group.name
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:158:    fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:292:    fun applyDamageToCharacter(characterId: String, damage: Int, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:303:    fun healCharacter(characterId: String, amount: Int): ServiceResult<CharacterCombatState> {
+app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt:309:    fun resolveRecoveryIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:93:    fun tradesBetween(characterIdA: String, characterIdB: String): List<DevTradeRecord> =
+app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:127:    fun accountFor(characterId: String): PlayerEconomyAccount? = accounts[characterId]
+app/src/main/kotlin/com/yourname/idlerpg/EventsLiveOpsSystem.kt:217:    fun cosmeticEligible(seasonId: String, characterId: String): Boolean = isOptedIn(seasonId, characterId)
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:229:    fun inviteMember(guildId: String, invitingCharacterId: String, invitedCharacterId: String): ServiceResult<Unit> {
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:240:    fun approveApplication(guildId: String, approverCharacterId: String, applicantCharacterId: String): ServiceResult<Unit> {
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:250:    fun kickMember(guildId: String, actingCharacterId: String, targetCharacterId: String): ServiceResult<Unit> {
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:260:    fun promoteToOfficer(guildId: String, actingCharacterId: String, targetCharacterId: String): ServiceResult<Unit> {
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:271:    fun promoteToLeader(guildId: String, actingCharacterId: String, targetCharacterId: String): ServiceResult<Unit> {
+app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:283:    fun initiateLeaderRemovalVote(guildId: String, initiatorCharacterId: String, targetLeaderCharacterId: String, now: Instant = Instant.now()): ServiceResult<LeaderRemovalVote> {
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:105:    private fun stateFor(characterId: String) = states.getOrPut(characterId) { SubscriptionState() }
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:107:    fun isSubscribed(characterId: String, now: Instant = Instant.now()): Boolean = stateFor(characterId).isActive(now)
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:117:    fun activeUntil(characterId: String): Instant? = stateFor(characterId).activeUntil
+app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:183:    fun balanceFor(characterId: String): Long = premiumBalances[characterId] ?: 0
+app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:204:    fun activeQueueFor(characterId: String): ActiveQueue? = activeQueues[characterId]
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:182:    private fun questsFor(characterId: String) = playerQuests.getOrPut(characterId) { mutableMapOf() }
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:183:    private fun completedFor(characterId: String) = completedQuestIds.getOrPut(characterId) { mutableSetOf() }
+app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt:316:    fun boardFor(characterId: String): DailyTaskBoard? = boards[characterId]
+app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt:158:    private fun resetStateFor(characterId: String): CharacterResetState =
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:68:    fun mute(viewerCharacterId: String, targetCharacterId: String) {
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:72:    fun unmute(viewerCharacterId: String, targetCharacterId: String) {
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:76:    fun isMuted(viewerCharacterId: String, targetCharacterId: String): Boolean =
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:124:    fun sendFriendRequest(fromCharacterId: String, toCharacterId: String): ServiceResult<FriendRequest> {
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:151:    fun areFriends(characterIdA: String, characterIdB: String): Boolean =
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:154:    fun blockPlayer(blockerCharacterId: String, targetCharacterId: String) {
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:158:    fun unblockPlayer(blockerCharacterId: String, targetCharacterId: String) {
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:162:    fun isBlocked(blockerCharacterId: String, targetCharacterId: String): Boolean =
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:261:    fun selfMute(viewerCharacterId: String, targetCharacterId: String) = selfMutes.mute(viewerCharacterId, targetCharacterId)
+app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt:262:    fun selfUnmute(viewerCharacterId: String, targetCharacterId: String) = selfMutes.unmute(viewerCharacterId, targetCharacterId)
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:99:    suspend fun getOrCreateDmChannel(characterId: String, otherCharacterId: String): Result<String> = runCatching {
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:175:    suspend fun blockCharacter(blockerCharacterId: String, blockedCharacterId: String): Result<Unit> = runCatching {
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:188:    suspend fun selfMute(viewerCharacterId: String, targetCharacterId: String): Result<Unit> = runCatching {
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:197:    suspend fun selfUnmute(viewerCharacterId: String, targetCharacterId: String): Result<Unit> = runCatching {
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:169:suspend fun blockCharacter(blockerCharacterId: String, blockedCharacterId: String): Result<Unit> = runCatching {
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:208:    suspend fun inviteMember(guildId: String, invitingCharacterId: String, invitedCharacterId: String): Result<Unit> = runCatching {
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:216:    suspend fun kickMember(guildId: String, actingCharacterId: String, targetCharacterId: String): Result<Unit> = runCatching {
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:224:    suspend fun promoteToOfficer(guildId: String, actingCharacterId: String, targetCharacterId: String): Result<Unit> = runCatching {
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:232:    suspend fun promoteToLeader(guildId: String, actingCharacterId: String, targetCharacterId: String): Result<Unit> = runCatching {
