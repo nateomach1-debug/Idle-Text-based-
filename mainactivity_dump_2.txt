@@ -1,0 +1,311 @@
+]633;E;echo "===== when(currentDestination) block, wide net =====";ca734d36-3da7-4a94-b335-04767b62a1c8]633;C===== when(currentDestination) block, wide net =====
+592:                        when (currentDestination) {
+                        when (currentDestination) {
+                            AppDestination.HOME -> HomeScreen(state = homeState)
+
+                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+                                is SkillsScreenState.List -> SkillsScreen(
+                                    allSkills = allSkills,
+                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) },
+                                    listState = skillsListScrollState,
+                                    gridState = skillsGridScrollState
+                                )
+                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
+                                    Box(modifier = Modifier.fillMaxSize()) {
+                                        when (screen.skillId) {
+                                            "SMITHING" -> SmithingScreen(
+                                                buildSmithingState(it, inventoryQuantities),
+                                                { skillsScreenState = SkillsScreenState.List },
+                                                { itemId -> gameViewModel.startCraftingAction(itemId) }
+                                            )
+                                            in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
+                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                                { skillsScreenState = SkillsScreenState.List },
+                                                { itemId -> gameViewModel.startCraftingAction(itemId) },
+                                                startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
+                                            )
+                                            else -> SkillDetailScreen(
+                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                                { skillsScreenState = SkillsScreenState.List },
+                                                { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            AppDestination.COMBAT -> when (combatScreenState) {
+                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
+                                    zones = zones, playerLevel = trainingSkillLevel,
+                                    onZoneSelected = { zoneId ->
+                                        val result = gameViewModel.enterCombatZone(zoneId)
+                                        if (result is ServiceResult.Success) {
+                                            combatScreenState = CombatScreenState.InZone
+                                        }
+                                    },
+                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
+                                )
+                                CombatScreenState.InZone -> {
+                                    val currentCombatData = combatViewData
+                                    if (currentCombatData != null) {
+                                        CombatViewScreen(
+                                            data = currentCombatData,
+                                            onLeaveZone = {
+                                                gameViewModel.leaveCombatZone()
+                                                combatScreenState = CombatScreenState.ZoneSelect
+                                            }
+                                        )
+                                    } else {
+                                        combatScreenState = CombatScreenState.ZoneSelect
+                                    }
+                                }
+                                CombatScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                    ),
+                                    trainingSkill = trainingSkill,
+                                    allowedTrainingSkills = gameViewModel.allowedTrainingSkills,
+                                    onTrainingSkillSelected = { gameViewModel.setTrainingSkill(it) },
+                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+                                )
+                            }
+
+                            AppDestination.INVENTORY -> when (inventoryScreenState) {
+                                InventoryScreenState.Items -> InventoryScreen(
+                                    items = inventoryItems,
+                                    onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
+                                    onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
+                                    onUseItem = { },
+                                    onSellOnMarket = { itemId ->
+                                        val item = inventoryItems.find { it.itemId == itemId }
+                                        selectedMarketItemId = itemId
+                                        prefilledSellQuantity = item?.quantity
+                                        currentDestination = AppDestination.MARKET
+                                    },
+                                    onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
+                                    canEquip = ::canEquip
+                                )
+                                InventoryScreenState.Equipment -> EquipmentScreen(
+                                    state = EquipmentScreenState(equipped, lockedEquipSlots),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onSlotTapped = { slot -> gameViewModel.unequipSlot(EquipSlot.valueOf(slot.name)) }
+                                )
+                                InventoryScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                    ),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+                                )
+                            }
+
+                            AppDestination.MARKET -> {
+                                val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
+                                val myBuyOrdersRaw by gameViewModel.myBuyOrders.collectAsState()
+                                val mySellOrdersRaw by gameViewModel.mySellOrders.collectAsState()
+                                val marketListingsUi = remember(marketPriceSummaries) {
+                                    marketPriceSummaries.map {
+                                        MarketListingSummary(
+                                            itemId = it.itemId,
+                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+                                            bestBuyPrice = it.bestBuyPrice,
+                                            bestSellPrice = it.bestSellPrice
+                                        )
+                                    }
+                                }
+                                val myBuyOrdersUi = remember(myBuyOrdersRaw) {
+                                    myBuyOrdersRaw.map {
+                                        MarketOrderSummary(
+                                            orderId = it.id,
+                                            itemId = it.itemId,
+                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+                                            pricePerUnit = it.pricePerUnit,
+                                            remainingQuantity = it.remainingQuantity
+                                        )
+                                    }
+                                }
+                                val mySellOrdersUi = remember(mySellOrdersRaw) {
+                                    mySellOrdersRaw.map {
+                                        MarketOrderSummary(
+                                            orderId = it.id,
+                                            itemId = it.itemId,
+                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+                                            pricePerUnit = it.pricePerUnit,
+                                            remainingQuantity = it.remainingQuantity
+                                        )
+                                    }
+                                }
+
+                                val itemId = selectedMarketItemId
+                                if (itemId != null) {
+                                    val orderBookDetail = remember(itemId, marketPriceSummaries) {
+                                        val summary = marketPriceSummaries.find { it.itemId == itemId }
+                                        ItemOrderBookDetail(
+                                            itemId = itemId,
+                                            displayName = ItemCatalog.find(itemId)?.name ?: itemId,
+                                            bestBuyPrice = summary?.bestBuyPrice,
+                                            bestSellPrice = summary?.bestSellPrice,
+                                            recentTrades = gameViewModel.marketService.priceHistoryFor(itemId)
+                                                .sortedByDescending { it.executedAt }
+                                                .take(10)
+                                                .map { PriceHistoryRow(it.pricePerUnit, it.quantity, formatTimeAgo(it.executedAt)) }
+                                        )
+                                    }
+                                    OrderBookScreen(
+                                        detail = orderBookDetail,
+                                        prefilledQuantity = prefilledSellQuantity,
+                                        onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+                                        onPlaceOrder = { side, qty, price ->
+                                            if (side == OrderSideUi.BUY) {
+                                                gameViewModel.placeBuyOrder(itemId, qty, price)
+                                            } else {
+                                                gameViewModel.placeSellOrder(itemId, qty, price)
+                                            }
+                                            selectedMarketItemId = null
+                                            prefilledSellQuantity = null
+                                        }
+                                    )
+                                } else {
+                                    MarketScreen(
+                                        currentTab = marketTab,
+                                        onTabSelected = { marketTab = it },
+                                        listings = marketListingsUi,
+                                        showingBuyOrders = showingBuyOrders,
+                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+                                        onItemSelected = { selectedMarketItemId = it },
+                                        myBuyOrders = myBuyOrdersUi,
+                                        mySellOrders = mySellOrdersUi,
+                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+                                        vendorSellableItems = inventoryItems,
+                                        onSellToVendor = { sellItemId, quantity ->
+                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
+                                        }
+                                    )
+                                }
+                            }
+
+                            AppDestination.GUILD -> {
+                                val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
+                                val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
+                                val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+
+                                LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+                                LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
+                                val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
+                                val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
+                                val debugErrorText = debugAuthError ?: ""
+                                Text("Supabase: $debugAuthState $debugErrorText", color = androidx.compose.ui.graphics.Color.Red)
+
+                                val guildState = currentGuildHomeState
+                                if (guildState == null) {
+                                    GuildCreateJoinScreen(
+                                        browsableGuilds = currentBrowsableGuilds,
+                                        onCreateGuild = { name -> gameViewModel.createGuild(name) },
+                                        onJoinGuild = { guildId -> gameViewModel.joinGuild(guildId) }
+                                    )
+                                } else {
+                                    GuildHomeScreen(
+                                        state = guildState,
+                                        leaderboardEntries = currentGuildLeaderboard,
+                                        leaderboardShowingDaily = leaderboardShowingDaily,
+                                        onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+                                        onMemberTapped = { selectedGuildMember = it },
+                                        onContributeToEvent = { },
+                                        onCastVote = { }
+                                    )
+
+                                    selectedGuildMember?.let { member ->
+                                        MemberActionPopup(
+                                            member = member,
+                                            viewerRole = guildState.viewerRole,
+                                            onDismiss = { selectedGuildMember = null },
+                                            onKick = {
+                                                gameViewModel.kickGuildMember(member.characterId)
+                                                selectedGuildMember = null
+                                            },
+                                            onPromote = {
+                                                when (member.role) {
+                                                    GuildMemberRole.MEMBER -> gameViewModel.promoteGuildMemberToOfficer(member.characterId)
+                                                    GuildMemberRole.OFFICER -> gameViewModel.promoteGuildMemberToLeader(member.characterId)
+                                                    GuildMemberRole.LEADER -> {}
+                                                }
+                                                selectedGuildMember = null
+                                            },
+                                            onDemote = { selectedGuildMember = null },
+                                            onInitiateVote = { selectedGuildMember = null }
+                                        )
+                                    }
+                                }
+                            }
+
+                            else -> androidx.compose.material3.Text(
+                                text = currentDestination.label + " screen coming soon",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        }
+                    }
+
+                    val chatMessagesFromVm by gameViewModel.chatMessages.collectAsState()
+val selectedChatChannelFromVm by gameViewModel.selectedChatChannel.collectAsState()
+val dmConversationsFromVm by gameViewModel.dmConversations.collectAsState()
+val selectedDmCharacterIdFromVm by gameViewModel.selectedDmCharacterId.collectAsState()
+
+var reportDialogMessage by remember { mutableStateOf<ChatMessageUi?>(null) }
+                    reportDialogMessage?.let { targetMessage ->
+                        ReportMessageDialog(
+                            message = targetMessage,
+                            onDismiss = { reportDialogMessage = null },
+                            onSubmit = { category, reason ->
+                                gameViewModel.reportChatMessage(targetMessage, category, reason)
+                                reportDialogMessage = null
+                            }
+                        )
+                    }
+
+                    ChatBanner(
+    selectedChannel = selectedChatChannelFromVm,
+    onChannelSelected = { gameViewModel.selectChatChannel(it) },
+    messages = chatMessagesFromVm,
+    dmConversations = dmConversationsFromVm,
+    selectedDmCharacterId = selectedDmCharacterIdFromVm,
+    onDmSelected = { gameViewModel.selectDmConversation(it) },
+    hasUnread = true,
+    messageInput = chatMessageInput,
+    onMessageInputChanged = { chatMessageInput = it },
+    onSendMessage = {
+        if (chatMessageInput.isNotBlank()) {
+            gameViewModel.sendChatMessage(chatMessageInput)
+                                chatMessageInput = ""
+                            }
+                        },
+                        onMessageAction = { message, action ->
+                            when (action) {
+                                ChatMessageAction.REPORT -> reportDialogMessage = message
+                                ChatMessageAction.BLOCK -> gameViewModel.blockCharacter(message.senderCharacterId)
+                                ChatMessageAction.SELF_MUTE -> gameViewModel.selfMuteCharacter(message.senderCharacterId)
+                                ChatMessageAction.MESSAGE_PLAYER -> {
+                                    gameViewModel.selectChatChannel(ChatChannelUi.DMS)
+                                    gameViewModel.selectDmConversation(message.senderCharacterId)
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
