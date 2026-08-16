@@ -35,21 +35,12 @@ Daemon will be stopped at the end of the build
 > Task :app:writeDebugAppMetadata UP-TO-DATE
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 > Task :app:compileDebugKotlin
-w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt:59:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
-w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt:44:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
-w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:100:52 'val Icons.Filled.ViewList: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ViewList.
-w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:56:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
-w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt:49:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
-w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt:63:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
-w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt:122:44 'val Icons.Filled.ViewList: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ViewList.
-w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt:99:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
-
 > Task :app:compileDebugJavaWithJavac UP-TO-DATE
 > Task :app:dexBuilderDebug
 > Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
-> Task :app:processDebugJavaRes UP-TO-DATE
-> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:processDebugJavaRes
 > Task :app:mergeProjectDexDebug
+> Task :app:mergeDebugJavaResource
 > Task :app:packageDebug
 > Task :app:createDebugApkListingFileRedirect UP-TO-DATE
 > Task :app:assembleDebug
@@ -62,7 +53,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.4.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 52s
-37 actionable tasks: 4 executed, 33 up-to-date
+BUILD SUCCESSFUL in 1m 12s
+37 actionable tasks: 6 executed, 31 up-to-date
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.0/userguide/configuration_cache_enabling.html
 EXIT CODE: 0
