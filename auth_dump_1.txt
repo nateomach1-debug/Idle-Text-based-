@@ -1,0 +1,132 @@
+]633;E;echo "===== auth/login/supabase sync code =====";9f3f417b-0485-4c27-a149-53e74bcc8f04]633;C===== auth/login/supabase sync code =====
+19-import kotlinx.coroutines.launch
+20-import java.time.Instant
+21-import kotlin.random.Random
+22:import io.github.jan.supabase.auth.auth
+23-import com.yourname.idlerpg.ui.components.ChatChannelUi
+24-import com.yourname.idlerpg.ui.components.ChatMessageUi
+25-import com.yourname.idlerpg.ui.components.DmConversationSummary
+26-
+27-data class OfflineSummary(
+28-    val awaySeconds: Long,
+29-    val skillActionName: String,
+30-    val itemName: String,
+31-    val quantity: Int,
+32-    val xpEarned: Long
+33-)
+34-
+35-data class ActiveQueueInfo(
+36-    val label: String,
+37-    val secondsPerAction: Long,
+38-    val startedAt: Instant
+39-)
+40-
+41-private fun formatItemName(itemId: String): String =
+42-    itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+43-
+44-class GameViewModel(application: Application) : AndroidViewModel(application) {
+45-
+46-    private val repository = GameStateRepository(application)
+47-
+--
+78-    val combatService = CombatService()
+79-
+80-    // =========================================================
+81:    // SUPABASE AUTH (guild/chat multiplayer only - local play never depends on this)
+82-    // =========================================================
+83-
+84:    private val _supabaseAuthState = MutableStateFlow(SupabaseAuthState.SIGNED_OUT)
+85:    val supabaseAuthState: StateFlow<SupabaseAuthState> = _supabaseAuthState.asStateFlow()
+86-
+87-    // Fire-and-forget: runs in the background after a successful LOCAL login/account
+88-    // creation. If this fails (no network, Supabase down, etc.) local gameplay is
+89-    // completely unaffected - only guild/chat multiplayer stays unavailable.
+90:    private fun syncSupabaseAuth(email: String, password: String, isNewAccount: Boolean) {
+91-        viewModelScope.launch {
+92:            _supabaseAuthState.value = SupabaseAuthState.SIGNING_IN
+93-            try {
+94:                val auth = SupabaseClientProvider.client.auth
+95-                if (isNewAccount) {
+96:                    auth.signUpWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+97-                        this.email = email
+98-                        this.password = password
+99-                    }
+100-                } else {
+101:                    auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+102-                        this.email = email
+103-                        this.password = password
+104-                    }
+105-                }
+106:                _supabaseAuthState.value = SupabaseAuthState.SIGNED_IN
+107-            } catch (e: Exception) {
+108:                _supabaseAuthState.value = SupabaseAuthState.ERROR
+109-            }
+110-        }
+111-    }
+112-
+113-        // =========================================================
+114-    // GUILD (Supabase-backed, best-effort - local play never depends on this)
+115-    // =========================================================
+116-
+117-    private val _guildHomeState = MutableStateFlow<GuildHomeState?>(null)
+118-    val guildHomeState: StateFlow<GuildHomeState?> = _guildHomeState.asStateFlow()
+119-
+120-    private val _guildId = MutableStateFlow<String?>(null)
+121-
+122-    private val _guildLeaderboard = MutableStateFlow<List<GuildLeaderboardEntry>>(emptyList())
+123-    val guildLeaderboard: StateFlow<List<GuildLeaderboardEntry>> = _guildLeaderboard.asStateFlow()
+124-
+125-    private val _browsableGuilds = MutableStateFlow<List<GuildBrowseEntry>>(emptyList())
+126-    val browsableGuilds: StateFlow<List<GuildBrowseEntry>> = _browsableGuilds.asStateFlow()
+127-
+128-    private val _guildActionError = MutableStateFlow<String?>(null)
+129-    val guildActionError: StateFlow<String?> = _guildActionError.asStateFlow()
+130-
+131-    fun refreshGuildHome() {
+132-        val characterId = _currentCharacterId.value ?: return
+133-        viewModelScope.launch {
+--
+689-        sessionManager.saveSession(result.value.id)
+690-            _currentAccountId.value = result.value.id
+691-            refreshCurrency()
+692:            syncSupabaseAuth(email, password, isNewAccount = false)
+693-    }
+694-    return result
+695-}
+696-  fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
+697-    val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
+698-    if (result is ServiceResult.Success) {
+699-        sessionManager.saveSession(result.value.id)
+700-            _currentAccountId.value = result.value.id
+701-            refreshCurrency()
+702:            syncSupabaseAuth(email, password, isNewAccount = true)
+703-    }
+704-    return result
+705-  }
+706:  fun tryAutoLogin(): Account? {
+707-    val accountId = sessionManager.getSavedAccountId() ?: return null
+708-    val account = accountService.accountById(accountId) ?: return null
+709-    _currentAccountId.value = account.id
+710-    refreshCurrency()
+711-    return account
+712-}
+713-
+714-fun logout() {
+715-    sessionManager.clearSession()
+716-    _currentAccountId.value = null
+717-    _currentCharacterId.value = null
+718-}
+719-
+720-    fun clearOfflineSummary() {
+721-        _offlineSummary.value = null
+722-    }
+723-    fun saveGame() {
+724-        repository.save(
+725-            accountService.exportAllAccounts(),
+726-            accountService.exportAllCharacters(),
+727-            progressionService.exportAllSkills(),
+728-            offlineIdleService.exportSkillingQueues(),
+729-            offlineIdleService.exportCraftingQueues(),
+730-            offlineIdleService.exportLastSeen(),
+731-            inventoryService.exportAllItems(),
+]633;E;echo "===== SupabaseClientProvider =====";9f3f417b-0485-4c27-a149-53e74bcc8f04]633;C===== SupabaseClientProvider =====
