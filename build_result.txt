@@ -35,77 +35,26 @@ Daemon will be stopped at the end of the build
 > Task :app:writeDebugAppMetadata UP-TO-DATE
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 > Task :app:compileDebugKotlin
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:18:20 Redeclaration:
-data class ChatMessageRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:28:20 Redeclaration:
-data class ChatChannelRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:35:20 Redeclaration:
-data class ChatChannelParticipantRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:41:20 Redeclaration:
-data class ChatCharacterNameRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:47:20 Redeclaration:
-data class ChatPreferenceRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:61:8 Redeclaration:
-object SupabaseChatRepository : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:18:20 Redeclaration:
-data class ChatMessageRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:28:20 Redeclaration:
-data class ChatChannelRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:35:20 Redeclaration:
-data class ChatChannelParticipantRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:41:20 Redeclaration:
-data class ChatCharacterNameRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:47:20 Redeclaration:
-data class ChatPreferenceRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:61:8 Redeclaration:
-object SupabaseChatRepository : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:85:29 Cannot access 'data class ChatChannelRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:86:35 Cannot access 'data class ChatChannelRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:87:19 Cannot access 'data class ChatChannelRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:121:27 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:125:43 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:128:29 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:129:51 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:129:62 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:131:32 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:133:29 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:134:44 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:135:46 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:136:34 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:214:37 Cannot access 'data class ChatPreferenceRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:214:59 Cannot access 'data class ChatPreferenceRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:238:29 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:239:57 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:244:29 Cannot access 'data class ChatChannelRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:245:52 Cannot access 'data class ChatChannelRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:250:29 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:251:30 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:252:71 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:252:89 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:257:29 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:258:51 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:258:62 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:262:29 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:263:65 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:264:65 Cannot access 'data class ChatMessageRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:271:75 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt:59:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt:44:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:100:52 'val Icons.Filled.ViewList: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ViewList.
+w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt:56:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt:49:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt:63:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt:122:44 'val Icons.Filled.ViewList: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ViewList.
+w: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt:99:49 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
 
-> Task :app:compileDebugKotlin FAILED
+> Task :app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebug
 
 [Incubating] Problems report is available at: file:///workspaces/Idle-Text-based-/build/reports/problems/problems-report.html
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:compileDebugKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
-> Get more help at https://help.gradle.org.
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
 
@@ -113,6 +62,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.4.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 1m 46s
-29 actionable tasks: 1 executed, 28 up-to-date
-EXIT CODE: 1
+BUILD SUCCESSFUL in 1m 52s
+37 actionable tasks: 4 executed, 33 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.0/userguide/configuration_cache_enabling.html
+EXIT CODE: 0
