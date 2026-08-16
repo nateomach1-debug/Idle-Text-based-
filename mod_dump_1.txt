@@ -1,0 +1,144 @@
+]633;E;echo "===== moderation logic (appeals/mutes/resolve) =====";9f3f417b-0485-4c27-a149-53e74bcc8f04]633;C===== moderation logic (appeals/mutes/resolve) =====
+78-}
+79-
+80:data class AdminMuteRecord(
+81-    val characterId: String,
+82-    val mutedUntil: Instant,
+83-    val reason: String,
+84-    val issuedBy: String
+85-) {
+86-    fun isActive(now: Instant = Instant.now()): Boolean = now.isBefore(mutedUntil)
+87-}
+88-
+89-// =========================================================
+90-// APPEALS
+91-// =========================================================
+92-
+93:enum class AppealStatus { PENDING, GRANTED, DENIED }
+94-
+95:data class Appeal(
+96-    val id: String = UUID.randomUUID().toString(),
+97-    val characterId: String,
+98-    val relatedMuteReason: String,
+99-    val appealText: String,
+100-    val submittedAt: Instant = Instant.now(),
+101:    var status: AppealStatus = AppealStatus.PENDING,
+102-    var reviewedBy: String? = null,
+103-    var reviewNotes: String? = null
+104-)
+105-
+106-// =========================================================
+107-// FRIENDS & BLOCKING
+108-// =========================================================
+109-
+110-enum class FriendRequestStatus { PENDING, ACCEPTED, DECLINED }
+111-
+112-data class FriendRequest(
+113-    val id: String = UUID.randomUUID().toString(),
+114-    val fromCharacterId: String,
+115-    val toCharacterId: String,
+116-    var status: FriendRequestStatus = FriendRequestStatus.PENDING
+117-)
+118-
+119-class SocialGraph {
+120-    private val friendRequests: MutableList<FriendRequest> = mutableListOf()
+121-    private val friendships: MutableMap<String, MutableSet<String>> = mutableMapOf()
+122-    private val blocks: MutableMap<String, MutableSet<String>> = mutableMapOf()
+123-
+124-    fun sendFriendRequest(fromCharacterId: String, toCharacterId: String): ServiceResult<FriendRequest> {
+125-        if (fromCharacterId == toCharacterId) return ServiceResult.Failure("Cannot friend yourself.")
+126-        if (areFriends(fromCharacterId, toCharacterId)) return ServiceResult.Failure("Already friends.")
+--
+184-    private val globalChatOptOut: MutableSet<String> = mutableSetOf()
+185-    private val selfMutes = SelfMuteList()
+186:    private val adminMutes: MutableMap<String, AdminMuteRecord> = mutableMapOf()
+187-    private val reports: MutableList<MessageReport> = mutableListOf()
+188-    private val reporterHiddenMessages: MutableMap<String, MutableSet<String>> = mutableMapOf()
+189:    private val appeals: MutableList<Appeal> = mutableListOf()
+190-    val socialGraph = SocialGraph()
+191-
+192-    fun sendMessage(
+193-        senderCharacterId: String,
+194-        channel: ChatChannel,
+195-        content: String,
+196-        guildId: String? = null,
+197-        recipientCharacterId: String? = null
+198-    ): ServiceResult<ChatMessage> {
+199-        adminMutes[senderCharacterId]?.let {
+200-            if (it.isActive()) {
+201-                return ServiceResult.Failure("You are muted until " + it.mutedUntil + ". Reason: " + it.reason)
+202-            }
+203-        }
+204-
+205-        if (content.isBlank()) return ServiceResult.Failure("Message cannot be empty.")
+206-        if (ProfanityFilter.containsBannedContent(content)) {
+207-            return ServiceResult.Failure("Message blocked: contains disallowed content.")
+208-        }
+209-        if (channel == ChatChannel.GUILD && guildId == null) {
+210-            return ServiceResult.Failure("Guild channel messages require a guildId.")
+211-        }
+212-        if (channel == ChatChannel.DIRECT_MESSAGE) {
+213-            if (recipientCharacterId == null) return ServiceResult.Failure("Direct messages require a recipient.")
+214-            if (socialGraph.isBlocked(recipientCharacterId, senderCharacterId)) {
+--
+262-    fun selfUnmute(viewerCharacterId: String, targetCharacterId: String) = selfMutes.unmute(viewerCharacterId, targetCharacterId)
+263-
+264:    fun adminMute(characterId: String, duration: Duration, reason: String, issuedBy: String, now: Instant = Instant.now()): AdminMuteRecord {
+265:        val record = AdminMuteRecord(characterId, now.plus(duration), reason, issuedBy)
+266-        adminMutes[characterId] = record
+267-        return record
+268-    }
+269-
+270-    fun reportMessage(
+271-        reporterCharacterId: String,
+272-        messageId: String,
+273-        category: ReportCategory,
+274-        reasoning: String
+275-    ): ServiceResult<MessageReport> {
+276-        val message = messages.find { it.id == messageId } ?: return ServiceResult.Failure("Message not found.")
+277-        if (reasoning.isBlank()) return ServiceResult.Failure("A reason must be provided.")
+278-
+279-        val report = MessageReport(
+280-            messageId = messageId,
+281-            reporterCharacterId = reporterCharacterId,
+282-            reportedCharacterId = message.senderCharacterId,
+283-            category = category,
+284-            reasoning = reasoning
+285-        )
+286-        reports.add(report)
+287-
+288-        reporterHiddenMessages.getOrPut(reporterCharacterId) { mutableSetOf() }.add(messageId)
+289-
+290-        return ServiceResult.Success(report)
+--
+293-    fun pendingReports(): List<MessageReport> = reports.filter { it.status == ReportStatus.PENDING }
+294-
+295:    fun resolveReport(reportId: String, actionTaken: Boolean): ServiceResult<MessageReport> {
+296-        val report = reports.find { it.id == reportId } ?: return ServiceResult.Failure("Report not found.")
+297-        report.status = if (actionTaken) ReportStatus.REVIEWED_ACTION_TAKEN else ReportStatus.REVIEWED_NO_ACTION
+298-        return ServiceResult.Success(report)
+299-    }
+300-
+301:    fun submitAppeal(characterId: String, relatedMuteReason: String, appealText: String): ServiceResult<Appeal> {
+302:        if (appealText.isBlank()) return ServiceResult.Failure("Appeal text cannot be empty.")
+303:        val appeal = Appeal(characterId = characterId, relatedMuteReason = relatedMuteReason, appealText = appealText)
+304-        appeals.add(appeal)
+305-        return ServiceResult.Success(appeal)
+306-    }
+307-
+308:    fun pendingAppeals(): List<Appeal> = appeals.filter { it.status == AppealStatus.PENDING }
+309-
+310:    fun resolveAppeal(appealId: String, grant: Boolean, reviewerId: String, notes: String): ServiceResult<Appeal> {
+311:        val appeal = appeals.find { it.id == appealId } ?: return ServiceResult.Failure("Appeal not found.")
+312:        appeal.status = if (grant) AppealStatus.GRANTED else AppealStatus.DENIED
+313-        appeal.reviewedBy = reviewerId
+314-        appeal.reviewNotes = notes
+315-        if (grant) {
+316-            adminMutes.remove(appeal.characterId)
+317-        }
+318-        return ServiceResult.Success(appeal)
+319-    }
+320-}
+]633;E;echo "===== moderator/role columns anywhere =====";9f3f417b-0485-4c27-a149-53e74bcc8f04]633;C===== moderator/role columns anywhere =====
+Run in Supabase SQL editor:
+select table_name, column_name, data_type from information_schema.columns where table_schema='public' and (column_name ilike '%role%' or column_name ilike '%moderator%' or column_name ilike '%admin%') order by table_name;
