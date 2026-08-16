@@ -796,7 +796,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
                                 val debugErrorText = debugAuthError ?: ""
-                                Text("Supabase: $debugAuthState $debugErrorText", color = androidx.compose.ui.graphics.Color.Red)
+                                androidx.compose.material3.Text("Supabase: $debugAuthState $debugErrorText", color = androidx.compose.ui.graphics.Color.Red)
 
                                 val guildState = currentGuildHomeState
                                 if (guildState == null) {
