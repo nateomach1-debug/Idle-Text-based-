@@ -4,7 +4,7 @@ Daemon will be stopped at the end of the build
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :app:generateDebugBuildConfig
+> Task :app:generateDebugBuildConfig UP-TO-DATE
 > Task :app:checkDebugAarMetadata UP-TO-DATE
 > Task :app:generateDebugResValues UP-TO-DATE
 > Task :app:mapDebugSourceSetPaths UP-TO-DATE
@@ -18,59 +18,54 @@ Daemon will be stopped at the end of the build
 > Task :app:processDebugManifest UP-TO-DATE
 > Task :app:processDebugManifestForPackage UP-TO-DATE
 > Task :app:processDebugResources UP-TO-DATE
-> Task :app:javaPreCompileDebug UP-TO-DATE
-> Task :app:mergeDebugShaders UP-TO-DATE
-> Task :app:compileDebugShaders NO-SOURCE
-> Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:mergeDebugAssets UP-TO-DATE
-> Task :app:compressDebugAssets UP-TO-DATE
-> Task :app:desugarDebugFileDependencies UP-TO-DATE
-> Task :app:checkDebugDuplicateClasses UP-TO-DATE
-> Task :app:mergeExtDexDebug UP-TO-DATE
-> Task :app:mergeLibDexDebug UP-TO-DATE
-> Task :app:mergeDebugJniLibFolders UP-TO-DATE
-> Task :app:mergeDebugNativeLibs UP-TO-DATE
-> Task :app:stripDebugDebugSymbols UP-TO-DATE
-> Task :app:validateSigningDebug UP-TO-DATE
-> Task :app:writeDebugAppMetadata UP-TO-DATE
-> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
-The message received from the daemon indicates that the daemon has disappeared.
-Build request sent: Build{id=cacc7059-b724-4362-8deb-2d76e8bf1a41, currentDir=/workspaces/Idle-Text-based-}
-Attempting to read last messages from the daemon log...
-Daemon pid: 92252
-  log file: /home/codespace/.gradle/daemon/9.4.0/daemon-92252.out.log
------ Last 20 lines from daemon log file - daemon-92252.out.log -----
-2026-08-16T16:43:18.430+0000 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] Command execution: started DaemonCommandExecution[command = Build{id=cacc7059-b724-4362-8deb-2d76e8bf1a41, currentDir=/workspaces/Idle-Text-based-}, connection = DefaultDaemonConnection: socket connection from /127.0.0.1:33383 to /127.0.0.1:37330] after 0.002266666666666667 minutes of idle
-2026-08-16T16:43:18.431+0000 [INFO] [org.gradle.launcher.daemon.server.DaemonRegistryUpdater] Marking the daemon as busy, address: [bba89e7e-c75a-4960-89b9-6d7c2e2bafaf port:33383, addresses:[localhost/127.0.0.1]]
-2026-08-16T16:43:18.431+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Marking busy by address: [bba89e7e-c75a-4960-89b9-6d7c2e2bafaf port:33383, addresses:[localhost/127.0.0.1]]
-2026-08-16T16:43:18.432+0000 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Waiting to acquire exclusive lock on daemon addresses registry.
-2026-08-16T16:43:18.434+0000 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Lock acquired on daemon addresses registry.
-2026-08-16T16:43:18.435+0000 [DEBUG] [org.gradle.cache.internal.DefaultFileLockManager] Releasing lock on daemon addresses registry.
-2026-08-16T16:43:18.435+0000 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] resetting idle timer
-2026-08-16T16:43:18.437+0000 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] daemon is running. Sleeping until state changes.
-2026-08-16T16:43:18.438+0000 [INFO] [org.gradle.launcher.daemon.server.exec.StartBuildOrRespondWithBusy] Daemon is about to start building Build{id=cacc7059-b724-4362-8deb-2d76e8bf1a41, currentDir=/workspaces/Idle-Text-based-}. Dispatching build started information...
-2026-08-16T16:43:18.438+0000 [DEBUG] [org.gradle.launcher.daemon.server.SynchronizedDispatchConnection] thread 21: dispatching org.gradle.launcher.daemon.protocol.BuildStarted@72a17323
-2026-08-16T16:43:18.440+0000 [DEBUG] [org.gradle.launcher.daemon.server.exec.EstablishBuildEnvironment] Configuring env variables: [PATH, IRBRC, CODESPACES, CODESPACE_VSCODE_FOLDER, PROMPT_DIRTRIM, VSCODE_PYTHON_AUTOACTIVATE_GUARD, GITHUB_API_URL, COLORTERM, DOCKER_BUILDKIT, SDKMAN_DIR, rvm_version, VSCODE_GIT_ASKPASS_NODE, PWD, TERM_PROGRAM_VERSION, NVS_DIR, SDKMAN_BROKER_API, CONDA_SCRIPT, HUGO_ROOT, NVM_CD_FLAGS, LESSOPEN, RVM_PATH, SDKMAN_CANDIDATES_API, MY_RUBY_HOME, GITHUB_CODESPACE_TOKEN, ContainerVersion, rvm_path, RAILS_DEVELOPMENT_HOSTS, GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN, PYTHON_ROOT, NVM_SYMLINK_CURRENT, GITHUB_USER, SHLVL, DOTNET_RUNNING_IN_CONTAINER, GITHUB_SERVER_URL, JAVA_ROOT, JAVA_HOME, GIT_EDITOR, TERM, FEATURE_SPARK_POST_COMMIT_CREATE_ITERATION, GRADLE_HOME, NVM_INC, GITHUB_REPOSITORY, VSCODE_IPC_HOOK_CLI, _, NUGET_XMLDOC_MODE, RUBY_HOME, NODE_ROOT, ENABLE_DYNAMIC_INSTALL, TERM_PROGRAM, DOTNET_SKIP_FIRST_TIME_EXPERIENCE, PHP_ROOT, RUBY_ROOT, GOROOT, JUPYTERLAB_PATH, GEM_PATH, NVM_BIN, NVS_USE_XZ, DOTNET_USE_POLLING_FILE_WATCHER, VSCODE_GIT_IPC_HANDLE, PIPX_HOME, HUGO_DIR, MAVEN_ROOT, COPILOT_DEBUG_NONCE, MAVEN_HOME, ORYX_PREFER_USER_INSTALLED_SDKS, GIT_ASKPASS, SHELL, GITHUB_TOKEN, GITHUB_GRAPHQL_URL, DEBIAN_FLAVOR, GOPATH, GEM_HOME, PHP_PATH, DOTNET_ROOT, RUBY_VERSION, DEBUGINFOD_URLS, LS_COLORS, PIPX_BIN_DIR, ORYX_ENV_TYPE, LESSCLOSE, BROWSER, rvm_bin_path, CLOUDENV_ENVIRONMENT_ID, ORYX_SDK_STORAGE_BASE_URL, rvm_prefix, LANG, VSCODE_GIT_ASKPASS_MAIN, INTERNAL_VSCS_TARGET_URL, CONDA_DIR, VSCODE_GIT_ASKPASS_EXTRA_ARGS, SDKMAN_CANDIDATES_DIR, NVS_HOME, NVS_ROOT, NVM_DIR, NVS_OS, SHELL_LOGGED_IN, PYTHON_PATH, PYTHONIOENCODING, SDKMAN_PLATFORM, USER, ORYX_DIR, HOSTNAME, CODESPACE_NAME, NPM_GLOBAL, HOME, DYNAMIC_INSTALL_ROOT_DIR]
-2026-08-16T16:43:18.445+0000 [DEBUG] [org.gradle.launcher.daemon.server.exec.LogToClient] About to start relaying all logs to the client via the connection.
-2026-08-16T16:43:18.446+0000 [INFO] [org.gradle.launcher.daemon.server.exec.LogToClient] The client will now receive all logging from the daemon (pid: 92252). The daemon log file: /home/codespace/.gradle/daemon/9.4.0/daemon-92252.out.log
-2026-08-16T16:43:18.448+0000 [DEBUG] [org.gradle.launcher.daemon.server.exec.RequestStopIfSingleUsedDaemon] Requesting daemon stop after processing Build{id=cacc7059-b724-4362-8deb-2d76e8bf1a41, currentDir=/workspaces/Idle-Text-based-}
-2026-08-16T16:43:18.448+0000 [LIFECYCLE] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] Daemon will be stopped at the end of the build 
-2026-08-16T16:43:18.448+0000 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] Stop as soon as idle requested. The daemon is busy
-2026-08-16T16:43:18.449+0000 [DEBUG] [org.gradle.launcher.daemon.server.DaemonStateCoordinator] daemon stop has been requested. Sleeping until state changes.
-2026-08-16T16:43:18.453+0000 [DEBUG] [org.gradle.launcher.daemon.server.exec.ExecuteBuild] The daemon has started executing the build.
-2026-08-16T16:43:18.454+0000 [DEBUG] [org.gradle.launcher.daemon.server.exec.ExecuteBuild] Executing build with daemon context: DefaultDaemonContext[uid=e4cc5d04-b1ee-47d7-b0ea-d30bbd2c30a0,javaHome=/usr/local/sdkman/candidates/java/17.0.10-tem,javaVersion=17,javaVendor=Eclipse Adoptium,daemonRegistryDir=/home/codespace/.gradle/daemon,pid=92252,idleTimeout=120000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-Xmx2048m,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]
-Daemon vm is shutting down... The daemon has exited normally or was terminated in response to a user interrupt.----- End of the daemon log -----
+> Task :app:compileDebugKotlin
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:592:25 'when' expression must be exhaustive. Add the 'CHAT' branch or an 'else' branch.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:33 Unresolved reference 'Text'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:85 Syntax error: Expecting an element.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:86 Syntax error: Expecting '}'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:91 Syntax error: Expecting '}'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:93 Unresolved reference 'color'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:93 Only expressions are allowed in this context.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:139 Syntax error: Expecting '}'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:140 Syntax error: Expecting an expression.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:800:37 Unresolved reference 'guildState'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:800:37 Only expressions are allowed in this context.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:800:71 Syntax error: Expecting '}'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:801:37 Unresolved reference 'guildState'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:809:49 Unresolved reference 'guildState'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:821:58 Unresolved reference 'guildState'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:840:30 Syntax error: Expecting '"'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:842:29 Syntax error: Expecting ')'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:842:34 Syntax error: Unexpected tokens (use ';' to separate expressions on the same line).
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:843:33 Unresolved reference 'text'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:843:88 Syntax error: Unexpected tokens (use ';' to separate expressions on the same line).
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:844:33 Unresolved reference 'modifier'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:845:29 Syntax error: Expecting an element.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:899:2 Syntax error: Expecting '}'.
 
+> Task :app:compileDebugKotlin FAILED
+
+[Incubating] Problems report is available at: file:///workspaces/Idle-Text-based-/build/reports/problems/problems-report.html
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Gradle build daemon disappeared unexpectedly (it may have been killed or may have crashed)
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 > Get more help at https://help.gradle.org.
-> Task :app:compileDebugKotlin
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.4.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 1m 24s
+15 actionable tasks: 1 executed, 14 up-to-date
 EXIT CODE: 1
