@@ -1,0 +1,4 @@
+]633;E;echo "===== GUILD + CHAT sections, wide net =====";4ce32660-653f-4145-9e87-10ff7cef652f]633;C===== GUILD + CHAT sections, wide net =====
+128:    // GUILD (Supabase-backed, best-effort - local play never depends on this)
+209:    // CHAT
+1131 app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
