@@ -19,29 +19,7 @@ Daemon will be stopped at the end of the build
 > Task :app:processDebugManifestForPackage UP-TO-DATE
 > Task :app:processDebugResources UP-TO-DATE
 > Task :app:compileDebugKotlin
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:592:25 'when' expression must be exhaustive. Add the 'CHAT' branch or an 'else' branch.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:33 Unresolved reference 'Text'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:85 Syntax error: Expecting an element.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:86 Syntax error: Expecting '}'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:91 Syntax error: Expecting '}'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:93 Unresolved reference 'color'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:93 Only expressions are allowed in this context.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:139 Syntax error: Expecting '}'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:798:140 Syntax error: Expecting an expression.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:800:37 Unresolved reference 'guildState'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:800:37 Only expressions are allowed in this context.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:800:71 Syntax error: Expecting '}'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:801:37 Unresolved reference 'guildState'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:809:49 Unresolved reference 'guildState'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:821:58 Unresolved reference 'guildState'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:840:30 Syntax error: Expecting '"'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:842:29 Syntax error: Expecting ')'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:842:34 Syntax error: Unexpected tokens (use ';' to separate expressions on the same line).
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:843:33 Unresolved reference 'text'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:843:88 Syntax error: Unexpected tokens (use ';' to separate expressions on the same line).
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:844:33 Unresolved reference 'modifier'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:845:29 Syntax error: Expecting an element.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:899:2 Syntax error: Expecting '}'.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:799:33 Unresolved reference 'Text'.
 
 > Task :app:compileDebugKotlin FAILED
 
@@ -66,6 +44,6 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.4.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 1m 24s
+BUILD FAILED in 1m 41s
 15 actionable tasks: 1 executed, 14 up-to-date
 EXIT CODE: 1
