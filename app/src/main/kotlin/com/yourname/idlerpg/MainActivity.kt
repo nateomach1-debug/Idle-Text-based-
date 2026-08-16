@@ -795,7 +795,8 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
-                                Text("Supabase: $debugAuthState ${debugAuthError ?: \"\"}", color = androidx.compose.ui.graphics.Color.Red)
+                                val debugErrorText = debugAuthError ?: ""
+                                Text("Supabase: $debugAuthState $debugErrorText", color = androidx.compose.ui.graphics.Color.Red)
 
                                 val guildState = currentGuildHomeState
                                 if (guildState == null) {
