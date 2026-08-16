@@ -10,11 +10,6 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.time.Instant
 
-// NOTE: adjust the ui.components import paths above if ChatChannelUi /
-// ChatMessageUi / DmConversationSummary actually live somewhere else -
-// chat_dump_4.txt showed them in a file found via grep, not a confirmed
-// package declaration.
-
 // =========================================================
 // RAW ROW SHAPES (mirror the Supabase schema, not the UI)
 // =========================================================
@@ -43,7 +38,7 @@ private data class ChatChannelParticipantRow(
 )
 
 @Serializable
-private data class CharacterNameRow(
+private data class ChatCharacterNameRow(
     val id: String,
     @SerialName("display_name") val displayName: String
 )
@@ -78,20 +73,18 @@ object SupabaseChatRepository {
     // ---------------------------------------------------------
     // CHANNEL LOOKUP
     // GLOBAL/TRADE/HELP are singleton channels seeded by the
-    // Phase A migration (guild_id is null). GUILD and DM channels
-    // are looked up/created via the RPC functions below.
+    // Phase A migration (guild_id is null). Filtering guild_id
+    // client-side rather than via an isNull() filter call, since
+    // that filter method's exact name varies by supabase-kt version.
     // ---------------------------------------------------------
 
     suspend fun fetchSingletonChannelId(channel: ChatChannelUi): String? {
         return try {
             client.postgrest.from("chat_channels")
-                .select {
-                    filter {
-                        eq("type", channel.toDbType())
-                        isNull("guild_id")
-                    }
-                }
-                .decodeSingleOrNull<ChatChannelRow>()?.id
+                .select { filter { eq("type", channel.toDbType()) } }
+                .decodeList<ChatChannelRow>()
+                .firstOrNull { it.guildId == null }
+                ?.id
         } catch (e: Exception) {
             null
         }
@@ -132,12 +125,13 @@ object SupabaseChatRepository {
             val senderIds = rows.map { it.senderCharacterId }.distinct()
             val names = client.postgrest.from("characters")
                 .select { filter { isIn("id", senderIds) } }
-                .decodeList<CharacterNameRow>()
+                .decodeList<ChatCharacterNameRow>()
             val nameById = names.associateBy({ it.id }, { it.displayName })
 
             rows.sortedBy { it.sentAt }.map {
                 ChatMessageUi(
                     id = it.id,
+                    senderCharacterId = it.senderCharacterId,
                     senderName = nameById[it.senderCharacterId] ?: "Unknown",
                     content = it.content,
                     channel = channel
@@ -158,8 +152,6 @@ object SupabaseChatRepository {
 
     // ---------------------------------------------------------
     // REPORTING
-    // p_category must be one of: HARASSMENT, SPAM, HATE_SPEECH,
-    // SCAM_ATTEMPT, OTHER (report_category enum).
     // ---------------------------------------------------------
 
     suspend fun reportMessage(
@@ -177,9 +169,20 @@ object SupabaseChatRepository {
     }
 
     // ---------------------------------------------------------
+    // BLOCKING
+    // ---------------------------------------------------------
+
+    suspend fun blockCharacter(blockerCharacterId: String, blockedCharacterId: String): Result<Unit> = runCatching {
+        client.postgrest.from("blocks").insert(
+            buildJsonObject {
+                put("blocker_character_id", blockerCharacterId)
+                put("blocked_character_id", blockedCharacterId)
+            }
+        )
+    }
+
+    // ---------------------------------------------------------
     // SELF-MUTES
-    // Direct table access - RLS on self_mutes already enforces
-    // that viewer_character_id belongs to the caller.
     // ---------------------------------------------------------
 
     suspend fun selfMute(viewerCharacterId: String, targetCharacterId: String): Result<Unit> = runCatching {
@@ -202,8 +205,6 @@ object SupabaseChatRepository {
 
     // ---------------------------------------------------------
     // CHAT PREFERENCES (global chat opt-out)
-    // Direct table access - RLS on chat_preferences already
-    // enforces that character_id belongs to the caller.
     // ---------------------------------------------------------
 
     suspend fun getGlobalChatOptOut(characterId: String): Boolean {
@@ -228,9 +229,6 @@ object SupabaseChatRepository {
 
     // ---------------------------------------------------------
     // DM CONVERSATION LIST
-    // Finds every DM channel this character participates in,
-    // the other participant in each, and a preview of the most
-    // recent message.
     // ---------------------------------------------------------
 
     suspend fun fetchDmConversations(characterId: String): List<DmConversationSummary> {
@@ -256,7 +254,7 @@ object SupabaseChatRepository {
             val otherIds = otherIdByChannel.values.distinct()
             val names = if (otherIds.isEmpty()) emptyList() else client.postgrest.from("characters")
                 .select { filter { isIn("id", otherIds) } }
-                .decodeList<CharacterNameRow>()
+                .decodeList<ChatCharacterNameRow>()
             val nameById = names.associateBy({ it.id }, { it.displayName })
 
             val allMessages = client.postgrest.from("chat_messages")
