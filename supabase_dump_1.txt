@@ -1,0 +1,103 @@
+]633;E;echo "===== all supabase-related files =====";9f3f417b-0485-4c27-a149-53e74bcc8f04]633;C===== all supabase-related files =====
+./apply_supabase_client.py
+./supabase_dump_1.txt
+./apply_supabase_auth_wiring.py
+./apply_supabase_gradle_setup.py
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$WhenMappings.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$getGlobalChatOptOut$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$promoteToOfficer$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$getOrCreateGuildChannel$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseAuthState.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$fetchSingletonChannelId$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$fetchChannelMessages$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$fetchLeaderboard$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$reportMessage$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$sendMessage$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$createGuild$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$selfMute$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$joinGuild$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$getOrCreateDmChannel$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/data/GameViewModel$syncSupabaseAuth$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$setGlobalChatOptOut$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$blockCharacter$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$fetchDmConversations$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$fetchGuildHome$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$listGuilds$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$disbandGuild$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$blockCharacter$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$kickMember$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$selfUnmute$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$inviteMember$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseChatRepository$fetchChannelMessages$$inlined$sortedBy$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseClientProvider.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$findMembership$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$promoteToLeader$1.class
+./app/build/tmp/kotlin-classes/debug/com/yourname/idlerpg/SupabaseGuildRepository$listGuilds$$inlined$groupingBy$1.class
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$promoteToOfficer$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$createGuild$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$disbandGuild$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$WhenMappings.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$fetchChannelMessages$$inlined$sortedBy$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$setGlobalChatOptOut$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$selfMute$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$listGuilds$$inlined$groupingBy$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$fetchLeaderboard$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$fetchGuildHome$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$fetchChannelMessages$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$getGlobalChatOptOut$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$fetchDmConversations$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$inviteMember$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$joinGuild$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$getOrCreateDmChannel$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseClientProvider.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/data/GameViewModel$syncSupabaseAuth$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$listGuilds$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$promoteToLeader$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$blockCharacter$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$getOrCreateGuildChannel$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseAuthState.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$sendMessage$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$reportMessage$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$blockCharacter$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$kickMember$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseGuildRepository$findMembership$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$fetchSingletonChannelId$1.dex
+./app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/yourname/idlerpg/SupabaseChatRepository$selfUnmute$1.dex
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseClient.kt
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt
+===== SupabaseClientProvider contents (once located, adjust path below) =====
+===== contents =====
+package com.yourname.idlerpg
+
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.realtime.Realtime
+
+// Single shared Supabase client for the whole app - guild/chat multiplayer only.
+// Everything else (characters, inventory, skills, combat) stays local and untouched.
+object SupabaseClientProvider {
+    val client = createSupabaseClient(
+        supabaseUrl = BuildConfig.SUPABASE_URL,
+        supabaseKey = BuildConfig.SUPABASE_ANON_KEY
+    ) {
+        install(Auth)
+        install(Postgrest)
+        install(Realtime)
+    }
+}
+
+// Tracks whether guild/chat multiplayer features are currently usable. Local
+// gameplay never depends on this - it's purely informational for gating
+// multiplayer UI until a real session exists.
+enum class SupabaseAuthState {
+    SIGNED_OUT,
+    SIGNING_IN,
+    SIGNED_IN,
+    ERROR
+}
