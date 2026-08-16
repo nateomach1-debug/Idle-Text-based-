@@ -1,0 +1,3 @@
+]633;E;echo "===== currentCharacterId usage in MainActivity =====";39d0e9f8-a304-45c1-8e27-8072f011c2be]633;C===== currentCharacterId usage in MainActivity =====
+339:    val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
+346:                currentCharacterId != null -> AppFlowState.InGame
