@@ -35,19 +35,60 @@ Daemon will be stopped at the end of the build
 > Task :app:writeDebugAppMetadata UP-TO-DATE
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
 > Task :app:compileDebugKotlin
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:334:49 Unresolved reference 'blockCharacter'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:335:20 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:46:20 Redeclaration:
-data class CharacterNameRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:91:25 Unresolved reference 'isNull'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:143:21 No value passed for parameter 'senderCharacterId'.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:37:20 Redeclaration:
-data class CharacterNameRow : Any
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:112:29 Cannot access 'data class CharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:113:51 Cannot access 'data class CharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:113:62 Cannot access 'data class CharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:188:29 Cannot access 'data class CharacterNameRow : Any': it is private in file.
-e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt:189:64 Cannot access 'data class CharacterNameRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:18:20 Redeclaration:
+data class ChatMessageRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:28:20 Redeclaration:
+data class ChatChannelRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:35:20 Redeclaration:
+data class ChatChannelParticipantRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:41:20 Redeclaration:
+data class ChatCharacterNameRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:47:20 Redeclaration:
+data class ChatPreferenceRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:61:8 Redeclaration:
+object SupabaseChatRepository : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:18:20 Redeclaration:
+data class ChatMessageRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:28:20 Redeclaration:
+data class ChatChannelRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:35:20 Redeclaration:
+data class ChatChannelParticipantRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:41:20 Redeclaration:
+data class ChatCharacterNameRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:47:20 Redeclaration:
+data class ChatPreferenceRow : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:61:8 Redeclaration:
+object SupabaseChatRepository : Any
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:85:29 Cannot access 'data class ChatChannelRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:86:35 Cannot access 'data class ChatChannelRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:87:19 Cannot access 'data class ChatChannelRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:121:27 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:125:43 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:128:29 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:129:51 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:129:62 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:131:32 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:133:29 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:134:44 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:135:46 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:136:34 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:214:37 Cannot access 'data class ChatPreferenceRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:214:59 Cannot access 'data class ChatPreferenceRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:238:29 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:239:57 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:244:29 Cannot access 'data class ChatChannelRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:245:52 Cannot access 'data class ChatChannelRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:250:29 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:251:30 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:252:71 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:252:89 Cannot access 'data class ChatChannelParticipantRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:257:29 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:258:51 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:258:62 Cannot access 'data class ChatCharacterNameRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:262:29 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:263:65 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:264:65 Cannot access 'data class ChatMessageRow : Any': it is private in file.
+e: file:///workspaces/Idle-Text-based-/app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository_v2.kt:271:75 Cannot access 'data class ChatMessageRow : Any': it is private in file.
 
 > Task :app:compileDebugKotlin FAILED
 
@@ -72,6 +113,6 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.4.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 1m 7s
+BUILD FAILED in 1m 46s
 29 actionable tasks: 1 executed, 28 up-to-date
 EXIT CODE: 1
