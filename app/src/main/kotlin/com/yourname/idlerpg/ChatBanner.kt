@@ -30,6 +30,7 @@ enum class ChatChannelUi { GLOBAL, GUILD, TRADE, HELP, DMS }
 
 data class ChatMessageUi(
     val id: String,
+    val senderCharacterId: String,
     val senderName: String,
     val content: String,
     val channel: ChatChannelUi
