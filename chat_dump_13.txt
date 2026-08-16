@@ -1,0 +1,24 @@
+]633;E;echo "===== loadInitialChatState call sites =====";9f3f417b-0485-4c27-a149-53e74bcc8f04]633;C===== loadInitialChatState call sites =====
+app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:321:    fun loadInitialChatState() {
+===== LaunchedEffect near currentCharacterId =====
+353-        )
+354-    }
+355:    LaunchedEffect(Unit) {
+356-        gameViewModel.loadGame()
+357-        if (flowState == AppFlowState.Login) {
+358-            val autoAccount = gameViewModel.tryAutoLogin()
+359-            if (autoAccount != null) {
+360-                val chars = gameViewModel.accountService.charactersFor(autoAccount.id)
+--
+790-                                val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+791-
+792:                                LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+793-
+794-                                val guildState = currentGuildHomeState
+795-                                if (guildState == null) {
+796-                                    GuildCreateJoinScreen(
+797-                                        browsableGuilds = currentBrowsableGuilds,
+===== ChatBanner call site check =====
+307:private fun demoDmConversations(): List<DmConversationSummary> = listOf(
+844:                    val chatMessagesFromVm by gameViewModel.chatMessages.collectAsState()
+845:val selectedChatChannelFromVm by gameViewModel.selectedChatChannel.collectAsState()
