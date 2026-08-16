@@ -1,5 +1,7 @@
 package com.yourname.idlerpg
 
+import com.yourname.idlerpg.ui.components.ReportMessageDialog
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -790,6 +792,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
 
                                 LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+                                LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
 
                                 val guildState = currentGuildHomeState
                                 if (guildState == null) {
@@ -846,7 +849,19 @@ val selectedChatChannelFromVm by gameViewModel.selectedChatChannel.collectAsStat
 val dmConversationsFromVm by gameViewModel.dmConversations.collectAsState()
 val selectedDmCharacterIdFromVm by gameViewModel.selectedDmCharacterId.collectAsState()
 
-ChatBanner(
+var reportDialogMessage by remember { mutableStateOf<ChatMessageUi?>(null) }
+                    reportDialogMessage?.let { targetMessage ->
+                        ReportMessageDialog(
+                            message = targetMessage,
+                            onDismiss = { reportDialogMessage = null },
+                            onSubmit = { category, reason ->
+                                gameViewModel.reportChatMessage(targetMessage, category, reason)
+                                reportDialogMessage = null
+                            }
+                        )
+                    }
+
+                    ChatBanner(
     selectedChannel = selectedChatChannelFromVm,
     onChannelSelected = { gameViewModel.selectChatChannel(it) },
     messages = chatMessagesFromVm,
@@ -864,7 +879,7 @@ ChatBanner(
                         },
                         onMessageAction = { message, action ->
                             when (action) {
-                                ChatMessageAction.REPORT -> gameViewModel.reportChatMessage(message, "OTHER", "Reported from chat")
+                                ChatMessageAction.REPORT -> reportDialogMessage = message
                                 ChatMessageAction.BLOCK -> gameViewModel.blockCharacter(message.senderCharacterId)
                                 ChatMessageAction.SELF_MUTE -> gameViewModel.selfMuteCharacter(message.senderCharacterId)
                                 ChatMessageAction.MESSAGE_PLAYER -> {
