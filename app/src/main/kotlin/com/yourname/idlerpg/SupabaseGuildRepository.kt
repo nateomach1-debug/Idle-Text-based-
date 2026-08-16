@@ -165,7 +165,15 @@ object SupabaseGuildRepository {
             return null
         }
     }
-
+    
+suspend fun blockCharacter(blockerCharacterId: String, blockedCharacterId: String): Result<Unit> = runCatching {
+    client.postgrest.from("blocks").insert(
+        buildJsonObject {
+            put("blocker_character_id", blockerCharacterId)
+            put("blocked_character_id", blockedCharacterId)
+        }
+    )
+}
     suspend fun fetchLeaderboard(characterId: String): List<GuildLeaderboardEntry> {
         // Placeholder until Phase 2 adds contribution tracking columns - returns
         // members with a value of 0 rather than fabricating numbers.
