@@ -1,0 +1,32 @@
+]633;E;echo "===== full syncSupabaseAuth function =====";956bf221-fce3-4d48-8a50-f0040c3cf833]633;C===== full syncSupabaseAuth function =====
+93:    private fun syncSupabaseAuth(email: String, password: String, isNewAccount: Boolean) {
+94-        viewModelScope.launch {
+95-            _supabaseAuthState.value = SupabaseAuthState.SIGNING_IN
+96-            try {
+97-                val auth = SupabaseClientProvider.client.auth
+98-                if (isNewAccount) {
+99-                    auth.signUpWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+100-                        this.email = email
+101-                        this.password = password
+102-                    }
+103-                } else {
+104-                    auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+105-                        this.email = email
+106-                        this.password = password
+107-                    }
+108-                }
+109-                _supabaseAuthState.value = SupabaseAuthState.SIGNED_IN
+110-            } catch (e: Exception) {
+111-                _supabaseAuthState.value = SupabaseAuthState.ERROR
+112-                _supabaseAuthError.value = e.message ?: e.toString()
+113-            }
+114-        }
+115-    }
+116-
+117-        // =========================================================
+118-    // GUILD (Supabase-backed, best-effort - local play never depends on this)
+119-    // =========================================================
+120-
+121-    private val _guildHomeState = MutableStateFlow<GuildHomeState?>(null)
+122-    val guildHomeState: StateFlow<GuildHomeState?> = _guildHomeState.asStateFlow()
+123-
