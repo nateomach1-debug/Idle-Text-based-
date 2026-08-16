@@ -101,9 +101,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         this.password = password
                     }
                 } else {
-                    auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
-                        this.email = email
-                        this.password = password
+                    try {
+                        auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+                            this.email = email
+                            this.password = password
+                        }
+                    } catch (signInError: Exception) {
+                        // Local account existed before Supabase sync was added - no
+                        // matching Supabase account exists yet. Lazily create one now
+                        // with the same credentials, so future logins sign in normally.
+                        auth.signUpWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+                            this.email = email
+                            this.password = password
+                        }
                     }
                 }
                 _supabaseAuthState.value = SupabaseAuthState.SIGNED_IN
