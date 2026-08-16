@@ -841,22 +841,24 @@ fun AppRoot(gameViewModel: GameViewModel) {
                         }
                     }
 
-                    ChatBanner(
-                        selectedChannel = selectedChatChannel,
-                        onChannelSelected = {
-                            selectedChatChannel = it
-                            if (it != ChatChannelUi.DMS) selectedDmCharacterId = null
-                        },
-                        messages = chatMessages.filter { it.channel == selectedChatChannel },
-                        dmConversations = demoDmConversations(),
-                        selectedDmCharacterId = selectedDmCharacterId,
-                        onDmSelected = { selectedDmCharacterId = it },
-                        hasUnread = true,
-                        messageInput = chatMessageInput,
-                        onMessageInputChanged = { chatMessageInput = it },
-                        onSendMessage = {
-                            if (chatMessageInput.isNotBlank()) {
-                                chatMessages.add(ChatMessageUi("m" + (chatMessages.size + 1), "You", chatMessageInput, selectedChatChannel))
+                    val chatMessagesFromVm by gameViewModel.chatMessages.collectAsState()
+val selectedChatChannelFromVm by gameViewModel.selectedChatChannel.collectAsState()
+val dmConversationsFromVm by gameViewModel.dmConversations.collectAsState()
+val selectedDmCharacterIdFromVm by gameViewModel.selectedDmCharacterId.collectAsState()
+
+ChatBanner(
+    selectedChannel = selectedChatChannelFromVm,
+    onChannelSelected = { gameViewModel.selectChatChannel(it) },
+    messages = chatMessagesFromVm,
+    dmConversations = dmConversationsFromVm,
+    selectedDmCharacterId = selectedDmCharacterIdFromVm,
+    onDmSelected = { gameViewModel.selectDmConversation(it) },
+    hasUnread = true,
+    messageInput = chatMessageInput,
+    onMessageInputChanged = { chatMessageInput = it },
+    onSendMessage = {
+        if (chatMessageInput.isNotBlank()) {
+            gameViewModel.sendChatMessage(chatMessageInput)
                                 chatMessageInput = ""
                             }
                         },
