@@ -1,0 +1,98 @@
+]633;E;echo "===== GameViewModel chat + guild wiring =====";39d0e9f8-a304-45c1-8e27-8072f011c2be]633;C===== GameViewModel chat + guild wiring =====
+112-    // =========================================================
+113-
+114:    private val _guildHomeState = MutableStateFlow<GuildHomeState?>(null)
+115:    val guildHomeState: StateFlow<GuildHomeState?> = _guildHomeState.asStateFlow()
+116-
+117-    private val _guildId = MutableStateFlow<String?>(null)
+118-
+119-    private val _guildLeaderboard = MutableStateFlow<List<GuildLeaderboardEntry>>(emptyList())
+120-    val guildLeaderboard: StateFlow<List<GuildLeaderboardEntry>> = _guildLeaderboard.asStateFlow()
+121-
+122-    private val _browsableGuilds = MutableStateFlow<List<GuildBrowseEntry>>(emptyList())
+123-    val browsableGuilds: StateFlow<List<GuildBrowseEntry>> = _browsableGuilds.asStateFlow()
+124-
+125-    private val _guildActionError = MutableStateFlow<String?>(null)
+126-    val guildActionError: StateFlow<String?> = _guildActionError.asStateFlow()
+127-
+128:    fun refreshGuildHome() {
+129-        val characterId = _currentCharacterId.value ?: return
+130-        viewModelScope.launch {
+131-            val membership = SupabaseGuildRepository.findMembership(characterId)
+132-            _guildId.value = membership?.first
+133-            if (membership == null) {
+134:                _guildHomeState.value = null
+135-                _guildLeaderboard.value = emptyList()
+136-                _browsableGuilds.value = SupabaseGuildRepository.listGuilds()
+137-            } else {
+138:                _guildHomeState.value = SupabaseGuildRepository.fetchGuildHome(characterId)
+139-                _guildLeaderboard.value = SupabaseGuildRepository.fetchLeaderboard(characterId)
+140-            }
+141-        }
+142-    }
+143-
+144:    fun createGuild(name: String) {
+145-        val characterId = _currentCharacterId.value ?: return
+146-        viewModelScope.launch {
+147-            val result = SupabaseGuildRepository.createGuild(name, characterId)
+148-            result.onFailure { _guildActionError.value = it.message }
+149:            refreshGuildHome()
+150-        }
+151-    }
+152-
+153:    fun joinGuild(guildId: String) {
+154-        val characterId = _currentCharacterId.value ?: return
+155-        viewModelScope.launch {
+156-            val result = SupabaseGuildRepository.joinGuild(guildId, characterId)
+157-            result.onFailure { _guildActionError.value = it.message }
+158:            refreshGuildHome()
+159-        }
+160-    }
+161-
+162:    fun kickGuildMember(targetCharacterId: String) {
+163-        val guildId = _guildId.value ?: return
+164-        val characterId = _currentCharacterId.value ?: return
+165-        viewModelScope.launch {
+166-            val result = SupabaseGuildRepository.kickMember(guildId, characterId, targetCharacterId)
+167-            result.onFailure { _guildActionError.value = it.message }
+168:            refreshGuildHome()
+169-        }
+170-    }
+171-
+172:    fun promoteGuildMemberToOfficer(targetCharacterId: String) {
+173-        val guildId = _guildId.value ?: return
+174-        val characterId = _currentCharacterId.value ?: return
+175-        viewModelScope.launch {
+176-            val result = SupabaseGuildRepository.promoteToOfficer(guildId, characterId, targetCharacterId)
+177-            result.onFailure { _guildActionError.value = it.message }
+178:            refreshGuildHome()
+179-        }
+180-    }
+181-
+182:    fun promoteGuildMemberToLeader(targetCharacterId: String) {
+183-        val guildId = _guildId.value ?: return
+184-        val characterId = _currentCharacterId.value ?: return
+185-        viewModelScope.launch {
+186-            val result = SupabaseGuildRepository.promoteToLeader(guildId, characterId, targetCharacterId)
+187-            result.onFailure { _guildActionError.value = it.message }
+188:            refreshGuildHome()
+189-        }
+190-    }
+191-
+192-        // =========================================================
+193-    // COMBAT
+194-    // =========================================================
+195-
+196-    private val _trainingSkill = MutableStateFlow(SkillType.ATTACK)
+197-    val trainingSkill: StateFlow<SkillType> = _trainingSkill.asStateFlow()
+198-
+199-    private val _trainingSkillLevel = MutableStateFlow(1)
+200-    val trainingSkillLevel: StateFlow<Int> = _trainingSkillLevel.asStateFlow()
+201-
+202-    private val _combatViewData = MutableStateFlow<CombatViewData?>(null)
+203-    val combatViewData: StateFlow<CombatViewData?> = _combatViewData.asStateFlow()
+204-
+205-    private val _combatHp = MutableStateFlow<Pair<Int, Int>?>(null)
+206-    val combatHp: StateFlow<Pair<Int, Int>?> = _combatHp.asStateFlow()
+207-
+208-    private var lastHitChancePercent: Double? = null
