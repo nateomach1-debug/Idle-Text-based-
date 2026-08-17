@@ -1,0 +1,41 @@
+201:    suspend fun createGuild(name: String, founderCharacterId: String): Result<Unit> = runCatching {
+202-        client.postgrest.rpc("create_guild", buildJsonObject {
+203-            put("p_name", name)
+204-            put("p_founder_character_id", founderCharacterId)
+205-        })
+206-    }
+207-
+208-    suspend fun inviteMember(guildId: String, invitingCharacterId: String, invitedCharacterId: String): Result<Unit> = runCatching {
+209-        client.postgrest.rpc("invite_member", buildJsonObject {
+210-            put("p_guild_id", guildId)
+211-            put("p_inviting_character_id", invitingCharacterId)
+212-            put("p_invited_character_id", invitedCharacterId)
+213-        })
+214-    }
+215-
+216-    suspend fun kickMember(guildId: String, actingCharacterId: String, targetCharacterId: String): Result<Unit> = runCatching {
+217-        client.postgrest.rpc("kick_member", buildJsonObject {
+218-            put("p_guild_id", guildId)
+219-            put("p_acting_character_id", actingCharacterId)
+220-            put("p_target_character_id", targetCharacterId)
+221-        })
+222-    }
+223-
+224-    suspend fun promoteToOfficer(guildId: String, actingCharacterId: String, targetCharacterId: String): Result<Unit> = runCatching {
+225-        client.postgrest.rpc("promote_to_officer", buildJsonObject {
+226-            put("p_guild_id", guildId)
+227-            put("p_acting_character_id", actingCharacterId)
+228-            put("p_target_character_id", targetCharacterId)
+229-        })
+230-    }
+231-
+232-    suspend fun promoteToLeader(guildId: String, actingCharacterId: String, targetCharacterId: String): Result<Unit> = runCatching {
+233-        client.postgrest.rpc("promote_to_leader", buildJsonObject {
+234-            put("p_guild_id", guildId)
+235-            put("p_acting_character_id", actingCharacterId)
+236-            put("p_target_character_id", targetCharacterId)
+237-        })
+238-    }
+239-
+240-    suspend fun disbandGuild(guildId: String, actingCharacterId: String): Result<Unit> = runCatching {
+241-        client.postgrest.rpc("disband_guild", buildJsonObject {
