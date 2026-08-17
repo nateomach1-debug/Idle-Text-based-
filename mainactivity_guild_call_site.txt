@@ -1,0 +1,121 @@
+                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+                                        vendorSellableItems = inventoryItems,
+                                        onSellToVendor = { sellItemId, quantity ->
+                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
+                                        }
+                                    )
+                                }
+                            }
+
+                            AppDestination.GUILD -> {
+                                val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
+                                val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
+                                val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+
+                                LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+                                LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
+                                val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
+                                val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
+                                val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
+                                val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
+                                val debugChatError by gameViewModel.chatActionError.collectAsState()
+                                var showDebugDialog by remember { mutableStateOf(false) }
+                                LaunchedEffect(debugAuthError, debugCharSyncError) {
+                                    if (debugAuthError != null || debugCharSyncError != null || debugChatError != null) {
+                                        showDebugDialog = true
+                                    }
+                                }
+                                if (showDebugDialog) {
+                                    androidx.compose.material3.AlertDialog(
+                                        onDismissRequest = { showDebugDialog = false },
+                                        title = { androidx.compose.material3.Text("Debug: Supabase Sync") },
+                                        text = {
+                                            androidx.compose.foundation.layout.Column {
+                                                androidx.compose.material3.Text("Auth: $debugAuthState")
+                                                debugAuthError?.let { androidx.compose.material3.Text("Auth error: $it") }
+                                                androidx.compose.material3.Text("Char id: ${debugSupabaseCharId ?: "none"}")
+                                                debugCharSyncError?.let { androidx.compose.material3.Text("Char sync error: $it") }
+                                                debugChatError?.let { androidx.compose.material3.Text("Chat error: $it") }
+                                            }
+                                        },
+                                        confirmButton = {
+                                            androidx.compose.material3.TextButton(onClick = { showDebugDialog = false }) {
+                                                androidx.compose.material3.Text("OK")
+                                            }
+                                        }
+                                    )
+                                }
+
+                                val guildState = currentGuildHomeState
+                                if (guildState == null) {
+                                    GuildCreateJoinScreen(
+                                        browsableGuilds = currentBrowsableGuilds,
+                                        onCreateGuild = { name -> gameViewModel.createGuild(name) },
+                                        onJoinGuild = { guildId -> gameViewModel.joinGuild(guildId) }
+                                    )
+                                } else {
+                                    GuildHomeScreen(
+                                        state = guildState,
+                                        leaderboardEntries = currentGuildLeaderboard,
+                                        leaderboardShowingDaily = leaderboardShowingDaily,
+                                        onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+                                        onMemberTapped = { selectedGuildMember = it },
+                                        onContributeToEvent = { },
+                                        onCastVote = { }
+                                    )
+
+                                    selectedGuildMember?.let { member ->
+                                        MemberActionPopup(
+                                            member = member,
+                                            viewerRole = guildState.viewerRole,
+                                            onDismiss = { selectedGuildMember = null },
+                                            onKick = {
+                                                gameViewModel.kickGuildMember(member.characterId)
+                                                selectedGuildMember = null
+                                            },
+                                            onPromote = {
+                                                when (member.role) {
+                                                    GuildMemberRole.MEMBER -> gameViewModel.promoteGuildMemberToOfficer(member.characterId)
+                                                    GuildMemberRole.OFFICER -> gameViewModel.promoteGuildMemberToLeader(member.characterId)
+                                                    GuildMemberRole.LEADER -> {}
+                                                }
+                                                selectedGuildMember = null
+                                            },
+                                            onDemote = { selectedGuildMember = null },
+                                            onInitiateVote = { selectedGuildMember = null }
+                                        )
+                                    }
+                                }
+                            }
+
+                            else -> androidx.compose.material3.Text(
+                                text = currentDestination.label + " screen coming soon",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        }
+                    }
+
+                    val chatMessagesFromVm by gameViewModel.chatMessages.collectAsState()
+val selectedChatChannelFromVm by gameViewModel.selectedChatChannel.collectAsState()
+val dmConversationsFromVm by gameViewModel.dmConversations.collectAsState()
+val selectedDmCharacterIdFromVm by gameViewModel.selectedDmCharacterId.collectAsState()
+
+var reportDialogMessage by remember { mutableStateOf<ChatMessageUi?>(null) }
+                    reportDialogMessage?.let { targetMessage ->
+                        ReportMessageDialog(
+                            message = targetMessage,
+                            onDismiss = { reportDialogMessage = null },
+                            onSubmit = { category, reason ->
+                                gameViewModel.reportChatMessage(targetMessage, category, reason)
+                                reportDialogMessage = null
+                            }
+                        )
+                    }
+
+                    ChatBanner(
+    selectedChannel = selectedChatChannelFromVm,
+    onChannelSelected = { gameViewModel.selectChatChannel(it) },
+    messages = chatMessagesFromVm,
+    dmConversations = dmConversationsFromVm,
+    selectedDmCharacterId = selectedDmCharacterIdFromVm,
