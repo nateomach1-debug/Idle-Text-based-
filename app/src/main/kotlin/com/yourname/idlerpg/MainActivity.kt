@@ -797,9 +797,10 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
+                                val debugChatError by gameViewModel.chatActionError.collectAsState()
                                 var showDebugDialog by remember { mutableStateOf(false) }
                                 LaunchedEffect(debugAuthError, debugCharSyncError) {
-                                    if (debugAuthError != null || debugCharSyncError != null) {
+                                    if (debugAuthError != null || debugCharSyncError != null || debugChatError != null) {
                                         showDebugDialog = true
                                     }
                                 }
@@ -813,6 +814,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                                 debugAuthError?.let { androidx.compose.material3.Text("Auth error: $it") }
                                                 androidx.compose.material3.Text("Char id: ${debugSupabaseCharId ?: "none"}")
                                                 debugCharSyncError?.let { androidx.compose.material3.Text("Char sync error: $it") }
+                                                debugChatError?.let { androidx.compose.material3.Text("Chat error: $it") }
                                             }
                                         },
                                         confirmButton = {
