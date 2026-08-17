@@ -795,12 +795,33 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
-                                val debugErrorText = debugAuthError ?: ""
-                                androidx.compose.material3.Text("Supabase: $debugAuthState $debugErrorText", color = androidx.compose.ui.graphics.Color.Red)
                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
-                                val debugCharErrorText = debugCharSyncError ?: ""
-                                androidx.compose.material3.Text("CharSync: $debugSupabaseCharId $debugCharErrorText", color = androidx.compose.ui.graphics.Color.Red)
+                                var showDebugDialog by remember { mutableStateOf(false) }
+                                LaunchedEffect(debugAuthError, debugCharSyncError) {
+                                    if (debugAuthError != null || debugCharSyncError != null) {
+                                        showDebugDialog = true
+                                    }
+                                }
+                                if (showDebugDialog) {
+                                    androidx.compose.material3.AlertDialog(
+                                        onDismissRequest = { showDebugDialog = false },
+                                        title = { androidx.compose.material3.Text("Debug: Supabase Sync") },
+                                        text = {
+                                            androidx.compose.foundation.layout.Column {
+                                                androidx.compose.material3.Text("Auth: $debugAuthState")
+                                                debugAuthError?.let { androidx.compose.material3.Text("Auth error: $it") }
+                                                androidx.compose.material3.Text("Char id: ${debugSupabaseCharId ?: "none"}")
+                                                debugCharSyncError?.let { androidx.compose.material3.Text("Char sync error: $it") }
+                                            }
+                                        },
+                                        confirmButton = {
+                                            androidx.compose.material3.TextButton(onClick = { showDebugDialog = false }) {
+                                                androidx.compose.material3.Text("OK")
+                                            }
+                                        }
+                                    )
+                                }
 
                                 val guildState = currentGuildHomeState
                                 if (guildState == null) {
