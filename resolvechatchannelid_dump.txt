@@ -1,0 +1,21 @@
+297:    private suspend fun resolveChatChannelId(channel: ChatChannelUi): String? {
+298-        return when (channel) {
+299-            ChatChannelUi.GUILD -> _guildId.value?.let {
+300-                SupabaseChatRepository.getOrCreateGuildChannel(it).getOrNull()
+301-            }
+302-            ChatChannelUi.DMS -> selectedDmChannelId
+303-            else -> SupabaseChatRepository.fetchSingletonChannelId(channel)
+304-        }
+305-    }
+306-
+307-    fun selectChatChannel(channel: ChatChannelUi) {
+308-        _selectedChatChannel.value = channel
+309-        if (channel == ChatChannelUi.DMS) {
+310-            refreshDmConversations()
+311-            _chatMessages.value = if (selectedDmChannelId != null) _chatMessages.value else emptyList()
+312-        } else {
+313-            refreshChatMessages()
+314-        }
+315-    }
+316-
+317-    fun refreshChatMessages() {
