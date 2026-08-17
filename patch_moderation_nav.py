@@ -5,7 +5,7 @@ BASE = "app/src/main/kotlin/com/yourname/idlerpg"
 # ---------------------------------------------------------
 # 1. NavigationDestinations.kt - add MODERATION enum entry
 # ---------------------------------------------------------
-nav_path = f"{BASE}/ui/navigation/NavigationDestinations.kt"
+nav_path = f"{BASE}/NavigationDestinations.kt"
 with open(nav_path, "r") as f:
     content = f.read()
 
@@ -20,7 +20,7 @@ print(f"Patched {nav_path}")
 # ---------------------------------------------------------
 # 2. SideRail.kt - icon mapping + filterable destinations param
 # ---------------------------------------------------------
-rail_path = f"{BASE}/ui/navigation/SideRail.kt"
+rail_path = f"{BASE}/SideRail.kt"
 with open(rail_path, "r") as f:
     content = f.read()
 
