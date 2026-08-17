@@ -1,0 +1,7 @@
+app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt:28:private fun iconFor(destination: AppDestination): ImageVector = when (destination) {
+app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt:40:    currentDestination: AppDestination,
+app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt:41:    onDestinationSelected: (AppDestination) -> Unit,
+app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt:42:    badgedDestinations: Set<AppDestination> = emptySet(),
+app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt:87:    destination: AppDestination,
+app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt:10:enum class AppDestination(val label: String, val iconName: String) {
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:28:import com.yourname.idlerpg.ui.navigation.AppDestination
