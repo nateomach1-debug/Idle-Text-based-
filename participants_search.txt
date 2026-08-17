@@ -1,0 +1,6 @@
+./fix_missing_select_policies_phase_b.sql:10:-- and chat_channel_participants (auth.uid() IS NOT NULL). Moderator-only
+./fix_missing_select_policies.sql:11:create policy chat_channel_participants_select_authenticated on public.chat_channel_participants
+./check_phase_b_rls.sql:20:    'chat_channel_participants',
+./check_phase_b_rls.sql:43:    'chat_channel_participants',
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:236:            val myParticipation = client.postgrest.from("chat_channel_participants")
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt:248:            val otherParticipants = client.postgrest.from("chat_channel_participants")
