@@ -683,7 +683,28 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 }
 
-override fun onCleared() {
+init {
+        viewModelScope.launch {
+            SupabaseClientProvider.client.auth.sessionStatus.collect { status ->
+                when (status) {
+                    is SessionStatus.Authenticated -> {
+                        _supabaseAuthState.value = SupabaseAuthState.SIGNED_IN
+                        _supabaseAuthError.value = null
+                    }
+                    is SessionStatus.NotAuthenticated -> {
+                        _supabaseAuthState.value = SupabaseAuthState.SIGNED_OUT
+                    }
+                    else -> {
+                        // Covers Initializing/LoadingFromStorage and RefreshFailure,
+                        // whichever names this supabase-kt version uses - all transient.
+                        _supabaseAuthState.value = SupabaseAuthState.SIGNING_IN
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onCleared() {
     super.onCleared()
     saveGame()
 }
