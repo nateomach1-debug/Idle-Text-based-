@@ -1,0 +1,31 @@
+]633;E;echo "===== SupabaseAuthState enum =====";5a10a390-491c-450e-b5e7-5e2a71f49ddd]633;C===== SupabaseAuthState enum =====
+===== init block =====
+664-    val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
+665-
+666:    init {
+667-        viewModelScope.launch(Dispatchers.Default) {
+668-            while (true) {
+669-                delay(1000L)
+670-                tickSkilling()
+671-            tickCrafting()
+672-            tickConsumables()
+673-            tickCombat()
+674-            }
+675-        }
+676-    }
+677:    init {
+678-    viewModelScope.launch(Dispatchers.Default) {
+679-        while (true) {
+680-            delay(30_000L)
+681-            saveGame()
+682-        }
+683-    }
+684-}
+685-
+686-override fun onCleared() {
+687-    super.onCleared()
+688-    saveGame()
+689-}
+690-    private var hasLoaded = false
+691-
+692-    fun loadGame() {
