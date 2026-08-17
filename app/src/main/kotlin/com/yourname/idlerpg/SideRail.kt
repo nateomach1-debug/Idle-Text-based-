@@ -33,6 +33,7 @@ private fun iconFor(destination: AppDestination): ImageVector = when (destinatio
     AppDestination.MARKET -> Icons.Filled.Storefront
     AppDestination.GUILD -> Icons.Filled.Flag
     AppDestination.CHAT -> Icons.Filled.ChatBubble
+    AppDestination.MODERATION -> Icons.Filled.AdminPanelSettings
 }
 
 @Composable
@@ -40,6 +41,7 @@ fun SideRail(
     currentDestination: AppDestination,
     onDestinationSelected: (AppDestination) -> Unit,
     badgedDestinations: Set<AppDestination> = emptySet(),
+    destinations: List<AppDestination> = AppDestination.values().toList(),
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -70,7 +72,7 @@ fun SideRail(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        AppDestination.values().forEach { destination ->
+        destinations.forEach { destination ->
             RailItem(
                 destination = destination,
                 isSelected = destination == currentDestination,

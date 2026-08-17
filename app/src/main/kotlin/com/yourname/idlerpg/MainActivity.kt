@@ -793,6 +793,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
 
                                 LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
+                                LaunchedEffect(Unit) { gameViewModel.checkModeratorStatus() }
                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
@@ -865,6 +866,18 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                         )
                                     }
                                 }
+                            }
+
+                            AppDestination.MODERATION -> {
+                                val moderation by gameViewModel.moderationState.collectAsState()
+                                LaunchedEffect(Unit) { gameViewModel.refreshModeration() }
+                                ModerationScreen(
+                                    state = moderation,
+                                    onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
+                                    onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
+                                    onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
+                                    onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) }
+                                )
                             }
 
                             else -> androidx.compose.material3.Text(
