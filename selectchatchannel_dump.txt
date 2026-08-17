@@ -1,0 +1,26 @@
+307:    fun selectChatChannel(channel: ChatChannelUi) {
+308-        _selectedChatChannel.value = channel
+309-        if (channel == ChatChannelUi.DMS) {
+310-            refreshDmConversations()
+311-            _chatMessages.value = if (selectedDmChannelId != null) _chatMessages.value else emptyList()
+312-        } else {
+313-            refreshChatMessages()
+314-        }
+315-    }
+316-
+317-    fun refreshChatMessages() {
+318-        val characterId = _currentSupabaseCharacterId.value ?: return
+319-        val channel = _selectedChatChannel.value
+320-        viewModelScope.launch {
+321-            val channelId = resolveChatChannelId(channel)
+322-            if (channelId == null) {
+323-                _chatMessages.value = emptyList()
+324-                return@launch
+325-            }
+326-            _chatMessages.value = SupabaseChatRepository.fetchChannelMessages(characterId, channelId, channel)
+327-        }
+328-    }
+329-
+330-    fun sendChatMessage(content: String) {
+331-        if (content.isBlank()) return
+332-        val characterId = _currentSupabaseCharacterId.value ?: return
