@@ -1,0 +1,1 @@
+app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:590:                            badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
