@@ -1,0 +1,5 @@
+]633;E;echo "===== SupabaseAuthState enum, any file =====";04c0ab8e-c327-4a19-833e-739371d354d2]633;C===== SupabaseAuthState enum, any file =====
+app/src/main/kotlin/com/yourname/idlerpg/SupabaseClient.kt:24:enum class SupabaseAuthState {
+===== auth state/error declarations =====
+84:    private val _supabaseAuthState = MutableStateFlow(SupabaseAuthState.SIGNED_OUT)
+87:    private val _supabaseAuthError = MutableStateFlow<String?>(null)
