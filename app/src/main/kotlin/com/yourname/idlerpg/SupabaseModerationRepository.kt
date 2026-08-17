@@ -40,6 +40,12 @@ private data class ModCharacterNameRow(
     @SerialName("display_name") val displayName: String
 )
 
+@Serializable
+private data class ModeratorFlagRow(
+    val id: String,
+    @SerialName("is_moderator") val isModerator: Boolean
+)
+
 // =========================================================
 // UI-FACING SHAPES
 // =========================================================
@@ -78,6 +84,22 @@ data class PendingAppealUi(
 object SupabaseModerationRepository {
 
     private val client get() = SupabaseClientProvider.client
+
+    // ---------------------------------------------------------
+    // MODERATOR STATUS CHECK
+    // UI-side gate only - every RPC below independently re-checks
+    // caller_is_moderator() server-side regardless of this.
+    // ---------------------------------------------------------
+
+    suspend fun isCallerModerator(profileId: String): Boolean {
+        return try {
+            client.postgrest.from("profiles")
+                .select { filter { eq("id", profileId) } }
+                .decodeSingleOrNull<ModeratorFlagRow>()?.isModerator ?: false
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     // ---------------------------------------------------------
     // REPORTS
