@@ -1,0 +1,7 @@
+578:                        SideRail(
+579-                            currentDestination = currentDestination,
+580-                            onDestinationSelected = {
+581-                                currentDestination = it
+582-                                skillsScreenState = SkillsScreenState.List
+583-                                combatScreenState = CombatScreenState.ZoneSelect
+584-                                inventoryScreenState = InventoryScreenState.Items
