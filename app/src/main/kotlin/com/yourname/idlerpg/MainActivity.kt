@@ -587,7 +587,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 marketTab = MarketTab.BROWSE
                                 selectedMarketItemId = null
                             },
-                            badgedDestinations = setOf(AppDestination.CHAT, AppDestination.GUILD)
+                            badgedDestinations = setOf(AppDestination.GUILD)
                         )
 
                         Box(modifier = Modifier.weight(1f)) {
