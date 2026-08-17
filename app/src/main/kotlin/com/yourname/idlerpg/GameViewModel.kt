@@ -1,5 +1,7 @@
 package com.yourname.idlerpg.data
 
+import io.github.jan.supabase.auth.status.SessionStatus
+
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
