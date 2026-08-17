@@ -575,8 +575,10 @@ fun AppRoot(gameViewModel: GameViewModel) {
                     RecoveryBar(recoveringUntil = recoveringUntil.value)
 
                     Row(modifier = Modifier.fillMaxSize().weight(1f)) {
+                        val isModerator by gameViewModel.isModerator.collectAsState()
                         SideRail(
                             currentDestination = currentDestination,
+                            destinations = AppDestination.values().filter { it != AppDestination.MODERATION || isModerator },
                             onDestinationSelected = {
                                 currentDestination = it
                                 skillsScreenState = SkillsScreenState.List
