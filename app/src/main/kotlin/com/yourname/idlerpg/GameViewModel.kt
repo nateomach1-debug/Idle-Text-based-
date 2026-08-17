@@ -217,6 +217,58 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     // =========================================================
+    // MODERATION (Supabase-backed, moderator-only, best-effort)
+    // =========================================================
+
+    private val _isModerator = MutableStateFlow(false)
+    val isModerator: StateFlow<Boolean> = _isModerator.asStateFlow()
+
+    private val _moderationState = MutableStateFlow(ModerationState())
+    val moderationState: StateFlow<ModerationState> = _moderationState.asStateFlow()
+
+    fun checkModeratorStatus() {
+        val profileId = SupabaseClientProvider.client.auth.currentUserOrNull()?.id ?: return
+        viewModelScope.launch {
+            _isModerator.value = SupabaseModerationRepository.isCallerModerator(profileId)
+        }
+    }
+
+    fun refreshModeration() {
+        if (!_isModerator.value) return
+        viewModelScope.launch {
+            _moderationState.value = _moderationState.value.copy(isLoading = true)
+            val reports = SupabaseModerationRepository.fetchPendingReports()
+            val appeals = SupabaseModerationRepository.fetchPendingAppeals()
+            _moderationState.value = ModerationState(reports, appeals, isLoading = false)
+        }
+    }
+
+    fun resolveReport(reportId: String, actionTaken: Boolean) {
+        viewModelScope.launch {
+            SupabaseModerationRepository.resolveReport(reportId, actionTaken)
+            refreshModeration()
+        }
+    }
+
+    fun resolveAppeal(appealId: String, grant: Boolean, notes: String) {
+        viewModelScope.launch {
+            SupabaseModerationRepository.resolveAppeal(appealId, grant, notes)
+            refreshModeration()
+        }
+    }
+
+    fun muteCharacterAsModerator(characterId: String, durationSeconds: Int, reason: String) {
+        viewModelScope.launch {
+            SupabaseModerationRepository.muteCharacter(characterId, durationSeconds, reason)
+        }
+    }
+
+    fun unmuteCharacterAsModerator(characterId: String) {
+        viewModelScope.launch {
+            SupabaseModerationRepository.unmuteCharacter(characterId)
+        }
+    }
+    // =========================================================
     // CHAT
     // =========================================================
 
