@@ -148,6 +148,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentSupabaseCharacterId = MutableStateFlow<String?>(null)
     val currentSupabaseCharacterId: StateFlow<String?> = _currentSupabaseCharacterId.asStateFlow()
 
+    private val _characterSyncError = MutableStateFlow<String?>(null)
+    val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
+
     fun refreshGuildHome() {
         val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
@@ -764,8 +767,12 @@ fun logout() {
         if (selectedCharacter != null) {
             viewModelScope.launch {
                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+                result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
+                result.onSuccess { _characterSyncError.value = null }
                 _currentSupabaseCharacterId.value = result.getOrNull()
             }
+        } else {
+            _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
         }
 
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
