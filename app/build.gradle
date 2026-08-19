@@ -1,46 +1,61 @@
-name: Build Debug APK
+plugins {
+    id 'com.android.application' version '8.9.1'
+    id 'org.jetbrains.kotlin.android' version '2.3.20'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.3.20'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.3.20'
+}
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+android {
+    namespace 'com.yourname.idlerpg'
+    compileSdk 36
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+    defaultConfig {
+        applicationId 'com.yourname.idlerpg'
+        minSdk 26
+        targetSdk 34
+        versionCode 2
+        versionName '1.1'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('SUPABASE_URL', '')}\""
+        buildConfigField "String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty('SUPABASE_ANON_KEY', '')}\""
+    }
 
-      - name: Write local.properties from secrets
-        run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> local.properties
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> local.properties
+    buildFeatures {
+        compose true
+        buildConfig true
+    }
 
-      - name: Verify secret format (no values exposed)
-        run: |
-          echo "URL length: ${#SUPABASE_URL_CHECK}"
-          echo "URL starts with https://: $(echo "$SUPABASE_URL_CHECK" | grep -c '^https://')"
-          echo "URL ends with .supabase.co: $(echo "$SUPABASE_URL_CHECK" | grep -c '\.supabase\.co$')"
-          echo "Anon key length: ${#SUPABASE_ANON_KEY_CHECK}"
-        env:
-          SUPABASE_URL_CHECK: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY_CHECK: ${{ secrets.SUPABASE_ANON_KEY }}
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2024.06.00')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.activity:activity-compose:1.9.0'
+    implementation 'androidx.activity:activity-ktx:1.9.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.1'
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1"
+    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+
+    // Supabase - guild/chat multiplayer backend.
+    implementation platform('io.github.jan-tennert.supabase:bom:3.5.0')
+    implementation 'io.github.jan-tennert.supabase:auth-kt'
+    implementation 'io.github.jan-tennert.supabase:postgrest-kt'
+    implementation 'io.github.jan-tennert.supabase:realtime-kt'
+    implementation 'io.ktor:ktor-client-android:3.1.1'
+}
