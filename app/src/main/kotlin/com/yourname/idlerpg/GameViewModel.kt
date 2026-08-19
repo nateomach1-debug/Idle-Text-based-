@@ -1004,6 +1004,9 @@ fun logout() {
     fun startCraftingAction(itemId: String, targetQuantity: Int? = null) {
         val characterId = _currentCharacterId.value ?: return
         val recipe = RecipeCatalog.forOutput(itemId) ?: return
+        // Starting crafting stops any active combat session - only one
+        // activity can run at a time.
+        leaveCombatZone()
         offlineIdleService.stopQueue(characterId)
         offlineIdleService.startCraftingQueue(
             characterId,
