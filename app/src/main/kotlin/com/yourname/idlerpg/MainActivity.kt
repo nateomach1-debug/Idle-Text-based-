@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yourname.idlerpg.data.GameViewModel
@@ -388,7 +389,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
         )
     }
 
-    var currentDestination by remember { mutableStateOf(AppDestination.HOME) }
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
     var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
     var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
