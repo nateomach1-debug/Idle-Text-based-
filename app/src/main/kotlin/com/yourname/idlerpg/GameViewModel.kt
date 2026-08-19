@@ -487,6 +487,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun enterCombatZone(zoneId: String): ServiceResult<CombatSession> {
         val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+        // Entering combat stops any active skilling/crafting queue - only one
+        // activity can run at a time.
+        offlineIdleService.stopQueue(characterId)
+        skillActionProgressSeconds = 0
+        craftActionProgressSeconds = 0
+        refreshActiveQueue()
         combatService.stateFor(characterId, maxHpFor(characterId))
         val result = combatService.enterZone(characterId, zoneId, skillLevel(characterId, _trainingSkill.value))
         if (result is ServiceResult.Success) {
@@ -915,6 +921,9 @@ fun logout() {
     fun startSkillAction(skillType: SkillType, itemId: String) {
         val characterId = _currentCharacterId.value ?: return
         val action = ActionCatalog.find(skillType, itemId) ?: return
+        // Starting a skill stops any active combat session - only one
+        // activity can run at a time.
+        leaveCombatZone()
         offlineIdleService.stopQueue(characterId)
         offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
         offlineIdleService.recordLastSeen(characterId)
