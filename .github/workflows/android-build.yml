@@ -26,6 +26,16 @@ jobs:
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> local.properties
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> local.properties
 
+      - name: Verify secret format (no values exposed)
+        run: |
+          echo "URL length: ${#SUPABASE_URL_CHECK}"
+          echo "URL starts with https://: $(echo "$SUPABASE_URL_CHECK" | grep -c '^https://')"
+          echo "URL ends with .supabase.co: $(echo "$SUPABASE_URL_CHECK" | grep -c '\.supabase\.co$')"
+          echo "Anon key length: ${#SUPABASE_ANON_KEY_CHECK}"
+        env:
+          SUPABASE_URL_CHECK: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY_CHECK: ${{ secrets.SUPABASE_ANON_KEY }}
+
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
