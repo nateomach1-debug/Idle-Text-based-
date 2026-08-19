@@ -4,7 +4,7 @@ with open(path, "r") as f:
 
 # 1. Make sure rememberSaveable is imported.
 if "import androidx.compose.runtime.saveable.rememberSaveable" not in content:
-    anchor = "import androidx.compose.runtime.remember\n"
+    anchor = "import androidx.compose.runtime.*\n"
     assert anchor in content, "Could not find an anchor import line to insert rememberSaveable import near"
     content = content.replace(
         anchor,
