@@ -1,0 +1,29 @@
+name: Run Patch Script
+
+on:
+  workflow_dispatch:
+    inputs:
+      script_path:
+        description: 'Path to the .py patch script to run (e.g. patch_combat_skill_exclusion.py)'
+        required: true
+        type: string
+
+jobs:
+  run-patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run patch script
+        run: python3 "${{ inputs.script_path }}"
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m "Run patch script: ${{ inputs.script_path }}"
+          git push
