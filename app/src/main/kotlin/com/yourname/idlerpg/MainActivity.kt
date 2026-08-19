@@ -453,6 +453,15 @@ fun AppRoot(gameViewModel: GameViewModel) {
 
     val combatViewData by gameViewModel.combatViewData.collectAsState()
 
+    // Survives rotation: if the ViewModel still has an active combat session
+    // but the local UI state reset back to ZoneSelect (e.g. after an
+    // orientation change recreated the Activity), snap back to InZone.
+    LaunchedEffect(combatViewData) {
+        if (combatViewData != null && combatScreenState == CombatScreenState.ZoneSelect) {
+            combatScreenState = CombatScreenState.InZone
+        }
+    }
+
     fun canEquip(item: InventoryItemSummary): Pair<Boolean, String?> {
         if (item.category == InventoryCategory.TOOL) return true to null
         val locked = combatViewData?.viewState == CombatViewState.IN_COMBAT
@@ -582,7 +591,9 @@ fun AppRoot(gameViewModel: GameViewModel) {
                             onDestinationSelected = {
                                 currentDestination = it
                                 skillsScreenState = SkillsScreenState.List
-                                combatScreenState = CombatScreenState.ZoneSelect
+                                // combatScreenState intentionally NOT reset here - if a
+                                // battle is still running in the background, navigating
+                                // away and back should return to it, not zone-select.
                                 inventoryScreenState = InventoryScreenState.Items
                                 marketTab = MarketTab.BROWSE
                                 selectedMarketItemId = null
