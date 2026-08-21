@@ -1,0 +1,65 @@
+======================================================================
+stats parameter presence check
+======================================================================
+
+GeneratedItemCatalog.kt:
+  total ItemDefinition( calls: 324
+  calls with explicit 'stats = ItemStats(...)': 0
+  of those, empty 'stats = ItemStats()': 0
+  --- 3 sample full blocks ---
+  >>> ItemDefinition(
+              id = "copper_ore",
+              name = "Copper Ore",
+              category = ItemCategory.MATERIAL,
+              isTradeable = true,
+              isStackable = true
+          )
+
+  >>> ItemDefinition(
+              id = "tin_ore",
+              name = "Tin Ore",
+              category = ItemCategory.MATERIAL,
+              isTradeable = true,
+              isStackable = true
+          )
+
+  >>> ItemDefinition(
+              id = "clay",
+              name = "Clay",
+              category = ItemCategory.MATERIAL,
+              isTradeable = true,
+              isStackable = true
+          )
+
+
+MetalTierItemCatalog.kt:
+  total ItemDefinition( calls: 105
+  calls with explicit 'stats = ItemStats(...)': 0
+  of those, empty 'stats = ItemStats()': 0
+  --- 3 sample full blocks ---
+  >>> ItemDefinition(
+                  id = "bronze_arrowheads",
+                  name = "Bronze Arrowheads",
+                  category = ItemCategory.MATERIAL,
+                  isTradeable = true,
+                  isStackable = true,
+              )
+
+  >>> ItemDefinition(
+                  id = "bronze_throwing_knives",
+                  name = "Bronze Throwing Knives",
+                  category = ItemCategory.WEAPON,
+                  isTradeable = true,
+                  isStackable = false,
+                  equipSlot = EquipSlot.WEAPON,
+                  combatStyle = CombatStyle.RANGED,
+              )
+
+  >>> ItemDefinition(
+                  id = "bronze_chainmail_body",
+                  name = "Bronze Chainmail Body",
+                  category = ItemCategory.ARMOR,
+                  isTradeable = true,
+                  isStackable = false,
+                  equipSlot = EquipSlot.CHESTPLATE,
+              )
