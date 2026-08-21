@@ -1,0 +1,30 @@
+======================================================================
+InventoryScreen.kt - lines mentioning Use/use/onUse/Consumable/Food
+======================================================================
+(total lines: 298)
+60:     val isConsumable: Boolean,
+70:     onUseItem: (String) -> Unit,
+141:             onUse = { onUseItem(item.itemId); selectedItem = null },
+230:     onUse: () -> Unit,
+255:                 if (item.isConsumable) {
+256:                     Button(onClick = onUse, modifier = Modifier.fillMaxWidth()) {
+257:                         Text(text = "Use")
+
+======================================================================
+GameViewModel.kt - lines mentioning healCharacter/ConsumableType/FOOD/useItem
+======================================================================
+(total lines: 1239)
+691:                     combatService.healCharacter(characterId, food.healAmount ?: 0)
+
+======================================================================
+CombatSystem-ish files - search for healCharacter definition
+======================================================================
+Found 'fun healCharacter' in CombatSystem.kt
+fun healCharacter(characterId: String, amount: Int): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp + amount).coerceAtMost(state.maxHp)
+        return ServiceResult.Success(state)
+    }
+
+    fun resolveRecoveryIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+        val stat
