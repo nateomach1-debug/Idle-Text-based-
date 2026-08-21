@@ -1,0 +1,23 @@
+======================================================================
+Item/weapon stats discovery report
+======================================================================
+
+----------------------------------------------------------------------
+STEP 1: data class / field name discovery
+----------------------------------------------------------------------
+
+GeneratedItemCatalog.kt:
+
+MetalTierItemCatalog.kt:
+
+ItemsEquipmentSystem.kt:
+
+----------------------------------------------------------------------
+STEP 2: raw numeric stat fields found (sample - first 200 per file)
+----------------------------------------------------------------------
+
+GeneratedItemCatalog.kt (total lines: 2909):
+
+MetalTierItemCatalog.kt (total lines: 910):
+
+ItemsEquipmentSystem.kt (total lines: 2136):
