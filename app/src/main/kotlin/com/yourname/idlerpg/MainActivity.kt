@@ -920,6 +920,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                         }
                         }
                         }
+                        }
                     }
 
                     val chatMessagesFromVm by gameViewModel.chatMessages.collectAsState()
