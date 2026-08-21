@@ -1,0 +1,423 @@
+======================================================================
+WEAPON/ARMOR items from GeneratedItemCatalog.kt + MetalTierItemCatalog.kt
+======================================================================
+
+--- GeneratedItemCatalog.kt ---
+  id='bronze_dagger' name='Bronze Dagger' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='bronze_sword' name='Bronze Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='bronze_mace' name='Bronze Mace' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='bronze_warhammer' name='Bronze Warhammer' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=STRENGTH
+  id='iron_chainmail_body' name='Iron Chainmail Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=DEFENSE
+  id='iron_full_helm' name='Iron Full Helm' category=ARMOR equipSlot=HELMET combatStyle=None skillRequired=DEFENSE
+  id='steel_platelegs' name='Steel Platelegs' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=DEFENSE
+  id='steel_platebody' name='Steel Platebody' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=DEFENSE
+  id='steel_kiteshield' name='Steel Kiteshield' category=ARMOR equipSlot=SHIELD combatStyle=None skillRequired=DEFENSE
+  id='mithril_battleaxe' name='Mithril Battleaxe' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='mithril_2h_sword' name='Mithril Two-Handed Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='adamant_throwing_knives' name='Adamant Throwing Knives' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='adamant_platebody_set' name='Adamant Full Plate Armor Set' category=ARMOR equipSlot=None combatStyle=None skillRequired=DEFENSE
+  id='rune_claws' name='Rune Claws' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='rune_halberd' name='Rune Halberd' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='orichalcum_ceremonial_armor' name='Orichalcum Ceremonial Armor' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=DEFENSE
+  id='masterwork_weapon' name='Masterwork Weapon' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='legendary_blade' name='Legendary Blade' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=ATTACK
+  id='shortbow' name='Shortbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='longbow' name='Longbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='oak_shortbow' name='Oak Shortbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='oak_longbow' name='Oak Longbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='willow_shortbow' name='Willow Shortbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='willow_longbow' name='Willow Longbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='composite_bow' name='Composite Bow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='maple_longbow' name='Maple Longbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='crossbow' name='Crossbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='yew_shortbow' name='Yew Shortbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='yew_longbow' name='Yew Longbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='ironwood_composite_bow' name='Ironwood Composite Bow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='magic_shortbow' name='Magic Shortbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='magic_longbow' name='Magic Longbow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='elder_bow' name='Elder Bow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='spirit_bow' name='Spirit Bow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='ancient_ironbark_bow' name='Ancient Ironbark Bow' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=ARCHERY
+  id='leather_gloves' name='Leather Gloves' category=ARMOR equipSlot=GLOVES combatStyle=None skillRequired=None
+  id='leather_boots' name='Leather Boots' category=ARMOR equipSlot=BOOTS combatStyle=None skillRequired=None
+  id='leather_cowl' name='Leather Cowl' category=ARMOR equipSlot=HELMET combatStyle=None skillRequired=None
+  id='leather_vambraces' name='Leather Vambraces' category=ARMOR equipSlot=GLOVES combatStyle=None skillRequired=None
+  id='leather_body' name='Leather Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='leather_chaps' name='Leather Chaps' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=None
+  id='studded_body' name='Studded Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=DEFENSE
+  id='studded_chaps' name='Studded Chaps' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=DEFENSE
+  id='hardleather_body' name='Hardleather Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='snakeskin_armor' name='Snakeskin Armor' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=ARCHERY
+  id='green_dhide_vambraces' name='Green Dragonhide Vambraces' category=ARMOR equipSlot=GLOVES combatStyle=None skillRequired=ARCHERY
+  id='blue_dhide_body' name='Blue Dragonhide Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=ARCHERY
+  id='blue_dhide_chaps' name='Blue Dragonhide Chaps' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=ARCHERY
+  id='battlestaff' name='Battlestaff' category=WEAPON equipSlot=WEAPON combatStyle=MAGIC skillRequired=MAGIC
+  (49 weapon/armor items found)
+
+--- MetalTierItemCatalog.kt ---
+  id='bronze_throwing_knives' name='Bronze Throwing Knives' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=None
+  id='bronze_chainmail_body' name='Bronze Chainmail Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='bronze_full_helm' name='Bronze Full Helm' category=ARMOR equipSlot=HELMET combatStyle=None skillRequired=None
+  id='bronze_platelegs' name='Bronze Platelegs' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=None
+  id='bronze_kiteshield' name='Bronze Kiteshield' category=ARMOR equipSlot=SHIELD combatStyle=None skillRequired=None
+  id='bronze_battleaxe' name='Bronze Battleaxe' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='bronze_claws' name='Bronze Claws' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='bronze_2h_sword' name='Bronze Two-Handed Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='bronze_platebody' name='Bronze Platebody' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='bronze_halberd' name='Bronze Halberd' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='iron_dagger' name='Iron Dagger' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='iron_sword' name='Iron Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='iron_mace' name='Iron Mace' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='iron_warhammer' name='Iron Warhammer' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='iron_throwing_knives' name='Iron Throwing Knives' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=None
+  id='iron_platelegs' name='Iron Platelegs' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=None
+  id='iron_kiteshield' name='Iron Kiteshield' category=ARMOR equipSlot=SHIELD combatStyle=None skillRequired=None
+  id='iron_battleaxe' name='Iron Battleaxe' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='iron_claws' name='Iron Claws' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='iron_2h_sword' name='Iron Two-Handed Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='iron_platebody' name='Iron Platebody' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='iron_halberd' name='Iron Halberd' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='steel_dagger' name='Steel Dagger' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='steel_sword' name='Steel Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='steel_mace' name='Steel Mace' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='steel_warhammer' name='Steel Warhammer' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='steel_throwing_knives' name='Steel Throwing Knives' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=None
+  id='steel_chainmail_body' name='Steel Chainmail Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='steel_full_helm' name='Steel Full Helm' category=ARMOR equipSlot=HELMET combatStyle=None skillRequired=None
+  id='steel_battleaxe' name='Steel Battleaxe' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='steel_claws' name='Steel Claws' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='steel_2h_sword' name='Steel Two-Handed Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='steel_halberd' name='Steel Halberd' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='mithril_dagger' name='Mithril Dagger' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='mithril_sword' name='Mithril Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='mithril_mace' name='Mithril Mace' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='mithril_warhammer' name='Mithril Warhammer' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='mithril_throwing_knives' name='Mithril Throwing Knives' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=None
+  id='mithril_chainmail_body' name='Mithril Chainmail Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='mithril_full_helm' name='Mithril Full Helm' category=ARMOR equipSlot=HELMET combatStyle=None skillRequired=None
+  id='mithril_platelegs' name='Mithril Platelegs' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=None
+  id='mithril_kiteshield' name='Mithril Kiteshield' category=ARMOR equipSlot=SHIELD combatStyle=None skillRequired=None
+  id='mithril_claws' name='Mithril Claws' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='mithril_platebody' name='Mithril Platebody' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='mithril_halberd' name='Mithril Halberd' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='adamant_dagger' name='Adamant Dagger' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='adamant_sword' name='Adamant Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='adamant_mace' name='Adamant Mace' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='adamant_warhammer' name='Adamant Warhammer' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='adamant_chainmail_body' name='Adamant Chainmail Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='adamant_full_helm' name='Adamant Full Helm' category=ARMOR equipSlot=HELMET combatStyle=None skillRequired=None
+  id='adamant_platelegs' name='Adamant Platelegs' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=None
+  id='adamant_kiteshield' name='Adamant Kiteshield' category=ARMOR equipSlot=SHIELD combatStyle=None skillRequired=None
+  id='adamant_battleaxe' name='Adamant Battleaxe' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='adamant_claws' name='Adamant Claws' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='adamant_2h_sword' name='Adamant Two-Handed Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='adamant_platebody' name='Adamant Platebody' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='adamant_halberd' name='Adamant Halberd' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='rune_dagger' name='Rune Dagger' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='rune_sword' name='Rune Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='rune_mace' name='Rune Mace' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='rune_warhammer' name='Rune Warhammer' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='rune_throwing_knives' name='Rune Throwing Knives' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=None
+  id='rune_chainmail_body' name='Rune Chainmail Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='rune_full_helm' name='Rune Full Helm' category=ARMOR equipSlot=HELMET combatStyle=None skillRequired=None
+  id='rune_platelegs' name='Rune Platelegs' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=None
+  id='rune_kiteshield' name='Rune Kiteshield' category=ARMOR equipSlot=SHIELD combatStyle=None skillRequired=None
+  id='rune_battleaxe' name='Rune Battleaxe' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='rune_2h_sword' name='Rune Two-Handed Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='rune_platebody' name='Rune Platebody' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='orichalcum_dagger' name='Orichalcum Dagger' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='orichalcum_sword' name='Orichalcum Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='orichalcum_mace' name='Orichalcum Mace' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='orichalcum_warhammer' name='Orichalcum Warhammer' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='orichalcum_throwing_knives' name='Orichalcum Throwing Knives' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=None
+  id='orichalcum_chainmail_body' name='Orichalcum Chainmail Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='orichalcum_full_helm' name='Orichalcum Full Helm' category=ARMOR equipSlot=HELMET combatStyle=None skillRequired=None
+  id='orichalcum_platelegs' name='Orichalcum Platelegs' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=None
+  id='orichalcum_kiteshield' name='Orichalcum Kiteshield' category=ARMOR equipSlot=SHIELD combatStyle=None skillRequired=None
+  id='orichalcum_battleaxe' name='Orichalcum Battleaxe' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='orichalcum_claws' name='Orichalcum Claws' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='orichalcum_2h_sword' name='Orichalcum Two-Handed Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='orichalcum_platebody' name='Orichalcum Platebody' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='orichalcum_halberd' name='Orichalcum Halberd' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='celestial_dagger' name='Celestial Dagger' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='celestial_sword' name='Celestial Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='celestial_mace' name='Celestial Mace' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='celestial_warhammer' name='Celestial Warhammer' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='celestial_throwing_knives' name='Celestial Throwing Knives' category=WEAPON equipSlot=WEAPON combatStyle=RANGED skillRequired=None
+  id='celestial_chainmail_body' name='Celestial Chainmail Body' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='celestial_full_helm' name='Celestial Full Helm' category=ARMOR equipSlot=HELMET combatStyle=None skillRequired=None
+  id='celestial_platelegs' name='Celestial Platelegs' category=ARMOR equipSlot=LEGS combatStyle=None skillRequired=None
+  id='celestial_kiteshield' name='Celestial Kiteshield' category=ARMOR equipSlot=SHIELD combatStyle=None skillRequired=None
+  id='celestial_battleaxe' name='Celestial Battleaxe' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='celestial_claws' name='Celestial Claws' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='celestial_2h_sword' name='Celestial Two-Handed Sword' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  id='celestial_platebody' name='Celestial Platebody' category=ARMOR equipSlot=CHESTPLATE combatStyle=None skillRequired=None
+  id='celestial_halberd' name='Celestial Halberd' category=WEAPON equipSlot=WEAPON combatStyle=MELEE skillRequired=None
+  (98 weapon/armor items found)
+
+======================================================================
+Recipe levelRequired for weapon/armor-looking output items
+(from ItemsEquipmentSystem.kt RecipeCatalog)
+======================================================================
+
+  bronze_dagger: level 5
+  bronze_sword: level 6
+  bronze_mace: level 7
+  bronze_arrowheads: level 7
+  bronze_warhammer: level 8
+  bronze_throwing_knives: level 8
+  bronze_chainmail_body: level 9
+  bronze_full_helm: level 9
+  bronze_platelegs: level 10
+  bronze_kiteshield: level 11
+  bronze_battleaxe: level 12
+  bronze_claws: level 12
+  bronze_2h_sword: level 13
+  bronze_platebody: level 14
+  bronze_halberd: level 14
+  iron_dagger: level 15
+  iron_sword: level 16
+  iron_mace: level 17
+  iron_arrowheads: level 17
+  iron_warhammer: level 18
+  iron_throwing_knives: level 18
+  iron_chainmail_body: level 19
+  iron_full_helm: level 19
+  iron_platelegs: level 20
+  iron_kiteshield: level 21
+  iron_battleaxe: level 22
+  iron_claws: level 22
+  iron_2h_sword: level 23
+  iron_platebody: level 24
+  iron_halberd: level 24
+  steel_dagger: level 35
+  steel_sword: level 36
+  steel_mace: level 37
+  steel_arrowheads: level 37
+  steel_warhammer: level 38
+  steel_throwing_knives: level 38
+  steel_chainmail_body: level 39
+  steel_full_helm: level 39
+  steel_platelegs: level 40
+  steel_kiteshield: level 41
+  steel_battleaxe: level 42
+  steel_claws: level 42
+  steel_2h_sword: level 43
+  steel_platebody: level 44
+  steel_halberd: level 44
+  mithril_dagger: level 50
+  mithril_sword: level 51
+  mithril_mace: level 52
+  mithril_arrowheads: level 52
+  mithril_warhammer: level 53
+  mithril_throwing_knives: level 53
+  mithril_chainmail_body: level 54
+  mithril_full_helm: level 54
+  mithril_platelegs: level 55
+  mithril_kiteshield: level 56
+  mithril_battleaxe: level 57
+  mithril_claws: level 57
+  mithril_2h_sword: level 58
+  mithril_platebody: level 59
+  mithril_halberd: level 59
+  adamant_dagger: level 60
+  adamant_sword: level 61
+  adamant_mace: level 62
+  adamant_arrowheads: level 62
+  adamant_warhammer: level 63
+  adamant_throwing_knives: level 63
+  adamant_chainmail_body: level 64
+  adamant_full_helm: level 64
+  adamant_platelegs: level 65
+  adamant_kiteshield: level 66
+  adamant_battleaxe: level 67
+  adamant_claws: level 67
+  adamant_2h_sword: level 68
+  adamant_platebody: level 69
+  adamant_halberd: level 69
+  rune_dagger: level 70
+  rune_sword: level 71
+  rune_mace: level 72
+  rune_arrowheads: level 72
+  rune_warhammer: level 73
+  rune_throwing_knives: level 73
+  rune_chainmail_body: level 74
+  rune_full_helm: level 74
+  rune_platelegs: level 75
+  rune_kiteshield: level 76
+  rune_battleaxe: level 77
+  rune_claws: level 77
+  rune_2h_sword: level 78
+  rune_platebody: level 79
+  rune_halberd: level 79
+  orichalcum_dagger: level 80
+  orichalcum_sword: level 81
+  orichalcum_mace: level 82
+  orichalcum_arrowheads: level 82
+  orichalcum_warhammer: level 83
+  orichalcum_throwing_knives: level 83
+  orichalcum_chainmail_body: level 84
+  orichalcum_full_helm: level 84
+  orichalcum_platelegs: level 85
+  orichalcum_kiteshield: level 86
+  orichalcum_battleaxe: level 87
+  orichalcum_claws: level 87
+  orichalcum_2h_sword: level 88
+  orichalcum_platebody: level 89
+  orichalcum_halberd: level 89
+  celestial_dagger: level 90
+  celestial_sword: level 91
+  celestial_mace: level 92
+  celestial_arrowheads: level 92
+  celestial_warhammer: level 93
+  celestial_throwing_knives: level 93
+  celestial_chainmail_body: level 94
+  celestial_full_helm: level 94
+  celestial_platelegs: level 95
+  celestial_kiteshield: level 96
+  celestial_battleaxe: level 97
+  celestial_claws: level 97
+  celestial_2h_sword: level 98
+  celestial_platebody: level 99
+  celestial_halberd: level 99
+  full_plate_armor_set: level 65
+  orichalcum_ceremonial_armor: level 80
+  masterwork_weapon: level 85
+  legendary_blade: level 90
+  copper_bar: level 1
+  tin_bar: level 1
+  bronze_bar: level 1
+  iron_bar: level 15
+  silver_bar: level 30
+  steel_bar: level 35
+  gold_bar: level 40
+  mithril_bar: level 50
+  adamantite_bar: level 60
+  runite_bar: level 70
+  orichalcum_bar: level 80
+  celestial_alloy_bar: level 90
+  iron_nails: level 1
+  cooked_shrimp: level 1
+  cooked_anchovies: level 1
+  cooked_sardine: level 5
+  cooked_chicken: level 8
+  cooked_herring: level 10
+  cooked_beef: level 12
+  cooked_crayfish: level 15
+  cooked_trout: level 20
+  cooked_salmon: level 25
+  cooked_tuna: level 30
+  cooked_mackerel: level 35
+  cooked_swordfish: level 40
+  cooked_lobster: level 45
+  cooked_crab: level 50
+  cooked_shark: level 55
+  cooked_monkfish: level 60
+  cooked_manta_ray: level 65
+  cooked_eel: level 70
+  cooked_deep_sea_cod: level 75
+  cooked_anglerfish: level 80
+  bread_dough: level 28
+  bread: level 28
+  meat_pie: level 34
+  cake: level 42
+  stew: level 58
+  gourmet_feast: level 85
+  leviathan_steak: level 90
+  ambrosia_banquet: level 99
+  shortbow_u: level 1
+  shortbow: level 5
+  longbow_u: level 10
+  longbow: level 15
+  oak_shortbow: level 20
+  oak_longbow: level 25
+  willow_shortbow: level 30
+  willow_longbow: level 35
+  composite_bow: level 40
+  maple_longbow: level 45
+  crossbow_frame: level 50
+  crossbow: level 50
+  yew_shortbow: level 55
+  yew_longbow: level 60
+  ironwood_composite_bow: level 65
+  magic_shortbow: level 70
+  magic_longbow: level 75
+  elder_bow: level 80
+  spirit_bow: level 90
+  ancient_ironbark_bow: level 99
+  arrow_shafts: level 1
+  bronze_arrows: level 5
+  iron_arrows: level 15
+  bolt_frame: level 20
+  bolts: level 20
+  steel_arrows: level 25
+  mithril_arrows: level 35
+  adamant_arrows: level 45
+  rune_arrows: level 55
+  barbed_bolts: level 60
+  broad_arrows: level 70
+  dragon_arrows: level 80
+  enchanted_bolts: level 90
+  attack_potion: level 1
+  antipoison: level 3
+  strength_potion: level 5
+  defense_potion: level 10
+  restore_potion: level 12
+  energy_potion: level 15
+  combat_potion: level 20
+  prayer_potion: level 22
+  super_attack_potion: level 30
+  super_strength_potion: level 34
+  super_defense_potion: level 38
+  ranging_potion: level 40
+  magic_potion: level 45
+  super_restore_potion: level 48
+  antidote_plus: level 55
+  brew_of_vigor: level 60
+  antifire_potion: level 65
+  extreme_attack_potion: level 72
+  extreme_strength_potion: level 78
+  overload_potion: level 85
+  divine_potion: level 92
+  elixir_of_the_ancients: level 99
+  leather: level 1
+  leather_gloves: level 1
+  leather_boots: level 5
+  leather_cowl: level 7
+  leather_vambraces: level 9
+  leather_body: level 14
+  leather_chaps: level 18
+  studded_body: level 22
+  studded_chaps: level 32
+  hardleather_body: level 38
+  snakeskin_armor: level 45
+  green_dhide_vambraces: level 55
+  blue_dhide_body: level 60
+  blue_dhide_chaps: level 65
+  opal: level 1
+  jade: level 5
+  red_topaz: level 10
+  sapphire: level 20
+  emerald: level 27
+  ruby: level 34
+  diamond: level 43
+  dragonstone: level 55
+  onyx: level 67
+  zenyte: level 80
+  celestial_crystal: level 90
+  gold_ring: level 5
+  gold_necklace: level 8
+  sapphire_ring: level 15
+  amulet_u: level 20
+  emerald_amulet: level 27
+  flax_into_bowstring: level 30
+  ruby_ring: level 35
+  diamond_necklace: level 40
+  glass_vial: level 46
+  battlestaff: level 50
+  dragonstone_amulet: level 56
+  basket: level 63
+  onyx_ring: level 70
+  zenyte_amulet: level 75
+  enchanted_circlet: level 80
+  celestial_diadem: level 90
