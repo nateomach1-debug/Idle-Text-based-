@@ -717,7 +717,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     items = inventoryItems,
                                     onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
                                     onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
-                                    onUseItem = { },
+                                    onUseItem = { itemId -> gameViewModel.useInventoryItem(itemId) },
                                     onSellOnMarket = { itemId ->
                                         val item = inventoryItems.find { it.itemId == itemId }
                                         selectedMarketItemId = itemId

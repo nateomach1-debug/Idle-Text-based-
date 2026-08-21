@@ -679,6 +679,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         refreshInventory()
     }
 
+    fun useInventoryItem(itemId: String) {
+        val characterId = _currentCharacterId.value ?: return
+        val definition = ItemCatalog.find(itemId) ?: return
+        if (definition.consumableType != ConsumableType.FOOD) return
+        val inventory = inventoryService.inventoryFor(characterId)
+        val removed = inventory.removeItem(itemId, 1)
+        if (removed is ServiceResult.Success) {
+            combatService.healCharacter(characterId, definition.healAmount ?: 0)
+            refreshInventory()
+        }
+    }
+
     private fun tickConsumables() {
         val characterId = _currentCharacterId.value ?: return
         val inventory = inventoryService.inventoryFor(characterId)
