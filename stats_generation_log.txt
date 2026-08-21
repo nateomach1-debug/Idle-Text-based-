@@ -1,0 +1,149 @@
+bronze_dagger (WEAPON, L5, subtype=dagger): atk=6 str=1 acc=13 hit=4
+bronze_sword (WEAPON, L6, subtype=sword): atk=7 str=2 acc=12 hit=6
+bronze_mace (WEAPON, L7, subtype=mace): atk=7 str=3 acc=11 hit=8
+bronze_warhammer (WEAPON, L8, subtype=warhammer): atk=6 str=5 acc=10 hit=13
+iron_chainmail_body (ARMOR, L19, slot=CHESTPLATE): def=19
+iron_full_helm (ARMOR, L19, slot=HELMET): def=11
+steel_platelegs (ARMOR, L40, slot=LEGS): def=29
+steel_platebody (ARMOR, L44, slot=CHESTPLATE): def=40
+steel_kiteshield (ARMOR, L41, slot=SHIELD): def=27
+mithril_battleaxe (WEAPON, L57, subtype=battleaxe): atk=34 str=23 acc=54 hit=63
+mithril_2h_sword (WEAPON, L58, subtype=2h_sword): atk=33 str=26 acc=55 hit=68
+adamant_throwing_knives (WEAPON, L63, subtype=throwing_knives): atk=47 str=2 acc=89 hit=30
+rune_claws (WEAPON, L77, subtype=claws): atk=63 str=6 acc=117 hit=36
+rune_halberd (WEAPON, L79, subtype=halberd): atk=50 str=26 acc=78 hit=80
+orichalcum_ceremonial_armor (ARMOR, L80, slot=CHESTPLATE): def=70
+masterwork_weapon (WEAPON, L85, subtype=masterwork_weapon): atk=62 str=15 acc=99 hit=66
+legendary_blade (WEAPON, L90, subtype=legendary_blade): atk=66 str=16 acc=104 hit=70
+shortbow (WEAPON, L5, subtype=shortbow): atk=6 str=0 acc=12 hit=5
+longbow (WEAPON, L15, subtype=longbow): atk=14 str=0 acc=24 hit=12
+oak_shortbow (WEAPON, L20, subtype=oak_shortbow): atk=17 str=0 acc=30 hit=15
+oak_longbow (WEAPON, L25, subtype=oak_longbow): atk=20 str=0 acc=36 hit=19
+willow_shortbow (WEAPON, L30, subtype=willow_shortbow): atk=24 str=0 acc=42 hit=22
+willow_longbow (WEAPON, L35, subtype=willow_longbow): atk=28 str=0 acc=48 hit=25
+composite_bow (WEAPON, L40, subtype=composite_bow): atk=31 str=0 acc=54 hit=29
+maple_longbow (WEAPON, L45, subtype=maple_longbow): atk=34 str=0 acc=60 hit=32
+crossbow (WEAPON, L50, subtype=crossbow): atk=38 str=0 acc=66 hit=36
+yew_shortbow (WEAPON, L55, subtype=yew_shortbow): atk=42 str=0 acc=72 hit=39
+yew_longbow (WEAPON, L60, subtype=yew_longbow): atk=45 str=0 acc=78 hit=42
+ironwood_composite_bow (WEAPON, L65, subtype=ironwood_composite_bow): atk=48 str=0 acc=84 hit=46
+magic_shortbow (WEAPON, L70, subtype=magic_shortbow): atk=52 str=0 acc=90 hit=49
+magic_longbow (WEAPON, L75, subtype=magic_longbow): atk=56 str=0 acc=96 hit=52
+elder_bow (WEAPON, L80, subtype=elder_bow): atk=59 str=0 acc=102 hit=56
+spirit_bow (WEAPON, L90, subtype=spirit_bow): atk=66 str=0 acc=114 hit=63
+ancient_ironbark_bow (WEAPON, L99, subtype=ancient_ironbark_bow): atk=72 str=0 acc=125 hit=69
+leather_gloves (ARMOR, L1, slot=GLOVES): def=1
+leather_boots (ARMOR, L5, slot=BOOTS): def=2
+leather_cowl (ARMOR, L7, slot=HELMET): def=5
+leather_vambraces (ARMOR, L9, slot=GLOVES): def=3
+leather_body (ARMOR, L14, slot=CHESTPLATE): def=15
+leather_chaps (ARMOR, L18, slot=LEGS): def=14
+studded_body (ARMOR, L22, slot=CHESTPLATE): def=21
+studded_chaps (ARMOR, L32, slot=LEGS): def=23
+hardleather_body (ARMOR, L38, slot=CHESTPLATE): def=35
+snakeskin_armor (ARMOR, L45, slot=CHESTPLATE): def=41
+green_dhide_vambraces (ARMOR, L55, slot=GLOVES): def=14
+blue_dhide_body (ARMOR, L60, slot=CHESTPLATE): def=53
+blue_dhide_chaps (ARMOR, L65, slot=LEGS): def=45
+battlestaff (WEAPON, L50, subtype=battlestaff): atk=38 str=0 acc=60 hit=40
+bronze_throwing_knives (WEAPON, L8, subtype=throwing_knives): atk=9 str=0 acc=17 hit=5
+bronze_chainmail_body (ARMOR, L9, slot=CHESTPLATE): def=10
+bronze_full_helm (ARMOR, L9, slot=HELMET): def=6
+bronze_platelegs (ARMOR, L10, slot=LEGS): def=9
+bronze_kiteshield (ARMOR, L11, slot=SHIELD): def=9
+bronze_battleaxe (WEAPON, L12, subtype=battleaxe): atk=9 str=6 acc=15 hit=15
+bronze_claws (WEAPON, L12, subtype=claws): atk=13 str=1 acc=24 hit=7
+bronze_2h_sword (WEAPON, L13, subtype=2h_sword): atk=9 str=7 acc=15 hit=18
+bronze_platebody (ARMOR, L14, slot=CHESTPLATE): def=15
+bronze_halberd (WEAPON, L14, subtype=halberd): atk=11 str=5 acc=17 hit=16
+iron_dagger (WEAPON, L15, subtype=dagger): atk=14 str=2 acc=26 hit=9
+iron_sword (WEAPON, L16, subtype=sword): atk=14 str=3 acc=23 hit=14
+iron_mace (WEAPON, L17, subtype=mace): atk=13 str=6 acc=21 hit=16
+iron_warhammer (WEAPON, L18, subtype=warhammer): atk=11 str=9 acc=17 hit=25
+iron_throwing_knives (WEAPON, L18, subtype=throwing_knives): atk=16 str=1 acc=30 hit=9
+iron_platelegs (ARMOR, L20, slot=LEGS): def=15
+iron_kiteshield (ARMOR, L21, slot=SHIELD): def=15
+iron_battleaxe (WEAPON, L22, subtype=battleaxe): atk=15 str=10 acc=23 hit=26
+iron_claws (WEAPON, L22, subtype=claws): atk=20 str=2 acc=38 hit=11
+iron_2h_sword (WEAPON, L23, subtype=2h_sword): atk=14 str=11 acc=24 hit=29
+iron_platebody (ARMOR, L24, slot=CHESTPLATE): def=23
+iron_halberd (WEAPON, L24, subtype=halberd): atk=17 str=8 acc=27 hit=26
+steel_dagger (WEAPON, L35, subtype=dagger): atk=28 str=4 acc=52 hit=20
+steel_sword (WEAPON, L36, subtype=sword): atk=28 str=7 acc=45 hit=29
+steel_mace (WEAPON, L37, subtype=mace): atk=26 str=11 acc=41 hit=33
+steel_warhammer (WEAPON, L38, subtype=warhammer): atk=21 str=19 acc=33 hit=49
+steel_throwing_knives (WEAPON, L38, subtype=throwing_knives): atk=30 str=1 acc=56 hit=18
+steel_chainmail_body (ARMOR, L39, slot=CHESTPLATE): def=36
+steel_full_helm (ARMOR, L39, slot=HELMET): def=20
+steel_battleaxe (WEAPON, L42, subtype=battleaxe): atk=26 str=17 acc=41 hit=47
+steel_claws (WEAPON, L42, subtype=claws): atk=36 str=3 acc=67 hit=20
+steel_2h_sword (WEAPON, L43, subtype=2h_sword): atk=25 str=19 acc=42 hit=51
+steel_halberd (WEAPON, L44, subtype=halberd): atk=29 str=15 acc=45 hit=46
+mithril_dagger (WEAPON, L50, subtype=dagger): atk=38 str=6 acc=72 hit=28
+mithril_sword (WEAPON, L51, subtype=sword): atk=39 str=9 acc=61 hit=40
+mithril_mace (WEAPON, L52, subtype=mace): atk=35 str=15 acc=56 hit=45
+mithril_warhammer (WEAPON, L53, subtype=warhammer): atk=28 str=25 acc=44 hit=67
+mithril_throwing_knives (WEAPON, L53, subtype=throwing_knives): atk=40 str=2 acc=76 hit=25
+mithril_chainmail_body (ARMOR, L54, slot=CHESTPLATE): def=48
+mithril_full_helm (ARMOR, L54, slot=HELMET): def=28
+mithril_platelegs (ARMOR, L55, slot=LEGS): def=38
+mithril_kiteshield (ARMOR, L56, slot=SHIELD): def=36
+mithril_claws (WEAPON, L57, subtype=claws): atk=47 str=4 acc=88 hit=27
+mithril_platebody (ARMOR, L59, slot=CHESTPLATE): def=52
+mithril_halberd (WEAPON, L59, subtype=halberd): atk=38 str=19 acc=59 hit=60
+adamant_dagger (WEAPON, L60, subtype=dagger): atk=45 str=7 acc=85 hit=33
+adamant_sword (WEAPON, L61, subtype=sword): atk=46 str=11 acc=72 hit=48
+adamant_mace (WEAPON, L62, subtype=mace): atk=42 str=18 acc=66 hit=53
+adamant_warhammer (WEAPON, L63, subtype=warhammer): atk=33 str=30 acc=52 hit=79
+adamant_chainmail_body (ARMOR, L64, slot=CHESTPLATE): def=57
+adamant_full_helm (ARMOR, L64, slot=HELMET): def=32
+adamant_platelegs (ARMOR, L65, slot=LEGS): def=45
+adamant_kiteshield (ARMOR, L66, slot=SHIELD): def=42
+adamant_battleaxe (WEAPON, L67, subtype=battleaxe): atk=40 str=27 acc=63 hit=73
+adamant_claws (WEAPON, L67, subtype=claws): atk=55 str=5 acc=102 hit=31
+adamant_2h_sword (WEAPON, L68, subtype=2h_sword): atk=38 str=30 acc=64 hit=80
+adamant_platebody (ARMOR, L69, slot=CHESTPLATE): def=61
+adamant_halberd (WEAPON, L69, subtype=halberd): atk=44 str=23 acc=69 hit=70
+rune_dagger (WEAPON, L70, subtype=dagger): atk=52 str=8 acc=98 hit=38
+rune_sword (WEAPON, L71, subtype=sword): atk=53 str=13 acc=83 hit=55
+rune_mace (WEAPON, L72, subtype=mace): atk=48 str=21 acc=76 hit=62
+rune_warhammer (WEAPON, L73, subtype=warhammer): atk=38 str=35 acc=60 hit=91
+rune_throwing_knives (WEAPON, L73, subtype=throwing_knives): atk=54 str=3 acc=102 hit=34
+rune_chainmail_body (ARMOR, L74, slot=CHESTPLATE): def=65
+rune_full_helm (ARMOR, L74, slot=HELMET): def=37
+rune_platelegs (ARMOR, L75, slot=LEGS): def=52
+rune_kiteshield (ARMOR, L76, slot=SHIELD): def=48
+rune_battleaxe (WEAPON, L77, subtype=battleaxe): atk=46 str=31 acc=72 hit=84
+rune_2h_sword (WEAPON, L78, subtype=2h_sword): atk=43 str=34 acc=73 hit=91
+rune_platebody (ARMOR, L79, slot=CHESTPLATE): def=69
+orichalcum_dagger (WEAPON, L80, subtype=dagger): atk=59 str=9 acc=112 hit=43
+orichalcum_sword (WEAPON, L81, subtype=sword): atk=60 str=15 acc=94 hit=63
+orichalcum_mace (WEAPON, L82, subtype=mace): atk=54 str=24 acc=86 hit=70
+orichalcum_warhammer (WEAPON, L83, subtype=warhammer): atk=43 str=39 acc=67 hit=103
+orichalcum_throwing_knives (WEAPON, L83, subtype=throwing_knives): atk=61 str=3 acc=116 hit=39
+orichalcum_chainmail_body (ARMOR, L84, slot=CHESTPLATE): def=73
+orichalcum_full_helm (ARMOR, L84, slot=HELMET): def=42
+orichalcum_platelegs (ARMOR, L85, slot=LEGS): def=58
+orichalcum_kiteshield (ARMOR, L86, slot=SHIELD): def=54
+orichalcum_battleaxe (WEAPON, L87, subtype=battleaxe): atk=51 str=35 acc=81 hit=94
+orichalcum_claws (WEAPON, L87, subtype=claws): atk=70 str=6 acc=131 hit=40
+orichalcum_2h_sword (WEAPON, L88, subtype=2h_sword): atk=48 str=38 acc=81 hit=102
+orichalcum_platebody (ARMOR, L89, slot=CHESTPLATE): def=78
+orichalcum_halberd (WEAPON, L89, subtype=halberd): atk=56 str=29 acc=87 hit=89
+celestial_dagger (WEAPON, L90, subtype=dagger): atk=66 str=10 acc=125 hit=49
+celestial_sword (WEAPON, L91, subtype=sword): atk=67 str=16 acc=105 hit=70
+celestial_mace (WEAPON, L92, subtype=mace): atk=61 str=27 acc=96 hit=78
+celestial_warhammer (WEAPON, L93, subtype=warhammer): atk=48 str=44 acc=75 hit=115
+celestial_throwing_knives (WEAPON, L93, subtype=throwing_knives): atk=68 str=3 acc=129 hit=43
+celestial_chainmail_body (ARMOR, L94, slot=CHESTPLATE): def=82
+celestial_full_helm (ARMOR, L94, slot=HELMET): def=47
+celestial_platelegs (ARMOR, L95, slot=LEGS): def=65
+celestial_kiteshield (ARMOR, L96, slot=SHIELD): def=60
+celestial_battleaxe (WEAPON, L97, subtype=battleaxe): atk=57 str=38 acc=89 hit=105
+celestial_claws (WEAPON, L97, subtype=claws): atk=78 str=7 acc=145 hit=45
+celestial_2h_sword (WEAPON, L98, subtype=2h_sword): atk=54 str=42 acc=90 hit=113
+celestial_platebody (ARMOR, L99, slot=CHESTPLATE): def=86
+celestial_halberd (WEAPON, L99, subtype=halberd): atk=61 str=32 acc=97 hit=99
+
+TOTAL PATCHED: 146
+SKIPPED (equipSlot=None, not equippable): ['adamant_platebody_set']

@@ -930,8 +930,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 6, strengthBonus = 1, accuracyBonus = 13, maxHitBonus = 4)
+        ),
     ItemDefinition(
         id = "iron_nails",
         name = "Iron Nails",
@@ -947,8 +948,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 7, strengthBonus = 2, accuracyBonus = 12, maxHitBonus = 6)
+        ),
     ItemDefinition(
         id = "bronze_mace",
         name = "Bronze Mace",
@@ -958,8 +960,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
         levelRequired = 5,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 7, strengthBonus = 3, accuracyBonus = 11, maxHitBonus = 8)
+        ),
     ItemDefinition(
         id = "bronze_warhammer",
         name = "Bronze Warhammer",
@@ -969,8 +972,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
         levelRequired = 10,
-        skillRequired = "STRENGTH"
-    ),
+        skillRequired = "STRENGTH",
+            stats = ItemStats(attackBonus = 6, strengthBonus = 5, accuracyBonus = 10, maxHitBonus = 13)
+        ),
     ItemDefinition(
         id = "iron_chainmail_body",
         name = "Iron Chainmail Body",
@@ -979,8 +983,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.CHESTPLATE,
         levelRequired = 10,
-        skillRequired = "DEFENSE"
-    ),
+        skillRequired = "DEFENSE",
+            stats = ItemStats(defenseBonus = 19)
+        ),
     ItemDefinition(
         id = "iron_full_helm",
         name = "Iron Full Helm",
@@ -989,8 +994,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.HELMET,
         levelRequired = 15,
-        skillRequired = "DEFENSE"
-    ),
+        skillRequired = "DEFENSE",
+            stats = ItemStats(defenseBonus = 11)
+        ),
     ItemDefinition(
         id = "steel_platelegs",
         name = "Steel Platelegs",
@@ -999,8 +1005,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.LEGS,
         levelRequired = 20,
-        skillRequired = "DEFENSE"
-    ),
+        skillRequired = "DEFENSE",
+            stats = ItemStats(defenseBonus = 29)
+        ),
     ItemDefinition(
         id = "steel_platebody",
         name = "Steel Platebody",
@@ -1009,8 +1016,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.CHESTPLATE,
         levelRequired = 25,
-        skillRequired = "DEFENSE"
-    ),
+        skillRequired = "DEFENSE",
+            stats = ItemStats(defenseBonus = 40)
+        ),
     ItemDefinition(
         id = "steel_kiteshield",
         name = "Steel Kiteshield",
@@ -1019,8 +1027,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.SHIELD,
         levelRequired = 25,
-        skillRequired = "DEFENSE"
-    ),
+        skillRequired = "DEFENSE",
+            stats = ItemStats(defenseBonus = 27)
+        ),
     ItemDefinition(
         id = "mithril_battleaxe",
         name = "Mithril Battleaxe",
@@ -1030,8 +1039,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
         levelRequired = 30,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 34, strengthBonus = 23, accuracyBonus = 54, maxHitBonus = 63)
+        ),
     ItemDefinition(
         id = "mithril_2h_sword",
         name = "Mithril Two-Handed Sword",
@@ -1041,8 +1051,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
         levelRequired = 35,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 33, strengthBonus = 26, accuracyBonus = 55, maxHitBonus = 68)
+        ),
     ItemDefinition(
         id = "mithril_arrowheads",
         name = "Mithril Arrowheads",
@@ -1059,8 +1070,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
         levelRequired = 40,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 47, strengthBonus = 2, accuracyBonus = 89, maxHitBonus = 30)
+        ),
     ItemDefinition(
         id = "adamant_platebody_set",
         name = "Adamant Full Plate Armor Set",
@@ -1079,8 +1091,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
         levelRequired = 50,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 63, strengthBonus = 6, accuracyBonus = 117, maxHitBonus = 36)
+        ),
     ItemDefinition(
         id = "rune_halberd",
         name = "Rune Halberd",
@@ -1090,8 +1103,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
         levelRequired = 55,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 50, strengthBonus = 26, accuracyBonus = 78, maxHitBonus = 80)
+        ),
     ItemDefinition(
         id = "orichalcum_ceremonial_armor",
         name = "Orichalcum Ceremonial Armor",
@@ -1100,8 +1114,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.CHESTPLATE,
         levelRequired = 60,
-        skillRequired = "DEFENSE"
-    ),
+        skillRequired = "DEFENSE",
+            stats = ItemStats(defenseBonus = 70)
+        ),
     ItemDefinition(
         id = "masterwork_weapon",
         name = "Masterwork Weapon",
@@ -1111,8 +1126,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
         levelRequired = 65,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 62, strengthBonus = 15, accuracyBonus = 99, maxHitBonus = 66)
+        ),
     ItemDefinition(
         id = "legendary_blade",
         name = "Legendary Blade",
@@ -1122,8 +1138,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MELEE,
         levelRequired = 70,
-        skillRequired = "ATTACK"
-    ),
+        skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 66, strengthBonus = 16, accuracyBonus = 104, maxHitBonus = 70)
+        ),
     ItemDefinition(
         id = "raw_chicken",
         name = "Raw Chicken",
@@ -1459,8 +1476,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 6, strengthBonus = 0, accuracyBonus = 12, maxHitBonus = 5)
+        ),
     ItemDefinition(
         id = "longbow_u",
         name = "Unstrung Longbow",
@@ -1476,8 +1494,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 14, strengthBonus = 0, accuracyBonus = 24, maxHitBonus = 12)
+        ),
     ItemDefinition(
         id = "oak_shortbow",
         name = "Oak Shortbow",
@@ -1487,8 +1506,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 5,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 17, strengthBonus = 0, accuracyBonus = 30, maxHitBonus = 15)
+        ),
     ItemDefinition(
         id = "oak_longbow",
         name = "Oak Longbow",
@@ -1498,8 +1518,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 5,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 20, strengthBonus = 0, accuracyBonus = 36, maxHitBonus = 19)
+        ),
     ItemDefinition(
         id = "willow_shortbow",
         name = "Willow Shortbow",
@@ -1509,8 +1530,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 15,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 24, strengthBonus = 0, accuracyBonus = 42, maxHitBonus = 22)
+        ),
     ItemDefinition(
         id = "willow_longbow",
         name = "Willow Longbow",
@@ -1520,8 +1542,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 15,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 28, strengthBonus = 0, accuracyBonus = 48, maxHitBonus = 25)
+        ),
     ItemDefinition(
         id = "composite_bow",
         name = "Composite Bow",
@@ -1531,8 +1554,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 20,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 31, strengthBonus = 0, accuracyBonus = 54, maxHitBonus = 29)
+        ),
     ItemDefinition(
         id = "maple_longbow",
         name = "Maple Longbow",
@@ -1542,8 +1566,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 25,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 34, strengthBonus = 0, accuracyBonus = 60, maxHitBonus = 32)
+        ),
     ItemDefinition(
         id = "crossbow",
         name = "Crossbow",
@@ -1553,8 +1578,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 25,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 38, strengthBonus = 0, accuracyBonus = 66, maxHitBonus = 36)
+        ),
     ItemDefinition(
         id = "yew_shortbow",
         name = "Yew Shortbow",
@@ -1564,8 +1590,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 35,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 42, strengthBonus = 0, accuracyBonus = 72, maxHitBonus = 39)
+        ),
     ItemDefinition(
         id = "yew_longbow",
         name = "Yew Longbow",
@@ -1575,8 +1602,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 35,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 45, strengthBonus = 0, accuracyBonus = 78, maxHitBonus = 42)
+        ),
     ItemDefinition(
         id = "ironwood_composite_bow",
         name = "Ironwood Composite Bow",
@@ -1586,8 +1614,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 40,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 48, strengthBonus = 0, accuracyBonus = 84, maxHitBonus = 46)
+        ),
     ItemDefinition(
         id = "magic_shortbow",
         name = "Magic Shortbow",
@@ -1597,7 +1626,8 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 50,
-        skillRequired = "ARCHERY"
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 52, strengthBonus = 0, accuracyBonus = 90, maxHitBonus = 49)
         ),
     ItemDefinition(
         id = "magic_longbow",
@@ -1608,8 +1638,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 50,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 56, strengthBonus = 0, accuracyBonus = 96, maxHitBonus = 52)
+        ),
     ItemDefinition(
         id = "elder_bow",
         name = "Elder Bow",
@@ -1619,8 +1650,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 60,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 59, strengthBonus = 0, accuracyBonus = 102, maxHitBonus = 56)
+        ),
     ItemDefinition(
         id = "spirit_bow",
         name = "Spirit Bow",
@@ -1630,8 +1662,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 70,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 66, strengthBonus = 0, accuracyBonus = 114, maxHitBonus = 63)
+        ),
     ItemDefinition(
         id = "ancient_ironbark_bow",
         name = "Ancient Ironbark Bow",
@@ -1641,8 +1674,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.RANGED,
         levelRequired = 80,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(attackBonus = 72, strengthBonus = 0, accuracyBonus = 125, maxHitBonus = 69)
+        ),
     ItemDefinition(
         id = "bronze_arrows",
         name = "Bronze Arrows",
@@ -1998,15 +2032,17 @@ object GeneratedItemCatalog {
         category = ItemCategory.ARMOR,
         isTradeable = true,
         isStackable = false,
-        equipSlot = EquipSlot.GLOVES
-    ),
+        equipSlot = EquipSlot.GLOVES,
+            stats = ItemStats(defenseBonus = 1)
+        ),
     ItemDefinition(
         id = "leather_boots",
         name = "Leather Boots",
         category = ItemCategory.ARMOR,
         isTradeable = true,
         isStackable = false,
-        equipSlot = EquipSlot.BOOTS
+        equipSlot = EquipSlot.BOOTS,
+            stats = ItemStats(defenseBonus = 2)
         ),
     ItemDefinition(
         id = "leather_cowl",
@@ -2014,32 +2050,36 @@ object GeneratedItemCatalog {
         category = ItemCategory.ARMOR,
         isTradeable = true,
         isStackable = false,
-        equipSlot = EquipSlot.HELMET
-    ),
+        equipSlot = EquipSlot.HELMET,
+            stats = ItemStats(defenseBonus = 5)
+        ),
     ItemDefinition(
         id = "leather_vambraces",
         name = "Leather Vambraces",
         category = ItemCategory.ARMOR,
         isTradeable = true,
         isStackable = false,
-        equipSlot = EquipSlot.GLOVES
-    ),
+        equipSlot = EquipSlot.GLOVES,
+            stats = ItemStats(defenseBonus = 3)
+        ),
     ItemDefinition(
         id = "leather_body",
         name = "Leather Body",
         category = ItemCategory.ARMOR,
         isTradeable = true,
         isStackable = false,
-        equipSlot = EquipSlot.CHESTPLATE
-    ),
+        equipSlot = EquipSlot.CHESTPLATE,
+            stats = ItemStats(defenseBonus = 15)
+        ),
     ItemDefinition(
         id = "leather_chaps",
         name = "Leather Chaps",
         category = ItemCategory.ARMOR,
         isTradeable = true,
         isStackable = false,
-        equipSlot = EquipSlot.LEGS
-    ),
+        equipSlot = EquipSlot.LEGS,
+            stats = ItemStats(defenseBonus = 14)
+        ),
     ItemDefinition(
         id = "studded_body",
         name = "Studded Body",
@@ -2048,8 +2088,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.CHESTPLATE,
         levelRequired = 15,
-        skillRequired = "DEFENSE"
-    ),
+        skillRequired = "DEFENSE",
+            stats = ItemStats(defenseBonus = 21)
+        ),
     ItemDefinition(
         id = "studded_chaps",
         name = "Studded Chaps",
@@ -2058,16 +2099,18 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.LEGS,
         levelRequired = 15,
-        skillRequired = "DEFENSE"
-    ),
+        skillRequired = "DEFENSE",
+            stats = ItemStats(defenseBonus = 23)
+        ),
     ItemDefinition(
         id = "hardleather_body",
         name = "Hardleather Body",
         category = ItemCategory.ARMOR,
         isTradeable = true,
         isStackable = false,
-        equipSlot = EquipSlot.CHESTPLATE
-    ),
+        equipSlot = EquipSlot.CHESTPLATE,
+            stats = ItemStats(defenseBonus = 35)
+        ),
     ItemDefinition(
         id = "snakeskin_armor",
         name = "Snakeskin Armor",
@@ -2076,8 +2119,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.CHESTPLATE,
         levelRequired = 20,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(defenseBonus = 41)
+        ),
     ItemDefinition(
         id = "green_dhide_vambraces",
         name = "Green Dragonhide Vambraces",
@@ -2086,8 +2130,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.GLOVES,
         levelRequired = 40,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(defenseBonus = 14)
+        ),
     ItemDefinition(
         id = "blue_dhide_body",
         name = "Blue Dragonhide Body",
@@ -2096,8 +2141,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.CHESTPLATE,
         levelRequired = 45,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(defenseBonus = 53)
+        ),
     ItemDefinition(
         id = "blue_dhide_chaps",
         name = "Blue Dragonhide Chaps",
@@ -2106,8 +2152,9 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.LEGS,
         levelRequired = 45,
-        skillRequired = "ARCHERY"
-    ),
+        skillRequired = "ARCHERY",
+            stats = ItemStats(defenseBonus = 45)
+        ),
     ItemDefinition(
         id = "uncut_opal",
         name = "Uncut Opal",
@@ -2340,8 +2387,9 @@ object GeneratedItemCatalog {
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
         levelRequired = 30,
-        skillRequired = "MAGIC"
-    ),
+        skillRequired = "MAGIC",
+            stats = ItemStats(attackBonus = 38, strengthBonus = 0, accuracyBonus = 60, maxHitBonus = 40)
+        ),
     ItemDefinition(
         id = "dragonstone_amulet",
         name = "Dragonstone Amulet",
