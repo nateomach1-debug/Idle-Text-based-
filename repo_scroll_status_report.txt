@@ -1,0 +1,105 @@
+======================================================================
+Scroll status report
+======================================================================
+
+CharacterSelectScreen.kt:
+  status: NEEDS FIX - no scroll/lazy found
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: False
+  Column( count: 2, Box( count: 0
+
+CombatViewScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: True
+  Column( count: 4, Box( count: 2
+
+EquipmentScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: True
+  Lazy* present: False
+  Column( count: 1, Box( count: 0
+
+GuildCreateJoinScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: True
+  Column( count: 1, Box( count: 0
+
+GuildHomeScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: True
+  Lazy* present: True
+  Column( count: 6, Box( count: 2
+
+HomeScreen.kt:
+  status: NEEDS FIX - no scroll/lazy found
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: False
+  Column( count: 2, Box( count: 2
+
+InventoryScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: True
+  Column( count: 2, Box( count: 0
+
+LoadoutScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: True
+  Lazy* present: False
+  Column( count: 1, Box( count: 0
+
+LoginScreen.kt:
+  status: NEEDS FIX - no scroll/lazy found
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: False
+  Column( count: 1, Box( count: 0
+
+MarketScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: True
+  Column( count: 3, Box( count: 0
+
+ModerationScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: True
+  Lazy* present: False
+  Column( count: 4, Box( count: 0
+
+OrderBookScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: True
+  Column( count: 2, Box( count: 0
+
+SkillDetailScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: True
+  Column( count: 1, Box( count: 2
+
+SkillsScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: True
+  Column( count: 3, Box( count: 2
+
+SmithingScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: True
+  Column( count: 2, Box( count: 2
+
+ZoneSelectScreen.kt:
+  status: OK - already scrollable
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: True
+  Column( count: 1, Box( count: 0
+
+SideRail.kt:
+  status: NEEDS FIX - no scroll/lazy found
+  verticalScroll/horizontalScroll present: False
+  Lazy* present: False
+  Column( count: 1, Box( count: 2
