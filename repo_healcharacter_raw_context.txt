@@ -1,0 +1,45 @@
+======================================================================
+GameViewModel.kt - raw context around every healCharacter occurrence
+======================================================================
+
+--- occurrence at line 691 ---
+   666:         inventoryService.inventoryFor(characterId).autoFleeThresholdPercent = percent.coerceIn(0, 100)
+   667:         refreshInventory()
+   668:     }
+   669: 
+   670:     fun selectFood(itemId: String?) {
+   671:         val characterId = _currentCharacterId.value ?: return
+   672:         inventoryService.inventoryFor(characterId).selectFood(itemId)
+   673:         refreshInventory()
+   674:     }
+   675: 
+   676:     fun selectPotion(itemId: String?) {
+   677:         val characterId = _currentCharacterId.value ?: return
+   678:         inventoryService.inventoryFor(characterId).selectPotion(itemId)
+   679:         refreshInventory()
+   680:     }
+   681: 
+   682:     private fun tickConsumables() {
+   683:         val characterId = _currentCharacterId.value ?: return
+   684:         val inventory = inventoryService.inventoryFor(characterId)
+   685:         val combatState = combatService.stateFor(characterId)
+   686: 
+   687:         if (combatState.maxHp > 0) {
+   688:             val hpPercent = (combatState.currentHp * 100) / combatState.maxHp
+   689:             if (hpPercent <= inventory.autoHealThresholdPercent) {
+   690:                 inventory.consumeSelectedFood()?.let { food ->
+>> 691:                     combatService.healCharacter(characterId, food.healAmount ?: 0)
+   692:                 }
+   693:             }
+   694:         }
+   695: 
+   696:         if (inventory.selectedPotionId != null) {
+   697:             if (inventory.potionTimerRemainingSeconds > 0) {
+   698:                 inventory.potionTimerRemainingSeconds -= 1
+   699:             }
+   700:             if (inventory.potionTimerRemainingSeconds <= 0) {
+   701:                 inventory.consumeSelectedPotion()?.let { potion ->
+   702:                     inventory.potionTimerRemainingSeconds = potion.buffDurationSeconds ?: 0
+   703:                 }
+   704:             }
+   705:         }
