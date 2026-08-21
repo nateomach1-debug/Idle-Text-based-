@@ -1,0 +1,21 @@
+======================================================================
+SharedTypes.kt - ItemStats / Rarity / ConsumableType
+======================================================================
+
+--- starting line 13 ---
+13: enum class Rarity { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
+
+--- starting line 26 ---
+26: data class ItemStats(
+27:     val attackBonus: Int = 0,
+28:     val strengthBonus: Int = 0,
+29:     val defenseBonus: Int = 0,
+30:     val accuracyBonus: Int = 0,
+31:     val maxHitBonus: Int = 0
+32: ) {
+33:     fun isAllZero(): Boolean =
+34:         attackBonus == 0 && strengthBonus == 0 && defenseBonus == 0 && accuracyBonus == 0 && maxHitBonus == 0
+35: }
+
+--- starting line 37 ---
+37: enum class ConsumableType { FOOD, POTION }
