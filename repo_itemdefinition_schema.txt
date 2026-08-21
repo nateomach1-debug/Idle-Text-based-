@@ -1,0 +1,78 @@
+======================================================================
+SharedTypes.kt - ItemDefinition and related type definitions
+(total lines: 100)
+======================================================================
+
+--- starting line 8 ---
+8: enum class CombatStyle { MELEE, RANGED, MAGIC }
+
+--- starting line 12 ---
+12: enum class ItemCategory { WEAPON, ARMOR, ACCESSORY, MATERIAL, CONSUMABLE, COSMETIC }
+
+--- starting line 14 ---
+14: enum class EquipSlot { WEAPON, HELMET, CHESTPLATE, GLOVES, BOOTS, NECKLACE, RING_1, RING_2, TOOL, LEGS, SHIELD, CAPE, AMMO }
+
+--- starting line 39 ---
+39: data class ItemDefinition(
+40:     val id: String,
+41:     val name: String,
+42:     val category: ItemCategory,
+43:     val rarity: Rarity = Rarity.COMMON,
+44:     val isTradeable: Boolean,
+45:     val isStackable: Boolean,
+46:     val isRealMoneyPurchasable: Boolean = false,
+47:     val equipSlot: EquipSlot? = null,
+48:     val combatStyle: CombatStyle? = null,
+49:     val levelRequired: Int = 1,
+50:     val skillRequired: String? = null,
+51:     val stats: ItemStats = ItemStats(),
+52:     val consumableType: ConsumableType? = null,
+53:     val healAmount: Int? = null,
+54:     val buffDurationSeconds: Int? = null
+55: )
+
+--- starting line 57 ---
+57: object ItemCatalog {
+58:     val items = mutableListOf(
+59:         ItemDefinition(
+60:             id = "iron_sword_common", name = "Iron Sword", category = ItemCategory.WEAPON,
+61:             rarity = Rarity.COMMON, isTradeable = true, isStackable = false,
+62:             equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE,
+63:             levelRequired = 10, skillRequired = "ATTACK",
+64:             stats = ItemStats(attackBonus = 5, accuracyBonus = 10, maxHitBonus = 6)
+65:         ),
+66:         ItemDefinition(
+67:             id = "iron_sword_rare", name = "Iron Sword", category = ItemCategory.WEAPON,
+68:             rarity = Rarity.RARE, isTradeable = true, isStackable = false,
+69:             equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE,
+70:             levelRequired = 10, skillRequired = "ATTACK",
+71:             stats = ItemStats(attackBonus = 9, accuracyBonus = 16, maxHitBonus = 10)
+72:         ),
+73:         ItemDefinition(
+74:             id = "leather_boots_common", name = "Leather Boots", category = ItemCategory.ARMOR,
+75:             rarity = Rarity.COMMON, isTradeable = true, isStackable = false,
+76:             equipSlot = EquipSlot.BOOTS, levelRequired = 1,
+77:             stats = ItemStats(defenseBonus = 3)
+78:         ),
+79:         ItemDefinition(
+80:             id = "minor_healing_potion", name = "Minor Healing Potion", category = ItemCategory.CONSUMABLE,
+81:             isTradeable = true, isStackable = true,
+82:             consumableType = ConsumableType.POTION, healAmount = 20
+83:         ),
+84:         ItemDefinition(
+85:             id = "smiths_hammer", name = "Smith's Hammer", category = ItemCategory.WEAPON,
+86:             rarity = Rarity.UNCOMMON, isTradeable = false, isStackable = false,
+87:             equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE, levelRequired = 1,
+88:             stats = ItemStats(attackBonus = 2, maxHitBonus = 2)
+89:         )
+90:    ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
+91: 
+92:     fun find(itemId: String): ItemDefinition? = items.find { it.id == itemId }
+93:     fun findByNameAndRarity(name: String, rarity: Rarity): ItemDefinition? =
+94:         items.find { it.name == name && it.rarity == rarity }
+95: 
+96:     fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
+97:         "oak_log" -> 8L
+98:         else -> 5L
+99:     }
+100: }
