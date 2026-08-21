@@ -14,6 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
+import android.content.res.Configuration
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,6 +43,20 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import java.time.Duration
 import java.time.Instant
+
+// Shrinks all dp-based sizing (padding, spacers, icons, fonts) proportionally
+// in landscape, unchanged in portrait. Adjust the two multipliers here to
+// retune density app-wide from one place.
+@Composable
+private fun adaptiveDensity(): Density {
+    val configuration = LocalConfiguration.current
+    val baseDensity = LocalDensity.current
+    return if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        Density(density = baseDensity.density * 0.78f, fontScale = baseDensity.fontScale * 0.9f)
+    } else {
+        baseDensity
+    }
+}
 
 class MainActivity : ComponentActivity() {
     private val gameViewModel: GameViewModel by viewModels()
@@ -602,6 +620,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                             badgedDestinations = setOf(AppDestination.GUILD)
                         )
 
+                        CompositionLocalProvider(LocalDensity provides adaptiveDensity()) {
                         Box(modifier = Modifier.weight(1f)) {
                         when (currentDestination) {
                             AppDestination.HOME -> HomeScreen(state = homeState)
@@ -898,6 +917,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 text = currentDestination.label + " screen coming soon",
                                 modifier = Modifier.fillMaxSize()
                             )
+                        }
                         }
                         }
                     }
