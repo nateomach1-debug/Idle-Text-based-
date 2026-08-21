@@ -1,0 +1,186 @@
+======================================================================
+Lines in GameViewModel.kt matching training-skill keywords
+(with 2 lines of context before/after each match)
+======================================================================
+
+--- around line 420 ---
+   418:     // =========================================================
+   419: 
+>> 420:     private val _trainingSkill = MutableStateFlow(SkillType.ATTACK)
+   421:     val trainingSkill: StateFlow<SkillType> = _trainingSkill.asStateFlow()
+   422: 
+
+--- around line 421 ---
+   419: 
+   420:     private val _trainingSkill = MutableStateFlow(SkillType.ATTACK)
+>> 421:     val trainingSkill: StateFlow<SkillType> = _trainingSkill.asStateFlow()
+   422: 
+   423:     private val _trainingSkillLevel = MutableStateFlow(1)
+
+--- around line 423 ---
+   421:     val trainingSkill: StateFlow<SkillType> = _trainingSkill.asStateFlow()
+   422: 
+>> 423:     private val _trainingSkillLevel = MutableStateFlow(1)
+   424:     val trainingSkillLevel: StateFlow<Int> = _trainingSkillLevel.asStateFlow()
+   425: 
+
+--- around line 424 ---
+   422: 
+   423:     private val _trainingSkillLevel = MutableStateFlow(1)
+>> 424:     val trainingSkillLevel: StateFlow<Int> = _trainingSkillLevel.asStateFlow()
+   425: 
+   426:     private val _combatViewData = MutableStateFlow<CombatViewData?>(null)
+
+--- around line 446 ---
+   444:         }
+   445: 
+>> 446:     val allowedTrainingSkills: List<SkillType>
+   447:         get() {
+   448:             val characterId = _currentCharacterId.value ?: return listOf(SkillType.DEFENSE)
+
+--- around line 448 ---
+   446:     val allowedTrainingSkills: List<SkillType>
+   447:         get() {
+>> 448:             val characterId = _currentCharacterId.value ?: return listOf(SkillType.DEFENSE)
+   449:             val style = equippedWeapon(characterId)?.style ?: CombatStyle.MELEE
+   450:             return CombatSkillRules.allowedTrainingSkills(style)
+
+--- around line 450 ---
+   448:             val characterId = _currentCharacterId.value ?: return listOf(SkillType.DEFENSE)
+   449:             val style = equippedWeapon(characterId)?.style ?: CombatStyle.MELEE
+>> 450:             return CombatSkillRules.allowedTrainingSkills(style)
+   451:         }
+   452: 
+
+--- around line 456 ---
+   454:     // Same "reasonable placeholder, tune later" approach used for food/potion heal amounts.
+   455:     private fun maxHpFor(characterId: String): Int {
+>> 456:         val defenseLevel = LevelCurve.levelForXp(progressionService.skillBookFor(characterId).get(SkillType.DEFENSE).xp)
+   457:         return 100 + (defenseLevel - 1) * 5
+   458:     }
+
+--- around line 473 ---
+   471:     }
+   472: 
+>> 473:     private fun skillLevel(characterId: String, skillType: SkillType): Int =
+   474:         LevelCurve.levelForXp(progressionService.skillBookFor(characterId).get(skillType).xp)
+   475: 
+
+--- around line 476 ---
+   474:         LevelCurve.levelForXp(progressionService.skillBookFor(characterId).get(skillType).xp)
+   475: 
+>> 476:     fun setTrainingSkill(skillType: SkillType) {
+   477:         _trainingSkill.value = skillType
+   478:         val characterId = _currentCharacterId.value
+
+--- around line 477 ---
+   475: 
+   476:     fun setTrainingSkill(skillType: SkillType) {
+>> 477:         _trainingSkill.value = skillType
+   478:         val characterId = _currentCharacterId.value
+   479:         _trainingSkillLevel.value = characterId?.let { skillLevel(it, skillType) } ?: 1
+
+--- around line 479 ---
+   477:         _trainingSkill.value = skillType
+   478:         val characterId = _currentCharacterId.value
+>> 479:         _trainingSkillLevel.value = characterId?.let { skillLevel(it, skillType) } ?: 1
+   480:     }
+   481: 
+
+--- around line 497 ---
+   495:         refreshActiveQueue()
+   496:         combatService.stateFor(characterId, maxHpFor(characterId))
+>> 497:         val result = combatService.enterZone(characterId, zoneId, skillLevel(characterId, _trainingSkill.value))
+   498:         if (result is ServiceResult.Success) {
+   499:             combatLogFor.getOrPut(characterId) { mutableListOf() }.apply {
+
+--- around line 566 ---
+   564: 
+   565:         val weapon = equippedWeapon(characterId)
+>> 566:         val trainingSkill = _trainingSkill.value
+   567:         val accuracy: Int
+   568:         val maxHit: Int
+
+--- around line 571 ---
+   569:         when (weapon?.style) {
+   570:             CombatStyle.MAGIC -> {
+>> 571:                 val magicLevel = skillLevel(characterId, SkillType.MAGIC)
+   572:                 accuracy = magicLevel * 2 + weapon.baseAccuracy
+   573:                 maxHit = (magicLevel / 3) + weapon.baseMaxHit
+
+--- around line 576 ---
+   574:             }
+   575:             CombatStyle.RANGED -> {
+>> 576:                 val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
+   577:                 accuracy = archeryLevel * 2 + weapon.baseAccuracy
+   578:                 maxHit = (archeryLevel / 3) + weapon.baseMaxHit
+
+--- around line 581 ---
+   579:             }
+   580:             else -> {
+>> 581:                 val attackLevel = skillLevel(characterId, SkillType.ATTACK)
+   582:                 val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
+   583:                 accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
+
+--- around line 582 ---
+   580:             else -> {
+   581:                 val attackLevel = skillLevel(characterId, SkillType.ATTACK)
+>> 582:                 val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
+   583:                 accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
+   584:                 maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
+
+--- around line 590 ---
+   588:         val loadout = CombatLoadout(
+   589:             style = weapon?.style ?: CombatStyle.MELEE,
+>> 590:             trainingSkill = trainingSkill,
+   591:             equippedWeapon = weapon,
+   592:             equippedSpell = null,
+
+--- around line 608 ---
+   606:             if (attack.didHit) {
+   607:                 log.add(CombatLogEntry("You hit for " + attack.damageDealt + "."))
+>> 608:                 val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong())
+   609:                 if (xpGrant is ServiceResult.Success) refreshSkills()
+   610:             } else {
+
+--- around line 863 ---
+   861:             val result = offlineIdleService.resolveOfflineProgress(characterId)
+   862:             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+>> 863:                 val skillType = SkillType.valueOf(queue.skillId)
+   864:                 val action = ActionCatalog.find(skillType, queue.itemId)
+   865:                 if (action != null) {
+
+--- around line 921 ---
+   919:     }
+   920: 
+>> 921:     fun startSkillAction(skillType: SkillType, itemId: String) {
+   922:         val characterId = _currentCharacterId.value ?: return
+   923:         val action = ActionCatalog.find(skillType, itemId) ?: return
+
+--- around line 951 ---
+   949:         skillActionProgressSeconds %= queue.secondsPerAction
+   950: 
+>> 951:         val skillType = SkillType.valueOf(queue.skillId)
+   952:         val action = ActionCatalog.find(skillType, queue.itemId)
+   953:         if (action != null) {
+
+--- around line 976 ---
+   974:     private fun craftItems(characterId: String, itemId: String, attempts: Int): CraftBatchResult {
+   975:         val recipe = RecipeCatalog.forOutput(itemId) ?: return CraftBatchResult(0, 0, 0)
+>> 976:         val skillType = SkillType.valueOf(recipe.skillRequired)
+   977:         val book = progressionService.skillBookFor(characterId)
+   978:         val skill = book.all().find { it.type == skillType }
+
+--- around line 1070 ---
+   1068:             )
+   1069:         }
+>> 1070:         _trainingSkillLevel.value = _skills.value[_trainingSkill.value.name]?.level ?: 1
+   1071:     }
+   1072: 
+
+--- around line 1106 ---
+   1104:         _activeQueueInfo.value = when (queue) {
+   1105:             is ActiveQueue.SkillingQueue -> {
+>> 1106:                 val skillType = SkillType.valueOf(queue.skillId)
+   1107:                 val action = ActionCatalog.find(skillType, queue.itemId)
+   1108:                 ActiveQueueInfo(
