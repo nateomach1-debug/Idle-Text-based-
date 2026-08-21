@@ -58,6 +58,11 @@ private fun adaptiveDensity(): Density {
     }
 }
 
+// Skills tab rows that route directly into training-location selection
+// (Combat's zone-select) instead of the generic skill-detail screen.
+// Prayer is deliberately excluded.
+private val COMBAT_TRAINING_SKILL_IDS = setOf("ATTACK", "STRENGTH", "DEFENSE", "MAGIC", "ARCHERY")
+
 class MainActivity : ComponentActivity() {
     private val gameViewModel: GameViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -628,7 +633,15 @@ fun AppRoot(gameViewModel: GameViewModel) {
                             AppDestination.SKILLS -> when (val screen = skillsScreenState) {
                                 is SkillsScreenState.List -> SkillsScreen(
                                     allSkills = allSkills,
-                                    onSkillSelected = { skillsScreenState = SkillsScreenState.Detail(it) },
+                                    onSkillSelected = { selectedSkillId ->
+                                        if (selectedSkillId in COMBAT_TRAINING_SKILL_IDS) {
+                                            gameViewModel.setTrainingSkill(SkillType.valueOf(selectedSkillId))
+                                            currentDestination = AppDestination.COMBAT
+                                            combatScreenState = CombatScreenState.ZoneSelect
+                                        } else {
+                                            skillsScreenState = SkillsScreenState.Detail(selectedSkillId)
+                                        }
+                                    },
                                     listState = skillsListScrollState,
                                     gridState = skillsGridScrollState
                                 )
