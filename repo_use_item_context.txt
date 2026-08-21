@@ -1,0 +1,35 @@
+======================================================================
+GameViewModel.kt - context around combatService.healCharacter call
+======================================================================
+676:     fun selectPotion(itemId: String?) {
+677:         val characterId = _currentCharacterId.value ?: return
+678:         inventoryService.inventoryFor(characterId).selectPotion(itemId)
+679:         refreshInventory()
+680:     }
+
+======================================================================
+MainActivity.kt - onUseItem wiring to InventoryScreen
+======================================================================
+--- around line 716 ---
+714: 
+715:                             AppDestination.INVENTORY -> when (inventoryScreenState) {
+716:                                 InventoryScreenState.Items -> InventoryScreen(
+717:                                     items = inventoryItems,
+718:                                     onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
+719:                                     onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
+720:                                     onUseItem = { },
+721:                                     onSellOnMarket = { itemId ->
+722:                                         val item = inventoryItems.find { it.itemId == itemId }
+723:                                         selectedMarketItemId = itemId
+
+--- around line 720 ---
+718:                                     onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
+719:                                     onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
+720:                                     onUseItem = { },
+721:                                     onSellOnMarket = { itemId ->
+722:                                         val item = inventoryItems.find { it.itemId == itemId }
+723:                                         selectedMarketItemId = itemId
+724:                                         prefilledSellQuantity = item?.quantity
+725:                                         currentDestination = AppDestination.MARKET
+726:                                     },
+727:                                     onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
