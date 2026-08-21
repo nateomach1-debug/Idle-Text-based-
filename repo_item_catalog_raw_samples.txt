@@ -1,0 +1,566 @@
+======================================================================
+GeneratedItemCatalog.kt
+======================================================================
+(total lines: 2909)
+
+--- first 120 lines ---
+1: package com.yourname.idlerpg
+2: 
+3: // =========================================================
+4: // GENERATED ITEM CATALOG DATA
+5: // 324 items converted from the standalone item-catalog design
+6: // doc into this project's ItemDefinition/ItemCatalog format.
+7: // Merged into ItemCatalog in SharedTypes.kt.
+8: // Combat stats are intentionally left at zero for every item
+9: // here -- the source data didn't specify attack/strength/
+10: // defense/accuracy bonuses. Revisit with real values later.
+11: // =========================================================
+12: 
+13: object GeneratedItemCatalog {
+14:     val definitions: List<ItemDefinition> = listOf(
+15:     ItemDefinition(
+16:         id = "copper_ore",
+17:         name = "Copper Ore",
+18:         category = ItemCategory.MATERIAL,
+19:         isTradeable = true,
+20:         isStackable = true
+21:     ),
+22:     ItemDefinition(
+23:         id = "tin_ore",
+24:         name = "Tin Ore",
+25:         category = ItemCategory.MATERIAL,
+26:         isTradeable = true,
+27:         isStackable = true
+28:     ),
+29:     ItemDefinition(
+30:         id = "clay",
+31:         name = "Clay",
+32:         category = ItemCategory.MATERIAL,
+33:         isTradeable = true,
+34:         isStackable = true
+35:     ),
+36:     ItemDefinition(
+37:         id = "iron_ore",
+38:         name = "Iron Ore",
+39:         category = ItemCategory.MATERIAL,
+40:         isTradeable = true,
+41:         isStackable = true
+42:     ),
+43:     ItemDefinition(
+44:         id = "sandstone",
+45:         name = "Sandstone",
+46:         category = ItemCategory.MATERIAL,
+47:         isTradeable = true,
+48:         isStackable = true
+49:     ),
+50:     ItemDefinition(
+51:         id = "silver_ore",
+52:         name = "Silver Ore",
+53:         category = ItemCategory.MATERIAL,
+54:         isTradeable = true,
+55:         isStackable = true
+56:     ),
+57:     ItemDefinition(
+58:         id = "coal",
+59:         name = "Coal",
+60:         category = ItemCategory.MATERIAL,
+61:         isTradeable = true,
+62:         isStackable = true
+63:     ),
+64:     ItemDefinition(
+65:         id = "gold_ore",
+66:         name = "Gold Ore",
+67:         category = ItemCategory.MATERIAL,
+68:         isTradeable = true,
+69:         isStackable = true
+70:     ),
+71:     ItemDefinition(
+72:         id = "granite",
+73:         name = "Granite",
+74:         category = ItemCategory.MATERIAL,
+75:         isTradeable = true,
+76:         isStackable = true
+77:     ),
+78:     ItemDefinition(
+79:         id = "mithril_ore",
+80:         name = "Mithril Ore",
+81:         category = ItemCategory.MATERIAL,
+82:         isTradeable = true,
+83:         isStackable = true
+84:     ),
+85:     ItemDefinition(
+86:         id = "uncut_gemstone",
+87:         name = "Uncut Gemstone",
+88:         category = ItemCategory.MATERIAL,
+89:         isTradeable = true,
+90:         isStackable = true
+91:     ),
+92:     ItemDefinition(
+93:         id = "adamantite_ore",
+94:         name = "Adamantite Ore",
+95:         category = ItemCategory.MATERIAL,
+96:         isTradeable = true,
+97:         isStackable = true
+98:     ),
+99:     ItemDefinition(
+100:         id = "volcanic_rock",
+101:         name = "Volcanic Rock",
+102:         category = ItemCategory.MATERIAL,
+103:         isTradeable = true,
+104:         isStackable = true
+105:     ),
+106:     ItemDefinition(
+107:         id = "runite_ore",
+108:         name = "Runite Ore",
+109:         category = ItemCategory.MATERIAL,
+110:         isTradeable = true,
+111:         isStackable = true
+112:     ),
+113:     ItemDefinition(
+114:         id = "onyx_fragment",
+115:         name = "Onyx Fragment",
+116:         category = ItemCategory.MATERIAL,
+117:         isTradeable = true,
+118:         isStackable = true
+119:     ),
+120:     ItemDefinition(
+
+--- middle 60 lines (around line 1454) ---
+1425:     ),
+1426:     ItemDefinition(
+1427:         id = "bowstring",
+1428:         name = "Bowstring",
+1429:         category = ItemCategory.MATERIAL,
+1430:         isTradeable = true,
+1431:         isStackable = true
+1432:     ),
+1433:     ItemDefinition(
+1434:         id = "crossbow_frame",
+1435:         name = "Crossbow Frame",
+1436:         category = ItemCategory.MATERIAL,
+1437:         isTradeable = true,
+1438:         isStackable = true
+1439:     ),
+1440:     ItemDefinition(
+1441:         id = "bolt_frame",
+1442:         name = "Bolt Frame",
+1443:         category = ItemCategory.MATERIAL,
+1444:         isTradeable = true,
+1445:         isStackable = true
+1446:     ),
+1447:     ItemDefinition(
+1448:         id = "shortbow_u",
+1449:         name = "Unstrung Shortbow",
+1450:         category = ItemCategory.MATERIAL,
+1451:         isTradeable = true,
+1452:         isStackable = true
+1453:     ),
+1454:     ItemDefinition(
+1455:         id = "shortbow",
+1456:         name = "Shortbow",
+1457:         category = ItemCategory.WEAPON,
+1458:         isTradeable = true,
+1459:         isStackable = false,
+1460:         equipSlot = EquipSlot.WEAPON,
+1461:         combatStyle = CombatStyle.RANGED,
+1462:         skillRequired = "ARCHERY"
+1463:     ),
+1464:     ItemDefinition(
+1465:         id = "longbow_u",
+1466:         name = "Unstrung Longbow",
+1467:         category = ItemCategory.MATERIAL,
+1468:         isTradeable = true,
+1469:         isStackable = true
+1470:     ),
+1471:     ItemDefinition(
+1472:         id = "longbow",
+1473:         name = "Longbow",
+1474:         category = ItemCategory.WEAPON,
+1475:         isTradeable = true,
+1476:         isStackable = false,
+1477:         equipSlot = EquipSlot.WEAPON,
+1478:         combatStyle = CombatStyle.RANGED,
+1479:         skillRequired = "ARCHERY"
+1480:     ),
+1481:     ItemDefinition(
+1482:         id = "oak_shortbow",
+1483:         name = "Oak Shortbow",
+1484:         category = ItemCategory.WEAPON,
+
+======================================================================
+MetalTierItemCatalog.kt
+======================================================================
+(total lines: 910)
+
+--- first 120 lines ---
+1: package com.yourname.idlerpg
+2: 
+3: // =========================================================
+4: // METAL TIER ITEM CATALOG
+5: // 105 items generated to fill out full metal x weapon-class
+6: // coverage (Option A: dynamic metal selection at craft time).
+7: // Merge these into ItemCatalog alongside GeneratedItemCatalog.definitions --
+8: // see instructions in the handoff message for the exact merge point.
+9: // =========================================================
+10: 
+11: object MetalTierItemCatalog {
+12:     val definitions: List<ItemDefinition> = listOf(
+13:         ItemDefinition(
+14:             id = "bronze_arrowheads",
+15:             name = "Bronze Arrowheads",
+16:             category = ItemCategory.MATERIAL,
+17:             isTradeable = true,
+18:             isStackable = true,
+19:         ),
+20:         ItemDefinition(
+21:             id = "bronze_throwing_knives",
+22:             name = "Bronze Throwing Knives",
+23:             category = ItemCategory.WEAPON,
+24:             isTradeable = true,
+25:             isStackable = false,
+26:             equipSlot = EquipSlot.WEAPON,
+27:             combatStyle = CombatStyle.RANGED,
+28:         ),
+29:         ItemDefinition(
+30:             id = "bronze_chainmail_body",
+31:             name = "Bronze Chainmail Body",
+32:             category = ItemCategory.ARMOR,
+33:             isTradeable = true,
+34:             isStackable = false,
+35:             equipSlot = EquipSlot.CHESTPLATE,
+36:         ),
+37:         ItemDefinition(
+38:             id = "bronze_full_helm",
+39:             name = "Bronze Full Helm",
+40:             category = ItemCategory.ARMOR,
+41:             isTradeable = true,
+42:             isStackable = false,
+43:             equipSlot = EquipSlot.HELMET,
+44:         ),
+45:         ItemDefinition(
+46:             id = "bronze_platelegs",
+47:             name = "Bronze Platelegs",
+48:             category = ItemCategory.ARMOR,
+49:             isTradeable = true,
+50:             isStackable = false,
+51:             equipSlot = EquipSlot.LEGS,
+52:         ),
+53:         ItemDefinition(
+54:             id = "bronze_kiteshield",
+55:             name = "Bronze Kiteshield",
+56:             category = ItemCategory.ARMOR,
+57:             isTradeable = true,
+58:             isStackable = false,
+59:             equipSlot = EquipSlot.SHIELD,
+60:         ),
+61:         ItemDefinition(
+62:             id = "bronze_battleaxe",
+63:             name = "Bronze Battleaxe",
+64:             category = ItemCategory.WEAPON,
+65:             isTradeable = true,
+66:             isStackable = false,
+67:             equipSlot = EquipSlot.WEAPON,
+68:             combatStyle = CombatStyle.MELEE,
+69:         ),
+70:         ItemDefinition(
+71:             id = "bronze_claws",
+72:             name = "Bronze Claws",
+73:             category = ItemCategory.WEAPON,
+74:             isTradeable = true,
+75:             isStackable = false,
+76:             equipSlot = EquipSlot.WEAPON,
+77:             combatStyle = CombatStyle.MELEE,
+78:         ),
+79:         ItemDefinition(
+80:             id = "bronze_2h_sword",
+81:             name = "Bronze Two-Handed Sword",
+82:             category = ItemCategory.WEAPON,
+83:             isTradeable = true,
+84:             isStackable = false,
+85:             equipSlot = EquipSlot.WEAPON,
+86:             combatStyle = CombatStyle.MELEE,
+87:         ),
+88:         ItemDefinition(
+89:             id = "bronze_platebody",
+90:             name = "Bronze Platebody",
+91:             category = ItemCategory.ARMOR,
+92:             isTradeable = true,
+93:             isStackable = false,
+94:             equipSlot = EquipSlot.CHESTPLATE,
+95:         ),
+96:         ItemDefinition(
+97:             id = "bronze_halberd",
+98:             name = "Bronze Halberd",
+99:             category = ItemCategory.WEAPON,
+100:             isTradeable = true,
+101:             isStackable = false,
+102:             equipSlot = EquipSlot.WEAPON,
+103:             combatStyle = CombatStyle.MELEE,
+104:         ),
+105:         ItemDefinition(
+106:             id = "iron_dagger",
+107:             name = "Iron Dagger",
+108:             category = ItemCategory.WEAPON,
+109:             isTradeable = true,
+110:             isStackable = false,
+111:             equipSlot = EquipSlot.WEAPON,
+112:             combatStyle = CombatStyle.MELEE,
+113:         ),
+114:         ItemDefinition(
+115:             id = "iron_sword",
+116:             name = "Iron Sword",
+117:             category = ItemCategory.WEAPON,
+118:             isTradeable = true,
+119:             isStackable = false,
+120:             equipSlot = EquipSlot.WEAPON,
+
+--- middle 60 lines (around line 455) ---
+426:             name = "Adamant Dagger",
+427:             category = ItemCategory.WEAPON,
+428:             isTradeable = true,
+429:             isStackable = false,
+430:             equipSlot = EquipSlot.WEAPON,
+431:             combatStyle = CombatStyle.MELEE,
+432:         ),
+433:         ItemDefinition(
+434:             id = "adamant_sword",
+435:             name = "Adamant Sword",
+436:             category = ItemCategory.WEAPON,
+437:             isTradeable = true,
+438:             isStackable = false,
+439:             equipSlot = EquipSlot.WEAPON,
+440:             combatStyle = CombatStyle.MELEE,
+441:         ),
+442:         ItemDefinition(
+443:             id = "adamant_mace",
+444:             name = "Adamant Mace",
+445:             category = ItemCategory.WEAPON,
+446:             isTradeable = true,
+447:             isStackable = false,
+448:             equipSlot = EquipSlot.WEAPON,
+449:             combatStyle = CombatStyle.MELEE,
+450:         ),
+451:         ItemDefinition(
+452:             id = "adamant_arrowheads",
+453:             name = "Adamant Arrowheads",
+454:             category = ItemCategory.MATERIAL,
+455:             isTradeable = true,
+456:             isStackable = true,
+457:         ),
+458:         ItemDefinition(
+459:             id = "adamant_warhammer",
+460:             name = "Adamant Warhammer",
+461:             category = ItemCategory.WEAPON,
+462:             isTradeable = true,
+463:             isStackable = false,
+464:             equipSlot = EquipSlot.WEAPON,
+465:             combatStyle = CombatStyle.MELEE,
+466:         ),
+467:         ItemDefinition(
+468:             id = "adamant_chainmail_body",
+469:             name = "Adamant Chainmail Body",
+470:             category = ItemCategory.ARMOR,
+471:             isTradeable = true,
+472:             isStackable = false,
+473:             equipSlot = EquipSlot.CHESTPLATE,
+474:         ),
+475:         ItemDefinition(
+476:             id = "adamant_full_helm",
+477:             name = "Adamant Full Helm",
+478:             category = ItemCategory.ARMOR,
+479:             isTradeable = true,
+480:             isStackable = false,
+481:             equipSlot = EquipSlot.HELMET,
+482:         ),
+483:         ItemDefinition(
+484:             id = "adamant_platelegs",
+485:             name = "Adamant Platelegs",
+
+======================================================================
+ItemsEquipmentSystem.kt
+======================================================================
+(total lines: 2136)
+
+--- first 120 lines ---
+1: package com.yourname.idlerpg
+2: 
+3: import kotlin.random.Random
+4: 
+5: // =========================================================
+6: // ITEM CATEGORY, RARITY, EQUIP SLOTS, ITEM DEFINITION, and
+7: // ITEM CATALOG now all come from SharedTypes.kt -- no longer
+8: // defined here. CombatStyle and EquipmentSlot also come from
+9: // SharedTypes.kt.
+10: // =========================================================
+11: 
+12: // =========================================================
+13: // RECIPE CATALOG
+14: // =========================================================
+15: 
+16: data class RecipeIngredient(val itemId: String, val quantity: Int)
+17: 
+18: data class Recipe(
+19:     val outputItemId: String,
+20:     val outputQuantity: Int,
+21:     val ingredients: List<RecipeIngredient>,
+22:     val skillRequired: String,
+23:     val levelRequired: Int
+24: )
+25: 
+26: object RecipeCatalog {
+27:     val recipes = listOf(
+28:         Recipe(
+29:             outputItemId = "bronze_dagger",
+30:             outputQuantity = 1,
+31:             ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
+32:             skillRequired = "SMITHING",
+33:             levelRequired = 5
+34:         ),
+35:         Recipe(
+36:             outputItemId = "bronze_sword",
+37:             outputQuantity = 1,
+38:             ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
+39:             skillRequired = "SMITHING",
+40:             levelRequired = 6
+41:         ),
+42:         Recipe(
+43:             outputItemId = "bronze_mace",
+44:             outputQuantity = 1,
+45:             ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
+46:             skillRequired = "SMITHING",
+47:             levelRequired = 7
+48:         ),
+49:         Recipe(
+50:             outputItemId = "bronze_arrowheads",
+51:             outputQuantity = 15,
+52:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+53:             skillRequired = "SMITHING",
+54:             levelRequired = 7
+55:         ),
+56:         Recipe(
+57:             outputItemId = "bronze_warhammer",
+58:             outputQuantity = 1,
+59:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+60:             skillRequired = "SMITHING",
+61:             levelRequired = 8
+62:         ),
+63:         Recipe(
+64:             outputItemId = "bronze_throwing_knives",
+65:             outputQuantity = 5,
+66:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+67:             skillRequired = "SMITHING",
+68:             levelRequired = 8
+69:         ),
+70:         Recipe(
+71:             outputItemId = "bronze_chainmail_body",
+72:             outputQuantity = 1,
+73:             ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+74:             skillRequired = "SMITHING",
+75:             levelRequired = 9
+76:         ),
+77:         Recipe(
+78:             outputItemId = "bronze_full_helm",
+79:             outputQuantity = 1,
+80:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+81:             skillRequired = "SMITHING",
+82:             levelRequired = 9
+83:         ),
+84:         Recipe(
+85:             outputItemId = "bronze_platelegs",
+86:             outputQuantity = 1,
+87:             ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+88:             skillRequired = "SMITHING",
+89:             levelRequired = 10
+90:         ),
+91:         Recipe(
+92:             outputItemId = "bronze_kiteshield",
+93:             outputQuantity = 1,
+94:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+95:             skillRequired = "SMITHING",
+96:             levelRequired = 11
+97:         ),
+98:         Recipe(
+99:             outputItemId = "bronze_battleaxe",
+100:             outputQuantity = 1,
+101:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+102:             skillRequired = "SMITHING",
+103:             levelRequired = 12
+104:         ),
+105:         Recipe(
+106:             outputItemId = "bronze_claws",
+107:             outputQuantity = 1,
+108:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+109:             skillRequired = "SMITHING",
+110:             levelRequired = 12
+111:         ),
+112:         Recipe(
+113:             outputItemId = "bronze_2h_sword",
+114:             outputQuantity = 1,
+115:             ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+116:             skillRequired = "SMITHING",
+117:             levelRequired = 13
+118:         ),
+119:         Recipe(
+120:             outputItemId = "bronze_platebody",
+
+--- middle 60 lines (around line 1068) ---
+1039:             ingredients = listOf(RecipeIngredient("raw_trout", 1)),
+1040:             skillRequired = "COOKING",
+1041:             levelRequired = 20
+1042:         ),
+1043:         Recipe(
+1044:             outputItemId = "cooked_salmon",
+1045:             outputQuantity = 1,
+1046:             ingredients = listOf(RecipeIngredient("raw_salmon", 1)),
+1047:             skillRequired = "COOKING",
+1048:             levelRequired = 25
+1049:         ),
+1050:         Recipe(
+1051:             outputItemId = "cooked_tuna",
+1052:             outputQuantity = 1,
+1053:             ingredients = listOf(RecipeIngredient("raw_tuna", 1)),
+1054:             skillRequired = "COOKING",
+1055:             levelRequired = 30
+1056:         ),
+1057:         Recipe(
+1058:             outputItemId = "cooked_mackerel",
+1059:             outputQuantity = 1,
+1060:             ingredients = listOf(RecipeIngredient("raw_mackerel", 1)),
+1061:             skillRequired = "COOKING",
+1062:             levelRequired = 35
+1063:         ),
+1064:         Recipe(
+1065:             outputItemId = "cooked_swordfish",
+1066:             outputQuantity = 1,
+1067:             ingredients = listOf(RecipeIngredient("raw_swordfish", 1)),
+1068:             skillRequired = "COOKING",
+1069:             levelRequired = 40
+1070:         ),
+1071:         Recipe(
+1072:             outputItemId = "cooked_lobster",
+1073:             outputQuantity = 1,
+1074:             ingredients = listOf(RecipeIngredient("raw_lobster", 1)),
+1075:             skillRequired = "COOKING",
+1076:             levelRequired = 45
+1077:         ),
+1078:         Recipe(
+1079:             outputItemId = "cooked_crab",
+1080:             outputQuantity = 1,
+1081:             ingredients = listOf(RecipeIngredient("raw_crab", 1)),
+1082:             skillRequired = "COOKING",
+1083:             levelRequired = 50
+1084:         ),
+1085:         Recipe(
+1086:             outputItemId = "cooked_shark",
+1087:             outputQuantity = 1,
+1088:             ingredients = listOf(RecipeIngredient("raw_shark", 1)),
+1089:             skillRequired = "COOKING",
+1090:             levelRequired = 55
+1091:         ),
+1092:         Recipe(
+1093:             outputItemId = "cooked_monkfish",
+1094:             outputQuantity = 1,
+1095:             ingredients = listOf(RecipeIngredient("raw_monkfish", 1)),
+1096:             skillRequired = "COOKING",
+1097:             levelRequired = 60
+1098:         ),
