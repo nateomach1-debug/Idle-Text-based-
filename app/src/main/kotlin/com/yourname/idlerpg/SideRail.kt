@@ -4,6 +4,8 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -48,6 +50,7 @@ fun SideRail(
     Column(
         modifier = modifier
             .fillMaxHeight()
+            .verticalScroll(rememberScrollState())
             .animateContentSize()
             .width(if (expanded) 140.dp else 64.dp)
             .padding(vertical = 12.dp),

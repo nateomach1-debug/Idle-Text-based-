@@ -3,6 +3,8 @@ package com.yourname.idlerpg.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,7 +28,12 @@ fun CharacterSelectScreen(
     onCreateNew: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize().padding(24.dp)) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp)
+    ) {
         Text(text = "Select a Character", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -64,7 +71,12 @@ fun CharacterCreateScreen(
     var displayName by remember { mutableStateOf("") }
     var selectedAvatar by remember { mutableStateOf("knight") }
 
-    Column(modifier = modifier.fillMaxSize().padding(24.dp)) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp)
+    ) {
         Text(text = "Create Your Character", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(20.dp))
 
