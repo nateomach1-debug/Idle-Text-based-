@@ -1,0 +1,717 @@
+======================================================================
+GameStateRepository.kt
+======================================================================
+(total lines: 388)
+package com.yourname.idlerpg.data
+
+import android.content.Context
+import com.yourname.idlerpg.*
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+
+class GameStateRepository(private val context: Context) {
+    private val saveFile: File get() = File(context.filesDir, "game_state.json")
+
+    fun save(
+        accounts: List<AccountExport>,
+        characters: List<CharacterExport>,
+        skills: List<SkillExport>,
+        skillingQueues: List<SkillingQueueExport>,
+        craftingQueues: List<CraftingQueueExport>,
+        lastSeen: List<LastSeenExport>,
+        inventoryItems: List<InventorySlotExport>,
+        equippedSlots: List<EquippedSlotExport>,
+        loadoutSettings: List<LoadoutSettingsExport>,
+        marketAccounts: List<PlayerEconomyAccountExport>,
+        marketOrders: List<MarketOrderExport>,
+        marketPriceHistory: List<PriceHistoryExport>
+    ) {
+        val root = JSONObject()
+
+        val accountsArray = JSONArray()
+        accounts.forEach { acc ->
+            val obj = JSONObject()
+            obj.put("id", acc.id)
+            obj.put("email", acc.email)
+            obj.put("username", acc.username)
+            obj.put("passwordHash", acc.passwordHash)
+            obj.put("passwordSalt", acc.passwordSalt)
+            obj.put("createdAt", acc.createdAt)
+            obj.put("lastLoginAt", acc.lastLoginAt)
+            obj.put("ageBracket", acc.ageBracket)
+            obj.put("region", acc.region)
+            obj.put("isBanned", acc.isBanned)
+            obj.put("banReason", acc.banReason)
+            obj.put("mutedUntil", acc.mutedUntil)
+            obj.put("subscriptionTier", acc.subscriptionTier)
+            obj.put("premiumCurrency", acc.premiumCurrency)
+            accountsArray.put(obj)
+        }
+        root.put("accounts", accountsArray)
+
+        val charactersArray = JSONArray()
+        characters.forEach { char ->
+            val obj = JSONObject()
+            obj.put("id", char.id)
+            obj.put("accountId", char.accountId)
+            obj.put("displayName", char.displayName)
+            obj.put("avatarId", char.avatarId)
+            obj.put("createdAt", char.createdAt)
+            obj.put("displayNameLastChangedAt", char.displayNameLastChangedAt)
+            obj.put("isMainCharacter", char.isMainCharacter)
+            charactersArray.put(obj)
+        }
+        root.put("characters", charactersArray)
+
+        val skillsArray = JSONArray()
+        skills.forEach { skill ->
+            val obj = JSONObject()
+            obj.put("characterId", skill.characterId)
+            obj.put("skillId", skill.skillId)
+            obj.put("xp", skill.xp)
+            skillsArray.put(obj)
+        }
+        root.put("skills", skillsArray)
+
+        val queuesArray = JSONArray()
+        skillingQueues.forEach { queue ->
+            val obj = JSONObject()
+            obj.put("characterId", queue.characterId)
+            obj.put("skillId", queue.skillId)
+            obj.put("itemId", queue.itemId)
+            obj.put("secondsPerAction", queue.secondsPerAction)
+            obj.put("startedAt", queue.startedAt)
+            queuesArray.put(obj)
+        }
+        root.put("skillingQueues", queuesArray)
+
+        val craftingQueuesArray = JSONArray()
+        craftingQueues.forEach { queue ->
+            val obj = JSONObject()
+            obj.put("characterId", queue.characterId)
+            obj.put("itemId", queue.itemId)
+            obj.put("secondsPerAction", queue.secondsPerAction)
+            obj.put("targetQuantity", queue.targetQuantity)
+            obj.put("quantityCompleted", queue.quantityCompleted)
+            obj.put("startedAt", queue.startedAt)
+            craftingQueuesArray.put(obj)
+        }
+        root.put("craftingQueues", craftingQueuesArray)
+
+        val lastSeenArray = JSONArray()
+        lastSeen.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
+
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("itemId", entry.itemId)
+            obj.put("quantity", entry.quantity)
+            inventoryArray.put(obj)
+        }
+        root.put("inventoryItems", inventoryArray)
+
+        val equippedArray = JSONArray()
+        equippedSlots.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("slot", entry.slot)
+            obj.put("itemId", entry.itemId)
+            equippedArray.put(obj)
+        }
+        root.put("equippedSlots", equippedArray)
+
+        val loadoutSettingsArray = JSONArray()
+        loadoutSettings.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("selectedFoodId", entry.selectedFoodId ?: JSONObject.NULL)
+            obj.put("selectedPotionId", entry.selectedPotionId ?: JSONObject.NULL)
+            obj.put("potionTimerRemainingSeconds", entry.potionTimerRemainingSeconds)
+            obj.put("autoHealThresholdPercent", entry.autoHealThresholdPercent)
+            obj.put("autoFleeThresholdPercent", entry.autoFleeThresholdPercent)
+            loadoutSettingsArray.put(obj)
+        }
+        root.put("loadoutSettings", loadoutSettingsArray)
+
+        val marketAccountsArray = JSONArray()
+        marketAccounts.forEach { acc ->
+            val obj = JSONObject()
+            obj.put("characterId", acc.characterId)
+            obj.put("accountId", acc.accountId)
+            obj.put("isMainCharacter", acc.isMainCharacter)
+            obj.put("currencyBalance", acc.currencyBalance)
+            val inventoryObj = JSONObject()
+            acc.inventory.forEach { (itemId, qty) -> inventoryObj.put(itemId, qty) }
+            obj.put("inventory", inventoryObj)
+            marketAccountsArray.put(obj)
+        }
+        root.put("marketAccounts", marketAccountsArray)
+
+        val marketOrdersArray = JSONArray()
+        marketOrders.forEach { order ->
+            val obj = JSONObject()
+            obj.put("id", order.id)
+            obj.put("characterId", order.characterId)
+            obj.put("itemId", order.itemId)
+            obj.put("side", order.side)
+            obj.put("pricePerUnit", order.pricePerUnit)
+            obj.put("originalQuantity", order.originalQuantity)
+            obj.put("remainingQuantity", order.remainingQuantity)
+            obj.put("status", order.status)
+            obj.put("createdAt", order.createdAt)
+            marketOrdersArray.put(obj)
+        }
+        root.put("marketOrders", marketOrdersArray)
+
+        val marketPriceHistoryArray = JSONArray()
+        marketPriceHistory.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("itemId", entry.itemId)
+            obj.put("pricePerUnit", entry.pricePerUnit)
+            obj.put("quantity", entry.quantity)
+            obj.put("executedAt", entry.executedAt)
+            marketPriceHistoryArray.put(obj)
+        }
+        root.put("marketPriceHistory", marketPriceHistoryArray)
+
+        saveFile.writeText(root.toString())
+    }
+
+    fun load(): SavedGameState? {
+        if (!saveFile.exists()) return null
+
+        val root = JSONObject(saveFile.readText())
+
+        val accounts = mutableListOf<AccountExport>()
+        val accountsArray = root.optJSONArray("accounts") ?: JSONArray()
+        for (i in 0 until accountsArray.length()) {
+            val obj = accountsArray.getJSONObject(i)
+            accounts.add(
+                AccountExport(
+                    id = obj.getString("id"), email = obj.getString("email"),
+                    username = obj.getString("username"), passwordHash = obj.getString("passwordHash"),
+                    passwordSalt = obj.getString("passwordSalt"),
+                    createdAt = obj.getString("createdAt"), lastLoginAt = obj.getString("lastLoginAt"),
+                    ageBracket = obj.getString("ageBracket"), region = obj.getString("region"),
+                    isBanned = obj.getBoolean("isBanned"),
+                    banReason = if (obj.isNull("banReason")) null else obj.getString("banReason"),
+                    mutedUntil = if (obj.isNull("mutedUntil")) null else obj.getString("mutedUntil"),
+                    subscriptionTier = obj.getString("subscriptionTier"),
+                    premiumCurrency = obj.getLong("premiumCurrency")
+                )
+            )
+        }
+
+        val characters = mutableListOf<CharacterExport>()
+        val charactersArray = root.optJSONArray("characters") ?: JSONArray()
+        for (i in 0 until charactersArray.length()) {
+            val obj = charactersArray.getJSONObject(i)
+            characters.add(
+                CharacterExport(
+                    id = obj.getString("id"), accountId = obj.getString("accountId"),
+                    displayName = obj.getString("displayName"), avatarId = obj.getString("avatarId"),
+                    createdAt = obj.getString("createdAt"),
+                    displayNameLastChangedAt = obj.getString("displayNameLastChangedAt"),
+                    isMainCharacter = obj.getBoolean("isMainCharacter")
+                )
+            )
+        }
+
+        val skills = mutableListOf<SkillExport>()
+        val skillsArray = root.optJSONArray("skills") ?: JSONArray()
+        for (i in 0 until skillsArray.length()) {
+            val obj = skillsArray.getJSONObject(i)
+            skills.add(
+                SkillExport(
+                    characterId = obj.getString("characterId"),
+                    skillId = obj.getString("skillId"),
+                    xp = obj.getLong("xp")
+                )
+            )
+        }
+
+        val skillingQueues = mutableListOf<SkillingQueueExport>()
+        val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+        for (i in 0 until queuesArray.length()) {
+            val obj = queuesArray.getJSONObject(i)
+            skillingQueues.add(
+                SkillingQueueExport(
+                    characterId = obj.getString("characterId"),
+                    skillId = obj.getString("skillId"),
+                    itemId = obj.getString("itemId"),
+                    secondsPerAction = obj.getLong("secondsPerAction"),
+                    startedAt = obj.getString("startedAt")
+                )
+            )
+        }
+
+        val craftingQueues = mutableListOf<CraftingQueueExport>()
+        val craftingQueuesArray = root.optJSONArray("craftingQueues") ?: JSONArray()
+        for (i in 0 until craftingQueuesArray.length()) {
+            val obj = craftingQueuesArray.getJSONObject(i)
+            craftingQueues.add(
+                CraftingQueueExport(
+                    characterId = obj.getString("characterId"),
+                    itemId = obj.getString("itemId"),
+                    secondsPerAction = obj.getLong("secondsPerAction"),
+                    targetQuantity = if (obj.isNull("targetQuantity")) null else obj.getInt("targetQuantity"),
+                    quantityCompleted = obj.getInt("quantityCompleted"),
+                    startedAt = obj.getString("startedAt")
+                )
+            )
+        }
+
+        val lastSeen = mutableListOf<LastSeenExport>()
+        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+        for (i in 0 until inventoryArray.length()) {
+            val obj = inventoryArray.getJSONObject(i)
+            inventoryItems.add(
+                InventorySlotExport(
+                    characterId = obj.getString("characterId"),
+                    itemId = obj.getString("itemId"),
+                    quantity = obj.getInt("quantity")
+                )
+            )
+        }
+
+        val equippedSlots = mutableListOf<EquippedSlotExport>()
+        val equippedArray = root.optJSONArray("equippedSlots") ?: JSONArray()
+        for (i in 0 until equippedArray.length()) {
+            val obj = equippedArray.getJSONObject(i)
+            equippedSlots.add(
+                EquippedSlotExport(
+                    characterId = obj.getString("characterId"),
+                    slot = obj.getString("slot"),
+                    itemId = obj.getString("itemId")
+                )
+            )
+        }
+
+        val marketAccounts = mutableListOf<PlayerEconomyAccountExport>()
+        val marketAccountsArray = root.optJSONArray("marketAccounts") ?: JSONArray()
+        for (i in 0 until marketAccountsArray.length()) {
+            val obj = marketAccountsArray.getJSONObject(i)
+            val inventoryObj = obj.optJSONObject("inventory") ?: JSONObject()
+            val inventory = mutableMapOf<String, Int>()
+            inventoryObj.keys().forEach { key -> inventory[key] = inventoryObj.getInt(key) }
+            marketAccounts.add(
+                PlayerEconomyAccountExport(
+                    characterId = obj.getString("characterId"),
+                    accountId = obj.getString("accountId"),
+                    isMainCharacter = obj.getBoolean("isMainCharacter"),
+                    currencyBalance = obj.getLong("currencyBalance"),
+                    inventory = inventory
+                )
+            )
+        }
+
+        val marketOrders = mutableListOf<MarketOrderExport>()
+        val marketOrdersArray = root.optJSONArray("marketOrders") ?: JSONArray()
+        for (i in 0 until marketOrdersArray.length()) {
+            val obj = marketOrdersArray.getJSONObject(i)
+            marketOrders.add(
+                MarketOrderExport(
+                    id = obj.getString("id"),
+                    characterId = obj.getString("characterId"),
+                    itemId = obj.getString("itemId"),
+                    side = obj.getString("side"),
+                    pricePerUnit = obj.getLong("pricePerUnit"),
+                    originalQuantity = obj.getInt("originalQuantity"),
+                    remainingQuantity = obj.getInt("remainingQuantity"),
+                    status = obj.getString("status"),
+                    createdAt = obj.getString("createdAt")
+                )
+            )
+        }
+
+        val marketPriceHistory = mutableListOf<PriceHistoryExport>()
+        val marketPriceHistoryArray = root.optJSONArray("marketPriceHistory") ?: JSONArray()
+        for (i in 0 until marketPriceHistoryArray.length()) {
+            val obj = marketPriceHistoryArray.getJSONObject(i)
+            marketPriceHistory.add(
+                PriceHistoryExport(
+                    itemId = obj.getString("itemId"),
+                    pricePerUnit = obj.getLong("pricePerUnit"),
+                    quantity = obj.getInt("quantity"),
+                    executedAt = obj.getString("executedAt")
+                )
+            )
+        }
+
+        val loadoutSettings = mutableListOf<LoadoutSettingsExport>()
+        val loadoutSettingsArray = root.optJSONArray("loadoutSettings") ?: JSONArray()
+        for (i in 0 until loadoutSettingsArray.length()) {
+            val obj = loadoutSettingsArray.getJSONObject(i)
+            loadoutSettings.add(
+                LoadoutSettingsExport(
+                    characterId = obj.getString("characterId"),
+                    selectedFoodId = if (obj.isNull("selectedFoodId")) null else obj.getString("selectedFoodId"),
+                    selectedPotionId = if (obj.isNull("selectedPotionId")) null else obj.getString("selectedPotionId"),
+                    potionTimerRemainingSeconds = obj.getInt("potionTimerRemainingSeconds"),
+                    autoHealThresholdPercent = obj.getInt("autoHealThresholdPercent"),
+                    autoFleeThresholdPercent = obj.getInt("autoFleeThresholdPercent")
+                )
+            )
+        }
+
+        return SavedGameState(
+            accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
+            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
+        )
+    }
+}
+
+data class SavedGameState(
+    val accounts: List<AccountExport>,
+    val characters: List<CharacterExport>,
+    val skills: List<SkillExport>,
+    val skillingQueues: List<SkillingQueueExport>,
+    val craftingQueues: List<CraftingQueueExport>,
+    val lastSeen: List<LastSeenExport>,
+    val inventoryItems: List<InventorySlotExport>,
+    val equippedSlots: List<EquippedSlotExport>,
+    val loadoutSettings: List<LoadoutSettingsExport>,
+    val marketAccounts: List<PlayerEconomyAccountExport>,
+    val marketOrders: List<MarketOrderExport>,
+    val marketPriceHistory: List<PriceHistoryExport>
+)
+
+
+======================================================================
+AccountCharacterSystem.kt
+======================================================================
+(total lines: 297)
+package com.yourname.idlerpg
+
+import java.time.Duration
+import java.time.Instant
+import java.util.UUID
+import java.security.SecureRandom
+import java.security.spec.KeySpec
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
+import java.util.Base64
+
+enum class AgeBracket { UNDER_13, TEEN_13_17, ADULT_18_PLUS }
+
+enum class SubscriptionTier { NONE, QOL_SUBSCRIBER }
+
+data class Account(
+    val id: String,
+    val email: String,
+    val username: String,
+    private var passwordHash: String,
+private var passwordSalt: String, // Base64-encoded
+    val createdAt: Instant,
+    var lastLoginAt: Instant,
+    var ageBracket: AgeBracket,
+    var region: String,
+    var isBanned: Boolean = false,
+    var banReason: String? = null,
+    var mutedUntil: Instant? = null,
+    var subscriptionTier: SubscriptionTier = SubscriptionTier.NONE,
+    var premiumCurrency: Long = 0
+) {
+    fun isMuted(now: Instant = Instant.now()): Boolean = mutedUntil?.isAfter(now) == true
+    internal fun exposePasswordHashForExport(): String = passwordHash
+    internal fun exposePasswordSaltForExport(): String = passwordSalt
+}
+
+data class Character(
+    val id: String,
+    val accountId: String,
+    var displayName: String,
+    var avatarId: String,
+    val createdAt: Instant,
+    var displayNameLastChangedAt: Instant,
+    var isMainCharacter: Boolean = false
+)
+
+object AvatarCatalog {
+    val presets = listOf("knight", "mage", "archer", "rogue", "cleric", "blacksmith")
+    fun isValid(avatarId: String) = presets.contains(avatarId)
+}
+
+data class AccountExport(
+    val id: String, val email: String, val username: String, val passwordHash: String, val passwordSalt: String,
+    val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
+    val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
+    val subscriptionTier: String, val premiumCurrency: Long
+)
+
+data class CharacterExport(
+    val id: String, val accountId: String, val displayName: String, val avatarId: String,
+    val createdAt: String, val displayNameLastChangedAt: String, val isMainCharacter: Boolean
+)
+
+class AccountService {
+    private val accountsById = mutableMapOf<String, Account>()
+    private val accountsByUsername = mutableMapOf<String, String>()
+    private val accountsByEmail = mutableMapOf<String, String>()
+    private val charactersById = mutableMapOf<String, Character>()
+    private val charactersByAccountId = mutableMapOf<String, MutableList<String>>()
+
+    private val bannedWords = setOf("badword1", "badword2")
+
+    private val displayNameChangeCooldown: Duration = Duration.ofDays(30)
+
+    fun createAccount(
+        email: String,
+        username: String,
+        password: String,
+        ageBracket: AgeBracket,
+        region: String
+    ): ServiceResult<Account> {
+        val normalizedUsername = username.trim().lowercase()
+        val normalizedEmail = email.trim().lowercase()
+
+        if (username.isBlank() || username.length < 3 || username.length > 20) {
+            return ServiceResult.Failure("Username must be between 3 and 20 characters.")
+        }
+        if (containsBannedWord(normalizedUsername)) {
+            return ServiceResult.Failure("Username contains a disallowed word.")
+        }
+        if (accountsByUsername.containsKey(normalizedUsername)) {
+            return ServiceResult.Failure("Username is already taken.")
+        }
+        if (accountsByEmail.containsKey(normalizedEmail)) {
+            return ServiceResult.Failure("An account already exists for this email.")
+        }
+        if (password.length < 8) {
+            return ServiceResult.Failure("Password must be at least 8 characters.")
+        }
+
+        val now = Instant.now()
+        val salt = generateSalt()
+        val account = Account(
+            id = UUID.randomUUID().toString(),
+            email = email,
+            username = username,
+            passwordHash = hashPassword(password, salt),
+            passwordSalt = Base64.getEncoder().encodeToString(salt),
+            createdAt = now,
+            lastLoginAt = now,
+            ageBracket = ageBracket,
+            region = region
+        )
+
+        accountsById[account.id] = account
+        accountsByUsername[normalizedUsername] = account.id
+        accountsByEmail[normalizedEmail] = account.id
+
+        return ServiceResult.Success(account)
+    }
+
+    fun createCharacter(accountId: String, displayName: String, avatarId: String): ServiceResult<Character> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+
+        if (account.isBanned) {
+            return ServiceResult.Failure("This account is banned and cannot create characters.")
+        }
+        if (displayName.isBlank() || displayName.length < 3 || displayName.length > 16) {
+            return ServiceResult.Failure("Display name must be between 3 and 16 characters.")
+        }
+        if (containsBannedWord(displayName.lowercase())) {
+            return ServiceResult.Failure("Display name contains a disallowed word.")
+        }
+        if (!AvatarCatalog.isValid(avatarId)) {
+            return ServiceResult.Failure("Avatar '" + avatarId + "' is not a valid preset.")
+        }
+
+        val now = Instant.now()
+        val character = Character(
+            id = UUID.randomUUID().toString(),
+            accountId = accountId,
+            displayName = displayName,
+            avatarId = avatarId,
+            createdAt = now,
+            displayNameLastChangedAt = now
+        )
+
+        charactersById[character.id] = character
+        charactersByAccountId.getOrPut(accountId) { mutableListOf() }.add(character.id)
+
+        return ServiceResult.Success(character)
+    }
+
+    fun changeDisplayName(
+        characterId: String,
+        newName: String,
+        now: Instant = Instant.now()
+    ): ServiceResult<Character> {
+        val character = charactersById[characterId] ?: return ServiceResult.Failure("Character not found.")
+
+        val elapsed = Duration.between(character.displayNameLastChangedAt, now)
+        if (elapsed < displayNameChangeCooldown) {
+            val daysRemaining = (displayNameChangeCooldown - elapsed).toDays() + 1
+            return ServiceResult.Failure("Display name can be changed again in " + daysRemaining + " day(s).")
+        }
+        if (newName.isBlank() || newName.length < 3 || newName.length > 16) {
+            return ServiceResult.Failure("Display name must be between 3 and 16 characters.")
+        }
+        if (containsBannedWord(newName.lowercase())) {
+            return ServiceResult.Failure("Display name contains a disallowed word.")
+        }
+
+        character.displayName = newName
+        character.displayNameLastChangedAt = now
+        return ServiceResult.Success(character)
+    }
+
+    fun setMainCharacter(characterId: String): ServiceResult<Character> {
+        val character = charactersById[characterId] ?: return ServiceResult.Failure("Character not found.")
+        val siblings = charactersByAccountId[character.accountId].orEmpty().mapNotNull { charactersById[it] }
+        siblings.forEach { it.isMainCharacter = false }
+        character.isMainCharacter = true
+        return ServiceResult.Success(character)
+    }
+
+    fun recordLogin(accountId: String, now: Instant = Instant.now()): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        account.lastLoginAt = now
+        return ServiceResult.Success(account)
+    }
+
+    fun banAccount(accountId: String, reason: String): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        account.isBanned = true
+        account.banReason = reason
+        return ServiceResult.Success(account)
+    }
+
+    fun muteAccount(accountId: String, duration: Duration, now: Instant = Instant.now()): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        account.mutedUntil = now.plus(duration)
+        return ServiceResult.Success(account)
+    }
+
+    fun addCurrency(accountId: String, premium: Long = 0): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        if (premium < 0) return ServiceResult.Failure("Currency amounts cannot be negative.")
+        account.premiumCurrency += premium
+        return ServiceResult.Success(account)
+    }
+
+    fun charactersFor(accountId: String): List<Character> =
+        charactersByAccountId[accountId]?.mapNotNull { charactersById[it] } ?: emptyList()
+
+    fun login(email: String, password: String): ServiceResult<Account> {
+        val normalizedEmail = email.trim().lowercase()
+        val accountId = accountsByEmail[normalizedEmail]
+            ?: return ServiceResult.Failure("No account found with that email.")
+        val account = accountsById.getValue(accountId)
+        if (account.isBanned) {
+            return ServiceResult.Failure("This account is banned.")
+        }
+        val salt = Base64.getDecoder().decode(account.exposePasswordSaltForExport())
+        if (!verifyPassword(password, salt, account.exposePasswordHashForExport())) {
+            return ServiceResult.Failure("Incorrect password.")
+        }
+        account.lastLoginAt = Instant.now()
+        return ServiceResult.Success(account)
+    }
+
+    fun accountById(accountId: String): Account? = accountsById[accountId]
+
+    private fun containsBannedWord(text: String): Boolean = bannedWords.any { text.contains(it) }
+
+    private fun hashPassword(password: String, salt: ByteArray): String {
+    val spec: KeySpec = PBEKeySpec(password.toCharArray(), salt, 120_000, 256)
+    val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+    val hash = factory.generateSecret(spec).encoded
+    return Base64.getEncoder().encodeToString(hash)
+}
+
+private fun generateSalt(): ByteArray {
+    val salt = ByteArray(16)
+    SecureRandom().nextBytes(salt)
+    return salt
+}
+
+private fun verifyPassword(password: String, salt: ByteArray, expectedHash: String): Boolean {
+    return hashPassword(password, salt) == expectedHash
+}
+
+    fun exportAllAccounts(): List<AccountExport> = accountsById.values.map {
+        AccountExport(
+            it.id, it.email, it.username, it.exposePasswordHashForExport(), it.exposePasswordSaltForExport(),
+            it.createdAt.toString(), it.lastLoginAt.toString(), it.ageBracket.name, it.region,
+            it.isBanned, it.banReason, it.mutedUntil?.toString(),
+            it.subscriptionTier.name, it.premiumCurrency
+        )
+    }
+
+    fun exportAllCharacters(): List<CharacterExport> = charactersById.values.map {
+        CharacterExport(
+            it.id, it.accountId, it.displayName, it.avatarId,
+            it.createdAt.toString(), it.displayNameLastChangedAt.toString(), it.isMainCharacter
+        )
+    }
+
+    fun restoreAccount(export: AccountExport) {
+        val account = Account(
+            id = export.id, email = export.email, username = export.username,
+            passwordHash = export.passwordHash, passwordSalt = export.passwordSalt,
+            createdAt = Instant.parse(export.createdAt), lastLoginAt = Instant.parse(export.lastLoginAt),
+            ageBracket = AgeBracket.valueOf(export.ageBracket), region = export.region,
+            isBanned = export.isBanned, banReason = export.banReason,
+            mutedUntil = export.mutedUntil?.let { Instant.parse(it) },
+            subscriptionTier = SubscriptionTier.valueOf(export.subscriptionTier),
+            premiumCurrency = export.premiumCurrency
+        )
+        accountsById[account.id] = account
+        accountsByUsername[account.username.lowercase()] = account.id
+        accountsByEmail[account.email.lowercase()] = account.id
+    }
+
+    fun restoreCharacter(export: CharacterExport) {
+        val character = Character(
+            id = export.id, accountId = export.accountId, displayName = export.displayName,
+            avatarId = export.avatarId, createdAt = Instant.parse(export.createdAt),
+            displayNameLastChangedAt = Instant.parse(export.displayNameLastChangedAt),
+            isMainCharacter = export.isMainCharacter
+        )
+        charactersById[character.id] = character
+        val siblingIds = charactersByAccountId.getOrPut(character.accountId) { mutableListOf() }
+        if (!siblingIds.contains(character.id)) {
+            siblingIds.add(character.id)
+        }
+    }
+}
+
+
+======================================================================
+Search for 'data class GameState' or similar across all files
+======================================================================
+
+Found in GameStateRepository.kt:
+rt org.json.JSONObject
+import java.io.File
+
+class GameStateRepository(private val context: Context) {
+    private val saveFile: File get() = File(context.filesDir, "game_state.json")
+
+    fun save(
+        accounts: List<AccountExport>,
+        characters: List<CharacterExport>,
+        skills: List<SkillExport>,
+        skillingQueues: List<SkillingQueueExport>,
+        craftingQueues: List<CraftingQueueExport>,
+        lastSeen: List<LastSeenExport>,
+        inventoryItems: List<InventorySlotExport>,
+        equippedSlots: List<EquippedSlotEx
