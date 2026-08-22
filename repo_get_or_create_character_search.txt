@@ -1,0 +1,481 @@
+======================================================================
+SupabaseCharacterRepository.kt (full content)
+======================================================================
+package com.yourname.idlerpg
+
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+
+// Bridges a local Room-database character (local_character_id) to its
+// matching Supabase characters row (a separate, real uuid). Every
+// chat/guild RPC call needs the Supabase uuid, not the local id -
+// they are different ID schemes entirely.
+object SupabaseCharacterRepository {
+
+    private val client get() = SupabaseClientProvider.client
+
+    suspend fun getOrCreateCharacter(localCharacterId: String, displayName: String): Result<String> = runCatching {
+        client.postgrest.rpc("get_or_create_character", buildJsonObject {
+            put("p_local_character_id", localCharacterId)
+            put("p_display_name", displayName)
+        }).decodeAs<String>()
+    }
+}
+
+
+======================================================================
+Searching entire repo for .sql files or 'get_or_create_character' mentions
+======================================================================
+
+--- SQL FILE FOUND: ./check_phase_b_rls.sql ---
+-- check_phase_b_rls.sql
+-- Purpose: verify RLS enabled/policy status on every table Phase B moderation
+-- screens will read directly, BEFORE assuming any bug is broken code vs missing policy.
+-- Run this in the Supabase SQL editor and paste the full output into a
+-- phase_b_rls_result.txt dump (see git commands below).
+
+-- 1. Which tables have RLS enabled at all
+select
+  schemaname,
+  tablename,
+  rowsecurity as rls_enabled
+from pg_tables
+where schemaname = 'public'
+  and tablename in (
+    'mutes',
+    'report_appeals',
+    'message_reports',
+    'blocks',
+    'chat_channels',
+    'chat_channel_participants',
+    'characters'
+  )
+order by tablename;
+
+-- 2. Every policy that currently exists on those tables, and what it allows
+select
+  schemaname,
+  tablename,
+  policyname,
+  permissive,
+  roles,
+  cmd,
+  qual,
+  with_check
+from pg_policies
+where schemaname = 'public'
+  and tablename in (
+    'mutes',
+    'report_appeals',
+    'message_reports',
+    'blocks',
+    'chat_channels',
+    'chat_channel_participants',
+    'characters'
+  )
+order by tablename, policyname;
+
+-- 3. Sanity check: is is_moderator actually set on the test profile
+select id, is_moderator
+from profiles
+where id = '4453e95f-80e0-4aa3-b62f-479acdafa6a7';
+
+-- 4. Sanity check: does a GUILD-type chat channel exist for BooziBar
+-- (outstanding item #4 from next_session_prompt.txt)
+select * from chat_channels where type = 'GUILD';
+
+
+--- SQL FILE FOUND: ./fix_missing_select_policies.sql ---
+-- These three tables have RLS enabled but were missing SELECT policies
+-- entirely, meaning any direct client-side read (as opposed to a
+-- SECURITY DEFINER RPC call, which bypasses RLS) silently returned
+-- zero rows instead of erroring. None of this data is sensitive -
+-- channel list, channel participants, and character display names
+-- are all fine to be readable by any signed-in player.
+
+create policy chat_channels_select_authenticated on public.chat_channels
+    for select using (auth.uid() is not null);
+
+create policy chat_channel_participants_select_authenticated on public.chat_channel_participants
+    for select using (auth.uid() is not null);
+
+create policy characters_select_authenticated on public.characters
+    for select using (auth.uid() is not null);
+
+
+--- SQL FILE FOUND: ./fix_send_message_blocks_check.sql ---
+-- fix_send_message_blocks_check.sql
+-- Root cause (confirmed via live test): blocking a character hid their DM
+-- from view (blockCharacter() only affects client-side fetch filtering) but
+-- never stopped them from sending - send_chat_message checks mutes and
+-- channel participation, but never touches the blocks table at all.
+--
+-- Fix: for DM channels, look up the other participant in the channel and
+-- block the send if either side has blocked the other.
+
+CREATE OR REPLACE FUNCTION public.send_chat_message(p_character_id uuid, p_channel_id uuid, p_content text)
+ RETURNS chat_messages
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+    v_message public.chat_messages;
+    v_channel_type public.channel_type;
+    v_is_participant boolean;
+    v_mute_expires timestamptz;
+    v_other_character_id uuid;
+begin
+    if not public.character_owned_by_caller(p_character_id) then
+        raise exception 'Character does not belong to caller.';
+    end if;
+
+    select expires_at into v_mute_expires
+        from public.mutes
+        where character_id = p_character_id
+          and (expires_at is null or expires_at > now())
+        limit 1;
+    if found then
+        raise exception 'You are muted%',
+            case when v_mute_expires is not null then ' until ' || v_mute_expires else '' end;
+    end if;
+
+    if trim(p_content) = '' then
+        raise exception 'Message cannot be empty.';
+    end if;
+
+    select type into v_channel_type from public.chat_channels where id = p_channel_id;
+    if v_channel_type is null then
+        raise exception 'Channel not found.';
+    end if;
+
+    if v_channel_type in ('GUILD', 'DM') then
+        select exists (
+            select 1 from public.chat_channel_participants
+            where channel_id = p_channel_id and character_id = p_character_id
+        ) into v_is_participant;
+        if not v_is_participant then
+            raise exception 'Not a participant of this channel.';
+        end if;
+    end if;
+
+    -- NEW: for DMs, block the send if either side has blocked the other.
+    if v_channel_type = 'DM' then
+        select character_id into v_other_character_id
+        from public.chat_channel_participants
+        where channel_id = p_channel_id and character_id != p_character_id
+        limit 1;
+
+        if v_other_character_id is not null and exists (
+            select 1 from public.blocks
+            where (blocker_character_id = p_character_id and blocked_character_id = v_other_character_id)
+               or (blocker_character_id = v_other_character_id and blocked_character_id = p_character_id)
+        ) then
+            raise exception 'You cannot message this character.';
+        end if;
+    end if;
+
+    insert into public.chat_messages (id, channel_id, sender_character_id, content, sent_at, type)
+        values (gen_random_uuid(), p_channel_id, p_character_id, p_content, now(), 'NORMAL')
+        returning * into v_message;
+
+    return v_message;
+end;
+$function$
+;
+
+
+--- SQL FILE FOUND: ./fix_blocks_insert_policy.sql ---
+-- fix_blocks_insert_policy.sql
+-- Root cause (confirmed via live test + pg_policies check): blocks only ever
+-- had a SELECT policy ("blocks visible to the blocker"). No INSERT policy
+-- existed, so blockCharacter()'s insert was silently RLS-denied every time -
+-- wrapped in runCatching client-side, so it just looked like "nothing
+-- happened" with no visible error.
+
+create policy "blocks insertable by the blocker"
+on public.blocks
+for insert
+with check (
+  exists (
+    select 1 from public.characters ch
+    where ch.id = blocks.blocker_character_id and ch.profile_id = auth.uid()
+  )
+);
+
+-- Verify after running:
+-- select schemaname, tablename, policyname, cmd
+-- from pg_policies
+-- where schemaname = 'public' and tablename = 'blocks'
+-- order by cmd;
+-- should now show both SELECT and INSERT policies.
+
+
+--- mention found in: ./repo_auth_signup_flow.txt ---
+  line 25: 16:         client.postgrest.rpc("get_or_create_character", buildJsonObject {
+
+--- SQL FILE FOUND: ./fix_missing_select_policies_phase_b.sql ---
+-- fix_missing_select_policies_phase_b.sql
+-- Same bug class as fix_missing_select_policies.sql (Chat Core): RLS is
+-- enabled on these tables but zero SELECT policies exist, so any direct
+-- client-side read silently returns empty instead of erroring.
+--
+-- Confirmed via check_phase_b_rls.sql that mutes, report_appeals, and
+-- message_reports have rowsecurity = true but no rows in pg_policies.
+--
+-- Mirrors the existing authenticated-read pattern used for chat_channels
+-- and chat_channel_participants (auth.uid() IS NOT NULL). Moderator-only
+-- write actions still go through the SECURITY DEFINER RPCs
+-- (admin_mute_character, resolve_report, resolve_appeal, etc.), so this
+-- only opens up read access needed for list/status screens.
+
+create policy mutes_select_authenticated
+on public.mutes
+for select
+using (auth.uid() is not null);
+
+create policy report_appeals_select_authenticated
+on public.report_appeals
+for select
+using (auth.uid() is not null);
+
+create policy message_reports_select_authenticated
+on public.message_reports
+for select
+using (auth.uid() is not null);
+
+-- Re-run this after applying, to confirm all 7 tables now show policies:
+-- select schemaname, tablename, policyname, cmd
+-- from pg_policies
+-- where schemaname = 'public'
+--   and tablename in ('mutes','report_appeals','message_reports')
+-- order by tablename;
+
+
+--- SQL FILE FOUND: ./fix_guild_chat_participants.sql ---
+-- fix_guild_chat_participants.sql
+-- Root cause (confirmed via live "Not a participant of this channel" error,
+-- code P0001, from send_chat_message): get_or_create_guild_channel creates
+-- the GUILD chat_channels row, but nothing ever inserts a matching row into
+-- chat_channel_participants for guild members - neither on guild creation
+-- nor on joining. So every guild's chat has always been unusable for
+-- everyone, not just Boozi.
+
+-- 1. create_guild: add founder as a participant of the new guild channel.
+CREATE OR REPLACE FUNCTION public.create_guild(p_name text, p_founder_character_id uuid)
+ RETURNS guilds
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+    v_profile_id uuid := auth.uid();
+    v_guild public.guilds;
+    v_channel_id uuid;
+begin
+    if v_profile_id is null then
+        raise exception 'Not authenticated';
+    end if;
+
+    if not exists (
+        select 1 from public.characters
+        where id = p_founder_character_id and profile_id = v_profile_id
+    ) then
+        raise exception 'Character does not belong to caller';
+    end if;
+
+    if length(p_name) < 3 or length(p_name) > 24 then
+        raise exception 'Guild name must be between 3 and 24 characters';
+    end if;
+
+    insert into public.guilds (name, leader_character_id)
+        values (p_name, p_founder_character_id)
+        returning * into v_guild;
+
+    insert into public.guild_members (guild_id, character_id, role)
+        values (v_guild.id, p_founder_character_id, 'LEADER');
+
+    v_channel_id := public.get_or_create_guild_channel(v_guild.id);
+
+    insert into public.chat_channel_participants (channel_id, character_id)
+        values (v_channel_id, p_founder_character_id)
+        on conflict do nothing;
+
+    update public.profiles
+        set free_guild_creation_used = true
+        where id = v_profile_id and free_guild_creation_used = false;
+
+    return v_guild;
+end;
+$function$
+;
+
+-- 2. join_guild: add the joining character as a participant of the guild channel.
+CREATE OR REPLACE FUNCTION public.join_guild(p_guild_id uuid, p_character_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+    v_profile_id uuid := auth.uid();
+    v_member_count integer;
+    v_channel_id uuid;
+begin
+    if v_profile_id is null then
+        raise exception 'Not authenticated';
+    end if;
+
+    if not exists (
+        select 1 from public.characters
+        where id = p_character_id and profile_id = v_profile_id
+    ) then
+        raise exception 'Character does not belong to caller';
+    end if;
+
+    if exists (select 1 from public.guild_members where character_id = p_character_id) then
+        raise exception 'Character is already in a guild';
+    end if;
+
+    if not exists (select 1 from public.guilds where id = p_guild_id) then
+        raise exception 'Guild not found';
+    end if;
+
+    select count(*) into v_member_count from public.guild_members where guild_id = p_guild_id;
+    if v_member_count >= 20 then
+        raise exception 'Guild is at max capacity (20)';
+    end if;
+
+    insert into public.guild_members (guild_id, character_id, role)
+        values (p_guild_id, p_character_id, 'MEMBER');
+
+    v_channel_id := public.get_or_create_guild_channel(p_guild_id);
+
+    insert into public.chat_channel_participants (channel_id, character_id)
+        values (v_channel_id, p_character_id)
+        on conflict do nothing;
+end;
+$function$
+;
+
+-- 3. Backfill: every existing guild member (e.g. Boozi in BooziBar) is
+-- missing their participant row. Add them all now.
+insert into public.chat_channel_participants (channel_id, character_id)
+select cc.id, gm.character_id
+from public.guild_members gm
+join public.chat_channels cc on cc.type = 'GUILD' and cc.guild_id = gm.guild_id
+on conflict do nothing;
+
+-- Verify after running all three statements above:
+-- select * from chat_channel_participants;
+-- should now include a row for Boozi's guild channel.
+
+
+--- SQL FILE FOUND: ./fix_create_guild_channel.sql ---
+-- fix_create_guild_channel.sql
+-- Root cause (confirmed via pg_get_functiondef): create_guild() inserts the
+-- guild row and the founder's guild_members row, then returns - it never
+-- calls get_or_create_guild_channel. That's why no GUILD-type chat_channels
+-- row exists for BooziBar (outstanding item #4).
+--
+-- Fix: add the channel creation inside create_guild itself, in the same
+-- transaction, since both functions are SECURITY DEFINER and this mirrors
+-- the existing server-enforced pattern used everywhere else in this project.
+
+CREATE OR REPLACE FUNCTION public.create_guild(p_name text, p_founder_character_id uuid)
+ RETURNS guilds
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+    v_profile_id uuid := auth.uid();
+    v_guild public.guilds;
+begin
+    if v_profile_id is null then
+        raise exception 'Not authenticated';
+    end if;
+
+    if not exists (
+        select 1 from public.characters
+        where id = p_founder_character_id and profile_id = v_profile_id
+    ) then
+        raise exception 'Character does not belong to caller';
+    end if;
+
+    if length(p_name) < 3 or length(p_name) > 24 then
+        raise exception 'Guild name must be between 3 and 24 characters';
+    end if;
+
+    insert into public.guilds (name, leader_character_id)
+        values (p_name, p_founder_character_id)
+        returning * into v_guild;
+
+    insert into public.guild_members (guild_id, character_id, role)
+        values (v_guild.id, p_founder_character_id, 'LEADER');
+
+    -- NEW: create the guild's chat channel in the same transaction
+    perform public.get_or_create_guild_channel(v_guild.id);
+
+    update public.profiles
+        set free_guild_creation_used = true
+        where id = v_profile_id and free_guild_creation_used = false;
+
+    return v_guild;
+end;
+$function$
+;
+
+-- Backfill: BooziBar (and any other existing guild) was created before this
+-- fix, so it still has no GUILD channel. Run this once to backfill all
+-- existing guilds:
+select public.get_or_create_guild_channel(id) from public.guilds;
+
+-- Verify after running both statements above:
+-- select * from chat_channels where type = 'GUILD';
+-- should now show one row per existing guild.
+
+
+--- SQL FILE FOUND: ./app/src/main/kotlin/com/yourname/idlerpg/create_profile_trigger.sql ---
+-- Auto-create a profiles row whenever a new auth.users row appears.
+-- Username is derived from the email's local part since nothing else
+-- is available at signup time (the app doesn't currently pass a
+-- username via signUpWith's metadata - worth adding later so this
+-- can use the real chosen username instead of guessing from email).
+
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+as $$
+begin
+    insert into public.profiles (id, username, created_at, free_guild_creation_used, is_moderator)
+    values (
+        new.id,
+        split_part(new.email, '@', 1),
+        now(),
+        false,
+        false
+    )
+    on conflict (id) do nothing;
+    return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+    after insert on auth.users
+    for each row execute function public.handle_new_auth_user();
+
+-- One-time backfill for the account that already exists in auth.users
+-- from before this trigger was created.
+insert into public.profiles (id, username, created_at, free_guild_creation_used, is_moderator)
+values (
+    '4453e95f-80e0-4aa3-b62f-479acdafa6a7',
+    'nateomach1',
+    now(),
+    false,
+    true
+)
+on conflict (id) do nothing;
+
+
+--- mention found in: ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseCharacterRepository.kt ---
+  line 16: client.postgrest.rpc("get_or_create_character", buildJsonObject {
