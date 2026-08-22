@@ -98,9 +98,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val auth = SupabaseClientProvider.client.auth
                 if (isNewAccount) {
-                    auth.signUpWith(io.github.jan.supabase.auth.providers.builtin.Email) {
-                        this.email = email
-                        this.password = password
+                    try {
+                        auth.signUpWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+                            this.email = email
+                            this.password = password
+                        }
+                    } catch (signUpError: Exception) {
+                        val message = signUpError.message ?: ""
+                        if (message.contains("user_already_exists", ignoreCase = true) ||
+                            message.contains("already registered", ignoreCase = true)
+                        ) {
+                            // Account already exists on the server (e.g. new phone, lost
+                            // local account, re-registered with the same email) - log in
+                            // to that existing account instead of failing outright.
+                            auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+                                this.email = email
+                                this.password = password
+                            }
+                        } else {
+                            throw signUpError
+                        }
                     }
                 } else {
                     try {
