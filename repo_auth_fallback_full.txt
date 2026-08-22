@@ -1,0 +1,114 @@
+======================================================================
+GameViewModel.kt lines 60-170 (full auth flow context)
+======================================================================
+60:     private val _currentAccountId = MutableStateFlow<String?>(null)
+61:     val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
+62: 
+63:     private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+64:     val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+65: 
+66:     private val _currentCharacterId = MutableStateFlow<String?>(null)
+67:     val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+68: 
+69:     private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+70:     val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+71: 
+72:     private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+73:     val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+74: 
+75:     private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+76:     val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+77: 
+78:     val economyMonitoring = EconomyMonitoringService()
+79:     val marketService = MarketService(economyMonitoring)
+80:     val combatService = CombatService()
+81: 
+82:     // =========================================================
+83:     // SUPABASE AUTH (guild/chat multiplayer only - local play never depends on this)
+84:     // =========================================================
+85: 
+86:     private val _supabaseAuthState = MutableStateFlow(SupabaseAuthState.SIGNED_OUT)
+87:     val supabaseAuthState: StateFlow<SupabaseAuthState> = _supabaseAuthState.asStateFlow()
+88: 
+89:     private val _supabaseAuthError = MutableStateFlow<String?>(null)
+90:     val supabaseAuthError: StateFlow<String?> = _supabaseAuthError.asStateFlow()
+91: 
+92:     // Fire-and-forget: runs in the background after a successful LOCAL login/account
+93:     // creation. If this fails (no network, Supabase down, etc.) local gameplay is
+94:     // completely unaffected - only guild/chat multiplayer stays unavailable.
+95:     private fun syncSupabaseAuth(email: String, password: String, isNewAccount: Boolean) {
+96:         viewModelScope.launch {
+97:             _supabaseAuthState.value = SupabaseAuthState.SIGNING_IN
+98:             try {
+99:                 val auth = SupabaseClientProvider.client.auth
+100:                 if (isNewAccount) {
+101:                     auth.signUpWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+102:                         this.email = email
+103:                         this.password = password
+104:                     }
+105:                 } else {
+106:                     try {
+107:                         auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+108:                             this.email = email
+109:                             this.password = password
+110:                         }
+111:                     } catch (signInError: Exception) {
+112:                         // Local account existed before Supabase sync was added - no
+113:                         // matching Supabase account exists yet. Lazily create one now
+114:                         // with the same credentials, so future logins sign in normally.
+115:                         auth.signUpWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+116:                             this.email = email
+117:                             this.password = password
+118:                         }
+119:                     }
+120:                 }
+121:                 _supabaseAuthState.value = SupabaseAuthState.SIGNED_IN
+122:             } catch (e: Exception) {
+123:                 _supabaseAuthState.value = SupabaseAuthState.ERROR
+124:                 _supabaseAuthError.value = e.message ?: e.toString()
+125:             }
+126:         }
+127:     }
+128: 
+129:         // =========================================================
+130:     // GUILD (Supabase-backed, best-effort - local play never depends on this)
+131:     // =========================================================
+132: 
+133:     private val _guildHomeState = MutableStateFlow<GuildHomeState?>(null)
+134:     val guildHomeState: StateFlow<GuildHomeState?> = _guildHomeState.asStateFlow()
+135: 
+136:     private val _guildId = MutableStateFlow<String?>(null)
+137: 
+138:     private val _guildLeaderboard = MutableStateFlow<List<GuildLeaderboardEntry>>(emptyList())
+139:     val guildLeaderboard: StateFlow<List<GuildLeaderboardEntry>> = _guildLeaderboard.asStateFlow()
+140: 
+141:     private val _browsableGuilds = MutableStateFlow<List<GuildBrowseEntry>>(emptyList())
+142:     val browsableGuilds: StateFlow<List<GuildBrowseEntry>> = _browsableGuilds.asStateFlow()
+143: 
+144:     private val _guildActionError = MutableStateFlow<String?>(null)
+145:     val guildActionError: StateFlow<String?> = _guildActionError.asStateFlow()
+146: 
+147:     // The Supabase characters.id for the current character - a DIFFERENT
+148:     // id than _currentCharacterId (which is the local Room-database id).
+149:     // Every Supabase RPC call needs this one, not the local id.
+150:     private val _currentSupabaseCharacterId = MutableStateFlow<String?>(null)
+151:     val currentSupabaseCharacterId: StateFlow<String?> = _currentSupabaseCharacterId.asStateFlow()
+152: 
+153:     private val _characterSyncError = MutableStateFlow<String?>(null)
+154:     val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
+155: 
+156:     fun refreshGuildHome() {
+157:         val characterId = _currentSupabaseCharacterId.value ?: return
+158:         viewModelScope.launch {
+159:             val membership = SupabaseGuildRepository.findMembership(characterId)
+160:             _guildId.value = membership?.first
+161:             if (membership == null) {
+162:                 _guildHomeState.value = null
+163:                 _guildLeaderboard.value = emptyList()
+164:                 _browsableGuilds.value = SupabaseGuildRepository.listGuilds()
+165:             } else {
+166:                 _guildHomeState.value = SupabaseGuildRepository.fetchGuildHome(characterId)
+167:                 _guildLeaderboard.value = SupabaseGuildRepository.fetchLeaderboard(characterId)
+168:             }
+169:         }
+170:     }
