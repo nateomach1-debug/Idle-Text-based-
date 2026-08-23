@@ -1,0 +1,12 @@
+No MarketService/MarketSystem/TradingSystem.kt found by direct name.
+Searching all files for 'class MarketService' or 'MarketOrder' instead...
+
+Found relevant content in: EconomyMarketSystem.kt (total lines: 426)
+
+Found relevant content in: GameStateRepository.kt (total lines: 398)
+
+Found relevant content in: GameViewModel.kt (total lines: 1363)
+
+Found relevant content in: MainActivity.kt (total lines: 991)
+
+Found relevant content in: MarketScreen.kt (total lines: 298)
