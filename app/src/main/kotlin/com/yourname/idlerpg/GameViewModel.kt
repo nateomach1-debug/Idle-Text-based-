@@ -823,8 +823,75 @@ fun login(email: String, password: String): ServiceResult<Account> {
             _currentAccountId.value = result.value.id
             refreshCurrency()
             syncSupabaseAuth(email, password, isNewAccount = false)
+    } else {
+        attemptCloudRecoveryLogin(email, password)
     }
     return result
+}
+
+private fun attemptCloudRecoveryLogin(email: String, password: String) {
+    viewModelScope.launch {
+        try {
+            auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+                this.email = email
+                this.password = password
+            }
+        } catch (e: Exception) {
+            _characterSyncError.value = "No local account found, and no matching cloud account either."
+            return@launch
+        }
+
+        val placeholderLocalId = java.util.UUID.randomUUID().toString()
+        val charResult = SupabaseCharacterRepository.getOrCreateCharacter(placeholderLocalId, "Recovered")
+        val supabaseCharacterId = charResult.getOrNull()
+        if (supabaseCharacterId == null) {
+            _characterSyncError.value = "Found a cloud account but couldn't sync a character to it."
+            return@launch
+        }
+
+        val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
+        if (cloudJson == null) {
+            _characterSyncError.value = "This account has no cloud backup saved yet - its local data can't be recovered."
+            return@launch
+        }
+
+        repository.overwriteRawJson(cloudJson)
+        val recovered = repository.load()
+        if (recovered == null) {
+            _characterSyncError.value = "Recovered cloud data was corrupted or empty."
+            return@launch
+        }
+
+        recovered.accounts.forEach { accountService.restoreAccount(it) }
+        recovered.characters.forEach { accountService.restoreCharacter(it) }
+        recovered.skills.forEach { progressionService.restoreSkill(it) }
+        recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+        recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+        recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+        val recoveredAccount = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        if (recoveredAccount == null) {
+            _characterSyncError.value = "Recovered cloud data but couldn't match it to this email."
+            return@launch
+        }
+
+        sessionManager.saveSession(recoveredAccount.id)
+        _currentAccountId.value = recoveredAccount.id
+        refreshCurrency()
+        _currentSupabaseCharacterId.value = supabaseCharacterId
+        _characterSyncError.value = null
+
+        val recoveredCharacter = recovered.characters.firstOrNull { it.accountId == recoveredAccount.id }
+        if (recoveredCharacter != null) {
+            _currentCharacterId.value = recoveredCharacter.id
+        }
+    }
 }
   fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
     val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
