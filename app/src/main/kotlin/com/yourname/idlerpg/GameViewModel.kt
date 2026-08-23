@@ -832,7 +832,7 @@ fun login(email: String, password: String): ServiceResult<Account> {
 private fun attemptCloudRecoveryLogin(email: String, password: String) {
     viewModelScope.launch {
         try {
-            auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+            SupabaseClientProvider.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
                 this.email = email
                 this.password = password
             }
