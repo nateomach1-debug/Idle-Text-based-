@@ -42,6 +42,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import java.time.Duration
+import kotlinx.coroutines.launch
 import java.time.Instant
 
 // Shrinks all dp-based sizing (padding, spacers, icons, fonts) proportionally
@@ -517,19 +518,22 @@ fun AppRoot(gameViewModel: GameViewModel) {
 
     when (flowState) {
         AppFlowState.Login -> {
+            val loginCoroutineScope = rememberCoroutineScope()
             LoginScreen(
                 isCreatingAccount = isCreatingAccount,
                 onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
                 errorMessage = loginError,
                 onLogin = { email, password ->
-                    val result = gameViewModel.login(email, password)
-                    when (result) {
-                        is ServiceResult.Success -> {
-                            val chars = gameViewModel.accountService.charactersFor(result.value.id)
-                            flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
-                            loginError = null
+                    loginCoroutineScope.launch {
+                        val result = gameViewModel.login(email, password)
+                        when (result) {
+                            is ServiceResult.Success -> {
+                                val chars = gameViewModel.accountService.charactersFor(result.value.id)
+                                flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+                                loginError = null
+                            }
+                            is ServiceResult.Failure -> loginError = result.reason
                         }
-                        is ServiceResult.Failure -> loginError = result.reason
                     }
                 },
                 onCreateAccount = { email, username, password ->
