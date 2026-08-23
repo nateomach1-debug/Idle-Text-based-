@@ -1,0 +1,46 @@
+======================================================================
+GameViewModel.kt - fun login(...) full context
+======================================================================
+--- around line 819 ---
+817:         saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+818:     }
+819: fun login(email: String, password: String): ServiceResult<Account> {
+820:     val result = accountService.login(email, password)
+821:     if (result is ServiceResult.Success) {
+822:         sessionManager.saveSession(result.value.id)
+823:             _currentAccountId.value = result.value.id
+824:             refreshCurrency()
+825:             syncSupabaseAuth(email, password, isNewAccount = false)
+826:     }
+827:     return result
+828: }
+829:   fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
+830:     val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
+831:     if (result is ServiceResult.Success) {
+832:         sessionManager.saveSession(result.value.id)
+833:             _currentAccountId.value = result.value.id
+834:             refreshCurrency()
+835:             syncSupabaseAuth(email, password, isNewAccount = true)
+836:     }
+837:     return result
+838:   }
+839:   fun tryAutoLogin(): Account? {
+840:     val accountId = sessionManager.getSavedAccountId() ?: return null
+841:     val account = accountService.accountById(accountId) ?: return null
+842:     _currentAccountId.value = account.id
+843:     refreshCurrency()
+844:     return account
+845: }
+846: 
+847: fun logout() {
+848:     sessionManager.clearSession()
+849:     _currentAccountId.value = null
+850:     _currentCharacterId.value = null
+851: }
+852: 
+853:     fun clearOfflineSummary() {
+854:         _offlineSummary.value = null
+855:     }
+856:     fun saveGame() {
+857:         repository.save(
+858:             accountService.exportAllAccounts(),
