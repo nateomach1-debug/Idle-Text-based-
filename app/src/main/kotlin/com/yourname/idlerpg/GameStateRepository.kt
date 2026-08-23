@@ -9,6 +9,16 @@ import java.io.File
 class GameStateRepository(private val context: Context) {
     private val saveFile: File get() = File(context.filesDir, "game_state.json")
 
+    // Exposes the exact JSON already written by save() - reused as-is as
+    // the cloud upload payload, so no separate serialization format is needed.
+    fun currentSaveJson(): String? = if (saveFile.exists()) saveFile.readText() else null
+
+    // Used when restoring a character's save downloaded from the cloud -
+    // overwrites local state with the recovered JSON before re-loading it.
+    fun overwriteRawJson(json: String) {
+        saveFile.writeText(json)
+    }
+
     fun save(
         accounts: List<AccountExport>,
         characters: List<CharacterExport>,

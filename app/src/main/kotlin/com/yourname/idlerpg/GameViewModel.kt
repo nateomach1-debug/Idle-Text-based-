@@ -868,6 +868,13 @@ fun logout() {
             marketService.exportOrders(),
             marketService.exportPriceHistory()
         )
+        val supabaseCharacterId = _currentSupabaseCharacterId.value
+        val json = repository.currentSaveJson()
+        if (supabaseCharacterId != null && json != null) {
+            viewModelScope.launch {
+                SupabaseCharacterRepository.uploadCharacterSave(supabaseCharacterId, json)
+            }
+        }
     }
 
     fun selectCharacter(characterId: String) {
@@ -880,6 +887,39 @@ fun logout() {
                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
                 result.onSuccess { _characterSyncError.value = null }
                 _currentSupabaseCharacterId.value = result.getOrNull()
+                val supabaseCharacterId = result.getOrNull()
+                if (supabaseCharacterId != null) {
+                    val remoteLocalId = SupabaseCharacterRepository.getCharacterLocalId(supabaseCharacterId).getOrNull()
+                    if (remoteLocalId != null && remoteLocalId != characterId) {
+                        // The server returned an EXISTING character from a different
+                        // device/install, not the one just created locally - recover
+                        // its real save instead of keeping the throwaway new one.
+                        val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
+                        if (cloudJson != null) {
+                            repository.overwriteRawJson(cloudJson)
+                            val recovered = repository.load()
+                            if (recovered != null) {
+                                recovered.accounts.forEach { accountService.restoreAccount(it) }
+                                recovered.characters.forEach { accountService.restoreCharacter(it) }
+                                recovered.skills.forEach { progressionService.restoreSkill(it) }
+                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                _currentCharacterId.value = remoteLocalId
+                                val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+                                if (recoveredCharacter != null) {
+                                    _currentAccountId.value = recoveredCharacter.accountId
+                                }
+                            }
+                        }
+                    }
+                }
             }
         } else {
             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
