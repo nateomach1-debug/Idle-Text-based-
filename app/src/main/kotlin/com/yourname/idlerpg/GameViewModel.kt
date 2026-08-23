@@ -863,8 +863,10 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     recovered.marketOrders.forEach { marketService.restoreOrder(it) }
     recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
 
-    val recoveredAccount = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
         ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+    val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+        ?: return ServiceResult.Failure("Recovered account data but couldn't load it.")
 
     sessionManager.saveSession(recoveredAccount.id)
     _currentAccountId.value = recoveredAccount.id
