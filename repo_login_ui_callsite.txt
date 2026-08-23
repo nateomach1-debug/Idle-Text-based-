@@ -1,0 +1,88 @@
+
+--- LoginScreen.kt ---
+  [line 25]
+    20: @Composable
+    21: fun LoginScreen(
+    22:     isCreatingAccount: Boolean,
+    23:     onToggleMode: () -> Unit,
+    24:     errorMessage: String?,
+    25:     onLogin: (email: String, password: String) -> Unit,
+    26:     onCreateAccount: (email: String, username: String, password: String) -> Unit,
+    27:     modifier: Modifier = Modifier
+    28: ) {
+    29:     var email by remember { mutableStateOf("") }
+    30:     var username by remember { mutableStateOf("") }
+    31:     var password by remember { mutableStateOf("") }
+    32: 
+    33:     Column(
+    34:         modifier = modifier
+    35:             .fillMaxSize()
+    36:             .verticalScroll(rememberScrollState())
+    37:             .padding(24.dp),
+    38:         verticalArrangement = Arrangement.Center,
+    39:         horizontalAlignment = Alignment.CenterHorizontally
+  [line 87]
+    82:         Button(
+    83:             onClick = {
+    84:                 if (isCreatingAccount) {
+    85:                     onCreateAccount(email, username, password)
+    86:                 } else {
+    87:                     onLogin(email, password)
+    88:                 }
+    89:             },
+    90:             modifier = Modifier.fillMaxWidth()
+    91:         ) {
+    92:             Text(text = if (isCreatingAccount) "Create Account" else "Log In")
+    93:         }
+    94: 
+    95:         Spacer(modifier = Modifier.height(12.dp))
+    96: 
+    97:         TextButton(onClick = onToggleMode) {
+    98:             Text(text = if (isCreatingAccount) "Already have an account? Log In" else "Need an account? Create one")
+    99:         }
+    100:     }
+    101: }
+
+--- MainActivity.kt ---
+  [line 524]
+    519:         AppFlowState.Login -> {
+    520:             LoginScreen(
+    521:                 isCreatingAccount = isCreatingAccount,
+    522:                 onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
+    523:                 errorMessage = loginError,
+    524:                 onLogin = { email, password ->
+    525:                     val result = gameViewModel.login(email, password)
+    526:                     when (result) {
+    527:                         is ServiceResult.Success -> {
+    528:                             val chars = gameViewModel.accountService.charactersFor(result.value.id)
+    529:                             flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+    530:                             loginError = null
+    531:                         }
+    532:                         is ServiceResult.Failure -> loginError = result.reason
+    533:                     }
+    534:                 },
+    535:                 onCreateAccount = { email, username, password ->
+    536:                     val result = gameViewModel.createAccount(email, username, password)
+    537:                     when (result) {
+    538:                         is ServiceResult.Success -> {
+  [line 525]
+    520:             LoginScreen(
+    521:                 isCreatingAccount = isCreatingAccount,
+    522:                 onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
+    523:                 errorMessage = loginError,
+    524:                 onLogin = { email, password ->
+    525:                     val result = gameViewModel.login(email, password)
+    526:                     when (result) {
+    527:                         is ServiceResult.Success -> {
+    528:                             val chars = gameViewModel.accountService.charactersFor(result.value.id)
+    529:                             flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
+    530:                             loginError = null
+    531:                         }
+    532:                         is ServiceResult.Failure -> loginError = result.reason
+    533:                     }
+    534:                 },
+    535:                 onCreateAccount = { email, username, password ->
+    536:                     val result = gameViewModel.createAccount(email, username, password)
+    537:                     when (result) {
+    538:                         is ServiceResult.Success -> {
+    539:                             gameViewModel.saveGame()
