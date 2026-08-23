@@ -1,0 +1,56 @@
+======================================================================
+Search for account-lookup functions across all files
+======================================================================
+
+--- AccountCharacterSystem.kt ---
+  fun accountById(accountId: String): Account
+
+======================================================================
+Full restoreAccount function (to see what it does with the id)
+======================================================================
+
+--- around line 215 ---
+214: 
+215:     fun login(email: String, password: String): ServiceResult<Account> {
+216:         val normalizedEmail = email.trim().lowercase()
+217:         val accountId = accountsByEmail[normalizedEmail]
+218:             ?: return ServiceResult.Failure("No account found with that email.")
+219:         val account = accountsById.getValue(accountId)
+220:         if (account.isBanned) {
+221:             return ServiceResult.Failure("This account is banned.")
+222:         }
+223:         val salt = Base64.getDecoder().decode(account.exposePasswordSaltForExport())
+224:         if (!verifyPassword(password, salt, account.exposePasswordHashForExport())) {
+225:             return ServiceResult.Failure("Incorrect password.")
+226:         }
+227:         account.lastLoginAt = Instant.now()
+228:         return ServiceResult.Success(account)
+229:     }
+230: 
+231:     fun accountById(accountId: String): Account? = accountsById[accountId]
+232: 
+233:     private fun containsBannedWord(text: String): Boolean = bannedWords.any { text.contains(it) }
+234: 
+
+--- around line 268 ---
+267: 
+268:     fun restoreAccount(export: AccountExport) {
+269:         val account = Account(
+270:             id = export.id, email = export.email, username = export.username,
+271:             passwordHash = export.passwordHash, passwordSalt = export.passwordSalt,
+272:             createdAt = Instant.parse(export.createdAt), lastLoginAt = Instant.parse(export.lastLoginAt),
+273:             ageBracket = AgeBracket.valueOf(export.ageBracket), region = export.region,
+274:             isBanned = export.isBanned, banReason = export.banReason,
+275:             mutedUntil = export.mutedUntil?.let { Instant.parse(it) },
+276:             subscriptionTier = SubscriptionTier.valueOf(export.subscriptionTier),
+277:             premiumCurrency = export.premiumCurrency
+278:         )
+279:         accountsById[account.id] = account
+280:         accountsByUsername[account.username.lowercase()] = account.id
+281:         accountsByEmail[account.email.lowercase()] = account.id
+282:     }
+283: 
+284:     fun restoreCharacter(export: CharacterExport) {
+285:         val character = Character(
+286:             id = export.id, accountId = export.accountId, displayName = export.displayName,
+287:             avatarId = export.avatarId, createdAt = Instant.parse(export.createdAt),
