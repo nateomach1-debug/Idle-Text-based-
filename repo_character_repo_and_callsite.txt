@@ -1,0 +1,66 @@
+======================================================================
+SupabaseCharacterRepository.kt (full content)
+======================================================================
+package com.yourname.idlerpg
+
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+
+// Bridges a local Room-database character (local_character_id) to its
+// matching Supabase characters row (a separate, real uuid). Every
+// chat/guild RPC call needs the Supabase uuid, not the local id -
+// they are different ID schemes entirely.
+object SupabaseCharacterRepository {
+
+    private val client get() = SupabaseClientProvider.client
+
+    suspend fun getOrCreateCharacter(localCharacterId: String, displayName: String): Result<String> = runCatching {
+        client.postgrest.rpc("get_or_create_character", buildJsonObject {
+            put("p_local_character_id", localCharacterId)
+            put("p_display_name", displayName)
+        }).decodeAs<String>()
+    }
+}
+
+
+======================================================================
+GameViewModel.kt - context around getOrCreateCharacter call(s)
+======================================================================
+
+--- around line 879 ---
+   864:             inventoryService.exportAllItems(),
+   865:             inventoryService.exportAllEquipped(),
+   866:             inventoryService.exportAllLoadoutSettings(),
+   867:             marketService.exportAccounts(),
+   868:             marketService.exportOrders(),
+   869:             marketService.exportPriceHistory()
+   870:         )
+   871:     }
+   872: 
+   873:     fun selectCharacter(characterId: String) {
+   874:         _currentCharacterId.value = characterId
+   875: 
+   876:         val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
+   877:         if (selectedCharacter != null) {
+   878:             viewModelScope.launch {
+>> 879:                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+   880:                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
+   881:                 result.onSuccess { _characterSyncError.value = null }
+   882:                 _currentSupabaseCharacterId.value = result.getOrNull()
+   883:             }
+   884:         } else {
+   885:             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
+   886:         }
+   887: 
+   888:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+   889:         if (queue != null) {
+   890:             val result = offlineIdleService.resolveOfflineProgress(characterId)
+   891:             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+   892:                 val skillType = SkillType.valueOf(queue.skillId)
+   893:                 val action = ActionCatalog.find(skillType, queue.itemId)
+   894:                 if (action != null) {
+   895:                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
+   896:                     progressionService.grantXp(characterId, skillType, xpEarned)
+   897:                     inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+   898:                     _offlineSummary.value = OfflineSummary(
