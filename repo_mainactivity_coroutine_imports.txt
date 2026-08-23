@@ -1,0 +1,49 @@
+======================================================================
+MainActivity.kt - all import lines
+======================================================================
+3: import com.yourname.idlerpg.ui.components.ReportMessageDialog
+5: import android.os.Bundle
+6: import androidx.activity.ComponentActivity
+7: import androidx.activity.compose.setContent
+8: import androidx.activity.viewModels
+9: import androidx.compose.foundation.layout.Box
+10: import androidx.compose.ui.graphics.Color
+11: import androidx.compose.foundation.layout.Column
+12: import androidx.compose.foundation.layout.Row
+13: import androidx.compose.foundation.layout.fillMaxSize
+14: import androidx.compose.foundation.layout.fillMaxWidth
+15: import androidx.compose.foundation.layout.padding
+16: import androidx.compose.ui.unit.dp
+17: import androidx.compose.ui.unit.Density
+18: import androidx.compose.ui.platform.LocalDensity
+19: import androidx.compose.ui.platform.LocalConfiguration
+20: import android.content.res.Configuration
+21: import androidx.compose.material3.Surface
+22: import androidx.compose.runtime.*
+23: import androidx.compose.runtime.saveable.rememberSaveable
+24: import androidx.compose.ui.Modifier
+25: import androidx.lifecycle.viewmodel.compose.viewModel
+26: import com.yourname.idlerpg.data.GameViewModel
+27: import com.yourname.idlerpg.ui.components.RecoveryBar
+28: import com.yourname.idlerpg.ui.components.ChatBanner
+29: import com.yourname.idlerpg.ui.components.ChatChannelUi
+30: import com.yourname.idlerpg.ui.components.ChatMessageUi
+31: import com.yourname.idlerpg.ui.components.DmConversationSummary
+32: import com.yourname.idlerpg.ui.components.ChatMessageAction
+33: import com.yourname.idlerpg.ui.navigation.AppDestination
+34: import com.yourname.idlerpg.ui.navigation.SideRail
+35: import com.yourname.idlerpg.ui.screens.*
+36: import com.yourname.idlerpg.ui.theme.IdleRpgTheme
+37: import com.yourname.idlerpg.ui.theme.skillPatternBackground
+38: import com.yourname.idlerpg.ui.theme.appPatternBackground
+39: import androidx.compose.foundation.background
+40: import androidx.compose.foundation.lazy.LazyListState
+41: import androidx.compose.foundation.lazy.rememberLazyListState
+42: import androidx.compose.foundation.lazy.grid.LazyGridState
+43: import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+44: import java.time.Duration
+45: import java.time.Instant
+
+has rememberCoroutineScope import: False
+has kotlinx.coroutines.launch import: False
+has any 'rememberCoroutineScope()' usage: False
