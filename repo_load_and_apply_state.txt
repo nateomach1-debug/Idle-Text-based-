@@ -1,0 +1,228 @@
+======================================================================
+GameStateRepository.kt - load() and SavedGameState (lines 188-388)
+======================================================================
+188: 
+189:         val accounts = mutableListOf<AccountExport>()
+190:         val accountsArray = root.optJSONArray("accounts") ?: JSONArray()
+191:         for (i in 0 until accountsArray.length()) {
+192:             val obj = accountsArray.getJSONObject(i)
+193:             accounts.add(
+194:                 AccountExport(
+195:                     id = obj.getString("id"), email = obj.getString("email"),
+196:                     username = obj.getString("username"), passwordHash = obj.getString("passwordHash"),
+197:                     passwordSalt = obj.getString("passwordSalt"),
+198:                     createdAt = obj.getString("createdAt"), lastLoginAt = obj.getString("lastLoginAt"),
+199:                     ageBracket = obj.getString("ageBracket"), region = obj.getString("region"),
+200:                     isBanned = obj.getBoolean("isBanned"),
+201:                     banReason = if (obj.isNull("banReason")) null else obj.getString("banReason"),
+202:                     mutedUntil = if (obj.isNull("mutedUntil")) null else obj.getString("mutedUntil"),
+203:                     subscriptionTier = obj.getString("subscriptionTier"),
+204:                     premiumCurrency = obj.getLong("premiumCurrency")
+205:                 )
+206:             )
+207:         }
+208: 
+209:         val characters = mutableListOf<CharacterExport>()
+210:         val charactersArray = root.optJSONArray("characters") ?: JSONArray()
+211:         for (i in 0 until charactersArray.length()) {
+212:             val obj = charactersArray.getJSONObject(i)
+213:             characters.add(
+214:                 CharacterExport(
+215:                     id = obj.getString("id"), accountId = obj.getString("accountId"),
+216:                     displayName = obj.getString("displayName"), avatarId = obj.getString("avatarId"),
+217:                     createdAt = obj.getString("createdAt"),
+218:                     displayNameLastChangedAt = obj.getString("displayNameLastChangedAt"),
+219:                     isMainCharacter = obj.getBoolean("isMainCharacter")
+220:                 )
+221:             )
+222:         }
+223: 
+224:         val skills = mutableListOf<SkillExport>()
+225:         val skillsArray = root.optJSONArray("skills") ?: JSONArray()
+226:         for (i in 0 until skillsArray.length()) {
+227:             val obj = skillsArray.getJSONObject(i)
+228:             skills.add(
+229:                 SkillExport(
+230:                     characterId = obj.getString("characterId"),
+231:                     skillId = obj.getString("skillId"),
+232:                     xp = obj.getLong("xp")
+233:                 )
+234:             )
+235:         }
+236: 
+237:         val skillingQueues = mutableListOf<SkillingQueueExport>()
+238:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+239:         for (i in 0 until queuesArray.length()) {
+240:             val obj = queuesArray.getJSONObject(i)
+241:             skillingQueues.add(
+242:                 SkillingQueueExport(
+243:                     characterId = obj.getString("characterId"),
+244:                     skillId = obj.getString("skillId"),
+245:                     itemId = obj.getString("itemId"),
+246:                     secondsPerAction = obj.getLong("secondsPerAction"),
+247:                     startedAt = obj.getString("startedAt")
+248:                 )
+249:             )
+250:         }
+251: 
+252:         val craftingQueues = mutableListOf<CraftingQueueExport>()
+253:         val craftingQueuesArray = root.optJSONArray("craftingQueues") ?: JSONArray()
+254:         for (i in 0 until craftingQueuesArray.length()) {
+255:             val obj = craftingQueuesArray.getJSONObject(i)
+256:             craftingQueues.add(
+257:                 CraftingQueueExport(
+258:                     characterId = obj.getString("characterId"),
+259:                     itemId = obj.getString("itemId"),
+260:                     secondsPerAction = obj.getLong("secondsPerAction"),
+261:                     targetQuantity = if (obj.isNull("targetQuantity")) null else obj.getInt("targetQuantity"),
+262:                     quantityCompleted = obj.getInt("quantityCompleted"),
+263:                     startedAt = obj.getString("startedAt")
+264:                 )
+265:             )
+266:         }
+267: 
+268:         val lastSeen = mutableListOf<LastSeenExport>()
+269:         val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+270:         for (i in 0 until lastSeenArray.length()) {
+271:             val obj = lastSeenArray.getJSONObject(i)
+272:             lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+273:         }
+274: 
+275:         val inventoryItems = mutableListOf<InventorySlotExport>()
+276:         val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+277:         for (i in 0 until inventoryArray.length()) {
+278:             val obj = inventoryArray.getJSONObject(i)
+279:             inventoryItems.add(
+280:                 InventorySlotExport(
+281:                     characterId = obj.getString("characterId"),
+282:                     itemId = obj.getString("itemId"),
+283:                     quantity = obj.getInt("quantity")
+284:                 )
+285:             )
+286:         }
+287: 
+288:         val equippedSlots = mutableListOf<EquippedSlotExport>()
+289:         val equippedArray = root.optJSONArray("equippedSlots") ?: JSONArray()
+290:         for (i in 0 until equippedArray.length()) {
+291:             val obj = equippedArray.getJSONObject(i)
+292:             equippedSlots.add(
+293:                 EquippedSlotExport(
+294:                     characterId = obj.getString("characterId"),
+295:                     slot = obj.getString("slot"),
+296:                     itemId = obj.getString("itemId")
+297:                 )
+298:             )
+299:         }
+300: 
+301:         val marketAccounts = mutableListOf<PlayerEconomyAccountExport>()
+302:         val marketAccountsArray = root.optJSONArray("marketAccounts") ?: JSONArray()
+303:         for (i in 0 until marketAccountsArray.length()) {
+304:             val obj = marketAccountsArray.getJSONObject(i)
+305:             val inventoryObj = obj.optJSONObject("inventory") ?: JSONObject()
+306:             val inventory = mutableMapOf<String, Int>()
+307:             inventoryObj.keys().forEach { key -> inventory[key] = inventoryObj.getInt(key) }
+308:             marketAccounts.add(
+309:                 PlayerEconomyAccountExport(
+310:                     characterId = obj.getString("characterId"),
+311:                     accountId = obj.getString("accountId"),
+312:                     isMainCharacter = obj.getBoolean("isMainCharacter"),
+313:                     currencyBalance = obj.getLong("currencyBalance"),
+314:                     inventory = inventory
+315:                 )
+316:             )
+317:         }
+318: 
+319:         val marketOrders = mutableListOf<MarketOrderExport>()
+320:         val marketOrdersArray = root.optJSONArray("marketOrders") ?: JSONArray()
+321:         for (i in 0 until marketOrdersArray.length()) {
+322:             val obj = marketOrdersArray.getJSONObject(i)
+323:             marketOrders.add(
+324:                 MarketOrderExport(
+325:                     id = obj.getString("id"),
+326:                     characterId = obj.getString("characterId"),
+327:                     itemId = obj.getString("itemId"),
+328:                     side = obj.getString("side"),
+329:                     pricePerUnit = obj.getLong("pricePerUnit"),
+330:                     originalQuantity = obj.getInt("originalQuantity"),
+331:                     remainingQuantity = obj.getInt("remainingQuantity"),
+332:                     status = obj.getString("status"),
+333:                     createdAt = obj.getString("createdAt")
+334:                 )
+335:             )
+336:         }
+337: 
+338:         val marketPriceHistory = mutableListOf<PriceHistoryExport>()
+339:         val marketPriceHistoryArray = root.optJSONArray("marketPriceHistory") ?: JSONArray()
+340:         for (i in 0 until marketPriceHistoryArray.length()) {
+341:             val obj = marketPriceHistoryArray.getJSONObject(i)
+342:             marketPriceHistory.add(
+343:                 PriceHistoryExport(
+344:                     itemId = obj.getString("itemId"),
+345:                     pricePerUnit = obj.getLong("pricePerUnit"),
+346:                     quantity = obj.getInt("quantity"),
+347:                     executedAt = obj.getString("executedAt")
+348:                 )
+349:             )
+350:         }
+351: 
+352:         val loadoutSettings = mutableListOf<LoadoutSettingsExport>()
+353:         val loadoutSettingsArray = root.optJSONArray("loadoutSettings") ?: JSONArray()
+354:         for (i in 0 until loadoutSettingsArray.length()) {
+355:             val obj = loadoutSettingsArray.getJSONObject(i)
+356:             loadoutSettings.add(
+357:                 LoadoutSettingsExport(
+358:                     characterId = obj.getString("characterId"),
+359:                     selectedFoodId = if (obj.isNull("selectedFoodId")) null else obj.getString("selectedFoodId"),
+360:                     selectedPotionId = if (obj.isNull("selectedPotionId")) null else obj.getString("selectedPotionId"),
+361:                     potionTimerRemainingSeconds = obj.getInt("potionTimerRemainingSeconds"),
+362:                     autoHealThresholdPercent = obj.getInt("autoHealThresholdPercent"),
+363:                     autoFleeThresholdPercent = obj.getInt("autoFleeThresholdPercent")
+364:                 )
+365:             )
+366:         }
+367: 
+368:         return SavedGameState(
+369:             accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
+370:             loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
+371:         )
+372:     }
+373: }
+374: 
+375: data class SavedGameState(
+376:     val accounts: List<AccountExport>,
+377:     val characters: List<CharacterExport>,
+378:     val skills: List<SkillExport>,
+379:     val skillingQueues: List<SkillingQueueExport>,
+380:     val craftingQueues: List<CraftingQueueExport>,
+381:     val lastSeen: List<LastSeenExport>,
+382:     val inventoryItems: List<InventorySlotExport>,
+383:     val equippedSlots: List<EquippedSlotExport>,
+384:     val loadoutSettings: List<LoadoutSettingsExport>,
+385:     val marketAccounts: List<PlayerEconomyAccountExport>,
+386:     val marketOrders: List<MarketOrderExport>,
+387:     val marketPriceHistory: List<PriceHistoryExport>
+388: )
+
+======================================================================
+Search all files for 'SavedGameState' usage (where it's applied)
+======================================================================
+
+--- GameStateRepository.kt ---
+  [line 184]
+    182:     }
+    183: 
+    184:     fun load(): SavedGameState? {
+    185:         if (!saveFile.exists()) return null
+    186: 
+  [line 368]
+    366:         }
+    367: 
+    368:         return SavedGameState(
+    369:             accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
+    370:             loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
+  [line 375]
+    373: }
+    374: 
+    375: data class SavedGameState(
+    376:     val accounts: List<AccountExport>,
+    377:     val characters: List<CharacterExport>,
