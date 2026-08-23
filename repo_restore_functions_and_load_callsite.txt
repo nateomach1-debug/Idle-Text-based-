@@ -1,0 +1,92 @@
+======================================================================
+All 'fun restore*' signatures across all files
+======================================================================
+
+--- AccountCharacterSystem.kt ---
+  fun restoreAccount(export: AccountExport)
+  fun restoreCharacter(export: CharacterExport)
+
+--- EconomyMarketSystem.kt ---
+  fun restoreAccount(export: PlayerEconomyAccountExport)
+  fun restoreOrder(export: MarketOrderExport)
+  fun restorePriceHistoryEntry(export: PriceHistoryExport)
+
+--- ItemsEquipmentSystem.kt ---
+  fun restoreItem(itemId: String, quantity: Int)
+  fun restoreEquipped(slot: EquipSlot, itemId: String)
+  fun restoreItem(export: InventorySlotExport)
+  fun restoreEquipped(export: EquippedSlotExport)
+  fun restoreLoadoutSettings(export: LoadoutSettingsExport)
+
+--- OfflineIdleMechanicsSystem.kt ---
+  fun restoreSkillingQueue(export: SkillingQueueExport)
+  fun restoreCraftingQueue(export: CraftingQueueExport)
+  fun restoreLastSeen(export: LastSeenExport)
+
+--- SkillProgressionSystem.kt ---
+  fun restoreSkill(export: SkillExport)
+
+======================================================================
+Search for '.load()' or 'GameStateRepository' call sites
+======================================================================
+
+--- GameStateRepository.kt ---
+  [line 9]
+    6: import org.json.JSONObject
+    7: import java.io.File
+    8: 
+    9: class GameStateRepository(private val context: Context) {
+    10:     private val saveFile: File get() = File(context.filesDir, "game_state.json")
+    11: 
+    12:     fun save(
+    13:         accounts: List<AccountExport>,
+    14:         characters: List<CharacterExport>,
+    15:         skills: List<SkillExport>,
+    16:         skillingQueues: List<SkillingQueueExport>,
+    17:         craftingQueues: List<CraftingQueueExport>,
+    18:         lastSeen: List<LastSeenExport>,
+    19:         inventoryItems: List<InventorySlotExport>,
+    20:         equippedSlots: List<EquippedSlotExport>,
+    21:         loadoutSettings: List<LoadoutSettingsExport>,
+    22:         marketAccounts: List<PlayerEconomyAccountExport>,
+    23:         marketOrders: List<MarketOrderExport>,
+
+--- GameViewModel.kt ---
+  [line 48]
+    45: 
+    46: class GameViewModel(application: Application) : AndroidViewModel(application) {
+    47: 
+    48:     private val repository = GameStateRepository(application)
+    49: 
+    50:     val accountService = AccountService()
+    51:     val progressionService = ProgressionService()
+    52:     val inventoryService = InventoryService()
+    53:     val sessionManager = SessionManager(application)
+    54:     // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
+    55:     // Skilling queues don't consume materials, only crafting does, so this is unused for now.
+    56:     val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
+    57: 
+    58:     private var skillActionProgressSeconds: Long = 0
+    59: 
+    60:     private val _currentAccountId = MutableStateFlow<String?>(null)
+    61:     val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
+    62: 
+  [line 805]
+    802:     fun loadGame() {
+    803:         if (hasLoaded) return
+    804:         hasLoaded = true
+    805:         val saved = repository.load() ?: return
+    806:         saved.accounts.forEach { accountService.restoreAccount(it) }
+    807:         saved.characters.forEach { accountService.restoreCharacter(it) }
+    808:         saved.skills.forEach { progressionService.restoreSkill(it) }
+    809:         saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    810:         saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    811:         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    812:         saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    813:         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    814:         saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    815:         saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+    816:         saved.marketOrders.forEach { marketService.restoreOrder(it) }
+    817:         saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    818:     }
+    819: fun login(email: String, password: String): ServiceResult<Account> {
