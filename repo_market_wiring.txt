@@ -1,0 +1,383 @@
+======================================================================
+GameViewModel.kt - all marketService / refreshCurrency / currencyBalance references
+======================================================================
+
+--- around line 79 ---
+   77: 
+   78:     val economyMonitoring = EconomyMonitoringService()
+>> 79:     val marketService = MarketService(economyMonitoring)
+   80:     val combatService = CombatService()
+   81: 
+   82:     // =========================================================
+   83:     // SUPABASE AUTH (guild/chat multiplayer only - local play never depends on this)
+   84:     // =========================================================
+
+--- around line 815 ---
+   813:         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+   814:         saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+>> 815:         saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+   816:         saved.marketOrders.forEach { marketService.restoreOrder(it) }
+   817:         saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+   818:     }
+   819: suspend fun login(email: String, password: String): ServiceResult<Account> {
+   820:     val result = accountService.login(email, password)
+
+--- around line 816 ---
+   814:         saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+   815:         saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+>> 816:         saved.marketOrders.forEach { marketService.restoreOrder(it) }
+   817:         saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+   818:     }
+   819: suspend fun login(email: String, password: String): ServiceResult<Account> {
+   820:     val result = accountService.login(email, password)
+   821:     if (result is ServiceResult.Success) {
+
+--- around line 817 ---
+   815:         saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+   816:         saved.marketOrders.forEach { marketService.restoreOrder(it) }
+>> 817:         saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+   818:     }
+   819: suspend fun login(email: String, password: String): ServiceResult<Account> {
+   820:     val result = accountService.login(email, password)
+   821:     if (result is ServiceResult.Success) {
+   822:         sessionManager.saveSession(result.value.id)
+
+--- around line 824 ---
+   822:         sessionManager.saveSession(result.value.id)
+   823:             _currentAccountId.value = result.value.id
+>> 824:             refreshCurrency()
+   825:             syncSupabaseAuth(email, password, isNewAccount = false)
+   826:         return result
+   827:     }
+   828:     return attemptCloudRecoveryLogin(email, password)
+   829: }
+
+--- around line 862 ---
+   860:     recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+   861:     recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+>> 862:     recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+   863:     recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+   864:     recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+   865: 
+   866:     val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+   867:         ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+
+--- around line 863 ---
+   861:     recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+   862:     recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+>> 863:     recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+   864:     recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+   865: 
+   866:     val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+   867:         ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+   868:     val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+
+--- around line 864 ---
+   862:     recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+   863:     recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+>> 864:     recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+   865: 
+   866:     val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+   867:         ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+   868:     val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+   869:         ?: return ServiceResult.Failure("Recovered account data but couldn't load it.")
+
+--- around line 873 ---
+   871:     sessionManager.saveSession(recoveredAccount.id)
+   872:     _currentAccountId.value = recoveredAccount.id
+>> 873:     refreshCurrency()
+   874:     _currentSupabaseCharacterId.value = supabaseCharacterId
+   875:     _characterSyncError.value = null
+   876: 
+   877:     val recoveredCharacter = recovered.characters.firstOrNull { it.accountId == recoveredAccount.id }
+   878:     if (recoveredCharacter != null) {
+
+--- around line 889 ---
+   887:         sessionManager.saveSession(result.value.id)
+   888:             _currentAccountId.value = result.value.id
+>> 889:             refreshCurrency()
+   890:             syncSupabaseAuth(email, password, isNewAccount = true)
+   891:     }
+   892:     return result
+   893:   }
+   894:   fun tryAutoLogin(): Account? {
+
+--- around line 898 ---
+   896:     val account = accountService.accountById(accountId) ?: return null
+   897:     _currentAccountId.value = account.id
+>> 898:     refreshCurrency()
+   899:     return account
+   900: }
+   901: 
+   902: fun logout() {
+   903:     sessionManager.clearSession()
+
+--- around line 922 ---
+   920:             inventoryService.exportAllEquipped(),
+   921:             inventoryService.exportAllLoadoutSettings(),
+>> 922:             marketService.exportAccounts(),
+   923:             marketService.exportOrders(),
+   924:             marketService.exportPriceHistory()
+   925:         )
+   926:         val supabaseCharacterId = _currentSupabaseCharacterId.value
+   927:         val json = repository.currentSaveJson()
+
+--- around line 923 ---
+   921:             inventoryService.exportAllLoadoutSettings(),
+   922:             marketService.exportAccounts(),
+>> 923:             marketService.exportOrders(),
+   924:             marketService.exportPriceHistory()
+   925:         )
+   926:         val supabaseCharacterId = _currentSupabaseCharacterId.value
+   927:         val json = repository.currentSaveJson()
+   928:         if (supabaseCharacterId != null && json != null) {
+
+--- around line 924 ---
+   922:             marketService.exportAccounts(),
+   923:             marketService.exportOrders(),
+>> 924:             marketService.exportPriceHistory()
+   925:         )
+   926:         val supabaseCharacterId = _currentSupabaseCharacterId.value
+   927:         val json = repository.currentSaveJson()
+   928:         if (supabaseCharacterId != null && json != null) {
+   929:             viewModelScope.launch {
+
+--- around line 966 ---
+   964:                                 recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+   965:                                 recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+>> 966:                                 recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+   967:                                 recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+   968:                                 recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+   969:                                 _currentCharacterId.value = remoteLocalId
+   970:                                 val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+   971:                                 if (recoveredCharacter != null) {
+
+--- around line 967 ---
+   965:                                 recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+   966:                                 recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+>> 967:                                 recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+   968:                                 recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+   969:                                 _currentCharacterId.value = remoteLocalId
+   970:                                 val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+   971:                                 if (recoveredCharacter != null) {
+   972:                                     _currentAccountId.value = recoveredCharacter.accountId
+
+--- around line 968 ---
+   966:                                 recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+   967:                                 recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+>> 968:                                 recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+   969:                                 _currentCharacterId.value = remoteLocalId
+   970:                                 val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+   971:                                 if (recoveredCharacter != null) {
+   972:                                     _currentAccountId.value = recoveredCharacter.accountId
+   973:                                 }
+
+--- around line 1028 ---
+   1026:         refreshActiveQueue()
+   1027: 
+>> 1028:         if (marketService.accountFor(characterId) == null) {
+   1029:             val character = accountService.charactersFor(_currentAccountId.value ?: "")
+   1030:                 .find { it.id == characterId }
+   1031:             marketService.registerAccount(
+   1032:                 PlayerEconomyAccount(
+   1033:                     characterId = characterId,
+
+--- around line 1031 ---
+   1029:             val character = accountService.charactersFor(_currentAccountId.value ?: "")
+   1030:                 .find { it.id == characterId }
+>> 1031:             marketService.registerAccount(
+   1032:                 PlayerEconomyAccount(
+   1033:                     characterId = characterId,
+   1034:                     accountId = _currentAccountId.value ?: "",
+   1035:                     isMainCharacter = character?.isMainCharacter ?: true,
+   1036:                     currencyBalance = 0L
+
+--- around line 1032 ---
+   1030:                 .find { it.id == characterId }
+   1031:             marketService.registerAccount(
+>> 1032:                 PlayerEconomyAccount(
+   1033:                     characterId = characterId,
+   1034:                     accountId = _currentAccountId.value ?: "",
+   1035:                     isMainCharacter = character?.isMainCharacter ?: true,
+   1036:                     currencyBalance = 0L
+   1037:                 )
+
+--- around line 1036 ---
+   1034:                     accountId = _currentAccountId.value ?: "",
+   1035:                     isMainCharacter = character?.isMainCharacter ?: true,
+>> 1036:                     currencyBalance = 0L
+   1037:                 )
+   1038:             )
+   1039:         }
+   1040:         refreshCurrency()
+   1041:         refreshMarketListings()
+
+--- around line 1040 ---
+   1038:             )
+   1039:         }
+>> 1040:         refreshCurrency()
+   1041:         refreshMarketListings()
+   1042:         refreshMyOrders()
+   1043:     }
+   1044: 
+   1045:     fun startSkillAction(skillType: SkillType, itemId: String) {
+
+--- around line 1247 ---
+   1245:     }
+   1246: 
+>> 1247:     fun refreshCurrency() {
+   1248:         val accountId = _currentAccountId.value ?: return
+   1249:         val account = accountService.accountById(accountId) ?: return
+   1250:         val characterId = _currentCharacterId.value
+   1251:         val gold = characterId?.let { marketService.accountFor(it)?.currencyBalance } ?: 0L
+   1252:         _currency.value = gold to account.premiumCurrency
+
+--- around line 1251 ---
+   1249:         val account = accountService.accountById(accountId) ?: return
+   1250:         val characterId = _currentCharacterId.value
+>> 1251:         val gold = characterId?.let { marketService.accountFor(it)?.currencyBalance } ?: 0L
+   1252:         _currency.value = gold to account.premiumCurrency
+   1253:     }
+   1254: 
+   1255:     // =========================================================
+   1256:     // MARKET
+
+--- around line 1260 ---
+   1258: 
+   1259:     fun refreshMarketListings() {
+>> 1260:         _marketListings.value = marketService.allListings()
+   1261:     }
+   1262: 
+   1263:     fun refreshMyOrders() {
+   1264:         val characterId = _currentCharacterId.value ?: return
+   1265:         val open = marketService.openOrdersFor(characterId)
+
+--- around line 1265 ---
+   1263:     fun refreshMyOrders() {
+   1264:         val characterId = _currentCharacterId.value ?: return
+>> 1265:         val open = marketService.openOrdersFor(characterId)
+   1266:         _myBuyOrders.value = open.filter { it.side == OrderSide.BUY }
+   1267:         _mySellOrders.value = open.filter { it.side == OrderSide.SELL }
+   1268:     }
+   1269: 
+   1270:     fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long): ServiceResult<MarketOrder> {
+
+--- around line 1272 ---
+   1270:     fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long): ServiceResult<MarketOrder> {
+   1271:         val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+>> 1272:         val account = marketService.accountFor(characterId)
+   1273:             ?: return ServiceResult.Failure("Market account not registered.")
+   1274:         val before = account.inventory[itemId] ?: 0
+   1275: 
+   1276:         val result = marketService.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
+   1277:         if (result is ServiceResult.Success) {
+
+--- around line 1276 ---
+   1274:         val before = account.inventory[itemId] ?: 0
+   1275: 
+>> 1276:         val result = marketService.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
+   1277:         if (result is ServiceResult.Success) {
+   1278:             val after = account.inventory[itemId] ?: 0
+   1279:             val filled = after - before
+   1280:             if (filled > 0) {
+   1281:                 inventoryService.inventoryFor(characterId).addItem(itemId, filled)
+
+--- around line 1285 ---
+   1283:                 refreshInventory()
+   1284:             }
+>> 1285:             refreshCurrency()
+   1286:             refreshMarketListings()
+   1287:             refreshMyOrders()
+   1288:         }
+   1289:         return result
+   1290:     }
+
+--- around line 1294 ---
+   1292:     fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long): ServiceResult<MarketOrder> {
+   1293:         val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+>> 1294:         val account = marketService.accountFor(characterId)
+   1295:             ?: return ServiceResult.Failure("Market account not registered.")
+   1296:         val realInventory = inventoryService.inventoryFor(characterId)
+   1297: 
+   1298:         if (realInventory.quantityOf(itemId) < quantity) {
+   1299:             return ServiceResult.Failure("Insufficient item quantity to escrow this order.")
+
+--- around line 1304 ---
+   1302:         account.addItem(itemId, quantity)
+   1303: 
+>> 1304:         val result = marketService.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
+   1305:         if (result is ServiceResult.Failure) {
+   1306:             realInventory.addItem(itemId, quantity)
+   1307:             account.removeItem(itemId, quantity)
+   1308:         } else {
+   1309:             refreshCurrency()
+
+--- around line 1309 ---
+   1307:             account.removeItem(itemId, quantity)
+   1308:         } else {
+>> 1309:             refreshCurrency()
+   1310:             refreshMarketListings()
+   1311:             refreshMyOrders()
+   1312:         }
+   1313:         refreshInventory()
+   1314:         return result
+
+--- around line 1319 ---
+   1317:     fun cancelMarketOrder(orderId: String): ServiceResult<MarketOrder> {
+   1318:         val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+>> 1319:         val account = marketService.accountFor(characterId)
+   1320:             ?: return ServiceResult.Failure("Market account not registered.")
+   1321:         val before = account.inventory.toMap()
+   1322: 
+   1323:         val result = marketService.cancelOrder(orderId)
+   1324:         if (result is ServiceResult.Success) {
+
+--- around line 1323 ---
+   1321:         val before = account.inventory.toMap()
+   1322: 
+>> 1323:         val result = marketService.cancelOrder(orderId)
+   1324:         if (result is ServiceResult.Success) {
+   1325:             for ((itemId, afterQty) in account.inventory.toMap()) {
+   1326:                 val delta = afterQty - (before[itemId] ?: 0)
+   1327:                 if (delta > 0) {
+   1328:                     inventoryService.inventoryFor(characterId).addItem(itemId, delta)
+
+--- around line 1333 ---
+   1331:             }
+   1332:             refreshInventory()
+>> 1333:             refreshCurrency()
+   1334:             refreshMarketListings()
+   1335:             refreshMyOrders()
+   1336:         }
+   1337:         return result
+   1338:     }
+
+--- around line 1342 ---
+   1340:     fun sellItemToVendor(itemId: String, quantity: Int): ServiceResult<Long> {
+   1341:         val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+>> 1342:         val account = marketService.accountFor(characterId)
+   1343:             ?: return ServiceResult.Failure("Market account not registered.")
+   1344:         val realInventory = inventoryService.inventoryFor(characterId)
+   1345: 
+   1346:         if (realInventory.quantityOf(itemId) < quantity) {
+   1347:             return ServiceResult.Failure("Insufficient item quantity to sell.")
+
+--- around line 1352 ---
+   1350:         account.addItem(itemId, quantity)
+   1351: 
+>> 1352:         val result = marketService.sellToVendor(characterId, itemId, quantity)
+   1353:         if (result is ServiceResult.Failure) {
+   1354:             realInventory.addItem(itemId, quantity)
+   1355:             account.removeItem(itemId, quantity)
+   1356:         } else {
+   1357:             refreshCurrency()
+
+--- around line 1357 ---
+   1355:             account.removeItem(itemId, quantity)
+   1356:         } else {
+>> 1357:             refreshCurrency()
+   1358:         }
+   1359:         refreshInventory()
+   1360:         return result
+   1361:     }
+   1362: }
