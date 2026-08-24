@@ -1,0 +1,246 @@
+======================================================================
+MainActivity.kt - placeBuyOrder/placeSellOrder/selectedMarketItemId references
+======================================================================
+
+--- around line 508 ---
+503:         } else emptySet()
+504:     }
+505: 
+506:     var marketTab by remember { mutableStateOf(MarketTab.BROWSE) }
+507:     var showingBuyOrders by remember { mutableStateOf(false) }
+508:     var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
+509:     var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
+510: 
+511:     var leaderboardShowingDaily by remember { mutableStateOf(false) }
+512:     var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) }
+513: 
+514:     var selectedChatChannel by remember { mutableStateOf(ChatChannelUi.GLOBAL) }
+515:     var selectedDmCharacterId by remember { mutableStateOf<String?>(null) }
+516:     var chatMessageInput by remember { mutableStateOf("") }
+517:     val chatMessages = remember { mutableStateListOf(*demoChatMessages().toTypedArray()) }
+518: 
+519:     when (flowState) {
+520:         AppFlowState.Login -> {
+521:             val loginCoroutineScope = rememberCoroutineScope()
+522:             LoginScreen(
+523:                 isCreatingAccount = isCreatingAccount,
+524:                 onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
+525:                 errorMessage = loginError,
+526:                 onLogin = { email, password ->
+527:                     loginCoroutineScope.launch {
+
+--- around line 627 ---
+622:                                 // combatScreenState intentionally NOT reset here - if a
+623:                                 // battle is still running in the background, navigating
+624:                                 // away and back should return to it, not zone-select.
+625:                                 inventoryScreenState = InventoryScreenState.Items
+626:                                 marketTab = MarketTab.BROWSE
+627:                                 selectedMarketItemId = null
+628:                             },
+629:                             badgedDestinations = setOf(AppDestination.GUILD)
+630:                         )
+631: 
+632:                         CompositionLocalProvider(LocalDensity provides adaptiveDensity()) {
+633:                         Box(modifier = Modifier.weight(1f)) {
+634:                         when (currentDestination) {
+635:                             AppDestination.HOME -> HomeScreen(state = homeState)
+636: 
+637:                             AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+638:                                 is SkillsScreenState.List -> SkillsScreen(
+639:                                     allSkills = allSkills,
+640:                                     onSkillSelected = { selectedSkillId ->
+641:                                         if (selectedSkillId in COMBAT_TRAINING_SKILL_IDS) {
+642:                                             gameViewModel.setTrainingSkill(SkillType.valueOf(selectedSkillId))
+643:                                             currentDestination = AppDestination.COMBAT
+644:                                             combatScreenState = CombatScreenState.ZoneSelect
+645:                                         } else {
+646:                                             skillsScreenState = SkillsScreenState.Detail(selectedSkillId)
+
+--- around line 727 ---
+722:                                     onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
+723:                                     onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
+724:                                     onUseItem = { itemId -> gameViewModel.useInventoryItem(itemId) },
+725:                                     onSellOnMarket = { itemId ->
+726:                                         val item = inventoryItems.find { it.itemId == itemId }
+727:                                         selectedMarketItemId = itemId
+728:                                         prefilledSellQuantity = item?.quantity
+729:                                         currentDestination = AppDestination.MARKET
+730:                                     },
+731:                                     onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
+732:                                     canEquip = ::canEquip
+733:                                 )
+734:                                 InventoryScreenState.Equipment -> EquipmentScreen(
+735:                                     state = EquipmentScreenState(equipped, lockedEquipSlots),
+736:                                     onBack = { inventoryScreenState = InventoryScreenState.Items },
+737:                                     onSlotTapped = { slot -> gameViewModel.unequipSlot(EquipSlot.valueOf(slot.name)) }
+738:                                 )
+739:                                 InventoryScreenState.Loadout -> LoadoutScreen(
+740:                                     state = LoadoutState(
+741:                                         availableFoodOptions, loadoutSettings.selectedFoodId,
+742:                                         availablePotionOptions, loadoutSettings.selectedPotionId,
+743:                                         loadoutSettings.potionTimerRemainingSeconds,
+744:                                         loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+745:                                     ),
+746:                                     onBack = { inventoryScreenState = InventoryScreenState.Items },
+
+--- around line 791 ---
+786:                                             remainingQuantity = it.remainingQuantity
+787:                                         )
+788:                                     }
+789:                                 }
+790: 
+791:                                 val itemId = selectedMarketItemId
+792:                                 if (itemId != null) {
+793:                                     val orderBookDetail = remember(itemId, marketPriceSummaries) {
+794:                                         val summary = marketPriceSummaries.find { it.itemId == itemId }
+795:                                         ItemOrderBookDetail(
+796:                                             itemId = itemId,
+797:                                             displayName = ItemCatalog.find(itemId)?.name ?: itemId,
+798:                                             bestBuyPrice = summary?.bestBuyPrice,
+799:                                             bestSellPrice = summary?.bestSellPrice,
+800:                                             recentTrades = gameViewModel.marketService.priceHistoryFor(itemId)
+801:                                                 .sortedByDescending { it.executedAt }
+802:                                                 .take(10)
+803:                                                 .map { PriceHistoryRow(it.pricePerUnit, it.quantity, formatTimeAgo(it.executedAt)) }
+804:                                         )
+805:                                     }
+806:                                     OrderBookScreen(
+807:                                         detail = orderBookDetail,
+808:                                         prefilledQuantity = prefilledSellQuantity,
+809:                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+810:                                         onPlaceOrder = { side, qty, price ->
+
+--- around line 809 ---
+804:                                         )
+805:                                     }
+806:                                     OrderBookScreen(
+807:                                         detail = orderBookDetail,
+808:                                         prefilledQuantity = prefilledSellQuantity,
+809:                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+810:                                         onPlaceOrder = { side, qty, price ->
+811:                                             if (side == OrderSideUi.BUY) {
+812:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
+813:                                             } else {
+814:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
+815:                                             }
+816:                                             selectedMarketItemId = null
+817:                                             prefilledSellQuantity = null
+818:                                         }
+819:                                     )
+820:                                 } else {
+821:                                     MarketScreen(
+822:                                         currentTab = marketTab,
+823:                                         onTabSelected = { marketTab = it },
+824:                                         listings = marketListingsUi,
+825:                                         showingBuyOrders = showingBuyOrders,
+826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+827:                                         onItemSelected = { selectedMarketItemId = it },
+828:                                         myBuyOrders = myBuyOrdersUi,
+
+--- around line 812 ---
+807:                                         detail = orderBookDetail,
+808:                                         prefilledQuantity = prefilledSellQuantity,
+809:                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+810:                                         onPlaceOrder = { side, qty, price ->
+811:                                             if (side == OrderSideUi.BUY) {
+812:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
+813:                                             } else {
+814:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
+815:                                             }
+816:                                             selectedMarketItemId = null
+817:                                             prefilledSellQuantity = null
+818:                                         }
+819:                                     )
+820:                                 } else {
+821:                                     MarketScreen(
+822:                                         currentTab = marketTab,
+823:                                         onTabSelected = { marketTab = it },
+824:                                         listings = marketListingsUi,
+825:                                         showingBuyOrders = showingBuyOrders,
+826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+827:                                         onItemSelected = { selectedMarketItemId = it },
+828:                                         myBuyOrders = myBuyOrdersUi,
+829:                                         mySellOrders = mySellOrdersUi,
+830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+831:                                         vendorSellableItems = inventoryItems,
+
+--- around line 814 ---
+809:                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+810:                                         onPlaceOrder = { side, qty, price ->
+811:                                             if (side == OrderSideUi.BUY) {
+812:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
+813:                                             } else {
+814:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
+815:                                             }
+816:                                             selectedMarketItemId = null
+817:                                             prefilledSellQuantity = null
+818:                                         }
+819:                                     )
+820:                                 } else {
+821:                                     MarketScreen(
+822:                                         currentTab = marketTab,
+823:                                         onTabSelected = { marketTab = it },
+824:                                         listings = marketListingsUi,
+825:                                         showingBuyOrders = showingBuyOrders,
+826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+827:                                         onItemSelected = { selectedMarketItemId = it },
+828:                                         myBuyOrders = myBuyOrdersUi,
+829:                                         mySellOrders = mySellOrdersUi,
+830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+831:                                         vendorSellableItems = inventoryItems,
+832:                                         onSellToVendor = { sellItemId, quantity ->
+833:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+
+--- around line 816 ---
+811:                                             if (side == OrderSideUi.BUY) {
+812:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
+813:                                             } else {
+814:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
+815:                                             }
+816:                                             selectedMarketItemId = null
+817:                                             prefilledSellQuantity = null
+818:                                         }
+819:                                     )
+820:                                 } else {
+821:                                     MarketScreen(
+822:                                         currentTab = marketTab,
+823:                                         onTabSelected = { marketTab = it },
+824:                                         listings = marketListingsUi,
+825:                                         showingBuyOrders = showingBuyOrders,
+826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+827:                                         onItemSelected = { selectedMarketItemId = it },
+828:                                         myBuyOrders = myBuyOrdersUi,
+829:                                         mySellOrders = mySellOrdersUi,
+830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+831:                                         vendorSellableItems = inventoryItems,
+832:                                         onSellToVendor = { sellItemId, quantity ->
+833:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+834:                                         }
+835:                                     )
+
+--- around line 827 ---
+822:                                         currentTab = marketTab,
+823:                                         onTabSelected = { marketTab = it },
+824:                                         listings = marketListingsUi,
+825:                                         showingBuyOrders = showingBuyOrders,
+826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+827:                                         onItemSelected = { selectedMarketItemId = it },
+828:                                         myBuyOrders = myBuyOrdersUi,
+829:                                         mySellOrders = mySellOrdersUi,
+830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+831:                                         vendorSellableItems = inventoryItems,
+832:                                         onSellToVendor = { sellItemId, quantity ->
+833:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+834:                                         }
+835:                                     )
+836:                                 }
+837:                             }
+838: 
+839:                             AppDestination.GUILD -> {
+840:                                 val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
+841:                                 val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
+842:                                 val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+843: 
+844:                                 LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+845:                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
+846:                                 LaunchedEffect(Unit) { gameViewModel.checkModeratorStatus() }
