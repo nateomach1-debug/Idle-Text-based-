@@ -311,6 +311,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _chatActionError = MutableStateFlow<String?>(null)
     val chatActionError: StateFlow<String?> = _chatActionError.asStateFlow()
 
+    private val _marketActionError = MutableStateFlow<String?>(null)
+    val marketActionError: StateFlow<String?> = _marketActionError.asStateFlow()
+
     private suspend fun resolveChatChannelId(channel: ChatChannelUi): String? {
         return when (channel) {
             ChatChannelUi.GUILD -> _guildId.value?.let {
@@ -1290,7 +1293,9 @@ fun logout() {
         val characterId = _currentCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseMarketRepository.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
+            result.onFailure { _marketActionError.value = it.message ?: it.toString() }
             result.onSuccess { order ->
+                _marketActionError.value = null
                 val filled = order.originalQuantity - order.remainingQuantity
                 if (filled > 0) {
                     inventoryService.inventoryFor(characterId).addItem(itemId, filled)
@@ -1314,10 +1319,12 @@ fun logout() {
         viewModelScope.launch {
             val result = SupabaseMarketRepository.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
             result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
                 realInventory.addItem(itemId, quantity)
                 refreshInventory()
             }
             result.onSuccess {
+                _marketActionError.value = null
                 refreshCurrency()
                 refreshMarketListings()
                 refreshMyOrders()
@@ -1329,7 +1336,9 @@ fun logout() {
         val characterId = _currentCharacterId.value ?: return
         viewModelScope.launch {
             val result = SupabaseMarketRepository.cancelOrder(orderId)
+            result.onFailure { _marketActionError.value = it.message ?: it.toString() }
             result.onSuccess { cancelled ->
+                _marketActionError.value = null
                 if (cancelled.side == "SELL" && cancelled.remainingQuantityBeforeCancel > 0) {
                     inventoryService.inventoryFor(characterId).addItem(cancelled.itemId, cancelled.remainingQuantityBeforeCancel)
                     refreshInventory()
@@ -1353,10 +1362,12 @@ fun logout() {
         viewModelScope.launch {
             val result = SupabaseMarketRepository.sellToVendor(characterId, itemId, quantity, payoutPerUnit)
             result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
                 realInventory.addItem(itemId, quantity)
                 refreshInventory()
             }
             result.onSuccess {
+                _marketActionError.value = null
                 refreshCurrency()
             }
         }
