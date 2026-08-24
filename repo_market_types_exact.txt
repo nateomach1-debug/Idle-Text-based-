@@ -1,0 +1,88 @@
+
+======================================================================
+SharedTypes.kt
+======================================================================
+
+======================================================================
+EconomyMarketSystem.kt
+======================================================================
+10: class PlayerEconomyAccount(
+11:     val characterId: String,
+12:     val accountId: String,
+13:     var isMainCharacter: Boolean,
+14:     var currencyBalance: Long,
+15:     val inventory: MutableMap<String, Int> = mutableMapOf()
+16: ) {
+17:     fun addItem(itemId: String, qty: Int) {
+18:         inventory[itemId] = (inventory[itemId] ?: 0) + qty
+19:     }
+
+33: enum class OrderSide { BUY, SELL }
+34: enum class OrderStatus { OPEN, PARTIALLY_FILLED, FILLED, CANCELLED }
+35: 
+36: data class MarketOrder(
+37:     val id: String = UUID.randomUUID().toString(),
+38:     val characterId: String,
+39:     val itemId: String,
+40:     val side: OrderSide,
+41:     val pricePerUnit: Long,
+42:     val originalQuantity: Int,
+
+34: enum class OrderStatus { OPEN, PARTIALLY_FILLED, FILLED, CANCELLED }
+35: 
+36: data class MarketOrder(
+37:     val id: String = UUID.randomUUID().toString(),
+38:     val characterId: String,
+39:     val itemId: String,
+40:     val side: OrderSide,
+41:     val pricePerUnit: Long,
+42:     val originalQuantity: Int,
+43:     var remainingQuantity: Int,
+
+36: data class MarketOrder(
+37:     val id: String = UUID.randomUUID().toString(),
+38:     val characterId: String,
+39:     val itemId: String,
+40:     val side: OrderSide,
+41:     val pricePerUnit: Long,
+42:     val originalQuantity: Int,
+43:     var remainingQuantity: Int,
+44:     var status: OrderStatus = OrderStatus.OPEN,
+45:     val createdAt: Instant = Instant.now()
+
+401: data class PlayerEconomyAccountExport(
+402:     val characterId: String,
+403:     val accountId: String,
+404:     val isMainCharacter: Boolean,
+405:     val currencyBalance: Long,
+406:     val inventory: Map<String, Int>
+407: )
+408: 
+409: data class MarketOrderExport(
+410:     val id: String,
+
+409: data class MarketOrderExport(
+410:     val id: String,
+411:     val characterId: String,
+412:     val itemId: String,
+413:     val side: String,
+414:     val pricePerUnit: Long,
+415:     val originalQuantity: Int,
+416:     val remainingQuantity: Int,
+417:     val status: String,
+418:     val createdAt: String
+
+
+======================================================================
+GameViewModel.kt - market StateFlow declarations
+======================================================================
+740:     private val _marketListings = MutableStateFlow<List<MarketPriceSummary>>(emptyList())
+741:     val marketListings: StateFlow<List<MarketPriceSummary>> = _marketListings.asStateFlow()
+743:     private val _myBuyOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+744:     val myBuyOrders: StateFlow<List<MarketOrder>> = _myBuyOrders.asStateFlow()
+746:     private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+747:     val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
+752:     private val _currency = MutableStateFlow(0L to 0L)
+1260:         _marketListings.value = marketService.allListings()
+1266:         _myBuyOrders.value = open.filter { it.side == OrderSide.BUY }
+1267:         _mySellOrders.value = open.filter { it.side == OrderSide.SELL }
