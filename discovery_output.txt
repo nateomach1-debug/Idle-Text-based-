@@ -1,0 +1,326 @@
+
+================================================================================
+MainActivity.kt - sell order UI
+================================================================================
+  805:                                     }
+  806:                                     OrderBookScreen(
+  807:                                         detail = orderBookDetail,
+  808:                                         prefilledQuantity = prefilledSellQuantity,
+  809:                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+  810:                                         onPlaceOrder = { side, qty, price ->
+  811:                                             if (side == OrderSideUi.BUY) {
+  812:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
+  813:                                             } else {
+  814:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
+  815:                                             }
+  816:                                             selectedMarketItemId = null
+  817:                                             prefilledSellQuantity = null
+  818:                                         }
+  819:                                     )
+  820:                                 } else {
+  821:                                     MarketScreen(
+  822:                                         currentTab = marketTab,
+  823:                                         onTabSelected = { marketTab = it },
+  824:                                         listings = marketListingsUi,
+  825:                                         showingBuyOrders = showingBuyOrders,
+  826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+  827:                                         onItemSelected = { selectedMarketItemId = it },
+  828:                                         myBuyOrders = myBuyOrdersUi,
+  829:                                         mySellOrders = mySellOrdersUi,
+  830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+  831:                                         vendorSellableItems = inventoryItems,
+  832:                                         onSellToVendor = { sellItemId, quantity ->
+  833:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+  834:                                         }
+  835:                                     )
+  836:                                 }
+  837:                             }
+  838: 
+  839:                             AppDestination.GUILD -> {
+  840:                                 val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
+  841:                                 val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
+  842:                                 val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+  843: 
+  844:                                 LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+  845:                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
+  846:                                 LaunchedEffect(Unit) { gameViewModel.checkModeratorStatus() }
+  847:                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
+  848:                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
+  849:                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
+  850:                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
+  851:                                 val debugChatError by gameViewModel.chatActionError.collectAsState()
+  852:                                 var showDebugDialog by remember { mutableStateOf(false) }
+  853:                                 LaunchedEffect(debugAuthError, debugCharSyncError) {
+  854:                                     if (debugAuthError != null || debugCharSyncError != null || debugChatError != null) {
+  855:                                         showDebugDialog = true
+  856:                                     }
+  857:                                 }
+  858:                                 if (showDebugDialog) {
+  859:                                     androidx.compose.material3.AlertDialog(
+
+--------------------------------------------------------------------------------
+  809:                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
+  810:                                         onPlaceOrder = { side, qty, price ->
+  811:                                             if (side == OrderSideUi.BUY) {
+  812:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
+  813:                                             } else {
+  814:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
+  815:                                             }
+  816:                                             selectedMarketItemId = null
+  817:                                             prefilledSellQuantity = null
+  818:                                         }
+  819:                                     )
+  820:                                 } else {
+  821:                                     MarketScreen(
+  822:                                         currentTab = marketTab,
+  823:                                         onTabSelected = { marketTab = it },
+  824:                                         listings = marketListingsUi,
+  825:                                         showingBuyOrders = showingBuyOrders,
+  826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+  827:                                         onItemSelected = { selectedMarketItemId = it },
+  828:                                         myBuyOrders = myBuyOrdersUi,
+  829:                                         mySellOrders = mySellOrdersUi,
+  830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+  831:                                         vendorSellableItems = inventoryItems,
+  832:                                         onSellToVendor = { sellItemId, quantity ->
+  833:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+  834:                                         }
+  835:                                     )
+  836:                                 }
+  837:                             }
+  838: 
+  839:                             AppDestination.GUILD -> {
+  840:                                 val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
+  841:                                 val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
+  842:                                 val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+  843: 
+  844:                                 LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+  845:                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
+  846:                                 LaunchedEffect(Unit) { gameViewModel.checkModeratorStatus() }
+  847:                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
+  848:                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
+  849:                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
+  850:                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
+  851:                                 val debugChatError by gameViewModel.chatActionError.collectAsState()
+  852:                                 var showDebugDialog by remember { mutableStateOf(false) }
+  853:                                 LaunchedEffect(debugAuthError, debugCharSyncError) {
+  854:                                     if (debugAuthError != null || debugCharSyncError != null || debugChatError != null) {
+  855:                                         showDebugDialog = true
+  856:                                     }
+  857:                                 }
+  858:                                 if (showDebugDialog) {
+  859:                                     androidx.compose.material3.AlertDialog(
+  860:                                         onDismissRequest = { showDebugDialog = false },
+  861:                                         title = { androidx.compose.material3.Text("Debug: Supabase Sync") },
+  862:                                         text = {
+  863:                                             androidx.compose.foundation.layout.Column {
+
+--------------------------------------------------------------------------------
+
+================================================================================
+GameViewModel.kt - placeSellOrder
+================================================================================
+ 1303:         }
+ 1304:     }
+ 1305: 
+ 1306:     fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+ 1307:         val characterId = _currentCharacterId.value ?: return
+ 1308:         val realInventory = inventoryService.inventoryFor(characterId)
+ 1309:         if (realInventory.quantityOf(itemId) < quantity) return
+ 1310: 
+ 1311:         realInventory.removeItem(itemId, quantity)
+ 1312:         refreshInventory()
+ 1313: 
+ 1314:         viewModelScope.launch {
+ 1315:             val result = SupabaseMarketRepository.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
+ 1316:             result.onFailure {
+ 1317:                 realInventory.addItem(itemId, quantity)
+ 1318:                 refreshInventory()
+ 1319:             }
+ 1320:             result.onSuccess {
+ 1321:                 refreshCurrency()
+ 1322:                 refreshMarketListings()
+ 1323:                 refreshMyOrders()
+ 1324:             }
+ 1325:         }
+ 1326:     }
+ 1327: 
+ 1328:     fun cancelMarketOrder(orderId: String) {
+ 1329:         val characterId = _currentCharacterId.value ?: return
+ 1330:         viewModelScope.launch {
+ 1331:             val result = SupabaseMarketRepository.cancelOrder(orderId)
+ 1332:             result.onSuccess { cancelled ->
+ 1333:                 if (cancelled.side == "SELL" && cancelled.remainingQuantityBeforeCancel > 0) {
+ 1334:                     inventoryService.inventoryFor(characterId).addItem(cancelled.itemId, cancelled.remainingQuantityBeforeCancel)
+ 1335:                     refreshInventory()
+ 1336:                 }
+ 1337:                 refreshCurrency()
+ 1338:                 refreshMarketListings()
+ 1339:                 refreshMyOrders()
+ 1340:             }
+ 1341:         }
+ 1342:     }
+ 1343: 
+ 1344:     fun sellItemToVendor(itemId: String, quantity: Int) {
+ 1345:         val characterId = _currentCharacterId.value ?: return
+ 1346:         val realInventory = inventoryService.inventoryFor(characterId)
+ 1347:         if (realInventory.quantityOf(itemId) < quantity) return
+ 1348:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
+ 1349: 
+ 1350:         realInventory.removeItem(itemId, quantity)
+ 1351:         refreshInventory()
+ 1352: 
+ 1353:         viewModelScope.launch {
+ 1354:             val result = SupabaseMarketRepository.sellToVendor(characterId, itemId, quantity, payoutPerUnit)
+ 1355:             result.onFailure {
+
+--------------------------------------------------------------------------------
+
+================================================================================
+SupabaseMarketRepository.kt - placeSellOrder
+================================================================================
+   53:         }).decodeAs<MarketOrderRpcResult>()
+   54:     }
+   55: 
+   56:     suspend fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
+   57:         client.postgrest.rpc("market_place_sell_order", buildJsonObject {
+   58:             put("p_character_id", characterId)
+   59:             put("p_item_id", itemId)
+   60:             put("p_quantity", quantity)
+   61:             put("p_price_per_unit", pricePerUnit)
+   62:         }).decodeAs<MarketOrderRpcResult>()
+   63:     }
+   64: 
+   65:     suspend fun cancelOrder(orderId: String): Result<MarketCancelRpcResult> = runCatching {
+   66:         client.postgrest.rpc("market_cancel_order", buildJsonObject {
+   67:             put("p_order_id", orderId)
+   68:         }).decodeAs<MarketCancelRpcResult>()
+   69:     }
+   70: 
+   71:     suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching {
+   72:         client.postgrest.rpc("market_sell_to_vendor", buildJsonObject {
+   73:             put("p_character_id", characterId)
+   74:             put("p_item_id", itemId)
+   75:             put("p_quantity", quantity)
+   76:             put("p_payout_per_unit", payoutPerUnit)
+   77:         }).decodeAs<Long>()
+   78:     }
+   79: 
+   80:     suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
+   81:         client.postgrest.rpc("market_currency_balance", buildJsonObject {
+   82:             put("p_character_id", characterId)
+   83:         }).decodeAs<Long>()
+   84:     }
+   85: 
+   86:     suspend fun listings(): Result<List<MarketListingRow>> = runCatching {
+   87:         client.postgrest.rpc("market_listings").decodeList<MarketListingRow>()
+   88:     }
+   89: 
+   90:     suspend fun myOrders(characterId: String): Result<List<MarketOrderRow>> = runCatching {
+   91:         client.postgrest.rpc("market_my_orders", buildJsonObject {
+   92:             put("p_character_id", characterId)
+   93:         }).decodeList<MarketOrderRow>()
+   94:     }
+   95: }
+
+--------------------------------------------------------------------------------
+
+================================================================================
+FULL FILE: SupabaseMarketRepository.kt (3261 chars)
+================================================================================
+package com.yourname.idlerpg
+
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+
+@Serializable
+data class MarketOrderRpcResult(
+    val id: String,
+    val originalQuantity: Int,
+    val remainingQuantity: Int,
+    val status: String
+)
+
+@Serializable
+data class MarketCancelRpcResult(
+    val id: String,
+    val side: String,
+    val itemId: String,
+    val remainingQuantityBeforeCancel: Int
+)
+
+@Serializable
+data class MarketListingRow(
+    val itemId: String,
+    val bestBuyPrice: Long? = null,
+    val bestSellPrice: Long? = null
+)
+
+@Serializable
+data class MarketOrderRow(
+    val id: String,
+    val characterId: String,
+    val itemId: String,
+    val side: String,
+    val pricePerUnit: Long,
+    val originalQuantity: Int,
+    val remainingQuantity: Int,
+    val status: String,
+    val createdAt: String
+)
+
+object SupabaseMarketRepository {
+    private val client get() = SupabaseClientProvider.client
+
+    suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
+        client.postgrest.rpc("market_place_buy_order", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_price_per_unit", pricePerUnit)
+        }).decodeAs<MarketOrderRpcResult>()
+    }
+
+    suspend fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
+        client.postgrest.rpc("market_place_sell_order", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_price_per_unit", pricePerUnit)
+        }).decodeAs<MarketOrderRpcResult>()
+    }
+
+    suspend fun cancelOrder(orderId: String): Result<MarketCancelRpcResult> = runCatching {
+        client.postgrest.rpc("market_cancel_order", buildJsonObject {
+            put("p_order_id", orderId)
+        }).decodeAs<MarketCancelRpcResult>()
+    }
+
+    suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("market_sell_to_vendor", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_payout_per_unit", payoutPerUnit)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
+        client.postgrest.rpc("market_currency_balance", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun listings(): Result<List<MarketListingRow>> = runCatching {
+        client.postgrest.rpc("market_listings").decodeList<MarketListingRow>()
+    }
+
+    suspend fun myOrders(characterId: String): Result<List<MarketOrderRow>> = runCatching {
+        client.postgrest.rpc("market_my_orders", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeList<MarketOrderRow>()
+    }
+}
+
