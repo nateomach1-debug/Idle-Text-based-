@@ -1,0 +1,55 @@
+
+--- EconomyMarketSystem.kt around line 311 ---
+310: 
+311:     fun allListings(): List<MarketPriceSummary> {
+312:         val itemIds = (buyOrders + sellOrders)
+313:             .filter { it.remainingQuantity > 0 }
+314:             .map { it.itemId }
+315:             .distinct()
+316:         return itemIds.map { itemId ->
+317:             val bestBuy = buyOrders
+318:                 .filter { it.itemId == itemId && it.remainingQuantity > 0 }
+
+--- EconomyMarketSystem.kt around line 323 ---
+322:                 .minOfOrNull { it.pricePerUnit }
+323:             MarketPriceSummary(itemId, bestBuy, bestSell)
+324:         }
+325:     }
+326: 
+327:     // ---------------- Persistence ----------------
+328: 
+329:     fun exportAccounts(): List<PlayerEconomyAccountExport> = accounts.values.map {
+330:         PlayerEconomyAccountExport(
+
+--- EconomyMarketSystem.kt around line 399 ---
+398: 
+399: data class MarketPriceSummary(val itemId: String, val bestBuyPrice: Long?, val bestSellPrice: Long?)
+400: 
+401: data class PlayerEconomyAccountExport(
+402:     val characterId: String,
+403:     val accountId: String,
+404:     val isMainCharacter: Boolean,
+405:     val currencyBalance: Long,
+406:     val inventory: Map<String, Int>
+
+--- GameViewModel.kt around line 740 ---
+739: 
+740:     private val _marketListings = MutableStateFlow<List<MarketPriceSummary>>(emptyList())
+741:     val marketListings: StateFlow<List<MarketPriceSummary>> = _marketListings.asStateFlow()
+742: 
+743:     private val _myBuyOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+744:     val myBuyOrders: StateFlow<List<MarketOrder>> = _myBuyOrders.asStateFlow()
+745: 
+746:     private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+747:     val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
+
+--- GameViewModel.kt around line 741 ---
+740:     private val _marketListings = MutableStateFlow<List<MarketPriceSummary>>(emptyList())
+741:     val marketListings: StateFlow<List<MarketPriceSummary>> = _marketListings.asStateFlow()
+742: 
+743:     private val _myBuyOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+744:     val myBuyOrders: StateFlow<List<MarketOrder>> = _myBuyOrders.asStateFlow()
+745: 
+746:     private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+747:     val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
+748: 
