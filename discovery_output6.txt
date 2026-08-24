@@ -1,0 +1,76 @@
+
+================================================================================
+_currentCharacterId declaration
+================================================================================
+   63:     private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+   64:     val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+   65: 
+   66:     private val _currentCharacterId = MutableStateFlow<String?>(null)
+   67:     val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+   68: 
+   69:     private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+----------------------------------------
+   64:     val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+   65: 
+   66:     private val _currentCharacterId = MutableStateFlow<String?>(null)
+   67:     val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+   68: 
+   69:     private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+   70:     val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+----------------------------------------
+
+================================================================================
+All assignments to _currentCharacterId.value
+================================================================================
+  879: 
+  880:     val recoveredCharacter = recovered.characters.firstOrNull { it.accountId == recoveredAccount.id }
+  881:     if (recoveredCharacter != null) {
+  882:         _currentCharacterId.value = recoveredCharacter.id
+  883:     }
+  884: 
+  885:     return ServiceResult.Success(recoveredAccount)
+----------------------------------------
+  905: fun logout() {
+  906:     sessionManager.clearSession()
+  907:     _currentAccountId.value = null
+  908:     _currentCharacterId.value = null
+  909: }
+  910: 
+  911:     fun clearOfflineSummary() {
+----------------------------------------
+  936:     }
+  937: 
+  938:     fun selectCharacter(characterId: String) {
+  939:         _currentCharacterId.value = characterId
+  940: 
+  941:         val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
+  942:         if (selectedCharacter != null) {
+----------------------------------------
+  969:                                 recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+  970:                                 recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+  971:                                 recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+  972:                                 _currentCharacterId.value = remoteLocalId
+  973:                                 val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+  974:                                 if (recoveredCharacter != null) {
+  975:                                     _currentAccountId.value = recoveredCharacter.accountId
+----------------------------------------
+
+================================================================================
+All assignments to _currentSupabaseCharacterId.value
+================================================================================
+  874:     sessionManager.saveSession(recoveredAccount.id)
+  875:     _currentAccountId.value = recoveredAccount.id
+  876:     refreshCurrency()
+  877:     _currentSupabaseCharacterId.value = supabaseCharacterId
+  878:     _characterSyncError.value = null
+  879: 
+  880:     val recoveredCharacter = recovered.characters.firstOrNull { it.accountId == recoveredAccount.id }
+----------------------------------------
+  944:                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+  945:                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
+  946:                 result.onSuccess { _characterSyncError.value = null }
+  947:                 _currentSupabaseCharacterId.value = result.getOrNull()
+  948:                 val supabaseCharacterId = result.getOrNull()
+  949:                 if (supabaseCharacterId != null) {
+  950:                     val remoteLocalId = SupabaseCharacterRepository.getCharacterLocalId(supabaseCharacterId).getOrNull()
+----------------------------------------
