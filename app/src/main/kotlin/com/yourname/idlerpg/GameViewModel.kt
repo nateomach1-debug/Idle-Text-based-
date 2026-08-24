@@ -1247,117 +1247,119 @@ fun logout() {
     fun refreshCurrency() {
         val accountId = _currentAccountId.value ?: return
         val account = accountService.accountById(accountId) ?: return
-        val characterId = _currentCharacterId.value
-        val gold = characterId?.let { marketService.accountFor(it)?.currencyBalance } ?: 0L
-        _currency.value = gold to account.premiumCurrency
+        val characterId = _currentCharacterId.value ?: return
+        viewModelScope.launch {
+            val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
+            _currency.value = gold to account.premiumCurrency
+        }
     }
 
     // =========================================================
-    // MARKET
+    // MARKET (server-side via Supabase - shared order book across all players)
     // =========================================================
 
     fun refreshMarketListings() {
-        _marketListings.value = marketService.allListings()
+        viewModelScope.launch {
+            val listings = SupabaseMarketRepository.listings().getOrNull() ?: emptyList()
+            _marketListings.value = listings.map { MarketPriceSummary(it.itemId, it.bestBuyPrice, it.bestSellPrice) }
+        }
     }
+
+    private fun MarketOrderRow.toDomain(): MarketOrder = MarketOrder(
+        id = id,
+        characterId = characterId,
+        itemId = itemId,
+        side = OrderSide.valueOf(side),
+        pricePerUnit = pricePerUnit,
+        originalQuantity = originalQuantity,
+        remainingQuantity = remainingQuantity,
+        status = OrderStatus.valueOf(status),
+        createdAt = java.time.OffsetDateTime.parse(createdAt).toInstant()
+    )
 
     fun refreshMyOrders() {
         val characterId = _currentCharacterId.value ?: return
-        val open = marketService.openOrdersFor(characterId)
-        _myBuyOrders.value = open.filter { it.side == OrderSide.BUY }
-        _mySellOrders.value = open.filter { it.side == OrderSide.SELL }
+        viewModelScope.launch {
+            val orders = SupabaseMarketRepository.myOrders(characterId).getOrNull()?.map { it.toDomain() } ?: emptyList()
+            _myBuyOrders.value = orders.filter { it.side == OrderSide.BUY }
+            _mySellOrders.value = orders.filter { it.side == OrderSide.SELL }
+        }
     }
 
-    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long): ServiceResult<MarketOrder> {
-        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
-        val account = marketService.accountFor(characterId)
-            ?: return ServiceResult.Failure("Market account not registered.")
-        val before = account.inventory[itemId] ?: 0
+    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
+            result.onSuccess { order ->
+                val filled = order.originalQuantity - order.remainingQuantity
+                if (filled > 0) {
+                    inventoryService.inventoryFor(characterId).addItem(itemId, filled)
+                    refreshInventory()
+                }
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
+            }
+        }
+    }
 
-        val result = marketService.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
-        if (result is ServiceResult.Success) {
-            val after = account.inventory[itemId] ?: 0
-            val filled = after - before
-            if (filled > 0) {
-                inventoryService.inventoryFor(characterId).addItem(itemId, filled)
-                account.removeItem(itemId, filled)
+    fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
+        if (realInventory.quantityOf(itemId) < quantity) return
+
+        realInventory.removeItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
+            result.onFailure {
+                realInventory.addItem(itemId, quantity)
                 refreshInventory()
             }
-            refreshCurrency()
-            refreshMarketListings()
-            refreshMyOrders()
-        }
-        return result
-    }
-
-    fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long): ServiceResult<MarketOrder> {
-        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
-        val account = marketService.accountFor(characterId)
-            ?: return ServiceResult.Failure("Market account not registered.")
-        val realInventory = inventoryService.inventoryFor(characterId)
-
-        if (realInventory.quantityOf(itemId) < quantity) {
-            return ServiceResult.Failure("Insufficient item quantity to escrow this order.")
-        }
-        realInventory.removeItem(itemId, quantity)
-        account.addItem(itemId, quantity)
-
-        val result = marketService.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
-        if (result is ServiceResult.Failure) {
-            realInventory.addItem(itemId, quantity)
-            account.removeItem(itemId, quantity)
-        } else {
-            refreshCurrency()
-            refreshMarketListings()
-            refreshMyOrders()
-        }
-        refreshInventory()
-        return result
-    }
-
-    fun cancelMarketOrder(orderId: String): ServiceResult<MarketOrder> {
-        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
-        val account = marketService.accountFor(characterId)
-            ?: return ServiceResult.Failure("Market account not registered.")
-        val before = account.inventory.toMap()
-
-        val result = marketService.cancelOrder(orderId)
-        if (result is ServiceResult.Success) {
-            for ((itemId, afterQty) in account.inventory.toMap()) {
-                val delta = afterQty - (before[itemId] ?: 0)
-                if (delta > 0) {
-                    inventoryService.inventoryFor(characterId).addItem(itemId, delta)
-                    account.removeItem(itemId, delta)
-                }
+            result.onSuccess {
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
             }
-            refreshInventory()
-            refreshCurrency()
-            refreshMarketListings()
-            refreshMyOrders()
         }
-        return result
     }
 
-    fun sellItemToVendor(itemId: String, quantity: Int): ServiceResult<Long> {
-        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
-        val account = marketService.accountFor(characterId)
-            ?: return ServiceResult.Failure("Market account not registered.")
+    fun cancelMarketOrder(orderId: String) {
+        val characterId = _currentCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.cancelOrder(orderId)
+            result.onSuccess { cancelled ->
+                if (cancelled.side == "SELL" && cancelled.remainingQuantityBeforeCancel > 0) {
+                    inventoryService.inventoryFor(characterId).addItem(cancelled.itemId, cancelled.remainingQuantityBeforeCancel)
+                    refreshInventory()
+                }
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
+            }
+        }
+    }
+
+    fun sellItemToVendor(itemId: String, quantity: Int) {
+        val characterId = _currentCharacterId.value ?: return
         val realInventory = inventoryService.inventoryFor(characterId)
+        if (realInventory.quantityOf(itemId) < quantity) return
+        val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
 
-        if (realInventory.quantityOf(itemId) < quantity) {
-            return ServiceResult.Failure("Insufficient item quantity to sell.")
-        }
         realInventory.removeItem(itemId, quantity)
-        account.addItem(itemId, quantity)
-
-        val result = marketService.sellToVendor(characterId, itemId, quantity)
-        if (result is ServiceResult.Failure) {
-            realInventory.addItem(itemId, quantity)
-            account.removeItem(itemId, quantity)
-        } else {
-            refreshCurrency()
-        }
         refreshInventory()
-        return result
+
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.sellToVendor(characterId, itemId, quantity, payoutPerUnit)
+            result.onFailure {
+                realInventory.addItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+                refreshCurrency()
+            }
+        }
     }
 }
 
