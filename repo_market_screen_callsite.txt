@@ -1,0 +1,68 @@
+======================================================================
+MainActivity.kt (total lines: 991) - MarketScreen callsite
+======================================================================
+
+--- around line 821 ---
+818:                                         }
+819:                                     )
+820:                                 } else {
+821:                                     MarketScreen(
+822:                                         currentTab = marketTab,
+823:                                         onTabSelected = { marketTab = it },
+824:                                         listings = marketListingsUi,
+825:                                         showingBuyOrders = showingBuyOrders,
+826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+827:                                         onItemSelected = { selectedMarketItemId = it },
+828:                                         myBuyOrders = myBuyOrdersUi,
+829:                                         mySellOrders = mySellOrdersUi,
+830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+831:                                         vendorSellableItems = inventoryItems,
+832:                                         onSellToVendor = { sellItemId, quantity ->
+833:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+834:                                         }
+835:                                     )
+836:                                 }
+837:                             }
+838: 
+839:                             AppDestination.GUILD -> {
+840:                                 val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
+841:                                 val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
+842:                                 val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+843: 
+844:                                 LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+845:                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
+846:                                 LaunchedEffect(Unit) { gameViewModel.checkModeratorStatus() }
+847:                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
+848:                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
+849:                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
+850:                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
+851:                                 val debugChatError by gameViewModel.chatActionError.collectAsState()
+852:                                 var showDebugDialog by remember { mutableStateOf(false) }
+853:                                 LaunchedEffect(debugAuthError, debugCharSyncError) {
+854:                                     if (debugAuthError != null || debugCharSyncError != null || debugChatError != null) {
+855:                                         showDebugDialog = true
+856:                                     }
+857:                                 }
+858:                                 if (showDebugDialog) {
+859:                                     androidx.compose.material3.AlertDialog(
+860:                                         onDismissRequest = { showDebugDialog = false },
+861:                                         title = { androidx.compose.material3.Text("Debug: Supabase Sync") },
+862:                                         text = {
+863:                                             androidx.compose.foundation.layout.Column {
+864:                                                 androidx.compose.material3.Text("Auth: $debugAuthState")
+865:                                                 debugAuthError?.let { androidx.compose.material3.Text("Auth error: $it") }
+866:                                                 androidx.compose.material3.Text("Char id: ${debugSupabaseCharId ?: "none"}")
+867:                                                 debugCharSyncError?.let { androidx.compose.material3.Text("Char sync error: $it") }
+868:                                                 debugChatError?.let { androidx.compose.material3.Text("Chat error: $it") }
+869:                                             }
+870:                                         },
+871:                                         confirmButton = {
+872:                                             androidx.compose.material3.TextButton(onClick = { showDebugDialog = false }) {
+873:                                                 androidx.compose.material3.Text("OK")
+874:                                             }
+875:                                         }
+876:                                     )
+877:                                 }
+878: 
+879:                                 val guildState = currentGuildHomeState
+880:                                 if (guildState == null) {
