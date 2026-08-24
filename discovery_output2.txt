@@ -1,0 +1,233 @@
+
+================================================================================
+GameViewModel.kt - characterSyncError occurrences
+================================================================================
+  168:     val currentSupabaseCharacterId: StateFlow<String?> = _currentSupabaseCharacterId.asStateFlow()
+  169: 
+  170:     private val _characterSyncError = MutableStateFlow<String?>(null)
+  171:     val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
+  172: 
+----------------------------------------
+  169: 
+  170:     private val _characterSyncError = MutableStateFlow<String?>(null)
+  171:     val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
+  172: 
+  173:     fun refreshGuildHome() {
+----------------------------------------
+  873:     refreshCurrency()
+  874:     _currentSupabaseCharacterId.value = supabaseCharacterId
+  875:     _characterSyncError.value = null
+  876: 
+  877:     val recoveredCharacter = recovered.characters.firstOrNull { it.accountId == recoveredAccount.id }
+----------------------------------------
+  940:             viewModelScope.launch {
+  941:                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+  942:                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
+  943:                 result.onSuccess { _characterSyncError.value = null }
+  944:                 _currentSupabaseCharacterId.value = result.getOrNull()
+----------------------------------------
+  941:                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+  942:                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
+  943:                 result.onSuccess { _characterSyncError.value = null }
+  944:                 _currentSupabaseCharacterId.value = result.getOrNull()
+  945:                 val supabaseCharacterId = result.getOrNull()
+----------------------------------------
+  978:             }
+  979:         } else {
+  980:             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
+  981:         }
+  982: 
+----------------------------------------
+
+================================================================================
+GameViewModel.kt - chatActionError occurrences
+================================================================================
+  309:     val globalChatOptOut: StateFlow<Boolean> = _globalChatOptOut.asStateFlow()
+  310: 
+  311:     private val _chatActionError = MutableStateFlow<String?>(null)
+  312:     val chatActionError: StateFlow<String?> = _chatActionError.asStateFlow()
+  313: 
+----------------------------------------
+  310: 
+  311:     private val _chatActionError = MutableStateFlow<String?>(null)
+  312:     val chatActionError: StateFlow<String?> = _chatActionError.asStateFlow()
+  313: 
+  314:     private suspend fun resolveChatChannelId(channel: ChatChannelUi): String? {
+----------------------------------------
+  352:             val channelId = resolveChatChannelId(channel)
+  353:             if (channelId == null) {
+  354:                 _chatActionError.value = "Could not resolve chat channel."
+  355:                 return@launch
+  356:             }
+----------------------------------------
+  356:             }
+  357:             val result = SupabaseChatRepository.sendMessage(characterId, channelId, content)
+  358:             result.onFailure { _chatActionError.value = it.message }
+  359:             refreshChatMessages()
+  360:         }
+----------------------------------------
+  375:             val result = SupabaseChatRepository.getOrCreateDmChannel(characterId, otherCharacterId)
+  376:             result.onFailure {
+  377:                 _chatActionError.value = it.message
+  378:                 return@launch
+  379:             }
+----------------------------------------
+  387:         viewModelScope.launch {
+  388:             val result = SupabaseChatRepository.reportMessage(characterId, message.id, category, reason)
+  389:             result.onFailure { _chatActionError.value = it.message }
+  390:             refreshChatMessages()
+  391:         }
+----------------------------------------
+  396:         viewModelScope.launch {
+  397:             val result = SupabaseChatRepository.selfMute(characterId, targetCharacterId)
+  398:             result.onFailure { _chatActionError.value = it.message }
+  399:             refreshChatMessages()
+  400:         }
+----------------------------------------
+  406:             val result = SupabaseChatRepository.setGlobalChatOptOut(characterId, optOut)
+  407:             result.onFailure {
+  408:                 _chatActionError.value = it.message
+  409:                 return@launch
+  410:             }
+----------------------------------------
+  427:         viewModelScope.launch {
+  428:             val result = SupabaseChatRepository.blockCharacter(characterId, targetCharacterId)
+  429:             result.onFailure { _chatActionError.value = it.message }
+  430:             refreshChatMessages()
+  431:         }
+----------------------------------------
+
+================================================================================
+GameViewModel.kt - placeBuyOrder
+================================================================================
+ 1286:         }
+ 1287:     }
+ 1288: 
+ 1289:     fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+ 1290:         val characterId = _currentCharacterId.value ?: return
+ 1291:         viewModelScope.launch {
+ 1292:             val result = SupabaseMarketRepository.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
+ 1293:             result.onSuccess { order ->
+ 1294:                 val filled = order.originalQuantity - order.remainingQuantity
+ 1295:                 if (filled > 0) {
+ 1296:                     inventoryService.inventoryFor(characterId).addItem(itemId, filled)
+ 1297:                     refreshInventory()
+ 1298:                 }
+ 1299:                 refreshCurrency()
+ 1300:                 refreshMarketListings()
+ 1301:                 refreshMyOrders()
+ 1302:             }
+ 1303:         }
+ 1304:     }
+ 1305: 
+ 1306:     fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+ 1307:         val characterId = _currentCharacterId.value ?: return
+ 1308:         val realInventory = inventoryService.inventoryFor(characterId)
+ 1309:         if (realInventory.quantityOf(itemId) < quantity) return
+ 1310: 
+ 1311:         realInventory.removeItem(itemId, quantity)
+ 1312:         refreshInventory()
+ 1313: 
+ 1314:         viewModelScope.launch {
+ 1315:             val result = SupabaseMarketRepository.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
+ 1316:             result.onFailure {
+ 1317:                 realInventory.addItem(itemId, quantity)
+ 1318:                 refreshInventory()
+----------------------------------------
+
+================================================================================
+MainActivity.kt - full debug dialog body
+================================================================================
+  859:                                     androidx.compose.material3.AlertDialog(
+  860:                                         onDismissRequest = { showDebugDialog = false },
+  861:                                         title = { androidx.compose.material3.Text("Debug: Supabase Sync") },
+  862:                                         text = {
+  863:                                             androidx.compose.foundation.layout.Column {
+  864:                                                 androidx.compose.material3.Text("Auth: $debugAuthState")
+  865:                                                 debugAuthError?.let { androidx.compose.material3.Text("Auth error: $it") }
+  866:                                                 androidx.compose.material3.Text("Char id: ${debugSupabaseCharId ?: "none"}")
+  867:                                                 debugCharSyncError?.let { androidx.compose.material3.Text("Char sync error: $it") }
+  868:                                                 debugChatError?.let { androidx.compose.material3.Text("Chat error: $it") }
+  869:                                             }
+  870:                                         },
+  871:                                         confirmButton = {
+  872:                                             androidx.compose.material3.TextButton(onClick = { showDebugDialog = false }) {
+  873:                                                 androidx.compose.material3.Text("OK")
+  874:                                             }
+  875:                                         }
+  876:                                     )
+  877:                                 }
+  878: 
+  879:                                 val guildState = currentGuildHomeState
+  880:                                 if (guildState == null) {
+  881:                                     GuildCreateJoinScreen(
+  882:                                         browsableGuilds = currentBrowsableGuilds,
+  883:                                         onCreateGuild = { name -> gameViewModel.createGuild(name) },
+  884:                                         onJoinGuild = { guildId -> gameViewModel.joinGuild(guildId) }
+  885:                                     )
+  886:                                 } else {
+  887:                                     GuildHomeScreen(
+  888:                                         state = guildState,
+  889:                                         leaderboardEntries = currentGuildLeaderboard,
+  890:                                         leaderboardShowingDaily = leaderboardShowingDaily,
+  891:                                         onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+  892:                                         onMemberTapped = { selectedGuildMember = it },
+  893:                                         onContributeToEvent = { },
+  894:                                         onCastVote = { }
+  895:                                     )
+  896: 
+  897:                                     selectedGuildMember?.let { member ->
+  898:                                         MemberActionPopup(
+  899:                                             member = member,
+  900:                                             viewerRole = guildState.viewerRole,
+  901:                                             onDismiss = { selectedGuildMember = null },
+  902:                                             onKick = {
+  903:                                                 gameViewModel.kickGuildMember(member.characterId)
+  904:                                                 selectedGuildMember = null
+  905:                                             },
+  906:                                             onPromote = {
+  907:                                                 when (member.role) {
+  908:                                                     GuildMemberRole.MEMBER -> gameViewModel.promoteGuildMemberToOfficer(member.characterId)
+  909:                                                     GuildMemberRole.OFFICER -> gameViewModel.promoteGuildMemberToLeader(member.characterId)
+  910:                                                     GuildMemberRole.LEADER -> {}
+  911:                                                 }
+  912:                                                 selectedGuildMember = null
+  913:                                             },
+  914:                                             onDemote = { selectedGuildMember = null },
+  915:                                             onInitiateVote = { selectedGuildMember = null }
+  916:                                         )
+  917:                                     }
+  918:                                 }
+  919:                             }
+  920: 
+  921:                             AppDestination.MODERATION -> {
+  922:                                 val moderation by gameViewModel.moderationState.collectAsState()
+  923:                                 LaunchedEffect(Unit) { gameViewModel.refreshModeration() }
+  924:                                 ModerationScreen(
+  925:                                     state = moderation,
+  926:                                     onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
+  927:                                     onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
+  928:                                     onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
+  929:                                     onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) }
+  930:                                 )
+  931:                             }
+  932: 
+  933:                             else -> androidx.compose.material3.Text(
+  934:                                 text = currentDestination.label + " screen coming soon",
+  935:                                 modifier = Modifier.fillMaxSize()
+  936:                             )
+  937:                         }
+  938:                         }
+  939:                         }
+  940:                     }
+  941: 
+  942:                     val chatMessagesFromVm by gameViewModel.chatMessages.collectAsState()
+  943: val selectedChatChannelFromVm by gameViewModel.selectedChatChannel.collectAsState()
+  944: val dmConversationsFromVm by gameViewModel.dmConversations.collectAsState()
+  945: val selectedDmCharacterIdFromVm by gameViewModel.selectedDmCharacterId.collectAsState()
+  946: 
+  947: var reportDialogMessage by remember { mutableStateOf<ChatMessageUi?>(null) }
+  948:                     reportDialogMessage?.let { targetMessage ->
+  949:                         ReportMessageDialog(
+  950:                             message = targetMessage,
+----------------------------------------
