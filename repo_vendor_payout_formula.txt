@@ -1,0 +1,113 @@
+--- around line 121 ---
+119: 
+120:     private val taxRatePercent: Double = 10.0
+121:     private val vendorPayoutPercent: Double = 40.0
+122: 
+123:     fun registerAccount(account: PlayerEconomyAccount) {
+124:         accounts[account.characterId] = account
+125:     }
+126: 
+127:     fun accountFor(characterId: String): PlayerEconomyAccount? = accounts[characterId]
+128: 
+129:     private fun requireMainCharacter(characterId: String): ServiceResult<PlayerEconomyAccount>? {
+130:         val account = accounts[characterId] ?: return ServiceResult.Failure("Character not registered.")
+131:         if (!account.isMainCharacter) {
+132:             return ServiceResult.Failure("Only the account's Main character can access the market.")
+133:         }
+134:         return null
+135:     }
+
+--- around line 282 ---
+280:     // ---------------- NPC vendor fallback ----------------
+281: 
+282:     fun vendorPayoutPerUnit(itemId: String): Long {
+283:         val baseValue = ItemCatalog.baseValueFor(itemId)
+284:         return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
+285:     }
+286: 
+287:     fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
+288:         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
+289:         val account = accounts.getValue(characterId)
+290:         val item = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+291: 
+292:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+293:         if (!account.removeItem(itemId, quantity)) {
+294:             return ServiceResult.Failure("Insufficient item quantity to sell.")
+295:         }
+296: 
+
+--- around line 283 ---
+281: 
+282:     fun vendorPayoutPerUnit(itemId: String): Long {
+283:         val baseValue = ItemCatalog.baseValueFor(itemId)
+284:         return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
+285:     }
+286: 
+287:     fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
+288:         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
+289:         val account = accounts.getValue(characterId)
+290:         val item = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+291: 
+292:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+293:         if (!account.removeItem(itemId, quantity)) {
+294:             return ServiceResult.Failure("Insufficient item quantity to sell.")
+295:         }
+296: 
+297:         val payout = vendorPayoutPerUnit(item.id) * quantity
+
+--- around line 284 ---
+282:     fun vendorPayoutPerUnit(itemId: String): Long {
+283:         val baseValue = ItemCatalog.baseValueFor(itemId)
+284:         return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
+285:     }
+286: 
+287:     fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
+288:         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
+289:         val account = accounts.getValue(characterId)
+290:         val item = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+291: 
+292:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+293:         if (!account.removeItem(itemId, quantity)) {
+294:             return ServiceResult.Failure("Insufficient item quantity to sell.")
+295:         }
+296: 
+297:         val payout = vendorPayoutPerUnit(item.id) * quantity
+298:         account.currencyBalance += payout
+
+--- around line 287 ---
+285:     }
+286: 
+287:     fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
+288:         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
+289:         val account = accounts.getValue(characterId)
+290:         val item = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+291: 
+292:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+293:         if (!account.removeItem(itemId, quantity)) {
+294:             return ServiceResult.Failure("Insufficient item quantity to sell.")
+295:         }
+296: 
+297:         val payout = vendorPayoutPerUnit(item.id) * quantity
+298:         account.currencyBalance += payout
+299:         monitoring.recordVendorPayout(payout)
+300: 
+301:         return ServiceResult.Success(payout)
+
+--- around line 297 ---
+295:         }
+296: 
+297:         val payout = vendorPayoutPerUnit(item.id) * quantity
+298:         account.currencyBalance += payout
+299:         monitoring.recordVendorPayout(payout)
+300: 
+301:         return ServiceResult.Success(payout)
+302:     }
+303: 
+304:     // ---------------- Public-safe queries ----------------
+305: 
+306:     fun priceHistoryFor(itemId: String): List<PriceHistoryEntry> = priceHistory.filter { it.itemId == itemId }
+307: 
+308:     fun openOrdersFor(characterId: String): List<MarketOrder> =
+309:         (buyOrders + sellOrders).filter { it.characterId == characterId && it.status != OrderStatus.CANCELLED }
+310: 
+311:     fun allListings(): List<MarketPriceSummary> {
