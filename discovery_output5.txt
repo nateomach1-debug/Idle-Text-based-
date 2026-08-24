@@ -1,0 +1,8 @@
+SQL files at repo root:
+ - check_phase_b_rls.sql
+ - fix_blocks_insert_policy.sql
+ - fix_create_guild_channel.sql
+ - fix_guild_chat_participants.sql
+ - fix_missing_select_policies.sql
+ - fix_missing_select_policies_phase_b.sql
+ - fix_send_message_blocks_check.sql
