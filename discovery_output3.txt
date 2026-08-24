@@ -1,0 +1,28 @@
+
+================================================================================
+GameViewModel.kt - sellItemToVendor full
+================================================================================
+ 1342:     }
+ 1343: 
+ 1344:     fun sellItemToVendor(itemId: String, quantity: Int) {
+ 1345:         val characterId = _currentCharacterId.value ?: return
+ 1346:         val realInventory = inventoryService.inventoryFor(characterId)
+ 1347:         if (realInventory.quantityOf(itemId) < quantity) return
+ 1348:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
+ 1349: 
+ 1350:         realInventory.removeItem(itemId, quantity)
+ 1351:         refreshInventory()
+ 1352: 
+ 1353:         viewModelScope.launch {
+ 1354:             val result = SupabaseMarketRepository.sellToVendor(characterId, itemId, quantity, payoutPerUnit)
+ 1355:             result.onFailure {
+ 1356:                 realInventory.addItem(itemId, quantity)
+ 1357:                 refreshInventory()
+ 1358:             }
+ 1359:             result.onSuccess {
+ 1360:                 refreshCurrency()
+ 1361:             }
+ 1362:         }
+ 1363:     }
+ 1364: }
+ 1365: 
