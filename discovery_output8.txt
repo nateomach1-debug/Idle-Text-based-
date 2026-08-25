@@ -1,0 +1,18 @@
+--- repr() of exact bytes, function start through ~700 chars ---
+'    fun sellItemToVendor(itemId: String, quantity: Int) {\n        val characterId = _currentCharacterId.value ?: return\n        val realInventory = inventoryService.inventoryFor(characterId)\n        if (realInventory.quantityOf(itemId) < quantity) return\n        val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()\n\n        realInventory.removeItem(itemId, quantity)\n        refreshInventory()\n\n        viewModelScope.launch {\n            val result = SupabaseMarketRepository.sellToVendor(characterId, itemId, quantity, payoutPerUnit)\n            result.onFailure {\n                _marketActionError.value = it.message ?: it.toString()\n                realInventory.addItem'
+
+--- same snippet, plain (for visual reference) ---
+    fun sellItemToVendor(itemId: String, quantity: Int) {
+        val characterId = _currentCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
+        if (realInventory.quantityOf(itemId) < quantity) return
+        val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
+
+        realInventory.removeItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.sellToVendor(characterId, itemId, quantity, payoutPerUnit)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.addItem
