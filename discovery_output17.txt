@@ -1,0 +1,71 @@
+
+================================================================================
+Grep for 'offline' (case-insensitive) across all kt files
+================================================================================
+./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt:121:// OFFLINE EFFICIENCY CURVE, SUBSCRIPTION-AWARE
+./app/src/main/kotlin/com/yourname/idlerpg/AntiCheatServerAuthoritySystem.kt:11:enum class FlagSource { RATE_LIMIT_VIOLATION, ECONOMY_COLLUSION, OFFLINE_TIME_ANOMALY, OTHER }
+./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:393:    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
+./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:394:    offlineSummary?.let { summary ->
+./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:396:            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:409:                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:29:data class OfflineSummary(
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:56:    val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:63:    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:64:    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:512:        offlineIdleService.stopQueue(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:812:        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:813:        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:814:        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:859:    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:860:    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:861:    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:911:    fun clearOfflineSummary() {
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:912:        _offlineSummary.value = null
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:919:            offlineIdleService.exportSkillingQueues(),
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:920:            offlineIdleService.exportCraftingQueues(),
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:921:            offlineIdleService.exportLastSeen(),
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:963:                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:964:                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:965:                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:986:        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:988:            val result = offlineIdleService.resolveOfflineProgress(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:996:                    _offlineSummary.value = OfflineSummary(
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1007:        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1009:            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1013:                    _offlineSummary.value = OfflineSummary(
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1024:        offlineIdleService.recordLastSeen(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1054:        offlineIdleService.stopQueue(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1055:        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1056:        offlineIdleService.recordLastSeen(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1063:        offlineIdleService.stopQueue(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1070:        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1137:        offlineIdleService.stopQueue(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1138:        offlineIdleService.startCraftingQueue(
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1144:        offlineIdleService.recordLastSeen(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1151:        offlineIdleService.stopQueue(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1158:        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue ?: return
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1176:            offlineIdleService.stopQueue(characterId)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1230:        val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:10:enum class QueueType { SKILLING, CRAFTING, OFFLINE_COMBAT }
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:39:    data class OfflineCombatQueue(
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:44:        override val type = QueueType.OFFLINE_COMBAT
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:60:object OfflineEfficiencyCurve {
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:96:data class OfflineFlagRecord(
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:103:object OfflineSanityCheck {
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:106:    fun validate(characterId: String, claimedElapsed: Duration): Pair<Duration, OfflineFlagRecord?> {
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:109:        val flag = OfflineFlagRecord(
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:123:data class OfflineResolution(
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:154:// OFFLINE/IDLE SERVICE
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:157:class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:161:    private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:189:    fun optIntoOfflineCombat(characterId: String, zoneId: String): ServiceResult<ActiveQueue> {
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:191:            return ServiceResult.Failure("Character already has an active queue. Stop it before opting into offline combat.")
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:193:        val queue = ActiveQueue.OfflineCombatQueue(characterId, zoneId)
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:210:    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:217:        val (cappedElapsed, flag) = OfflineSanityCheck.validate(characterId, claimedElapsed)
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:220:        val combatPenaltyMultiplier = if (queue.type == QueueType.OFFLINE_COMBAT) 0.8 else 1.0
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:221:        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed)
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:250:            is ActiveQueue.OfflineCombatQueue -> {
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:260:            OfflineResolution(
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:281:    fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
+
