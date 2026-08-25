@@ -1,0 +1,98 @@
+  938:     fun selectCharacter(characterId: String) {
+  939:         _currentCharacterId.value = characterId
+  940: 
+  941:         val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
+  942:         if (selectedCharacter != null) {
+  943:             viewModelScope.launch {
+  944:                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+  945:                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
+  946:                 result.onSuccess { _characterSyncError.value = null }
+  947:                 _currentSupabaseCharacterId.value = result.getOrNull()
+  948:                 val supabaseCharacterId = result.getOrNull()
+  949:                 if (supabaseCharacterId != null) {
+  950:                     val remoteLocalId = SupabaseCharacterRepository.getCharacterLocalId(supabaseCharacterId).getOrNull()
+  951:                     if (remoteLocalId != null && remoteLocalId != characterId) {
+  952:                         // The server returned an EXISTING character from a different
+  953:                         // device/install, not the one just created locally - recover
+  954:                         // its real save instead of keeping the throwaway new one.
+  955:                         val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
+  956:                         if (cloudJson != null) {
+  957:                             repository.overwriteRawJson(cloudJson)
+  958:                             val recovered = repository.load()
+  959:                             if (recovered != null) {
+  960:                                 recovered.accounts.forEach { accountService.restoreAccount(it) }
+  961:                                 recovered.characters.forEach { accountService.restoreCharacter(it) }
+  962:                                 recovered.skills.forEach { progressionService.restoreSkill(it) }
+  963:                                 recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+  964:                                 recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+  965:                                 recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+  966:                                 recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+  967:                                 recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+  968:                                 recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+  969:                                 recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+  970:                                 recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+  971:                                 recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+  972:                                 _currentCharacterId.value = remoteLocalId
+  973:                                 val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+  974:                                 if (recoveredCharacter != null) {
+  975:                                     _currentAccountId.value = recoveredCharacter.accountId
+  976:                                 }
+  977:                             }
+  978:                         }
+  979:                     }
+  980:                 }
+  981:             }
+  982:         } else {
+  983:             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
+  984:         }
+  985: 
+  986:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+  987:         if (queue != null) {
+  988:             val result = offlineIdleService.resolveOfflineProgress(characterId)
+  989:             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+  990:                 val skillType = SkillType.valueOf(queue.skillId)
+  991:                 val action = ActionCatalog.find(skillType, queue.itemId)
+  992:                 if (action != null) {
+  993:                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
+  994:                     progressionService.grantXp(characterId, skillType, xpEarned)
+  995:                     inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+  996:                     _offlineSummary.value = OfflineSummary(
+  997:                         awaySeconds = result.value.claimedElapsed.seconds,
+  998:                         skillActionName = action.displayName,
+  999:                         itemName = formatItemName(queue.itemId),
+ 1000:                         quantity = result.value.actionsCompleted,
+ 1001:                         xpEarned = xpEarned
+ 1002:                     )
+ 1003:                 }
+ 1004:             }
+ 1005:         }
+ 1006: 
+ 1007:         val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
+ 1008:         if (craftingQueue != null) {
+ 1009:             val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+ 1010:             if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
+ 1011:                 val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
+ 1012:                 if (batch.xpGranted > 0) {
+ 1013:                     _offlineSummary.value = OfflineSummary(
+ 1014:                         awaySeconds = craftResult.value.claimedElapsed.seconds,
+ 1015:                         skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
+ 1016:                         itemName = formatItemName(craftingQueue.itemId),
+ 1017:                         quantity = batch.itemsProduced,
+ 1018:                         xpEarned = batch.xpGranted
+ 1019:                     )
+ 1020:                 }
+ 1021:             }
+ 1022:         }
+ 1023: 
+ 1024:         offlineIdleService.recordLastSeen(characterId)
+ 1025:         skillActionProgressSeconds = 0
+ 1026:         craftActionProgressSeconds = 0
+ 1027:         refreshSkills()
+ 1028:         refreshInventory()
+ 1029:         refreshActiveQueue()
+ 1030: 
+ 1031:         if (marketService.accountFor(characterId) == null) {
+ 1032:             val character = accountService.charactersFor(_currentAccountId.value ?: "")
+ 1033:                 .find { it.id == characterId }
+ 1034:             marketService.registerAccount(
+ 1035:                 PlayerEconomyAccount(
