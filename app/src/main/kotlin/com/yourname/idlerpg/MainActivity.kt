@@ -632,7 +632,10 @@ fun AppRoot(gameViewModel: GameViewModel) {
                         CompositionLocalProvider(LocalDensity provides adaptiveDensity()) {
                         Box(modifier = Modifier.weight(1f)) {
                         when (currentDestination) {
-                            AppDestination.HOME -> HomeScreen(state = homeState)
+                            AppDestination.HOME -> {
+                                LaunchedEffect(Unit) { gameViewModel.refreshCurrency() }
+                                HomeScreen(state = homeState)
+                            }
 
                             AppDestination.SKILLS -> when (val screen = skillsScreenState) {
                                 is SkillsScreenState.List -> SkillsScreen(
@@ -765,7 +768,9 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                             itemId = it.itemId,
                                             displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
                                             bestBuyPrice = it.bestBuyPrice,
-                                            bestSellPrice = it.bestSellPrice
+                                            bestBuyQuantity = it.bestBuyQuantity,
+                                            bestSellPrice = it.bestSellPrice,
+                                            bestSellQuantity = it.bestSellQuantity
                                         )
                                     }
                                 }

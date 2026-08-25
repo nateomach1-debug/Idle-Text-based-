@@ -1264,7 +1264,7 @@ fun logout() {
     fun refreshMarketListings() {
         viewModelScope.launch {
             val listings = SupabaseMarketRepository.listings().getOrNull() ?: emptyList()
-            _marketListings.value = listings.map { MarketPriceSummary(it.itemId, it.bestBuyPrice, it.bestSellPrice) }
+            _marketListings.value = listings.map { MarketPriceSummary(it.itemId, it.bestBuyPrice, it.bestBuyQuantity, it.bestSellPrice, it.bestSellQuantity) }
         }
     }
 

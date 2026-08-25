@@ -25,7 +25,9 @@ data class MarketCancelRpcResult(
 data class MarketListingRow(
     val itemId: String,
     val bestBuyPrice: Long? = null,
-    val bestSellPrice: Long? = null
+    val bestBuyQuantity: Int? = null,
+    val bestSellPrice: Long? = null,
+    val bestSellQuantity: Int? = null
 )
 
 @Serializable

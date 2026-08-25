@@ -29,7 +29,9 @@ data class MarketListingSummary(
     val itemId: String,
     val displayName: String,
     val bestBuyPrice: Long?,   // highest current buy order, null if none
-    val bestSellPrice: Long?   // lowest current sell order, null if none
+    val bestBuyQuantity: Int?, // total quantity available at bestBuyPrice
+    val bestSellPrice: Long?,  // lowest current sell order, null if none
+    val bestSellQuantity: Int? // total quantity available at bestSellPrice
 )
 
 data class MarketOrderSummary(
@@ -182,8 +184,8 @@ private fun ListingRow(listing: MarketListingSummary, onClick: () -> Unit) {
     ) {
         Text(text = listing.displayName, style = MaterialTheme.typography.titleMedium)
         Column(horizontalAlignment = Alignment.End) {
-            Text(text = "Buy: " + (listing.bestBuyPrice?.toString() ?: "—"), style = MaterialTheme.typography.labelSmall)
-            Text(text = "Sell: " + (listing.bestSellPrice?.toString() ?: "—"), style = MaterialTheme.typography.labelSmall)
+            Text(text = "Buy: " + (listing.bestBuyPrice?.let { "$it (x${listing.bestBuyQuantity ?: 0})" } ?: "—"), style = MaterialTheme.typography.labelSmall)
+            Text(text = "Sell: " + (listing.bestSellPrice?.let { "$it (x${listing.bestSellQuantity ?: 0})" } ?: "—"), style = MaterialTheme.typography.labelSmall)
         }
     }
 }
