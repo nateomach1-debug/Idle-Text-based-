@@ -1,0 +1,79 @@
+
+================================================================================
+sellItemToVendor header
+================================================================================
+ 1351:     }
+ 1352: 
+ 1353:     fun sellItemToVendor(itemId: String, quantity: Int) {
+ 1354:         val characterId = _currentCharacterId.value ?: return
+ 1355:         val realInventory = inventoryService.inventoryFor(characterId)
+ 1356:         if (realInventory.quantityOf(itemId) < quantity) return
+ 1357:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
+ 1358: 
+----------------------------------------
+
+================================================================================
+refreshCurrency
+================================================================================
+ 1248:     }
+ 1249: 
+ 1250:     fun refreshCurrency() {
+ 1251:         val accountId = _currentAccountId.value ?: return
+ 1252:         val account = accountService.accountById(accountId) ?: return
+ 1253:         val characterId = _currentCharacterId.value ?: return
+ 1254:         viewModelScope.launch {
+ 1255:             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
+ 1256:             _currency.value = gold to account.premiumCurrency
+ 1257:         }
+ 1258:     }
+ 1259: 
+ 1260:     // =========================================================
+ 1261:     // MARKET (server-side via Supabase - shared order book across all players)
+ 1262:     // =========================================================
+ 1263: 
+ 1264:     fun refreshMarketListings() {
+----------------------------------------
+
+================================================================================
+refreshMarketListings
+================================================================================
+ 1262:     // =========================================================
+ 1263: 
+ 1264:     fun refreshMarketListings() {
+ 1265:         viewModelScope.launch {
+ 1266:             val listings = SupabaseMarketRepository.listings().getOrNull() ?: emptyList()
+ 1267:             _marketListings.value = listings.map { MarketPriceSummary(it.itemId, it.bestBuyPrice, it.bestSellPrice) }
+ 1268:         }
+ 1269:     }
+ 1270: 
+ 1271:     private fun MarketOrderRow.toDomain(): MarketOrder = MarketOrder(
+ 1272:         id = id,
+ 1273:         characterId = characterId,
+ 1274:         itemId = itemId,
+ 1275:         side = OrderSide.valueOf(side),
+ 1276:         pricePerUnit = pricePerUnit,
+ 1277:         originalQuantity = originalQuantity,
+ 1278:         remainingQuantity = remainingQuantity,
+----------------------------------------
+
+================================================================================
+refreshMyOrders
+================================================================================
+ 1281:     )
+ 1282: 
+ 1283:     fun refreshMyOrders() {
+ 1284:         val characterId = _currentCharacterId.value ?: return
+ 1285:         viewModelScope.launch {
+ 1286:             val orders = SupabaseMarketRepository.myOrders(characterId).getOrNull()?.map { it.toDomain() } ?: emptyList()
+ 1287:             _myBuyOrders.value = orders.filter { it.side == OrderSide.BUY }
+ 1288:             _mySellOrders.value = orders.filter { it.side == OrderSide.SELL }
+ 1289:         }
+ 1290:     }
+ 1291: 
+ 1292:     fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+ 1293:         val characterId = _currentCharacterId.value ?: return
+ 1294:         viewModelScope.launch {
+ 1295:             val result = SupabaseMarketRepository.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
+ 1296:             result.onFailure { _marketActionError.value = it.message ?: it.toString() }
+ 1297:             result.onSuccess { order ->
+----------------------------------------
