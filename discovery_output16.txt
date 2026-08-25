@@ -1,0 +1,15 @@
+  314:             .map { it.itemId }
+  315:             .distinct()
+  316:         return itemIds.map { itemId ->
+  317:             val bestBuy = buyOrders
+  318:                 .filter { it.itemId == itemId && it.remainingQuantity > 0 }
+  319:                 .maxOfOrNull { it.pricePerUnit }
+  320:             val bestSell = sellOrders
+  321:                 .filter { it.itemId == itemId && it.remainingQuantity > 0 }
+  322:                 .minOfOrNull { it.pricePerUnit }
+  323:             MarketPriceSummary(itemId, bestBuy, bestSell)
+  324:         }
+  325:     }
+  326: 
+  327:     // ---------------- Persistence ----------------
+  328: 
