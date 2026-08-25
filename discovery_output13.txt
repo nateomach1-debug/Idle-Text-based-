@@ -1,0 +1,51 @@
+
+================================================================================
+MainActivity.kt - refreshCurrency call sites
+================================================================================
+NO MATCH for pattern: refreshCurrency
+
+================================================================================
+MainActivity.kt - where currency StateFlow is collected
+================================================================================
+  458:     val skillsGridScrollState = rememberLazyGridState()
+  459: 
+  460:     val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
+  461:     val currency by gameViewModel.currency.collectAsState()
+  462:     val combatHp by gameViewModel.combatHp.collectAsState()
+  463:     val homeState = HomeScreenState(
+  464:         activeQueue = activeQueue,
+  465:         softCurrency = currency.first,
+  466:         premiumCurrency = currency.second,
+----------------------------------------
+
+================================================================================
+MainActivity.kt - Market tab entry (recheck after listings patch)
+================================================================================
+  753: 
+  754:                             AppDestination.MARKET -> {
+  755:                                 LaunchedEffect(Unit) {
+  756:                                     gameViewModel.refreshMarketListings()
+  757:                                     gameViewModel.refreshMyOrders()
+  758:                                 }
+  759:                                 val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
+----------------------------------------
+
+================================================================================
+MarketPriceSummary / MarketListingSummary definitions
+================================================================================
+NO MATCH for pattern: data class MarketPriceSummary|data class MarketListingSummary
+
+================================================================================
+MainActivity.kt - MarketListingSummary usage / display
+================================================================================
+  762:                                 val marketListingsUi = remember(marketPriceSummaries) {
+  763:                                     marketPriceSummaries.map {
+  764:                                         MarketListingSummary(
+  765:                                             itemId = it.itemId,
+  766:                                             displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+  767:                                             bestBuyPrice = it.bestBuyPrice,
+  768:                                             bestSellPrice = it.bestSellPrice
+  769:                                         )
+  770:                                     }
+  771:                                 }
+----------------------------------------
