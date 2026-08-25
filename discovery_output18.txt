@@ -1,0 +1,65 @@
+================================================================================
+GameViewModel.kt lines 975-1030 (offline resolution function)
+================================================================================
+  975:                                     _currentAccountId.value = recoveredCharacter.accountId
+  976:                                 }
+  977:                             }
+  978:                         }
+  979:                     }
+  980:                 }
+  981:             }
+  982:         } else {
+  983:             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
+  984:         }
+  985: 
+  986:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+  987:         if (queue != null) {
+  988:             val result = offlineIdleService.resolveOfflineProgress(characterId)
+  989:             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+  990:                 val skillType = SkillType.valueOf(queue.skillId)
+  991:                 val action = ActionCatalog.find(skillType, queue.itemId)
+  992:                 if (action != null) {
+  993:                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
+  994:                     progressionService.grantXp(characterId, skillType, xpEarned)
+  995:                     inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+  996:                     _offlineSummary.value = OfflineSummary(
+  997:                         awaySeconds = result.value.claimedElapsed.seconds,
+  998:                         skillActionName = action.displayName,
+  999:                         itemName = formatItemName(queue.itemId),
+ 1000:                         quantity = result.value.actionsCompleted,
+ 1001:                         xpEarned = xpEarned
+ 1002:                     )
+ 1003:                 }
+ 1004:             }
+ 1005:         }
+ 1006: 
+ 1007:         val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
+ 1008:         if (craftingQueue != null) {
+ 1009:             val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+ 1010:             if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
+ 1011:                 val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
+ 1012:                 if (batch.xpGranted > 0) {
+ 1013:                     _offlineSummary.value = OfflineSummary(
+ 1014:                         awaySeconds = craftResult.value.claimedElapsed.seconds,
+ 1015:                         skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
+ 1016:                         itemName = formatItemName(craftingQueue.itemId),
+ 1017:                         quantity = batch.itemsProduced,
+ 1018:                         xpEarned = batch.xpGranted
+ 1019:                     )
+ 1020:                 }
+ 1021:             }
+ 1022:         }
+ 1023: 
+ 1024:         offlineIdleService.recordLastSeen(characterId)
+ 1025:         skillActionProgressSeconds = 0
+ 1026:         craftActionProgressSeconds = 0
+ 1027:         refreshSkills()
+ 1028:         refreshInventory()
+ 1029:         refreshActiveQueue()
+ 1030: 
+
+================================================================================
+Search for function name enclosing this block
+================================================================================
+Function starts at line 938:     fun selectCharacter(characterId: String) {
+
