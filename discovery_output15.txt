@@ -1,0 +1,231 @@
+================================================================================
+MarketScreen.kt lines 1-90 (data classes + start of composable)
+================================================================================
+    1: package com.yourname.idlerpg.ui.screens
+    2: 
+    3: import androidx.compose.foundation.background
+    4: import androidx.compose.foundation.clickable
+    5: import androidx.compose.foundation.layout.*
+    6: import androidx.compose.foundation.lazy.LazyColumn
+    7: import androidx.compose.foundation.lazy.items
+    8: import androidx.compose.foundation.shape.RoundedCornerShape
+    9: import androidx.compose.foundation.text.KeyboardOptions
+   10: import androidx.compose.material3.*
+   11: import androidx.compose.runtime.*
+   12: import androidx.compose.ui.Alignment
+   13: import androidx.compose.ui.Modifier
+   14: import androidx.compose.ui.draw.clip
+   15: import androidx.compose.ui.text.input.KeyboardType
+   16: import androidx.compose.ui.text.style.TextOverflow
+   17: import androidx.compose.ui.unit.dp
+   18: 
+   19: // =========================================================
+   20: // MARKET SCREENS
+   21: // Three separate screens (Browse, My Orders, Sell to Vendor),
+   22: // navigated via top buttons. Cosmetic-only price warning on
+   23: // order placement -- no backend validation tied to it.
+   24: // =========================================================
+   25: 
+   26: enum class MarketTab { BROWSE, MY_ORDERS, SELL_TO_VENDOR }
+   27: 
+   28: data class MarketListingSummary(
+   29:     val itemId: String,
+   30:     val displayName: String,
+   31:     val bestBuyPrice: Long?,   // highest current buy order, null if none
+   32:     val bestSellPrice: Long?   // lowest current sell order, null if none
+   33: )
+   34: 
+   35: data class MarketOrderSummary(
+   36:     val orderId: String,
+   37:     val itemId: String,
+   38:     val displayName: String,
+   39:     val pricePerUnit: Long,
+   40:     val remainingQuantity: Int
+   41: )
+   42: 
+   43: data class PriceHistoryRow(val pricePerUnit: Long, val quantity: Int, val timeAgo: String)
+   44: 
+   45: data class ItemOrderBookDetail(
+   46:     val itemId: String,
+   47:     val displayName: String,
+   48:     val bestBuyPrice: Long?,
+   49:     val bestSellPrice: Long?,
+   50:     val recentTrades: List<PriceHistoryRow>
+   51: )
+   52: 
+   53: @Composable
+   54: fun MarketScreen(
+   55:     currentTab: MarketTab,
+   56:     onTabSelected: (MarketTab) -> Unit,
+   57:     // Browse
+   58:     listings: List<MarketListingSummary>,
+   59:     showingBuyOrders: Boolean,
+   60:     onToggleBrowseMode: () -> Unit,
+   61:     onItemSelected: (String) -> Unit,
+   62:     // My Orders
+   63:     myBuyOrders: List<MarketOrderSummary>,
+   64:     mySellOrders: List<MarketOrderSummary>,
+   65:     onCancelOrder: (String) -> Unit,
+   66:     // Sell to Vendor
+   67:     vendorSellableItems: List<InventoryItemSummary>,
+   68:     onSellToVendor: (String, Int) -> Unit,
+   69:     modifier: Modifier = Modifier
+   70: ) {
+   71:     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+   72:         Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
+   73:         Spacer(modifier = Modifier.height(12.dp))
+   74: 
+   75:         Row(
+   76:             modifier = Modifier.fillMaxWidth(),
+   77:             horizontalArrangement = Arrangement.spacedBy(8.dp)
+   78:         ) {
+   79:             MarketTabButton(
+   80:                 label = "Browse",
+   81:                 isSelected = currentTab == MarketTab.BROWSE,
+   82:                 modifier = Modifier.weight(1f)
+   83:             ) { onTabSelected(MarketTab.BROWSE) }
+   84:             MarketTabButton(
+   85:                 label = "Orders",
+   86:                 isSelected = currentTab == MarketTab.MY_ORDERS,
+   87:                 modifier = Modifier.weight(1f)
+   88:             ) { onTabSelected(MarketTab.MY_ORDERS) }
+   89:             MarketTabButton(
+   90:                 label = "Vendor",
+
+================================================================================
+MarketScreen.kt - listing row rendering (bestSellPrice usage)
+================================================================================
+   28: data class MarketListingSummary(
+   29:     val itemId: String,
+   30:     val displayName: String,
+   31:     val bestBuyPrice: Long?,   // highest current buy order, null if none
+   32:     val bestSellPrice: Long?   // lowest current sell order, null if none
+   33: )
+   34: 
+   35: data class MarketOrderSummary(
+   36:     val orderId: String,
+   37:     val itemId: String,
+   38:     val displayName: String,
+   39:     val pricePerUnit: Long,
+   40:     val remainingQuantity: Int
+----------------------------------------
+   29:     val itemId: String,
+   30:     val displayName: String,
+   31:     val bestBuyPrice: Long?,   // highest current buy order, null if none
+   32:     val bestSellPrice: Long?   // lowest current sell order, null if none
+   33: )
+   34: 
+   35: data class MarketOrderSummary(
+   36:     val orderId: String,
+   37:     val itemId: String,
+   38:     val displayName: String,
+   39:     val pricePerUnit: Long,
+   40:     val remainingQuantity: Int
+   41: )
+----------------------------------------
+   45: data class ItemOrderBookDetail(
+   46:     val itemId: String,
+   47:     val displayName: String,
+   48:     val bestBuyPrice: Long?,
+   49:     val bestSellPrice: Long?,
+   50:     val recentTrades: List<PriceHistoryRow>
+   51: )
+   52: 
+   53: @Composable
+   54: fun MarketScreen(
+   55:     currentTab: MarketTab,
+   56:     onTabSelected: (MarketTab) -> Unit,
+   57:     // Browse
+----------------------------------------
+   46:     val itemId: String,
+   47:     val displayName: String,
+   48:     val bestBuyPrice: Long?,
+   49:     val bestSellPrice: Long?,
+   50:     val recentTrades: List<PriceHistoryRow>
+   51: )
+   52: 
+   53: @Composable
+   54: fun MarketScreen(
+   55:     currentTab: MarketTab,
+   56:     onTabSelected: (MarketTab) -> Unit,
+   57:     // Browse
+   58:     listings: List<MarketListingSummary>,
+----------------------------------------
+  182:     ) {
+  183:         Text(text = listing.displayName, style = MaterialTheme.typography.titleMedium)
+  184:         Column(horizontalAlignment = Alignment.End) {
+  185:             Text(text = "Buy: " + (listing.bestBuyPrice?.toString() ?: "—"), style = MaterialTheme.typography.labelSmall)
+  186:             Text(text = "Sell: " + (listing.bestSellPrice?.toString() ?: "—"), style = MaterialTheme.typography.labelSmall)
+  187:         }
+  188:     }
+  189: }
+  190: 
+  191: // ---------------- My Orders ----------------
+  192: 
+  193: @Composable
+  194: private fun MyOrdersTab(
+----------------------------------------
+  183:         Text(text = listing.displayName, style = MaterialTheme.typography.titleMedium)
+  184:         Column(horizontalAlignment = Alignment.End) {
+  185:             Text(text = "Buy: " + (listing.bestBuyPrice?.toString() ?: "—"), style = MaterialTheme.typography.labelSmall)
+  186:             Text(text = "Sell: " + (listing.bestSellPrice?.toString() ?: "—"), style = MaterialTheme.typography.labelSmall)
+  187:         }
+  188:     }
+  189: }
+  190: 
+  191: // ---------------- My Orders ----------------
+  192: 
+  193: @Composable
+  194: private fun MyOrdersTab(
+  195:     buyOrders: List<MarketOrderSummary>,
+----------------------------------------
+
+================================================================================
+MainActivity.kt lines 450-470 (currency collection context)
+================================================================================
+  450:         inventoryItemEntries.mapNotNull { entry ->
+  451:             val definition = ItemCatalog.find(entry.itemId)
+  452:             if (definition?.consumableType == ConsumableType.POTION) {
+  453:                 ConsumableOption(entry.itemId, definition.name, entry.quantity)
+  454:             } else null
+  455:         }
+  456:     }
+  457:     val skillsListScrollState = rememberLazyListState()
+  458:     val skillsGridScrollState = rememberLazyGridState()
+  459: 
+  460:     val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
+  461:     val currency by gameViewModel.currency.collectAsState()
+  462:     val combatHp by gameViewModel.combatHp.collectAsState()
+  463:     val homeState = HomeScreenState(
+  464:         activeQueue = activeQueue,
+  465:         softCurrency = currency.first,
+  466:         premiumCurrency = currency.second,
+  467:         currentHp = combatHp?.first,
+  468:         maxHp = combatHp?.second,
+  469:         isRecovering = false,
+  470:         unreadNotificationCount = 2
+
+================================================================================
+MainActivity.kt lines 625-645 (HOME block context)
+================================================================================
+  625:                                 inventoryScreenState = InventoryScreenState.Items
+  626:                                 marketTab = MarketTab.BROWSE
+  627:                                 selectedMarketItemId = null
+  628:                             },
+  629:                             badgedDestinations = setOf(AppDestination.GUILD)
+  630:                         )
+  631: 
+  632:                         CompositionLocalProvider(LocalDensity provides adaptiveDensity()) {
+  633:                         Box(modifier = Modifier.weight(1f)) {
+  634:                         when (currentDestination) {
+  635:                             AppDestination.HOME -> HomeScreen(state = homeState)
+  636: 
+  637:                             AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+  638:                                 is SkillsScreenState.List -> SkillsScreen(
+  639:                                     allSkills = allSkills,
+  640:                                     onSkillSelected = { selectedSkillId ->
+  641:                                         if (selectedSkillId in COMBAT_TRAINING_SKILL_IDS) {
+  642:                                             gameViewModel.setTrainingSkill(SkillType.valueOf(selectedSkillId))
+  643:                                             currentDestination = AppDestination.COMBAT
+  644:                                             combatScreenState = CombatScreenState.ZoneSelect
+  645:                                         } else {
