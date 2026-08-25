@@ -1,0 +1,12 @@
+
+================================================================================
+Grep for the exact error string
+================================================================================
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:841:        return ServiceResult.Failure("No local account found, and no matching cloud account either.")
+
+
+================================================================================
+Grep for second half of error string
+================================================================================
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:841:        return ServiceResult.Failure("No local account found, and no matching cloud account either.")
+
