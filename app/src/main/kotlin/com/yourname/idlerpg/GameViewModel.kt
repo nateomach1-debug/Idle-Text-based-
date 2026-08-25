@@ -1250,7 +1250,7 @@ fun logout() {
     fun refreshCurrency() {
         val accountId = _currentAccountId.value ?: return
         val account = accountService.accountById(accountId) ?: return
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
             _currency.value = gold to account.premiumCurrency
@@ -1281,7 +1281,7 @@ fun logout() {
     )
 
     fun refreshMyOrders() {
-        val characterId = _currentCharacterId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val orders = SupabaseMarketRepository.myOrders(characterId).getOrNull()?.map { it.toDomain() } ?: emptyList()
             _myBuyOrders.value = orders.filter { it.side == OrderSide.BUY }
@@ -1291,8 +1291,9 @@ fun logout() {
 
     fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
         val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
-            val result = SupabaseMarketRepository.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
+            val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
             result.onFailure { _marketActionError.value = it.message ?: it.toString() }
             result.onSuccess { order ->
                 _marketActionError.value = null
@@ -1310,6 +1311,7 @@ fun logout() {
 
     fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
         val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
         val realInventory = inventoryService.inventoryFor(characterId)
         if (realInventory.quantityOf(itemId) < quantity) return
 
@@ -1317,7 +1319,7 @@ fun logout() {
         refreshInventory()
 
         viewModelScope.launch {
-            val result = SupabaseMarketRepository.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
+            val result = SupabaseMarketRepository.placeSellOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
             result.onFailure {
                 _marketActionError.value = it.message ?: it.toString()
                 realInventory.addItem(itemId, quantity)
@@ -1352,6 +1354,7 @@ fun logout() {
 
     fun sellItemToVendor(itemId: String, quantity: Int) {
         val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
         val realInventory = inventoryService.inventoryFor(characterId)
         if (realInventory.quantityOf(itemId) < quantity) return
         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
@@ -1360,7 +1363,7 @@ fun logout() {
         refreshInventory()
 
         viewModelScope.launch {
-            val result = SupabaseMarketRepository.sellToVendor(characterId, itemId, quantity, payoutPerUnit)
+            val result = SupabaseMarketRepository.sellToVendor(supabaseCharacterId, itemId, quantity, payoutPerUnit)
             result.onFailure {
                 _marketActionError.value = it.message ?: it.toString()
                 realInventory.addItem(itemId, quantity)
