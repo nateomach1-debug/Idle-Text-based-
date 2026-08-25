@@ -1,0 +1,159 @@
+
+================================================================================
+MainActivity.kt - refreshMarketListings call sites
+================================================================================
+NO MATCH for pattern: refreshMarketListings
+
+================================================================================
+GameViewModel.kt - refreshMarketListings call sites
+================================================================================
+ 1041:             )
+ 1042:         }
+ 1043:         refreshCurrency()
+ 1044:         refreshMarketListings()
+ 1045:         refreshMyOrders()
+ 1046:     }
+----------------------------------------
+ 1261:     // MARKET (server-side via Supabase - shared order book across all players)
+ 1262:     // =========================================================
+ 1263: 
+ 1264:     fun refreshMarketListings() {
+ 1265:         viewModelScope.launch {
+ 1266:             val listings = SupabaseMarketRepository.listings().getOrNull() ?: emptyList()
+----------------------------------------
+ 1303:                     refreshInventory()
+ 1304:                 }
+ 1305:                 refreshCurrency()
+ 1306:                 refreshMarketListings()
+ 1307:                 refreshMyOrders()
+ 1308:             }
+----------------------------------------
+ 1328:             result.onSuccess {
+ 1329:                 _marketActionError.value = null
+ 1330:                 refreshCurrency()
+ 1331:                 refreshMarketListings()
+ 1332:                 refreshMyOrders()
+ 1333:             }
+----------------------------------------
+ 1346:                     refreshInventory()
+ 1347:                 }
+ 1348:                 refreshCurrency()
+ 1349:                 refreshMarketListings()
+ 1350:                 refreshMyOrders()
+ 1351:             }
+----------------------------------------
+
+================================================================================
+MainActivity.kt - marketListingsUi
+================================================================================
+  755:                                 val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
+  756:                                 val myBuyOrdersRaw by gameViewModel.myBuyOrders.collectAsState()
+  757:                                 val mySellOrdersRaw by gameViewModel.mySellOrders.collectAsState()
+  758:                                 val marketListingsUi = remember(marketPriceSummaries) {
+  759:                                     marketPriceSummaries.map {
+  760:                                         MarketListingSummary(
+  761:                                             itemId = it.itemId,
+  762:                                             displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+  763:                                             bestBuyPrice = it.bestBuyPrice,
+  764:                                             bestSellPrice = it.bestSellPrice
+  765:                                         )
+----------------------------------------
+  821:                                     MarketScreen(
+  822:                                         currentTab = marketTab,
+  823:                                         onTabSelected = { marketTab = it },
+  824:                                         listings = marketListingsUi,
+  825:                                         showingBuyOrders = showingBuyOrders,
+  826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+  827:                                         onItemSelected = { selectedMarketItemId = it },
+  828:                                         myBuyOrders = myBuyOrdersUi,
+  829:                                         mySellOrders = mySellOrdersUi,
+  830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+  831:                                         vendorSellableItems = inventoryItems,
+----------------------------------------
+
+================================================================================
+GameViewModel.kt - _marketListings
+================================================================================
+  741:     }
+  742: 
+  743:     private val _marketListings = MutableStateFlow<List<MarketPriceSummary>>(emptyList())
+  744:     val marketListings: StateFlow<List<MarketPriceSummary>> = _marketListings.asStateFlow()
+  745: 
+  746:     private val _myBuyOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+----------------------------------------
+  742: 
+  743:     private val _marketListings = MutableStateFlow<List<MarketPriceSummary>>(emptyList())
+  744:     val marketListings: StateFlow<List<MarketPriceSummary>> = _marketListings.asStateFlow()
+  745: 
+  746:     private val _myBuyOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+  747:     val myBuyOrders: StateFlow<List<MarketOrder>> = _myBuyOrders.asStateFlow()
+----------------------------------------
+ 1265:         viewModelScope.launch {
+ 1266:             val listings = SupabaseMarketRepository.listings().getOrNull() ?: emptyList()
+ 1267:             _marketListings.value = listings.map { MarketPriceSummary(it.itemId, it.bestBuyPrice, it.bestSellPrice) }
+ 1268:         }
+ 1269:     }
+ 1270: 
+----------------------------------------
+
+================================================================================
+MainActivity.kt - AppDestination.MARKET block
+================================================================================
+  726:                                         val item = inventoryItems.find { it.itemId == itemId }
+  727:                                         selectedMarketItemId = itemId
+  728:                                         prefilledSellQuantity = item?.quantity
+  729:                                         currentDestination = AppDestination.MARKET
+  730:                                     },
+  731:                                     onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
+  732:                                     canEquip = ::canEquip
+  733:                                 )
+  734:                                 InventoryScreenState.Equipment -> EquipmentScreen(
+  735:                                     state = EquipmentScreenState(equipped, lockedEquipSlots),
+  736:                                     onBack = { inventoryScreenState = InventoryScreenState.Items },
+  737:                                     onSlotTapped = { slot -> gameViewModel.unequipSlot(EquipSlot.valueOf(slot.name)) }
+  738:                                 )
+  739:                                 InventoryScreenState.Loadout -> LoadoutScreen(
+  740:                                     state = LoadoutState(
+  741:                                         availableFoodOptions, loadoutSettings.selectedFoodId,
+  742:                                         availablePotionOptions, loadoutSettings.selectedPotionId,
+  743:                                         loadoutSettings.potionTimerRemainingSeconds,
+  744:                                         loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+  745:                                     ),
+  746:                                     onBack = { inventoryScreenState = InventoryScreenState.Items },
+  747:                                     onFoodSelected = { gameViewModel.selectFood(it) },
+  748:                                     onPotionSelected = { gameViewModel.selectPotion(it) },
+  749:                                     onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+  750:                                     onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+  751:                                 )
+  752:                             }
+  753: 
+----------------------------------------
+  751:                                 )
+  752:                             }
+  753: 
+  754:                             AppDestination.MARKET -> {
+  755:                                 val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
+  756:                                 val myBuyOrdersRaw by gameViewModel.myBuyOrders.collectAsState()
+  757:                                 val mySellOrdersRaw by gameViewModel.mySellOrders.collectAsState()
+  758:                                 val marketListingsUi = remember(marketPriceSummaries) {
+  759:                                     marketPriceSummaries.map {
+  760:                                         MarketListingSummary(
+  761:                                             itemId = it.itemId,
+  762:                                             displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+  763:                                             bestBuyPrice = it.bestBuyPrice,
+  764:                                             bestSellPrice = it.bestSellPrice
+  765:                                         )
+  766:                                     }
+  767:                                 }
+  768:                                 val myBuyOrdersUi = remember(myBuyOrdersRaw) {
+  769:                                     myBuyOrdersRaw.map {
+  770:                                         MarketOrderSummary(
+  771:                                             orderId = it.id,
+  772:                                             itemId = it.itemId,
+  773:                                             displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+  774:                                             pricePerUnit = it.pricePerUnit,
+  775:                                             remainingQuantity = it.remainingQuantity
+  776:                                         )
+  777:                                     }
+  778:                                 }
+----------------------------------------
