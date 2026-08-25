@@ -1,0 +1,41 @@
+ 1030: 
+ 1031:         if (marketService.accountFor(characterId) == null) {
+ 1032:             val character = accountService.charactersFor(_currentAccountId.value ?: "")
+ 1033:                 .find { it.id == characterId }
+ 1034:             marketService.registerAccount(
+ 1035:                 PlayerEconomyAccount(
+ 1036:                     characterId = characterId,
+ 1037:                     accountId = _currentAccountId.value ?: "",
+ 1038:                     isMainCharacter = character?.isMainCharacter ?: true,
+ 1039:                     currencyBalance = 0L
+ 1040:                 )
+ 1041:             )
+ 1042:         }
+ 1043:         refreshCurrency()
+ 1044:         refreshMarketListings()
+ 1045:         refreshMyOrders()
+ 1046:     }
+ 1047: 
+ 1048:     fun startSkillAction(skillType: SkillType, itemId: String) {
+ 1049:         val characterId = _currentCharacterId.value ?: return
+ 1050:         val action = ActionCatalog.find(skillType, itemId) ?: return
+ 1051:         // Starting a skill stops any active combat session - only one
+ 1052:         // activity can run at a time.
+ 1053:         leaveCombatZone()
+ 1054:         offlineIdleService.stopQueue(characterId)
+ 1055:         offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+ 1056:         offlineIdleService.recordLastSeen(characterId)
+ 1057:         skillActionProgressSeconds = 0
+ 1058:         refreshActiveQueue()
+ 1059:     }
+ 1060: 
+ 1061:     fun stopSkillAction() {
+ 1062:         val characterId = _currentCharacterId.value ?: return
+ 1063:         offlineIdleService.stopQueue(characterId)
+ 1064:         skillActionProgressSeconds = 0
+ 1065:         refreshActiveQueue()
+ 1066:     }
+ 1067: 
+ 1068:     private fun tickSkilling() {
+ 1069:         val characterId = _currentCharacterId.value ?: return
+ 1070:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
