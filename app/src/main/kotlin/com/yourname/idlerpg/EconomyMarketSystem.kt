@@ -317,10 +317,16 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
             val bestBuy = buyOrders
                 .filter { it.itemId == itemId && it.remainingQuantity > 0 }
                 .maxOfOrNull { it.pricePerUnit }
+            val bestBuyQty = buyOrders
+                .filter { it.itemId == itemId && it.remainingQuantity > 0 && it.pricePerUnit == bestBuy }
+                .sumOf { it.remainingQuantity }
             val bestSell = sellOrders
                 .filter { it.itemId == itemId && it.remainingQuantity > 0 }
                 .minOfOrNull { it.pricePerUnit }
-            MarketPriceSummary(itemId, bestBuy, bestSell)
+            val bestSellQty = sellOrders
+                .filter { it.itemId == itemId && it.remainingQuantity > 0 && it.pricePerUnit == bestSell }
+                .sumOf { it.remainingQuantity }
+            MarketPriceSummary(itemId, bestBuy, if (bestBuy != null) bestBuyQty else null, bestSell, if (bestSell != null) bestSellQty else null)
         }
     }
 
