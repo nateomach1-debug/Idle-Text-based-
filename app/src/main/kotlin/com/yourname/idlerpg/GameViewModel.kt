@@ -838,7 +838,7 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
             this.password = password
         }
     } catch (e: Exception) {
-        return ServiceResult.Failure("No local account found, and no matching cloud account either.")
+        return ServiceResult.Failure("No local account found, and no matching cloud account either. (${e.message})")
     }
 
     val placeholderLocalId = java.util.UUID.randomUUID().toString()
