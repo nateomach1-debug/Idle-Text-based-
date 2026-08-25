@@ -1,0 +1,26 @@
+
+================================================================================
+class MarketListingSummary definition
+================================================================================
+./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:28:data class MarketListingSummary(
+
+
+================================================================================
+class MarketPriceSummary definition
+================================================================================
+./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:399:data class MarketPriceSummary(val itemId: String, val bestBuyPrice: Long?, val bestSellPrice: Long?)
+
+
+================================================================================
+MarketScreen composable definition
+================================================================================
+./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:54:fun MarketScreen(
+
+
+================================================================================
+MainActivity.kt - Home tab entry
+================================================================================
+./app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt:31:    AppDestination.HOME -> Icons.Filled.Person
+./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:416:    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
+./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:635:                            AppDestination.HOME -> HomeScreen(state = homeState)
+
