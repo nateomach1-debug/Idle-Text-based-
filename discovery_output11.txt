@@ -1,0 +1,24 @@
+  832: }
+  833: 
+  834: private suspend fun attemptCloudRecoveryLogin(email: String, password: String): ServiceResult<Account> {
+  835:     try {
+  836:         SupabaseClientProvider.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+  837:             this.email = email
+  838:             this.password = password
+  839:         }
+  840:     } catch (e: Exception) {
+  841:         return ServiceResult.Failure("No local account found, and no matching cloud account either.")
+  842:     }
+  843: 
+  844:     val placeholderLocalId = java.util.UUID.randomUUID().toString()
+  845:     val charResult = SupabaseCharacterRepository.getOrCreateCharacter(placeholderLocalId, "Recovered")
+  846:     val supabaseCharacterId = charResult.getOrNull()
+  847:         ?: return ServiceResult.Failure("Found a cloud account but couldn't sync a character to it.")
+  848: 
+  849:     val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
+  850:         ?: return ServiceResult.Failure("This account has no cloud backup saved yet - its local data can't be recovered.")
+  851: 
+  852:     repository.overwriteRawJson(cloudJson)
+  853:     val recovered = repository.load()
+  854:         ?: return ServiceResult.Failure("Recovered cloud data was corrupted or empty.")
+  855: 
