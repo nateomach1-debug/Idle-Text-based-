@@ -1,326 +1,1153 @@
+=== FULL REPO FILE LISTING (.kt / .sql) ===
+./ModerationScreen.kt  (8793 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt  (12519 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt  (41614 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/AntiCheatServerAuthoritySystem.kt  (5701 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt  (4603 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ChatBanner.kt  (10390 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt  (11914 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt  (6907 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt  (16544 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt  (3518 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/EventsLiveOpsSystem.kt  (15345 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt  (17478 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt  (62947 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt  (84563 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt  (20817 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GuildCreateJoinScreen.kt  (3344 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt  (9616 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt  (6925 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt  (11633 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt  (79720 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt  (6875 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/LoginScreen.kt  (3392 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt  (52989 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt  (10929 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MemberActionPopup.kt  (2476 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt  (39087 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt  (8793 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt  (7729 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt  (739 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt  (12573 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt  (6583 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/PatternBackground.kt  (2678 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt  (13431 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/RecoveryBar.kt  (3429 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ReportMessageDialog.kt  (2580 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt  (1091 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt  (4263 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt  (4964 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt  (8691 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt  (9361 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt  (8763 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt  (13593 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt  (12966 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseCharacterRepository.kt  (2413 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt  (10841 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseClient.kt  (939 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt  (11093 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt  (3338 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseModerationRepository.kt  (7175 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt  (5989 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ZoneSelectScreen.kt  (4049 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/create_profile_trigger.sql  (1268 bytes)
+./check_phase_b_rls.sql  (1416 bytes)
+./fix_blocks_insert_policy.sql  (815 bytes)
+./fix_create_guild_channel.sql  (2190 bytes)
+./fix_guild_chat_participants.sql  (3912 bytes)
+./fix_missing_select_policies.sql  (777 bytes)
+./fix_missing_select_policies_phase_b.sql  (1349 bytes)
+./fix_send_message_blocks_check.sql  (2964 bytes)
 
-================================================================================
-MainActivity.kt - sell order UI
-================================================================================
-  805:                                     }
-  806:                                     OrderBookScreen(
-  807:                                         detail = orderBookDetail,
-  808:                                         prefilledQuantity = prefilledSellQuantity,
-  809:                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
-  810:                                         onPlaceOrder = { side, qty, price ->
-  811:                                             if (side == OrderSideUi.BUY) {
-  812:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
-  813:                                             } else {
-  814:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
-  815:                                             }
-  816:                                             selectedMarketItemId = null
-  817:                                             prefilledSellQuantity = null
-  818:                                         }
-  819:                                     )
-  820:                                 } else {
-  821:                                     MarketScreen(
-  822:                                         currentTab = marketTab,
-  823:                                         onTabSelected = { marketTab = it },
-  824:                                         listings = marketListingsUi,
-  825:                                         showingBuyOrders = showingBuyOrders,
-  826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
-  827:                                         onItemSelected = { selectedMarketItemId = it },
-  828:                                         myBuyOrders = myBuyOrdersUi,
-  829:                                         mySellOrders = mySellOrdersUi,
-  830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
-  831:                                         vendorSellableItems = inventoryItems,
-  832:                                         onSellToVendor = { sellItemId, quantity ->
-  833:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
-  834:                                         }
-  835:                                     )
-  836:                                 }
-  837:                             }
-  838: 
-  839:                             AppDestination.GUILD -> {
-  840:                                 val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
-  841:                                 val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
-  842:                                 val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
-  843: 
-  844:                                 LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
-  845:                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
-  846:                                 LaunchedEffect(Unit) { gameViewModel.checkModeratorStatus() }
-  847:                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
-  848:                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
-  849:                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
-  850:                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
-  851:                                 val debugChatError by gameViewModel.chatActionError.collectAsState()
-  852:                                 var showDebugDialog by remember { mutableStateOf(false) }
-  853:                                 LaunchedEffect(debugAuthError, debugCharSyncError) {
-  854:                                     if (debugAuthError != null || debugCharSyncError != null || debugChatError != null) {
-  855:                                         showDebugDialog = true
-  856:                                     }
-  857:                                 }
-  858:                                 if (showDebugDialog) {
-  859:                                     androidx.compose.material3.AlertDialog(
+=== KEYWORD MATCHES (file : line_no : line) ===
 
---------------------------------------------------------------------------------
-  809:                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
-  810:                                         onPlaceOrder = { side, qty, price ->
-  811:                                             if (side == OrderSideUi.BUY) {
-  812:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
-  813:                                             } else {
-  814:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
-  815:                                             }
-  816:                                             selectedMarketItemId = null
-  817:                                             prefilledSellQuantity = null
-  818:                                         }
-  819:                                     )
-  820:                                 } else {
-  821:                                     MarketScreen(
-  822:                                         currentTab = marketTab,
-  823:                                         onTabSelected = { marketTab = it },
-  824:                                         listings = marketListingsUi,
-  825:                                         showingBuyOrders = showingBuyOrders,
-  826:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
-  827:                                         onItemSelected = { selectedMarketItemId = it },
-  828:                                         myBuyOrders = myBuyOrdersUi,
-  829:                                         mySellOrders = mySellOrdersUi,
-  830:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
-  831:                                         vendorSellableItems = inventoryItems,
-  832:                                         onSellToVendor = { sellItemId, quantity ->
-  833:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
-  834:                                         }
-  835:                                     )
-  836:                                 }
-  837:                             }
-  838: 
-  839:                             AppDestination.GUILD -> {
-  840:                                 val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
-  841:                                 val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
-  842:                                 val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
-  843: 
-  844:                                 LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
-  845:                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
-  846:                                 LaunchedEffect(Unit) { gameViewModel.checkModeratorStatus() }
-  847:                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
-  848:                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
-  849:                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
-  850:                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
-  851:                                 val debugChatError by gameViewModel.chatActionError.collectAsState()
-  852:                                 var showDebugDialog by remember { mutableStateOf(false) }
-  853:                                 LaunchedEffect(debugAuthError, debugCharSyncError) {
-  854:                                     if (debugAuthError != null || debugCharSyncError != null || debugChatError != null) {
-  855:                                         showDebugDialog = true
-  856:                                     }
-  857:                                 }
-  858:                                 if (showDebugDialog) {
-  859:                                     androidx.compose.material3.AlertDialog(
-  860:                                         onDismissRequest = { showDebugDialog = false },
-  861:                                         title = { androidx.compose.material3.Text("Debug: Supabase Sync") },
-  862:                                         text = {
-  863:                                             androidx.compose.foundation.layout.Column {
+--- RECIPE / CRAFTING / COOKING ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/AntiCheatServerAuthoritySystem.kt]
+    52:     // Recipe.levelRequired-based timing, once wired together directly.
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt]
+    1101:     // CRAFTING -- mirrors the SkillingQueue flow above. Recipe.levelRequired
+    1254:                 label = "Crafting " + formatItemName(queue.itemId),
+  [./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt]
+    18: data class Recipe(
+    21:     val ingredients: List<RecipeIngredient>,
+    28:         Recipe(
+    31:             ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
+    35:         Recipe(
+    38:             ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
+    42:         Recipe(
+    45:             ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
+    49:         Recipe(
+    52:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+    56:         Recipe(
+    59:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+    63:         Recipe(
+    66:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+    70:         Recipe(
+    73:             ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+    77:         Recipe(
+    80:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+    84:         Recipe(
+    87:             ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+    91:         Recipe(
+    94:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+    98:         Recipe(
+    101:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+    105:         Recipe(
+    108:             ingredients = listOf(RecipeIngredient("bronze_bar", 2)),
+    112:         Recipe(
+    115:             ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+    119:         Recipe(
+    122:             ingredients = listOf(RecipeIngredient("bronze_bar", 5)),
+    126:         Recipe(
+    129:             ingredients = listOf(RecipeIngredient("bronze_bar", 3)),
+    133:         Recipe(
+    136:             ingredients = listOf(RecipeIngredient("iron_bar", 1)),
+    140:         Recipe(
+    143:             ingredients = listOf(RecipeIngredient("iron_bar", 1)),
+    147:         Recipe(
+    150:             ingredients = listOf(RecipeIngredient("iron_bar", 1)),
+    154:         Recipe(
+    157:             ingredients = listOf(RecipeIngredient("iron_bar", 2)),
+    161:         Recipe(
+    164:             ingredients = listOf(RecipeIngredient("iron_bar", 2)),
+    168:         Recipe(
+    171:             ingredients = listOf(RecipeIngredient("iron_bar", 2)),
+    175:         Recipe(
+    178:             ingredients = listOf(RecipeIngredient("iron_bar", 3)),
+    182:         Recipe(
+    185:             ingredients = listOf(RecipeIngredient("iron_bar", 2)),
+    189:         Recipe(
+    192:             ingredients = listOf(RecipeIngredient("iron_bar", 3)),
+    196:         Recipe(
+    199:             ingredients = listOf(RecipeIngredient("iron_bar", 2)),
+    203:         Recipe(
+    206:             ingredients = listOf(RecipeIngredient("iron_bar", 2)),
+    210:         Recipe(
+    213:             ingredients = listOf(RecipeIngredient("iron_bar", 2)),
+    217:         Recipe(
+    220:             ingredients = listOf(RecipeIngredient("iron_bar", 3)),
+    224:         Recipe(
+    227:             ingredients = listOf(RecipeIngredient("iron_bar", 5)),
+    231:         Recipe(
+    234:             ingredients = listOf(RecipeIngredient("iron_bar", 3)),
+    238:         Recipe(
+    241:             ingredients = listOf(RecipeIngredient("steel_bar", 1)),
+    245:         Recipe(
+    248:             ingredients = listOf(RecipeIngredient("steel_bar", 1)),
+    252:         Recipe(
+    255:             ingredients = listOf(RecipeIngredient("steel_bar", 1)),
+    259:         Recipe(
+    262:             ingredients = listOf(RecipeIngredient("steel_bar", 2)),
+    266:         Recipe(
+    269:             ingredients = listOf(RecipeIngredient("steel_bar", 2)),
+    273:         Recipe(
+    276:             ingredients = listOf(RecipeIngredient("steel_bar", 2)),
+    280:         Recipe(
+    283:             ingredients = listOf(RecipeIngredient("steel_bar", 3)),
+    287:         Recipe(
+    290:             ingredients = listOf(RecipeIngredient("steel_bar", 2)),
+    294:         Recipe(
+    297:             ingredients = listOf(RecipeIngredient("steel_bar", 3)),
+    301:         Recipe(
+    304:             ingredients = listOf(RecipeIngredient("steel_bar", 2)),
+    308:         Recipe(
+    311:             ingredients = listOf(RecipeIngredient("steel_bar", 2)),
+    315:         Recipe(
+    318:             ingredients = listOf(RecipeIngredient("steel_bar", 2)),
+    322:         Recipe(
+    325:             ingredients = listOf(RecipeIngredient("steel_bar", 3)),
+    329:         Recipe(
+    332:             ingredients = listOf(RecipeIngredient("steel_bar", 5)),
+    336:         Recipe(
+    339:             ingredients = listOf(RecipeIngredient("steel_bar", 3)),
+    343:         Recipe(
+    346:             ingredients = listOf(RecipeIngredient("mithril_bar", 1)),
+    350:         Recipe(
+    353:             ingredients = listOf(RecipeIngredient("mithril_bar", 1)),
+    357:         Recipe(
+    360:             ingredients = listOf(RecipeIngredient("mithril_bar", 1)),
+    364:         Recipe(
+    367:             ingredients = listOf(RecipeIngredient("mithril_bar", 2)),
+    371:         Recipe(
+    374:             ingredients = listOf(RecipeIngredient("mithril_bar", 2)),
+    378:         Recipe(
+    381:             ingredients = listOf(RecipeIngredient("mithril_bar", 2)),
+    385:         Recipe(
+    388:             ingredients = listOf(RecipeIngredient("mithril_bar", 3)),
+    392:         Recipe(
+    395:             ingredients = listOf(RecipeIngredient("mithril_bar", 2)),
+    399:         Recipe(
+    402:             ingredients = listOf(RecipeIngredient("mithril_bar", 3)),
+    406:         Recipe(
+    409:             ingredients = listOf(RecipeIngredient("mithril_bar", 2)),
+    413:         Recipe(
+    416:             ingredients = listOf(RecipeIngredient("mithril_bar", 2)),
+    420:         Recipe(
+    423:             ingredients = listOf(RecipeIngredient("mithril_bar", 2)),
+    427:         Recipe(
+    430:             ingredients = listOf(RecipeIngredient("mithril_bar", 3)),
+    434:         Recipe(
+    437:             ingredients = listOf(RecipeIngredient("mithril_bar", 5)),
+    441:         Recipe(
+    444:             ingredients = listOf(RecipeIngredient("mithril_bar", 3)),
+    448:         Recipe(
+    451:             ingredients = listOf(RecipeIngredient("adamantite_bar", 1)),
+    455:         Recipe(
+    458:             ingredients = listOf(RecipeIngredient("adamantite_bar", 1)),
+    462:         Recipe(
+    465:             ingredients = listOf(RecipeIngredient("adamantite_bar", 1)),
+    469:         Recipe(
+    472:             ingredients = listOf(RecipeIngredient("adamantite_bar", 2)),
+    476:         Recipe(
+    479:             ingredients = listOf(RecipeIngredient("adamantite_bar", 2)),
+    483:         Recipe(
+    486:             ingredients = listOf(RecipeIngredient("adamantite_bar", 2)),
+    490:         Recipe(
+    493:             ingredients = listOf(RecipeIngredient("adamantite_bar", 3)),
+    497:         Recipe(
+    500:             ingredients = listOf(RecipeIngredient("adamantite_bar", 2)),
+    504:         Recipe(
+    507:             ingredients = listOf(RecipeIngredient("adamantite_bar", 3)),
+    511:         Recipe(
+    514:             ingredients = listOf(RecipeIngredient("adamantite_bar", 2)),
+    518:         Recipe(
+    521:             ingredients = listOf(RecipeIngredient("adamantite_bar", 2)),
+    525:         Recipe(
+    528:             ingredients = listOf(RecipeIngredient("adamantite_bar", 2)),
+    532:         Recipe(
+    535:             ingredients = listOf(RecipeIngredient("adamantite_bar", 3)),
+    539:         Recipe(
+    542:             ingredients = listOf(RecipeIngredient("adamantite_bar", 5)),
+    546:         Recipe(
+    549:             ingredients = listOf(RecipeIngredient("adamantite_bar", 3)),
+    553:         Recipe(
+    556:             ingredients = listOf(RecipeIngredient("runite_bar", 1)),
+    560:         Recipe(
+    563:             ingredients = listOf(RecipeIngredient("runite_bar", 1)),
+    567:         Recipe(
+    570:             ingredients = listOf(RecipeIngredient("runite_bar", 1)),
+    574:         Recipe(
+    577:             ingredients = listOf(RecipeIngredient("runite_bar", 2)),
+    581:         Recipe(
+    584:             ingredients = listOf(RecipeIngredient("runite_bar", 2)),
+    588:         Recipe(
+    591:             ingredients = listOf(RecipeIngredient("runite_bar", 2)),
+    595:         Recipe(
+    598:             ingredients = listOf(RecipeIngredient("runite_bar", 3)),
+    602:         Recipe(
+    605:             ingredients = listOf(RecipeIngredient("runite_bar", 2)),
+    609:         Recipe(
+    612:             ingredients = listOf(RecipeIngredient("runite_bar", 3)),
+    616:         Recipe(
+    619:             ingredients = listOf(RecipeIngredient("runite_bar", 2)),
+    623:         Recipe(
+    626:             ingredients = listOf(RecipeIngredient("runite_bar", 2)),
+    630:         Recipe(
+    633:             ingredients = listOf(RecipeIngredient("runite_bar", 2)),
+    637:         Recipe(
+    640:             ingredients = listOf(RecipeIngredient("runite_bar", 3)),
+    644:         Recipe(
+    647:             ingredients = listOf(RecipeIngredient("runite_bar", 5)),
+    651:         Recipe(
+    654:             ingredients = listOf(RecipeIngredient("runite_bar", 3)),
+    658:         Recipe(
+    661:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 1)),
+    665:         Recipe(
+    668:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 1)),
+    672:         Recipe(
+    675:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 1)),
+    679:         Recipe(
+    682:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 2)),
+    686:         Recipe(
+    689:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 2)),
+    693:         Recipe(
+    696:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 2)),
+    700:         Recipe(
+    703:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 3)),
+    707:         Recipe(
+    710:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 2)),
+    714:         Recipe(
+    717:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 3)),
+    721:         Recipe(
+    724:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 2)),
+    728:         Recipe(
+    731:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 2)),
+    735:         Recipe(
+    738:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 2)),
+    742:         Recipe(
+    745:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 3)),
+    749:         Recipe(
+    752:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 5)),
+    756:         Recipe(
+    759:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 3)),
+    763:         Recipe(
+    766:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 1)),
+    770:         Recipe(
+    773:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 1)),
+    777:         Recipe(
+    780:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 1)),
+    784:         Recipe(
+    787:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 2)),
+    791:         Recipe(
+    794:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 2)),
+    798:         Recipe(
+    801:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 2)),
+    805:         Recipe(
+    808:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 3)),
+    812:         Recipe(
+    815:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 2)),
+    819:         Recipe(
+    822:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 3)),
+    826:         Recipe(
+    829:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 2)),
+    833:         Recipe(
+    836:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 2)),
+    840:         Recipe(
+    843:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 2)),
+    847:         Recipe(
+    850:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 3)),
+    854:         Recipe(
+    857:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 5)),
+    861:         Recipe(
+    864:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 3)),
+    868:         Recipe(
+    871:             ingredients = listOf(RecipeIngredient("adamantite_bar", 8)),
+    875:         Recipe(
+    878:             ingredients = listOf(RecipeIngredient("orichalcum_bar", 6)),
+    882:         Recipe(
+    885:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 5)),
+    889:         Recipe(
+    892:             ingredients = listOf(RecipeIngredient("celestial_alloy_bar", 8)),
+    896:         Recipe(
+    899:             ingredients = listOf(RecipeIngredient("copper_ore", 1)),
+    903:         Recipe(
+    906:             ingredients = listOf(RecipeIngredient("tin_ore", 1)),
+    910:         Recipe(
+    913:             ingredients = listOf(RecipeIngredient("copper_ore", 1), RecipeIngredient("tin_ore", 1)),
+    917:         Recipe(
+    920:             ingredients = listOf(RecipeIngredient("iron_ore", 1)),
+    924:         Recipe(
+    927:             ingredients = listOf(RecipeIngredient("silver_ore", 1)),
+    931:         Recipe(
+    934:             ingredients = listOf(RecipeIngredient("iron_ore", 1), RecipeIngredient("coal", 1)),
+    938:         Recipe(
+    941:             ingredients = listOf(RecipeIngredient("gold_ore", 1)),
+    945:         Recipe(
+    948:             ingredients = listOf(RecipeIngredient("mithril_ore", 1), RecipeIngredient("coal", 2)),
+    952:         Recipe(
+    955:             ingredients = listOf(RecipeIngredient("adamantite_ore", 1), RecipeIngredient("coal", 3)),
+    959:         Recipe(
+    962:             ingredients = listOf(RecipeIngredient("runite_ore", 1), RecipeIngredient("coal", 4)),
+    966:         Recipe(
+    969:             ingredients = listOf(RecipeIngredient("orichalcum_ore", 1), RecipeIngredient("coal", 5)),
+    973:         Recipe(
+    976:             ingredients = listOf(RecipeIngredient("celestial_silver", 1), RecipeIngredient("coal", 6)),
+    980:         Recipe(
+    983:             ingredients = listOf(RecipeIngredient("copper_bar", 1)),
+    987:         Recipe(
+    990:             ingredients = listOf(RecipeIngredient("raw_shrimp", 1)),
+    994:         Recipe(
+    997:             ingredients = listOf(RecipeIngredient("raw_anchovies", 1)),
+    1001:         Recipe(
+    1004:             ingredients = listOf(RecipeIngredient("raw_sardine", 1)),
+    1008:         Recipe(
+    1011:             ingredients = listOf(RecipeIngredient("raw_chicken", 1)),
+    1015:         Recipe(
+    1018:             ingredients = listOf(RecipeIngredient("raw_herring", 1)),
+    1022:         Recipe(
+    1025:             ingredients = listOf(RecipeIngredient("raw_beef", 1)),
+    1029:         Recipe(
+    1032:             ingredients = listOf(RecipeIngredient("raw_crayfish", 1)),
+    1036:         Recipe(
+    1039:             ingredients = listOf(RecipeIngredient("raw_trout", 1)),
+    1043:         Recipe(
+    1046:             ingredients = listOf(RecipeIngredient("raw_salmon", 1)),
+    1050:         Recipe(
+    1053:             ingredients = listOf(RecipeIngredient("raw_tuna", 1)),
+    1057:         Recipe(
+    1060:             ingredients = listOf(RecipeIngredient("raw_mackerel", 1)),
+    1064:         Recipe(
+    1067:             ingredients = listOf(RecipeIngredient("raw_swordfish", 1)),
+    1071:         Recipe(
+    1074:             ingredients = listOf(RecipeIngredient("raw_lobster", 1)),
+    1078:         Recipe(
+    1081:             ingredients = listOf(RecipeIngredient("raw_crab", 1)),
+    1085:         Recipe(
+    1088:             ingredients = listOf(RecipeIngredient("raw_shark", 1)),
+    1092:         Recipe(
+    1095:             ingredients = listOf(RecipeIngredient("raw_monkfish", 1)),
+    1099:         Recipe(
+    1102:             ingredients = listOf(RecipeIngredient("raw_manta_ray", 1)),
+    1106:         Recipe(
+    1109:             ingredients = listOf(RecipeIngredient("raw_eel", 1)),
+    1113:         Recipe(
+    1116:             ingredients = listOf(RecipeIngredient("raw_deep_sea_cod", 1)),
+    1120:         Recipe(
+    1123:             ingredients = listOf(RecipeIngredient("raw_anglerfish", 1)),
+    1127:         Recipe(
+    1130:             ingredients = listOf(RecipeIngredient("flour", 2), RecipeIngredient("vial_of_water", 1)),
+    1134:         Recipe(
+    1137:             ingredients = listOf(RecipeIngredient("bread_dough", 1)),
+    1141:         Recipe(
+    1144:             ingredients = listOf(RecipeIngredient("pie_shell", 1), RecipeIngredient("cooked_beef", 1)),
+    1148:         Recipe(
+    1151:             ingredients = listOf(RecipeIngredient("cake_mix", 1), RecipeIngredient("vial_of_water", 1)),
+    1155:         Recipe(
+    1158:             ingredients = listOf(RecipeIngredient("potato", 1), RecipeIngredient("cooked_beef", 1)),
+    1162:         Recipe(
+    1165:             ingredients = listOf(RecipeIngredient("cooked_shark", 1), RecipeIngredient("cooked_monkfish", 1), RecipeIngredient("cake", 1)),
+    1169:         Recipe(
+    1172:             ingredients = listOf(RecipeIngredient("leviathan_spawn", 1)),
+    1176:         Recipe(
+    1179:             ingredients = listOf(RecipeIngredient("cooked_anglerfish", 1), RecipeIngredient("gourmet_feast", 1), RecipeIngredient("celestial_herb", 1)),
+    1183:         Recipe(
+    1186:             ingredients = listOf(RecipeIngredient("logs", 1)),
+    1190:         Recipe(
+    1193:             ingredients = listOf(RecipeIngredient("shortbow_u", 1), RecipeIngredient("bowstring", 1)),
+    1197:         Recipe(
+    1200:             ingredients = listOf(RecipeIngredient("logs", 1)),
+    1204:         Recipe(
+    1207:             ingredients = listOf(RecipeIngredient("longbow_u", 1), RecipeIngredient("bowstring", 1)),
+    1211:         Recipe(
+    1214:             ingredients = listOf(RecipeIngredient("oak_logs", 1), RecipeIngredient("bowstring", 1)),
+    1218:         Recipe(
+    1221:             ingredients = listOf(RecipeIngredient("oak_logs", 1), RecipeIngredient("bowstring", 1)),
+    1225:         Recipe(
+    1228:             ingredients = listOf(RecipeIngredient("willow_logs", 1), RecipeIngredient("bowstring", 1)),
+    1232:         Recipe(
+    1235:             ingredients = listOf(RecipeIngredient("willow_logs", 1), RecipeIngredient("bowstring", 1)),
+    1239:         Recipe(
+    1242:             ingredients = listOf(RecipeIngredient("teak_logs", 1), RecipeIngredient("bowstring", 1)),
+    1246:         Recipe(
+    1249:             ingredients = listOf(RecipeIngredient("maple_logs", 1), RecipeIngredient("bowstring", 1)),
+    1253:         Recipe(
+    1256:             ingredients = listOf(RecipeIngredient("mahogany_logs", 1)),
+    1260:         Recipe(
+    1263:             ingredients = listOf(RecipeIngredient("crossbow_frame", 1), RecipeIngredient("bowstring", 1)),
+    1267:         Recipe(
+    1270:             ingredients = listOf(RecipeIngredient("yew_logs", 1), RecipeIngredient("bowstring", 1)),
+    1274:         Recipe(
+    1277:             ingredients = listOf(RecipeIngredient("yew_logs", 1), RecipeIngredient("bowstring", 1)),
+    1281:         Recipe(
+    1284:             ingredients = listOf(RecipeIngredient("ironwood_logs", 1), RecipeIngredient("bowstring", 1)),
+    1288:         Recipe(
+    1291:             ingredients = listOf(RecipeIngredient("magic_logs", 1), RecipeIngredient("bowstring", 1)),
+    1295:         Recipe(
+    1298:             ingredients = listOf(RecipeIngredient("magic_logs", 1), RecipeIngredient("bowstring", 1)),
+    1302:         Recipe(
+    1305:             ingredients = listOf(RecipeIngredient("elder_logs", 1), RecipeIngredient("bowstring", 1)),
+    1309:         Recipe(
+    1312:             ingredients = listOf(RecipeIngredient("spirit_logs", 1), RecipeIngredient("bowstring", 1)),
+    1316:         Recipe(
+    1319:             ingredients = listOf(RecipeIngredient("ancient_ironbark_logs", 1), RecipeIngredient("bowstring", 1)),
+    1323:         Recipe(
+    1326:             ingredients = listOf(RecipeIngredient("logs", 1)),
+    1330:         Recipe(
+    1333:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("bronze_arrowheads", 15)),
+    1337:         Recipe(
+    1340:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("iron_arrowheads", 15)),
+    1344:         Recipe(
+    1347:             ingredients = listOf(RecipeIngredient("iron_bar", 1)),
+    1351:         Recipe(
+    1354:             ingredients = listOf(RecipeIngredient("bolt_frame", 15), RecipeIngredient("feathers", 15)),
+    1358:         Recipe(
+    1361:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("steel_arrowheads", 15)),
+    1365:         Recipe(
+    1368:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("mithril_arrowheads", 15)),
+    1372:         Recipe(
+    1375:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("adamant_arrowheads", 15)),
+    1379:         Recipe(
+    1382:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("rune_arrowheads", 15)),
+    1386:         Recipe(
+    1389:             ingredients = listOf(RecipeIngredient("bolt_frame", 15), RecipeIngredient("feathers", 15)),
+    1393:         Recipe(
+    1396:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("rune_arrowheads", 15)),
+    1400:         Recipe(
+    1403:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("orichalcum_arrowheads", 15)),
+    1407:         Recipe(
+    1410:             ingredients = listOf(RecipeIngredient("bolt_frame", 15), RecipeIngredient("feathers", 15), RecipeIngredient("celestial_herb", 1)),
+    1414:         Recipe(
+    1417:             ingredients = listOf(RecipeIngredient("guam_leaf", 1), RecipeIngredient("vial_of_water", 1)),
+    1421:         Recipe(
+    1424:             ingredients = listOf(RecipeIngredient("marrentill", 1), RecipeIngredient("vial_of_water", 1)),
+    1428:         Recipe(
+    1431:             ingredients = listOf(RecipeIngredient("tarromin", 1), RecipeIngredient("vial_of_water", 1)),
+    1435:         Recipe(
+    1438:             ingredients = listOf(RecipeIngredient("harralander", 1), RecipeIngredient("vial_of_water", 1)),
+    1442:         Recipe(
+    1445:             ingredients = listOf(RecipeIngredient("harralander", 1), RecipeIngredient("vial_of_water", 1)),
+    1449:         Recipe(
+    1452:             ingredients = listOf(RecipeIngredient("harralander", 1), RecipeIngredient("vial_of_water", 1)),
+    1456:         Recipe(
+    1459:             ingredients = listOf(RecipeIngredient("harralander", 1), RecipeIngredient("vial_of_water", 1)),
+    1463:         Recipe(
+    1466:             ingredients = listOf(RecipeIngredient("ranarr_weed", 1), RecipeIngredient("vial_of_water", 1)),
+    1470:         Recipe(
+    1473:             ingredients = listOf(RecipeIngredient("irit_leaf", 1), RecipeIngredient("vial_of_water", 1)),
+    1477:         Recipe(
+    1480:             ingredients = listOf(RecipeIngredient("kwuarm", 1), RecipeIngredient("vial_of_water", 1)),
+    1484:         Recipe(
+    1487:             ingredients = listOf(RecipeIngredient("avantoe", 1), RecipeIngredient("vial_of_water", 1)),
+    1491:         Recipe(
+    1494:             ingredients = listOf(RecipeIngredient("avantoe", 1), RecipeIngredient("vial_of_water", 1)),
+    1498:         Recipe(
+    1501:             ingredients = listOf(RecipeIngredient("toadflax", 1), RecipeIngredient("vial_of_water", 1)),
+    1505:         Recipe(
+    1508:             ingredients = listOf(RecipeIngredient("snapdragon", 1), RecipeIngredient("vial_of_water", 1)),
+    1512:         Recipe(
+    1515:             ingredients = listOf(RecipeIngredient("toadflax", 1), RecipeIngredient("vial_of_water", 1)),
+    1519:         Recipe(
+    1522:             ingredients = listOf(RecipeIngredient("torstol", 1), RecipeIngredient("vial_of_water", 1)),
+    1526:         Recipe(
+    1529:             ingredients = listOf(RecipeIngredient("snapdragon", 1), RecipeIngredient("vial_of_water", 1)),
+    1533:         Recipe(
+    1536:             ingredients = listOf(RecipeIngredient("torstol", 1), RecipeIngredient("vial_of_water", 1)),
+    1540:         Recipe(
+    1543:             ingredients = listOf(RecipeIngredient("torstol", 1), RecipeIngredient("vial_of_water", 1)),
+    1547:         Recipe(
+    1550:             ingredients = listOf(RecipeIngredient("torstol", 1), RecipeIngredient("celestial_herb", 1), RecipeIngredient("vial_of_water", 1)),
+    1554:         Recipe(
+    1557:             ingredients = listOf(RecipeIngredient("celestial_herb", 1), RecipeIngredient("vial_of_water", 1)),
+    1561:         Recipe(
+    1564:             ingredients = listOf(RecipeIngredient("celestial_herb", 2), RecipeIngredient("vial_of_water", 1)),
+    1568:         Recipe(
+    1571:             ingredients = listOf(RecipeIngredient("cowhide", 1)),
+    1575:         Recipe(
+    1578:             ingredients = listOf(RecipeIngredient("leather", 1)),
+    1582:         Recipe(
+    1585:             ingredients = listOf(RecipeIngredient("leather", 1)),
+    1589:         Recipe(
+    1592:             ingredients = listOf(RecipeIngredient("leather", 1)),
+    1596:         Recipe(
+    1599:             ingredients = listOf(RecipeIngredient("leather", 1)),
+    1603:         Recipe(
+    1606:             ingredients = listOf(RecipeIngredient("leather", 3)),
+    1610:         Recipe(
+    1613:             ingredients = listOf(RecipeIngredient("leather", 2)),
+    1617:         Recipe(
+    1620:             ingredients = listOf(RecipeIngredient("leather_body", 1), RecipeIngredient("iron_bar", 1)),
+    1624:         Recipe(
+    1627:             ingredients = listOf(RecipeIngredient("leather_chaps", 1), RecipeIngredient("iron_bar", 1)),
+    1631:         Recipe(
+    1634:             ingredients = listOf(RecipeIngredient("leather", 4)),
+    1638:         Recipe(
+    1641:             ingredients = listOf(RecipeIngredient("snake_hide", 3)),
+    1645:         Recipe(
+    1648:             ingredients = listOf(RecipeIngredient("green_dragonhide", 1)),
+    1652:         Recipe(
+    1655:             ingredients = listOf(RecipeIngredient("blue_dragonhide", 3)),
+    1659:         Recipe(
+    1662:             ingredients = listOf(RecipeIngredient("blue_dragonhide", 2)),
+    1666:         Recipe(
+    1669:             ingredients = listOf(RecipeIngredient("uncut_opal", 1)),
+    1673:         Recipe(
+    1676:             ingredients = listOf(RecipeIngredient("uncut_jade", 1)),
+    1680:         Recipe(
+    1683:             ingredients = listOf(RecipeIngredient("uncut_red_topaz", 1)),
+    1687:         Recipe(
+    1690:             ingredients = listOf(RecipeIngredient("uncut_sapphire", 1)),
+    1694:         Recipe(
+    1697:             ingredients = listOf(RecipeIngredient("uncut_emerald", 1)),
+    1701:         Recipe(
+    1704:             ingredients = listOf(RecipeIngredient("uncut_ruby", 1)),
+    1708:         Recipe(
+    1711:             ingredients = listOf(RecipeIngredient("uncut_diamond", 1)),
+    1715:         Recipe(
+    1718:             ingredients = listOf(RecipeIngredient("uncut_dragonstone", 1)),
+    1722:         Recipe(
+    1725:             ingredients = listOf(RecipeIngredient("uncut_onyx", 1)),
+    1729:         Recipe(
+    1732:             ingredients = listOf(RecipeIngredient("uncut_zenyte", 1)),
+    1736:         Recipe(
+    1739:             ingredients = listOf(RecipeIngredient("uncut_celestial_crystal", 1)),
+    1743:         Recipe(
+    1746:             ingredients = listOf(RecipeIngredient("gold_bar", 1)),
+    1750:         Recipe(
+    1753:             ingredients = listOf(RecipeIngredient("gold_bar", 1)),
+    1757:         Recipe(
+    1760:             ingredients = listOf(RecipeIngredient("gold_ring", 1), RecipeIngredient("sapphire", 1)),
+    1764:         Recipe(
+    1767:             ingredients = listOf(RecipeIngredient("gold_bar", 1)),
+    1771:         Recipe(
+    1774:             ingredients = listOf(RecipeIngredient("amulet_u", 1), RecipeIngredient("emerald", 1), RecipeIngredient("bowstring", 1)),
+    1778:         Recipe(
+    1781:             ingredients = listOf(RecipeIngredient("flax", 1)),
+    1785:         Recipe(
+    1788:             ingredients = listOf(RecipeIngredient("gold_ring", 1), RecipeIngredient("ruby", 1)),
+    1792:         Recipe(
+    1795:             ingredients = listOf(RecipeIngredient("gold_necklace", 1), RecipeIngredient("diamond", 1)),
+    1799:         Recipe(
+    1802:             ingredients = listOf(RecipeIngredient("sandstone", 1)),
+    1806:         Recipe(
+    1809:             ingredients = listOf(RecipeIngredient("volcanic_rock", 1), RecipeIngredient("celestial_silver", 1)),
+    1813:         Recipe(
+    1816:             ingredients = listOf(RecipeIngredient("amulet_u", 1), RecipeIngredient("dragonstone", 1), RecipeIngredient("bowstring", 1)),
+    1820:         Recipe(
+    1823:             ingredients = listOf(RecipeIngredient("bamboo", 1)),
+    1827:         Recipe(
+    1830:             ingredients = listOf(RecipeIngredient("gold_ring", 1), RecipeIngredient("onyx", 1)),
+    1834:         Recipe(
+    1837:             ingredients = listOf(RecipeIngredient("amulet_u", 1), RecipeIngredient("zenyte", 1), RecipeIngredient("bowstring", 1)),
+    1841:         Recipe(
+    1844:             ingredients = listOf(RecipeIngredient("gold_bar", 1), RecipeIngredient("dragonstone", 1)),
+    1848:         Recipe(
+    1851:             ingredients = listOf(RecipeIngredient("amulet_u", 1), RecipeIngredient("celestial_crystal", 1), RecipeIngredient("bowstring", 1)),
+    1857:     fun forOutput(itemId: String): Recipe? = recipes.find { it.outputItemId == itemId }
+    1868:     fun successChancePercent(playerSkillLevel: Int, recipe: Recipe): Double {
+    1874:     fun rollSuccess(playerSkillLevel: Int, recipe: Recipe): Boolean {
+    1882: // Decoupled from ActionCatalog on purpose -- Recipe.levelRequired is
+    2064:         for (ingredient in recipe.ingredients) {
+    2065:             if (inventory.quantityOf(ingredient.itemId) < ingredient.quantity) {
+    2066:                 return ServiceResult.Failure("Missing materials: " + ingredient.itemId)
+    2070:         for (ingredient in recipe.ingredients) {
+    2071:             inventory.removeItem(ingredient.itemId, ingredient.quantity)
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt]
+    95:     "CRAFTING" to "Select Recipe",
+    102:     ingredients: List<RecipeIngredient>,
+    105:     return ingredients.mapNotNull { ingredient ->
+    106:         val have = inventoryQuantities[ingredient.itemId] ?: 0
+    107:         if (have < ingredient.quantity) {
+    109:                 displayName = ItemCatalog.find(ingredient.itemId)?.name ?: ingredient.itemId,
+    110:                 required = ingredient.quantity,
+    151:                     missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+    181: private fun recipeToSmithingSummary(recipe: Recipe): SmithingRecipeSummary {
+    183:     val ingredients = recipe.ingredients.map { ing ->
+    187:     return SmithingRecipeSummary(recipe.outputItemId, displayName, recipe.levelRequired, ingredients)
+    211:                 missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+    215:             .filter { it.skillRequired == "SMITHING" && it.ingredients.any { ing -> ing.itemId == barItemId } }
+    218:                     missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+  [./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt]
+    67:         "Thieving & Crafting" to listOf("THIEVING", "CRAFTING")
+  [./app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt]
+    57:     val ingredients: List<SmithingIngredientSummary>,
+    314:     val ingredientsOk = recipe.missingIngredients.isEmpty()
+    315:     val eligible = levelOk && ingredientsOk
+    328:                 if (!ingredientsOk) showMissingDialog = true else onClick()
+    339:         if (showIngredients && recipe.ingredients.isNotEmpty()) {
+    342:                 text = recipe.ingredients.joinToString(", ") { it.quantity.toString() + "x " + it.displayName },
 
---------------------------------------------------------------------------------
+--- DROP TABLE / LOOT ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt]
+    44: data class LootEntry(val itemId: String, val minQty: Int, val maxQty: Int, val dropChancePercent: Double)
+    52:     val mainLootTable: List<LootEntry>,
+    53:     val rareLootTable: List<LootEntry>
+    77:                         LootEntry("bone", 1, 1, 60.0),
+    78:                         LootEntry("goblin_ear", 1, 2, 40.0)
+    81:                         LootEntry("rusty_dagger", 1, 1, 2.0)
+    98:                         LootEntry("ectoplasm", 1, 3, 55.0)
+    101:                         LootEntry("wraith_essence", 1, 1, 0.5)
+    144:     val lootPool: MutableList<LootEntry> = mutableListOf()
+    285:     fun collectLoot(characterId: String): ServiceResult<List<LootEntry>> {
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt]
+    637:                 val loot = combatService.collectLoot(characterId)
+    638:                 if (loot is ServiceResult.Success && loot.value.isNotEmpty()) {
+    639:                     loot.value.forEach { entry -> inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty) }
 
-================================================================================
-GameViewModel.kt - placeSellOrder
-================================================================================
- 1303:         }
- 1304:     }
- 1305: 
- 1306:     fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
- 1307:         val characterId = _currentCharacterId.value ?: return
- 1308:         val realInventory = inventoryService.inventoryFor(characterId)
- 1309:         if (realInventory.quantityOf(itemId) < quantity) return
- 1310: 
- 1311:         realInventory.removeItem(itemId, quantity)
- 1312:         refreshInventory()
- 1313: 
- 1314:         viewModelScope.launch {
- 1315:             val result = SupabaseMarketRepository.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
- 1316:             result.onFailure {
- 1317:                 realInventory.addItem(itemId, quantity)
- 1318:                 refreshInventory()
- 1319:             }
- 1320:             result.onSuccess {
- 1321:                 refreshCurrency()
- 1322:                 refreshMarketListings()
- 1323:                 refreshMyOrders()
- 1324:             }
- 1325:         }
- 1326:     }
- 1327: 
- 1328:     fun cancelMarketOrder(orderId: String) {
- 1329:         val characterId = _currentCharacterId.value ?: return
- 1330:         viewModelScope.launch {
- 1331:             val result = SupabaseMarketRepository.cancelOrder(orderId)
- 1332:             result.onSuccess { cancelled ->
- 1333:                 if (cancelled.side == "SELL" && cancelled.remainingQuantityBeforeCancel > 0) {
- 1334:                     inventoryService.inventoryFor(characterId).addItem(cancelled.itemId, cancelled.remainingQuantityBeforeCancel)
- 1335:                     refreshInventory()
- 1336:                 }
- 1337:                 refreshCurrency()
- 1338:                 refreshMarketListings()
- 1339:                 refreshMyOrders()
- 1340:             }
- 1341:         }
- 1342:     }
- 1343: 
- 1344:     fun sellItemToVendor(itemId: String, quantity: Int) {
- 1345:         val characterId = _currentCharacterId.value ?: return
- 1346:         val realInventory = inventoryService.inventoryFor(characterId)
- 1347:         if (realInventory.quantityOf(itemId) < quantity) return
- 1348:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
- 1349: 
- 1350:         realInventory.removeItem(itemId, quantity)
- 1351:         refreshInventory()
- 1352: 
- 1353:         viewModelScope.launch {
- 1354:             val result = SupabaseMarketRepository.sellToVendor(characterId, itemId, quantity, payoutPerUnit)
- 1355:             result.onFailure {
+--- GATHERING ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/EventsLiveOpsSystem.kt]
+    270:     println("=== Skill event: marking players active in Mining ===")
+  [./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt]
+    63:         "Mining & Smithing" to listOf("MINING", "SMITHING"),
+    64:         "Fishing & Cooking" to listOf("FISHING", "COOKING"),
+    65:         "Woodcutting & Fletching" to listOf("WOODCUTTING", "FLETCHING"),
 
---------------------------------------------------------------------------------
+--- VENDOR / SHOP ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt]
+    21: // Three separate screens (Browse, My Orders, Sell to Vendor),
+    68:     // Sell to Vendor
+    92:                 label = "Vendor",
+    240: // ---------------- Sell to Vendor ----------------
 
-================================================================================
-SupabaseMarketRepository.kt - placeSellOrder
-================================================================================
-   53:         }).decodeAs<MarketOrderRpcResult>()
-   54:     }
-   55: 
-   56:     suspend fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-   57:         client.postgrest.rpc("market_place_sell_order", buildJsonObject {
-   58:             put("p_character_id", characterId)
-   59:             put("p_item_id", itemId)
-   60:             put("p_quantity", quantity)
-   61:             put("p_price_per_unit", pricePerUnit)
-   62:         }).decodeAs<MarketOrderRpcResult>()
-   63:     }
-   64: 
-   65:     suspend fun cancelOrder(orderId: String): Result<MarketCancelRpcResult> = runCatching {
-   66:         client.postgrest.rpc("market_cancel_order", buildJsonObject {
-   67:             put("p_order_id", orderId)
-   68:         }).decodeAs<MarketCancelRpcResult>()
-   69:     }
-   70: 
-   71:     suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching {
-   72:         client.postgrest.rpc("market_sell_to_vendor", buildJsonObject {
-   73:             put("p_character_id", characterId)
-   74:             put("p_item_id", itemId)
-   75:             put("p_quantity", quantity)
-   76:             put("p_payout_per_unit", payoutPerUnit)
-   77:         }).decodeAs<Long>()
-   78:     }
-   79: 
-   80:     suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
-   81:         client.postgrest.rpc("market_currency_balance", buildJsonObject {
-   82:             put("p_character_id", characterId)
-   83:         }).decodeAs<Long>()
-   84:     }
-   85: 
-   86:     suspend fun listings(): Result<List<MarketListingRow>> = runCatching {
-   87:         client.postgrest.rpc("market_listings").decodeList<MarketListingRow>()
-   88:     }
-   89: 
-   90:     suspend fun myOrders(characterId: String): Result<List<MarketOrderRow>> = runCatching {
-   91:         client.postgrest.rpc("market_my_orders", buildJsonObject {
-   92:             put("p_character_id", characterId)
-   93:         }).decodeList<MarketOrderRow>()
-   94:     }
-   95: }
+--- STARTING INVENTORY ---
 
---------------------------------------------------------------------------------
-
-================================================================================
-FULL FILE: SupabaseMarketRepository.kt (3261 chars)
-================================================================================
-package com.yourname.idlerpg
-
-import io.github.jan.supabase.postgrest.postgrest
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-
-@Serializable
-data class MarketOrderRpcResult(
-    val id: String,
-    val originalQuantity: Int,
-    val remainingQuantity: Int,
-    val status: String
-)
-
-@Serializable
-data class MarketCancelRpcResult(
-    val id: String,
-    val side: String,
-    val itemId: String,
-    val remainingQuantityBeforeCancel: Int
-)
-
-@Serializable
-data class MarketListingRow(
-    val itemId: String,
-    val bestBuyPrice: Long? = null,
-    val bestSellPrice: Long? = null
-)
-
-@Serializable
-data class MarketOrderRow(
-    val id: String,
-    val characterId: String,
-    val itemId: String,
-    val side: String,
-    val pricePerUnit: Long,
-    val originalQuantity: Int,
-    val remainingQuantity: Int,
-    val status: String,
-    val createdAt: String
-)
-
-object SupabaseMarketRepository {
-    private val client get() = SupabaseClientProvider.client
-
-    suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-        client.postgrest.rpc("market_place_buy_order", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_item_id", itemId)
-            put("p_quantity", quantity)
-            put("p_price_per_unit", pricePerUnit)
-        }).decodeAs<MarketOrderRpcResult>()
-    }
-
-    suspend fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-        client.postgrest.rpc("market_place_sell_order", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_item_id", itemId)
-            put("p_quantity", quantity)
-            put("p_price_per_unit", pricePerUnit)
-        }).decodeAs<MarketOrderRpcResult>()
-    }
-
-    suspend fun cancelOrder(orderId: String): Result<MarketCancelRpcResult> = runCatching {
-        client.postgrest.rpc("market_cancel_order", buildJsonObject {
-            put("p_order_id", orderId)
-        }).decodeAs<MarketCancelRpcResult>()
-    }
-
-    suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching {
-        client.postgrest.rpc("market_sell_to_vendor", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_item_id", itemId)
-            put("p_quantity", quantity)
-            put("p_payout_per_unit", payoutPerUnit)
-        }).decodeAs<Long>()
-    }
-
-    suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
-        client.postgrest.rpc("market_currency_balance", buildJsonObject {
-            put("p_character_id", characterId)
-        }).decodeAs<Long>()
-    }
-
-    suspend fun listings(): Result<List<MarketListingRow>> = runCatching {
-        client.postgrest.rpc("market_listings").decodeList<MarketListingRow>()
-    }
-
-    suspend fun myOrders(characterId: String): Result<List<MarketOrderRow>> = runCatching {
-        client.postgrest.rpc("market_my_orders", buildJsonObject {
-            put("p_character_id", characterId)
-        }).decodeList<MarketOrderRow>()
-    }
-}
-
+--- ITEM CATALOG ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt]
+    110: //  now uses the shared ItemCatalog instead of a separate MarketItem list.)
+    145:         if (ItemCatalog.find(itemId) == null) return ServiceResult.Failure("Unknown item.")
+    173:         if (ItemCatalog.find(itemId) == null) return ServiceResult.Failure("Unknown item.")
+    283:         val baseValue = ItemCatalog.baseValueFor(itemId)
+    290:         val item = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt]
+    482:         val def = ItemCatalog.items.find { it.id == itemId } ?: return null
+    704:         val definition = ItemCatalog.find(itemId) ?: return
+    1372:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
+  [./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt]
+    6: // doc into this project's ItemDefinition/ItemCatalog format.
+    7: // Merged into ItemCatalog in SharedTypes.kt.
+    13: object GeneratedItemCatalog {
+    14:     val definitions: List<ItemDefinition> = listOf(
+    15:     ItemDefinition(
+    22:     ItemDefinition(
+    29:     ItemDefinition(
+    36:     ItemDefinition(
+    43:     ItemDefinition(
+    50:     ItemDefinition(
+    57:     ItemDefinition(
+    64:     ItemDefinition(
+    71:     ItemDefinition(
+    78:     ItemDefinition(
+    85:     ItemDefinition(
+    92:     ItemDefinition(
+    99:     ItemDefinition(
+    106:     ItemDefinition(
+    113:     ItemDefinition(
+    120:     ItemDefinition(
+    127:     ItemDefinition(
+    134:     ItemDefinition(
+    141:     ItemDefinition(
+    148:     ItemDefinition(
+    155:     ItemDefinition(
+    162:     ItemDefinition(
+    169:     ItemDefinition(
+    176:     ItemDefinition(
+    183:     ItemDefinition(
+    190:     ItemDefinition(
+    197:     ItemDefinition(
+    204:     ItemDefinition(
+    211:     ItemDefinition(
+    218:     ItemDefinition(
+    225:     ItemDefinition(
+    232:     ItemDefinition(
+    239:     ItemDefinition(
+    246:     ItemDefinition(
+    253:     ItemDefinition(
+    260:     ItemDefinition(
+    267:     ItemDefinition(
+    274:     ItemDefinition(
+    281:     ItemDefinition(
+    288:     ItemDefinition(
+    295:     ItemDefinition(
+    302:     ItemDefinition(
+    309:     ItemDefinition(
+    316:     ItemDefinition(
+    323:     ItemDefinition(
+    330:     ItemDefinition(
+    337:     ItemDefinition(
+    344:     ItemDefinition(
+    351:     ItemDefinition(
+    358:     ItemDefinition(
+    365:     ItemDefinition(
+    372:     ItemDefinition(
+    379:     ItemDefinition(
+    386:     ItemDefinition(
+    393:     ItemDefinition(
+    400:     ItemDefinition(
+    407:     ItemDefinition(
+    414:     ItemDefinition(
+    421:     ItemDefinition(
+    428:     ItemDefinition(
+    435:     ItemDefinition(
+    442:     ItemDefinition(
+    449:     ItemDefinition(
+    456:     ItemDefinition(
+    463:     ItemDefinition(
+    470:     ItemDefinition(
+    477:     ItemDefinition(
+    484:     ItemDefinition(
+    491:     ItemDefinition(
+    498:     ItemDefinition(
+    505:     ItemDefinition(
+    512:     ItemDefinition(
+    519:     ItemDefinition(
+    526:     ItemDefinition(
+    533:     ItemDefinition(
+    540:     ItemDefinition(
+    547:     ItemDefinition(
+    554:     ItemDefinition(
+    561:     ItemDefinition(
+    568:     ItemDefinition(
+    575:     ItemDefinition(
+    582:     ItemDefinition(
+    589:     ItemDefinition(
+    596:     ItemDefinition(
+    603:     ItemDefinition(
+    610:     ItemDefinition(
+    617:     ItemDefinition(
+    624:     ItemDefinition(
+    631:     ItemDefinition(
+    638:     ItemDefinition(
+    645:     ItemDefinition(
+    652:     ItemDefinition(
+    659:     ItemDefinition(
+    666:     ItemDefinition(
+    673:     ItemDefinition(
+    680:     ItemDefinition(
+    687:     ItemDefinition(
+    694:     ItemDefinition(
+    701:     ItemDefinition(
+    708:     ItemDefinition(
+    715:     ItemDefinition(
+    722:     ItemDefinition(
+    729:     ItemDefinition(
+    736:     ItemDefinition(
+    743:     ItemDefinition(
+    750:     ItemDefinition(
+    757:     ItemDefinition(
+    764:     ItemDefinition(
+    771:     ItemDefinition(
+    778:     ItemDefinition(
+    785:     ItemDefinition(
+    792:     ItemDefinition(
+    799:     ItemDefinition(
+    806:     ItemDefinition(
+    813:     ItemDefinition(
+    820:     ItemDefinition(
+    827:     ItemDefinition(
+    834:     ItemDefinition(
+    841:     ItemDefinition(
+    848:     ItemDefinition(
+    855:     ItemDefinition(
+    862:     ItemDefinition(
+    869:     ItemDefinition(
+    876:     ItemDefinition(
+    883:     ItemDefinition(
+    890:     ItemDefinition(
+    897:     ItemDefinition(
+    904:     ItemDefinition(
+    911:     ItemDefinition(
+    918:     ItemDefinition(
+    925:     ItemDefinition(
+    936:     ItemDefinition(
+    943:     ItemDefinition(
+    954:     ItemDefinition(
+    966:     ItemDefinition(
+    978:     ItemDefinition(
+    989:     ItemDefinition(
+    1000:     ItemDefinition(
+    1011:     ItemDefinition(
+    1022:     ItemDefinition(
+    1033:     ItemDefinition(
+    1045:     ItemDefinition(
+    1057:     ItemDefinition(
+    1064:     ItemDefinition(
+    1076:     ItemDefinition(
+    1085:     ItemDefinition(
+    1097:     ItemDefinition(
+    1109:     ItemDefinition(
+    1120:     ItemDefinition(
+    1132:     ItemDefinition(
+    1144:     ItemDefinition(
+    1151:     ItemDefinition(
+    1158:     ItemDefinition(
+    1165:     ItemDefinition(
+    1172:     ItemDefinition(
+    1179:     ItemDefinition(
+    1186:     ItemDefinition(
+    1195:     ItemDefinition(
+    1204:     ItemDefinition(
+    1213:         ItemDefinition(
+    1222:     ItemDefinition(
+    1231:     ItemDefinition(
+    1240:     ItemDefinition(
+    1249:     ItemDefinition(
+    1258:     ItemDefinition(
+    1267:     ItemDefinition(
+    1276:     ItemDefinition(
+    1285:     ItemDefinition(
+    1294:     ItemDefinition(
+    1303:     ItemDefinition(
+    1312:     ItemDefinition(
+    1321:     ItemDefinition(
+    1330:     ItemDefinition(
+    1339:     ItemDefinition(
+    1348:     ItemDefinition(
+    1357:     ItemDefinition(
+    1366:     ItemDefinition(
+    1375:     ItemDefinition(
+    1384:     ItemDefinition(
+    1393:     ItemDefinition(
+    1402:     ItemDefinition(
+    1411:     ItemDefinition(
+    1420:     ItemDefinition(
+    1429:     ItemDefinition(
+    1436:     ItemDefinition(
+    1443:     ItemDefinition(
+    1450:     ItemDefinition(
+    1457:     ItemDefinition(
+    1464:     ItemDefinition(
+    1471:     ItemDefinition(
+    1482:     ItemDefinition(
+    1489:     ItemDefinition(
+    1500:     ItemDefinition(
+    1512:     ItemDefinition(
+    1524:     ItemDefinition(
+    1536:     ItemDefinition(
+    1548:     ItemDefinition(
+    1560:     ItemDefinition(
+    1572:     ItemDefinition(
+    1584:     ItemDefinition(
+    1596:     ItemDefinition(
+    1608:     ItemDefinition(
+    1620:     ItemDefinition(
+    1632:     ItemDefinition(
+    1644:     ItemDefinition(
+    1656:     ItemDefinition(
+    1668:     ItemDefinition(
+    1680:     ItemDefinition(
+    1689:     ItemDefinition(
+    1699:     ItemDefinition(
+    1709:     ItemDefinition(
+    1719:     ItemDefinition(
+    1729:     ItemDefinition(
+    1739:     ItemDefinition(
+    1749:     ItemDefinition(
+    1759:     ItemDefinition(
+    1769:     ItemDefinition(
+    1779:     ItemDefinition(
+    1789:     ItemDefinition(
+    1796:     ItemDefinition(
+    1805:     ItemDefinition(
+    1814:     ItemDefinition(
+    1823:     ItemDefinition(
+    1832:     ItemDefinition(
+    1841:     ItemDefinition(
+    1850:     ItemDefinition(
+    1859:     ItemDefinition(
+    1868:     ItemDefinition(
+    1877:     ItemDefinition(
+    1886:     ItemDefinition(
+    1895:     ItemDefinition(
+    1904:     ItemDefinition(
+    1913:     ItemDefinition(
+    1922:     ItemDefinition(
+    1931:     ItemDefinition(
+    1940:     ItemDefinition(
+    1949:     ItemDefinition(
+    1958:     ItemDefinition(
+    1967:     ItemDefinition(
+    1976:     ItemDefinition(
+    1985:     ItemDefinition(
+    1994:     ItemDefinition(
+    2001:     ItemDefinition(
+    2008:     ItemDefinition(
+    2015:     ItemDefinition(
+    2022:     ItemDefinition(
+    2029:     ItemDefinition(
+    2038:     ItemDefinition(
+    2047:     ItemDefinition(
+    2056:     ItemDefinition(
+    2065:     ItemDefinition(
+    2074:     ItemDefinition(
+    2083:     ItemDefinition(
+    2094:     ItemDefinition(
+    2105:     ItemDefinition(
+    2114:     ItemDefinition(
+    2125:     ItemDefinition(
+    2136:     ItemDefinition(
+    2147:     ItemDefinition(
+    2158:     ItemDefinition(
+    2165:     ItemDefinition(
+    2172:     ItemDefinition(
+    2179:     ItemDefinition(
+    2186:     ItemDefinition(
+    2193:     ItemDefinition(
+    2200:     ItemDefinition(
+    2207:     ItemDefinition(
+    2214:     ItemDefinition(
+    2221:     ItemDefinition(
+    2228:     ItemDefinition(
+    2235:     ItemDefinition(
+    2242:     ItemDefinition(
+    2249:     ItemDefinition(
+    2256:     ItemDefinition(
+    2263:     ItemDefinition(
+    2270:     ItemDefinition(
+    2277:     ItemDefinition(
+    2284:     ItemDefinition(
+    2291:     ItemDefinition(
+    2298:     ItemDefinition(
+    2305:     ItemDefinition(
+    2312:     ItemDefinition(
+    2320:     ItemDefinition(
+    2328:     ItemDefinition(
+    2336:     ItemDefinition(
+    2343:     ItemDefinition(
+    2351:     ItemDefinition(
+    2358:     ItemDefinition(
+    2366:     ItemDefinition(
+    2374:     ItemDefinition(
+    2381:     ItemDefinition(
+    2393:     ItemDefinition(
+    2401:     ItemDefinition(
+    2408:     ItemDefinition(
+    2416:     ItemDefinition(
+    2424:     ItemDefinition(
+    2432:     ItemDefinition(
+    2440:     ItemDefinition(
+    2447:     ItemDefinition(
+    2454:     ItemDefinition(
+    2461:     ItemDefinition(
+    2468:     ItemDefinition(
+    2475:     ItemDefinition(
+    2482:     ItemDefinition(
+    2489:     ItemDefinition(
+    2496:     ItemDefinition(
+    2503:     ItemDefinition(
+    2510:     ItemDefinition(
+    2517:     ItemDefinition(
+    2524:     ItemDefinition(
+    2531:     ItemDefinition(
+    2538:     ItemDefinition(
+    2545:     ItemDefinition(
+    2552:     ItemDefinition(
+    2559:     ItemDefinition(
+    2566:     ItemDefinition(
+    2573:     ItemDefinition(
+    2580:     ItemDefinition(
+    2587:     ItemDefinition(
+    2594:     ItemDefinition(
+    2601:     ItemDefinition(
+    2608:     ItemDefinition(
+    2615:     ItemDefinition(
+    2622:     ItemDefinition(
+  [./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt]
+    1924:         val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+    1962:         val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+    2017:             val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+    2026:             val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+    2034:     fun consumeSelectedFood(): ItemDefinition? {
+    2036:         val definition = ItemCatalog.find(foodId) ?: return null
+    2042:     fun consumeSelectedPotion(): ItemDefinition? {
+    2044:         val definition = ItemCatalog.find(potionId) ?: return null
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt]
+    109:                 displayName = ItemCatalog.find(ingredient.itemId)?.name ?: ingredient.itemId,
+    149:                     displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
+    182:     val displayName = ItemCatalog.find(recipe.outputItemId)?.name ?: recipe.outputItemId
+    184:         val ingName = ItemCatalog.find(ing.itemId)?.name ?: ing.itemId
+    253:         val definition = ItemCatalog.find(entry.itemId)
+    276:             // Not yet defined in ItemCatalog (e.g. some gathered materials) -- graceful fallback.
+    436:                 ItemCatalog.find(itemId)?.let { def -> EquippedItemInfo(itemId, def.name) }
+    443:             val definition = ItemCatalog.find(entry.itemId)
+    451:             val definition = ItemCatalog.find(entry.itemId)
+    769:                                             displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+    782:                                             displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+    793:                                             displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
+    806:                                             displayName = ItemCatalog.find(itemId)?.name ?: itemId,
+  [./app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt]
+    7: // Merge these into ItemCatalog alongside GeneratedItemCatalog.definitions --
+    12:     val definitions: List<ItemDefinition> = listOf(
+    13:         ItemDefinition(
+    20:         ItemDefinition(
+    30:         ItemDefinition(
+    39:         ItemDefinition(
+    48:         ItemDefinition(
+    57:         ItemDefinition(
+    66:         ItemDefinition(
+    76:         ItemDefinition(
+    86:         ItemDefinition(
+    96:         ItemDefinition(
+    105:         ItemDefinition(
+    115:         ItemDefinition(
+    125:         ItemDefinition(
+    135:         ItemDefinition(
+    145:         ItemDefinition(
+    152:         ItemDefinition(
+    162:         ItemDefinition(
+    172:         ItemDefinition(
+    181:         ItemDefinition(
+    190:         ItemDefinition(
+    200:         ItemDefinition(
+    210:         ItemDefinition(
+    220:         ItemDefinition(
+    229:         ItemDefinition(
+    239:         ItemDefinition(
+    249:         ItemDefinition(
+    259:         ItemDefinition(
+    269:         ItemDefinition(
+    276:         ItemDefinition(
+    286:         ItemDefinition(
+    296:         ItemDefinition(
+    305:         ItemDefinition(
+    314:         ItemDefinition(
+    324:         ItemDefinition(
+    334:         ItemDefinition(
+    344:         ItemDefinition(
+    354:         ItemDefinition(
+    364:         ItemDefinition(
+    374:         ItemDefinition(
+    384:         ItemDefinition(
+    394:         ItemDefinition(
+    404:         ItemDefinition(
+    413:         ItemDefinition(
+    422:         ItemDefinition(
+    431:         ItemDefinition(
+    440:         ItemDefinition(
+    450:         ItemDefinition(
+    459:         ItemDefinition(
+    469:         ItemDefinition(
+    479:         ItemDefinition(
+    489:         ItemDefinition(
+    499:         ItemDefinition(
+    506:         ItemDefinition(
+    516:         ItemDefinition(
+    525:         ItemDefinition(
+    534:         ItemDefinition(
+    543:         ItemDefinition(
+    552:         ItemDefinition(
+    562:         ItemDefinition(
+    572:         ItemDefinition(
+    582:         ItemDefinition(
+    591:         ItemDefinition(
+    601:         ItemDefinition(
+    611:         ItemDefinition(
+    621:         ItemDefinition(
+    631:         ItemDefinition(
+    638:         ItemDefinition(
+    648:         ItemDefinition(
+    658:         ItemDefinition(
+    667:         ItemDefinition(
+    676:         ItemDefinition(
+    685:         ItemDefinition(
+    694:         ItemDefinition(
+    704:         ItemDefinition(
+    714:         ItemDefinition(
+    723:         ItemDefinition(
+    733:         ItemDefinition(
+    743:         ItemDefinition(
+    753:         ItemDefinition(
+    760:         ItemDefinition(
+    770:         ItemDefinition(
+    780:         ItemDefinition(
+    789:         ItemDefinition(
+    798:         ItemDefinition(
+    807:         ItemDefinition(
+    816:         ItemDefinition(
+    826:         ItemDefinition(
+    836:         ItemDefinition(
+    846:         ItemDefinition(
+    855:         ItemDefinition(
+    865:         ItemDefinition(
+    875:         ItemDefinition(
+    885:         ItemDefinition(
+    895:         ItemDefinition(
+    902:         ItemDefinition(
+    912:         ItemDefinition(
+    922:         ItemDefinition(
+    931:         ItemDefinition(
+    940:         ItemDefinition(
+    949:         ItemDefinition(
+    958:         ItemDefinition(
+    968:         ItemDefinition(
+    978:         ItemDefinition(
+    988:         ItemDefinition(
+    997:         ItemDefinition(
+  [./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt]
+    18:     fun validate(item: ItemDefinition): ServiceResult<ItemDefinition> {
+    35:     private val cosmetics: MutableMap<String, ItemDefinition> = mutableMapOf()
+    42:     ): ServiceResult<ItemDefinition> {
+    43:         val item = ItemDefinition(
+    59:     fun find(id: String): ItemDefinition? = cosmetics[id]
+    60:     fun all(): List<ItemDefinition> = cosmetics.values.toList()
+    68:     val tokenItem = ItemDefinition(
+  [./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt]
+    39: data class ItemDefinition(
+    57: object ItemCatalog {
+    59:         ItemDefinition(
+    66:         ItemDefinition(
+    73:         ItemDefinition(
+    79:         ItemDefinition(
+    84:         ItemDefinition(
+    90:    ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
+    92:     fun find(itemId: String): ItemDefinition? = items.find { it.id == itemId }
+    93:     fun findByNameAndRarity(name: String, rarity: Rarity): ItemDefinition? =
+    96:     fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
