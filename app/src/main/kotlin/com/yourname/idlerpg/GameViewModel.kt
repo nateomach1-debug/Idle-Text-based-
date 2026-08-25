@@ -974,6 +974,7 @@ fun logout() {
                                 if (recoveredCharacter != null) {
                                     _currentAccountId.value = recoveredCharacter.accountId
                                 }
+                                resolveOfflineRewardsAndSync(remoteLocalId)
                             }
                         }
                     }
@@ -983,6 +984,17 @@ fun logout() {
             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
         }
 
+        resolveOfflineRewardsAndSync(characterId)
+    }
+
+    // Grants offline-progress rewards (skilling/crafting), records last-seen, and
+    // syncs currency/market state for the given character. Extracted so it can be
+    // re-run against a cloud-recovered character id after async recovery completes
+    // (see selectCharacter) - a throwaway local character's offline queue is never
+    // the "real" one in that scenario, so re-resolving against the recovered
+    // character's actual data is the correct behavior, not just a race-condition
+    // workaround.
+    private fun resolveOfflineRewardsAndSync(characterId: String) {
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
         if (queue != null) {
             val result = offlineIdleService.resolveOfflineProgress(characterId)
