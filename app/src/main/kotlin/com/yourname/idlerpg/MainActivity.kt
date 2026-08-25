@@ -752,6 +752,10 @@ fun AppRoot(gameViewModel: GameViewModel) {
                             }
 
                             AppDestination.MARKET -> {
+                                LaunchedEffect(Unit) {
+                                    gameViewModel.refreshMarketListings()
+                                    gameViewModel.refreshMyOrders()
+                                }
                                 val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
                                 val myBuyOrdersRaw by gameViewModel.myBuyOrders.collectAsState()
                                 val mySellOrdersRaw by gameViewModel.mySellOrders.collectAsState()
