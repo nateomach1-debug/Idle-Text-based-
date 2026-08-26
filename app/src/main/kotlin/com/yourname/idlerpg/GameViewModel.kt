@@ -1005,6 +1005,9 @@ fun logout() {
                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
                     progressionService.grantXp(characterId, skillType, xpEarned)
                     inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+                    if (skillType == SkillType.MINING) {
+                        MiningBonusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), result.value.actionsCompleted)
+                    }
                     _offlineSummary.value = OfflineSummary(
                         awaySeconds = result.value.claimedElapsed.seconds,
                         skillActionName = action.displayName,
@@ -1092,6 +1095,9 @@ fun logout() {
         if (action != null) {
             progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
             inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
+            if (skillType == SkillType.MINING) {
+                MiningBonusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), actionsCompleted.toInt())
+            }
             refreshSkills()
             refreshInventory()
         }

@@ -1,5 +1,7 @@
 package com.yourname.idlerpg
 
+import kotlin.random.Random
+
 data class SkillActionDefinition(
     val skillType: SkillType,
     val itemId: String,
@@ -291,4 +293,34 @@ object ActionCatalog {
 
     fun allFor(skillType: SkillType): List<SkillActionDefinition> =
         actions.filter { it.skillType == skillType }
+}
+
+// Bonus gem drops from Mining, independent of which ore/rock node was mined.
+// Rates are set lower than Gem Cavern's rareLootTable for the same gem -
+// mining is a secondary source, combat is the primary one.
+object MiningBonusGemTable {
+    private val entries = listOf(
+        "uncut_opal" to 2.0,
+        "uncut_jade" to 1.5,
+        "uncut_red_topaz" to 1.2,
+        "uncut_sapphire" to 1.0,
+        "uncut_emerald" to 0.8,
+        "uncut_ruby" to 0.5,
+        "uncut_diamond" to 0.3,
+        "uncut_dragonstone" to 0.15,
+        "uncut_onyx" to 0.08,
+        "uncut_zenyte" to 0.04,
+        "uncut_celestial_crystal" to 0.015
+    )
+
+    fun rollAndGrant(inventory: Inventory, actionsCompleted: Int) {
+        if (actionsCompleted <= 0) return
+        entries.forEach { (itemId, chancePercent) ->
+            var count = 0
+            repeat(actionsCompleted) {
+                if (Random.nextDouble(0.0, 100.0) < chancePercent) count++
+            }
+            if (count > 0) inventory.addItem(itemId, count)
+        }
+    }
 }
