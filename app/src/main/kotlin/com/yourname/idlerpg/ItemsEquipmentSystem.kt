@@ -1851,6 +1851,20 @@ object RecipeCatalog {
             ingredients = listOf(RecipeIngredient("amulet_u", 1), RecipeIngredient("celestial_crystal", 1), RecipeIngredient("bowstring", 1)),
             skillRequired = "CRAFTING",
             levelRequired = 90
+        ),
+        Recipe(
+            outputItemId = "cake_mix",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("flour", 1), RecipeIngredient("vial_of_water", 1)),
+            skillRequired = "COOKING",
+            levelRequired = 1
+        ),
+        Recipe(
+            outputItemId = "pie_shell",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("flour", 1), RecipeIngredient("vial_of_water", 1)),
+            skillRequired = "COOKING",
+            levelRequired = 1
         )
     )
 
