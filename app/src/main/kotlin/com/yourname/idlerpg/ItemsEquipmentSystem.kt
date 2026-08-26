@@ -1776,7 +1776,7 @@ object RecipeCatalog {
             levelRequired = 27
         ),
         Recipe(
-            outputItemId = "flax_into_bowstring",
+            outputItemId = "bowstring",
             outputQuantity = 1,
             ingredients = listOf(RecipeIngredient("flax", 1)),
             skillRequired = "CRAFTING",
