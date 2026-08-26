@@ -23,7 +23,20 @@ import androidx.compose.ui.unit.dp
 // order placement -- no backend validation tied to it.
 // =========================================================
 
-enum class MarketTab { BROWSE, MY_ORDERS, SELL_TO_VENDOR }
+enum class MarketTab { BROWSE, MY_ORDERS, SELL_TO_VENDOR, BUY_FROM_VENDOR }
+
+data class VendorBuyableItem(
+    val itemId: String,
+    val displayName: String,
+    val pricePerUnit: Long
+)
+
+object VendorBuyCatalog {
+    val items = listOf(
+        VendorBuyableItem("flour", "Flour", 2L),
+        VendorBuyableItem("vial_of_water", "Vial of Water", 2L)
+    )
+}
 
 data class MarketListingSummary(
     val itemId: String,
@@ -68,6 +81,9 @@ fun MarketScreen(
     // Sell to Vendor
     vendorSellableItems: List<InventoryItemSummary>,
     onSellToVendor: (String, Int) -> Unit,
+    // Buy from Vendor
+    vendorBuyableItems: List<VendorBuyableItem>,
+    onBuyFromVendor: (String, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
@@ -93,6 +109,11 @@ fun MarketScreen(
                 isSelected = currentTab == MarketTab.SELL_TO_VENDOR,
                 modifier = Modifier.weight(1f)
             ) { onTabSelected(MarketTab.SELL_TO_VENDOR) }
+            MarketTabButton(
+                label = "Buy",
+                isSelected = currentTab == MarketTab.BUY_FROM_VENDOR,
+                modifier = Modifier.weight(1f)
+            ) { onTabSelected(MarketTab.BUY_FROM_VENDOR) }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -101,6 +122,7 @@ fun MarketScreen(
             MarketTab.BROWSE -> BrowseTab(listings, showingBuyOrders, onToggleBrowseMode, onItemSelected)
             MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder)
             MarketTab.SELL_TO_VENDOR -> SellToVendorTab(vendorSellableItems, onSellToVendor)
+            MarketTab.BUY_FROM_VENDOR -> BuyFromVendorTab(vendorBuyableItems, onBuyFromVendor)
         }
     }
 }
@@ -233,6 +255,67 @@ private fun OrderRow(order: MarketOrderSummary, onCancel: (String) -> Unit) {
         }
         TextButton(onClick = { onCancel(order.orderId) }) {
             Text(text = "Cancel")
+        }
+    }
+}
+
+// ---------------- Buy from Vendor ----------------
+
+@Composable
+private fun BuyFromVendorTab(items: List<VendorBuyableItem>, onBuy: (String, Int) -> Unit) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(items) { item ->
+            VendorBuyItemRow(item, onBuy)
+        }
+    }
+}
+
+@Composable
+private fun VendorBuyItemRow(item: VendorBuyableItem, onBuy: (String, Int) -> Unit) {
+    var quantityText by remember(item.itemId) { mutableStateOf("1") }
+    val enteredQuantity = quantityText.toIntOrNull()
+    val isValidQuantity = enteredQuantity != null && enteredQuantity > 0
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp)
+    ) {
+        Text(
+            text = item.displayName,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = item.pricePerUnit.toString() + " gold each (unlimited stock)",
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = quantityText,
+                onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
+                modifier = Modifier.width(56.dp),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            Button(
+                onClick = { enteredQuantity?.let { onBuy(item.itemId, it) } },
+                enabled = isValidQuantity
+            ) {
+                Text("Buy")
+            }
         }
     }
 }

@@ -94,4 +94,13 @@ object SupabaseMarketRepository {
             put("p_character_id", characterId)
         }).decodeList<MarketOrderRow>()
     }
+
+    suspend fun buyFromVendor(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("market_buy_from_vendor", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_price_per_unit", pricePerUnit)
+        }).decodeAs<Long>()
+    }
 }

@@ -1393,5 +1393,29 @@ fun logout() {
             }
         }
     }
+
+    fun buyItemFromVendor(itemId: String, quantity: Int) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
+        val pricePerUnit = VendorBuyCatalog.items.find { it.itemId == itemId }?.pricePerUnit ?: return
+        if (quantity <= 0) return
+
+        realInventory.addItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.buyFromVendor(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.removeItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+            }
+        }
+    }
 }
 

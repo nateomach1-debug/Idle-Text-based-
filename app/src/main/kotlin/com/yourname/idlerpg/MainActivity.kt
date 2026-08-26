@@ -840,6 +840,10 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                         vendorSellableItems = inventoryItems,
                                         onSellToVendor = { sellItemId, quantity ->
                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+                                        },
+                                        vendorBuyableItems = VendorBuyCatalog.items,
+                                        onBuyFromVendor = { buyItemId, quantity ->
+                                            gameViewModel.buyItemFromVendor(buyItemId, quantity)
                                         }
                                     )
                                 }
