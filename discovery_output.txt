@@ -1,4 +1,4 @@
-=== FILE LISTING (.kt) with sizes ===
+=== FILE LISTING (.kt / .sql) with sizes ===
 ./ModerationScreen.kt  (8793 bytes)
 ./app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt  (12519 bytes)
 ./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt  (41614 bytes)
@@ -50,455 +50,576 @@
 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseModerationRepository.kt  (7175 bytes)
 ./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt  (5989 bytes)
 ./app/src/main/kotlin/com/yourname/idlerpg/ZoneSelectScreen.kt  (4049 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/create_profile_trigger.sql  (1268 bytes)
+./check_phase_b_rls.sql  (1416 bytes)
+./fix_blocks_insert_policy.sql  (815 bytes)
+./fix_create_guild_channel.sql  (2190 bytes)
+./fix_guild_chat_participants.sql  (3912 bytes)
+./fix_missing_select_policies.sql  (777 bytes)
+./fix_missing_select_policies_phase_b.sql  (1349 bytes)
+./fix_send_message_blocks_check.sql  (2964 bytes)
 
-=== TERM SEARCH (whole repo, +/-4 lines context) ===
+=== TERM SEARCH (whole repo, +/-5 lines context) ===
 
---- TERM: SkillingQueue ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:26]
-       22:     fun save(
-       23:         accounts: List<AccountExport>,
-       24:         characters: List<CharacterExport>,
-       25:         skills: List<SkillExport>,
-    >> 26:         skillingQueues: List<SkillingQueueExport>,
-       27:         craftingQueues: List<CraftingQueueExport>,
-       28:         lastSeen: List<LastSeenExport>,
-       29:         inventoryItems: List<InventorySlotExport>,
-       30:         equippedSlots: List<EquippedSlotExport>,
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:247]
-       243:                 )
-       244:             )
-       245:         }
-       246: 
-    >> 247:         val skillingQueues = mutableListOf<SkillingQueueExport>()
-       248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
-       249:         for (i in 0 until queuesArray.length()) {
-       250:             val obj = queuesArray.getJSONObject(i)
-       251:             skillingQueues.add(
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:252]
-       248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
-       249:         for (i in 0 until queuesArray.length()) {
-       250:             val obj = queuesArray.getJSONObject(i)
-       251:             skillingQueues.add(
-    >> 252:                 SkillingQueueExport(
-       253:                     characterId = obj.getString("characterId"),
-       254:                     skillId = obj.getString("skillId"),
-       255:                     itemId = obj.getString("itemId"),
-       256:                     secondsPerAction = obj.getLong("secondsPerAction"),
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:389]
-       385: data class SavedGameState(
-       386:     val accounts: List<AccountExport>,
-       387:     val characters: List<CharacterExport>,
-       388:     val skills: List<SkillExport>,
-    >> 389:     val skillingQueues: List<SkillingQueueExport>,
-       390:     val craftingQueues: List<CraftingQueueExport>,
-       391:     val lastSeen: List<LastSeenExport>,
-       392:     val inventoryItems: List<InventorySlotExport>,
-       393:     val equippedSlots: List<EquippedSlotExport>,
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:812]
-       808:         val saved = repository.load() ?: return
-       809:         saved.accounts.forEach { accountService.restoreAccount(it) }
-       810:         saved.characters.forEach { accountService.restoreCharacter(it) }
-       811:         saved.skills.forEach { progressionService.restoreSkill(it) }
-    >> 812:         saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-       813:         saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-       814:         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-       815:         saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
-       816:         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:859]
-       855: 
-       856:     recovered.accounts.forEach { accountService.restoreAccount(it) }
-       857:     recovered.characters.forEach { accountService.restoreCharacter(it) }
-       858:     recovered.skills.forEach { progressionService.restoreSkill(it) }
-    >> 859:     recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-       860:     recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-       861:     recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-       862:     recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
-       863:     recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:919]
-       915:         repository.save(
-       916:             accountService.exportAllAccounts(),
-       917:             accountService.exportAllCharacters(),
-       918:             progressionService.exportAllSkills(),
-    >> 919:             offlineIdleService.exportSkillingQueues(),
-       920:             offlineIdleService.exportCraftingQueues(),
-       921:             offlineIdleService.exportLastSeen(),
-       922:             inventoryService.exportAllItems(),
-       923:             inventoryService.exportAllEquipped(),
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:963]
-       959:                             if (recovered != null) {
-       960:                                 recovered.accounts.forEach { accountService.restoreAccount(it) }
-       961:                                 recovered.characters.forEach { accountService.restoreCharacter(it) }
-       962:                                 recovered.skills.forEach { progressionService.restoreSkill(it) }
-    >> 963:                                 recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-       964:                                 recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-       965:                                 recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-       966:                                 recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
-       967:                                 recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:998]
-       994:     // the "real" one in that scenario, so re-resolving against the recovered
-       995:     // character's actual data is the correct behavior, not just a race-condition
-       996:     // workaround.
-       997:     private fun resolveOfflineRewardsAndSync(characterId: String) {
-    >> 998:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
-       999:         if (queue != null) {
-       1000:             val result = offlineIdleService.resolveOfflineProgress(characterId)
-       1001:             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
-       1002:                 val skillType = SkillType.valueOf(queue.skillId)
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1067]
-       1063:         // Starting a skill stops any active combat session - only one
-       1064:         // activity can run at a time.
-       1065:         leaveCombatZone()
-       1066:         offlineIdleService.stopQueue(characterId)
-    >> 1067:         offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
-       1068:         offlineIdleService.recordLastSeen(characterId)
-       1069:         skillActionProgressSeconds = 0
-       1070:         refreshActiveQueue()
-       1071:     }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1082]
-       1078:     }
-       1079: 
-       1080:     private fun tickSkilling() {
-       1081:         val characterId = _currentCharacterId.value ?: return
-    >> 1082:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
-       1083: 
-       1084:         skillActionProgressSeconds += 1
-       1085:         if (skillActionProgressSeconds < queue.secondsPerAction) return
-       1086: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1101]
-       1097:         }
-       1098:     }
-       1099: 
-       1100:     // =========================================================
-    >> 1101:     // CRAFTING -- mirrors the SkillingQueue flow above. Recipe.levelRequired
-       1102:     // (via CraftingTierCurve) is the source of truth for timing/XP, decoupled
-       1103:     // from ActionCatalog since production item ids don't line up with
-       1104:     // ActionCatalog's generic class-action ids (see Step 5 handoff notes).
-       1105:     // =========================================================
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1244]
-       1240:     fun refreshActiveQueue() {
-       1241:         val characterId = _currentCharacterId.value
-       1242:         val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
-       1243:         _activeQueueInfo.value = when (queue) {
-    >> 1244:             is ActiveQueue.SkillingQueue -> {
-       1245:                 val skillType = SkillType.valueOf(queue.skillId)
-       1246:                 val action = ActionCatalog.find(skillType, queue.itemId)
-       1247:                 ActiveQueueInfo(
-       1248:                     label = action?.displayName ?: formatItemName(queue.itemId),
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:17]
-       13:     abstract val characterId: String
-       14:     abstract val startedAt: Instant
-       15:     abstract val type: QueueType
-       16: 
-    >> 17:     data class SkillingQueue(
-       18:         override val characterId: String,
-       19:         val skillId: String,
-       20:         val itemId: String,
-       21:         val secondsPerAction: Long,
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:134]
-       130:     val wasFlagged: Boolean,
-       131:     val queueExhausted: Boolean
-       132: )
-       133: 
-    >> 134: data class SkillingQueueExport(
-       135:     val characterId: String,
-       136:     val skillId: String,
-       137:     val itemId: String,
-       138:     val secondsPerAction: Long,
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:163]
-       159:     private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
-       160:     private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
-       161:     private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
-       162: 
-    >> 163:     fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
-       164:         if (activeQueues.containsKey(characterId)) {
-       165:             return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
-       166:         }
-       167:         val queue = ActiveQueue.SkillingQueue(characterId, skillId, itemId, secondsPerAction)
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:167]
-       163:     fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
-       164:         if (activeQueues.containsKey(characterId)) {
-       165:             return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
-       166:         }
-    >> 167:         val queue = ActiveQueue.SkillingQueue(characterId, skillId, itemId, secondsPerAction)
-       168:         activeQueues[characterId] = queue
-       169:         return ServiceResult.Success(queue)
-       170:     }
-       171: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:229]
-       225:         var actionsCompleted = 0
-       226:         var queueExhausted = false
-       227: 
-       228:         when (queue) {
-    >> 229:             is ActiveQueue.SkillingQueue -> {
-       230:                 actionsCompleted = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
-       231:             }
-       232:             is ActiveQueue.CraftingQueue -> {
-       233:                 var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:283]
-       279:     }
-       280: 
-       281:     fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
-       282: 
-    >> 283:     fun exportSkillingQueues(): List<SkillingQueueExport> =
-       284:         activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
-       285:             SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
-       286:         }
-       287: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:284]
-       280: 
-       281:     fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
-       282: 
-       283:     fun exportSkillingQueues(): List<SkillingQueueExport> =
-    >> 284:         activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
-       285:             SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
-       286:         }
-       287: 
-       288:     fun exportCraftingQueues(): List<CraftingQueueExport> =
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:285]
-       281:     fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
-       282: 
-       283:     fun exportSkillingQueues(): List<SkillingQueueExport> =
-       284:         activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
-    >> 285:             SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
-       286:         }
-       287: 
-       288:     fun exportCraftingQueues(): List<CraftingQueueExport> =
-       289:         activeQueues.values.filterIsInstance<ActiveQueue.CraftingQueue>().map {
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:303]
-       299: 
-       300:     fun exportLastSeen(): List<LastSeenExport> =
-       301:         lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
-       302: 
-    >> 303:     fun restoreSkillingQueue(export: SkillingQueueExport) {
-       304:         activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
-       305:             characterId = export.characterId,
-       306:             skillId = export.skillId,
-       307:             itemId = export.itemId,
-  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:304]
-       300:     fun exportLastSeen(): List<LastSeenExport> =
-       301:         lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
-       302: 
-       303:     fun restoreSkillingQueue(export: SkillingQueueExport) {
-    >> 304:         activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
-       305:             characterId = export.characterId,
-       306:             skillId = export.skillId,
-       307:             itemId = export.itemId,
-       308:             secondsPerAction = export.secondsPerAction,
+--- TERM: sellItemToVendor ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1367]
+       1362:                 refreshMyOrders()
+       1363:             }
+       1364:         }
+       1365:     }
+       1366: 
+    >> 1367:     fun sellItemToVendor(itemId: String, quantity: Int) {
+       1368:         val characterId = _currentCharacterId.value ?: return
+       1369:         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+       1370:         val realInventory = inventoryService.inventoryFor(characterId)
+       1371:         if (realInventory.quantityOf(itemId) < quantity) return
+       1372:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:842]
+       837:                                         myBuyOrders = myBuyOrdersUi,
+       838:                                         mySellOrders = mySellOrdersUi,
+       839:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+       840:                                         vendorSellableItems = inventoryItems,
+       841:                                         onSellToVendor = { sellItemId, quantity ->
+    >> 842:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+       843:                                         }
+       844:                                     )
+       845:                                 }
+       846:                             }
+       847: 
 
---- TERM: skillingQueue ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:26]
-       22:     fun save(
-       23:         accounts: List<AccountExport>,
-       24:         characters: List<CharacterExport>,
-       25:         skills: List<SkillExport>,
-    >> 26:         skillingQueues: List<SkillingQueueExport>,
-       27:         craftingQueues: List<CraftingQueueExport>,
-       28:         lastSeen: List<LastSeenExport>,
-       29:         inventoryItems: List<InventorySlotExport>,
-       30:         equippedSlots: List<EquippedSlotExport>,
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:84]
-       80:         }
-       81:         root.put("skills", skillsArray)
-       82: 
-       83:         val queuesArray = JSONArray()
-    >> 84:         skillingQueues.forEach { queue ->
-       85:             val obj = JSONObject()
-       86:             obj.put("characterId", queue.characterId)
-       87:             obj.put("skillId", queue.skillId)
-       88:             obj.put("itemId", queue.itemId)
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:93]
-       89:             obj.put("secondsPerAction", queue.secondsPerAction)
-       90:             obj.put("startedAt", queue.startedAt)
-       91:             queuesArray.put(obj)
-       92:         }
-    >> 93:         root.put("skillingQueues", queuesArray)
-       94: 
-       95:         val craftingQueuesArray = JSONArray()
-       96:         craftingQueues.forEach { queue ->
-       97:             val obj = JSONObject()
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:247]
-       243:                 )
-       244:             )
-       245:         }
-       246: 
-    >> 247:         val skillingQueues = mutableListOf<SkillingQueueExport>()
-       248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
-       249:         for (i in 0 until queuesArray.length()) {
-       250:             val obj = queuesArray.getJSONObject(i)
-       251:             skillingQueues.add(
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:248]
-       244:             )
-       245:         }
-       246: 
-       247:         val skillingQueues = mutableListOf<SkillingQueueExport>()
-    >> 248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
-       249:         for (i in 0 until queuesArray.length()) {
-       250:             val obj = queuesArray.getJSONObject(i)
-       251:             skillingQueues.add(
-       252:                 SkillingQueueExport(
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:251]
-       247:         val skillingQueues = mutableListOf<SkillingQueueExport>()
-       248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
-       249:         for (i in 0 until queuesArray.length()) {
-       250:             val obj = queuesArray.getJSONObject(i)
-    >> 251:             skillingQueues.add(
-       252:                 SkillingQueueExport(
-       253:                     characterId = obj.getString("characterId"),
-       254:                     skillId = obj.getString("skillId"),
-       255:                     itemId = obj.getString("itemId"),
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:379]
-       375:             )
-       376:         }
-       377: 
-       378:         return SavedGameState(
-    >> 379:             accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
-       380:             loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
-       381:         )
-       382:     }
-       383: }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:389]
-       385: data class SavedGameState(
-       386:     val accounts: List<AccountExport>,
-       387:     val characters: List<CharacterExport>,
-       388:     val skills: List<SkillExport>,
-    >> 389:     val skillingQueues: List<SkillingQueueExport>,
-       390:     val craftingQueues: List<CraftingQueueExport>,
-       391:     val lastSeen: List<LastSeenExport>,
-       392:     val inventoryItems: List<InventorySlotExport>,
-       393:     val equippedSlots: List<EquippedSlotExport>,
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:812]
-       808:         val saved = repository.load() ?: return
-       809:         saved.accounts.forEach { accountService.restoreAccount(it) }
-       810:         saved.characters.forEach { accountService.restoreCharacter(it) }
-       811:         saved.skills.forEach { progressionService.restoreSkill(it) }
-    >> 812:         saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-       813:         saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-       814:         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-       815:         saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
-       816:         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:859]
-       855: 
-       856:     recovered.accounts.forEach { accountService.restoreAccount(it) }
-       857:     recovered.characters.forEach { accountService.restoreCharacter(it) }
-       858:     recovered.skills.forEach { progressionService.restoreSkill(it) }
-    >> 859:     recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-       860:     recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-       861:     recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-       862:     recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
-       863:     recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:963]
-       959:                             if (recovered != null) {
-       960:                                 recovered.accounts.forEach { accountService.restoreAccount(it) }
-       961:                                 recovered.characters.forEach { accountService.restoreCharacter(it) }
-       962:                                 recovered.skills.forEach { progressionService.restoreSkill(it) }
-    >> 963:                                 recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-       964:                                 recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-       965:                                 recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-       966:                                 recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
-       967:                                 recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+--- TERM: onSellToVendor ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:841]
+       836:                                         onItemSelected = { selectedMarketItemId = it },
+       837:                                         myBuyOrders = myBuyOrdersUi,
+       838:                                         mySellOrders = mySellOrdersUi,
+       839:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+       840:                                         vendorSellableItems = inventoryItems,
+    >> 841:                                         onSellToVendor = { sellItemId, quantity ->
+       842:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+       843:                                         }
+       844:                                     )
+       845:                                 }
+       846:                             }
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:70]
+       65:     myBuyOrders: List<MarketOrderSummary>,
+       66:     mySellOrders: List<MarketOrderSummary>,
+       67:     onCancelOrder: (String) -> Unit,
+       68:     // Sell to Vendor
+       69:     vendorSellableItems: List<InventoryItemSummary>,
+    >> 70:     onSellToVendor: (String, Int) -> Unit,
+       71:     modifier: Modifier = Modifier
+       72: ) {
+       73:     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+       74:         Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
+       75:         Spacer(modifier = Modifier.height(12.dp))
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:103]
+       98:         Spacer(modifier = Modifier.height(16.dp))
+       99: 
+       100:         when (currentTab) {
+       101:             MarketTab.BROWSE -> BrowseTab(listings, showingBuyOrders, onToggleBrowseMode, onItemSelected)
+       102:             MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder)
+    >> 103:             MarketTab.SELL_TO_VENDOR -> SellToVendorTab(vendorSellableItems, onSellToVendor)
+       104:         }
+       105:     }
+       106: }
+       107: 
+       108: @Composable
 
---- TERM: ActionCatalog.find ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1003]
-       999:         if (queue != null) {
-       1000:             val result = offlineIdleService.resolveOfflineProgress(characterId)
-       1001:             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
-       1002:                 val skillType = SkillType.valueOf(queue.skillId)
-    >> 1003:                 val action = ActionCatalog.find(skillType, queue.itemId)
-       1004:                 if (action != null) {
-       1005:                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
-       1006:                     progressionService.grantXp(characterId, skillType, xpEarned)
-       1007:                     inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1062]
-       1058:     }
-       1059: 
-       1060:     fun startSkillAction(skillType: SkillType, itemId: String) {
-       1061:         val characterId = _currentCharacterId.value ?: return
-    >> 1062:         val action = ActionCatalog.find(skillType, itemId) ?: return
-       1063:         // Starting a skill stops any active combat session - only one
-       1064:         // activity can run at a time.
-       1065:         leaveCombatZone()
-       1066:         offlineIdleService.stopQueue(characterId)
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1091]
-       1087:         val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
-       1088:         skillActionProgressSeconds %= queue.secondsPerAction
-       1089: 
-       1090:         val skillType = SkillType.valueOf(queue.skillId)
-    >> 1091:         val action = ActionCatalog.find(skillType, queue.itemId)
-       1092:         if (action != null) {
-       1093:             progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
-       1094:             inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
-       1095:             refreshSkills()
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1246]
-       1242:         val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
-       1243:         _activeQueueInfo.value = when (queue) {
-       1244:             is ActiveQueue.SkillingQueue -> {
-       1245:                 val skillType = SkillType.valueOf(queue.skillId)
-    >> 1246:                 val action = ActionCatalog.find(skillType, queue.itemId)
-       1247:                 ActiveQueueInfo(
-       1248:                     label = action?.displayName ?: formatItemName(queue.itemId),
-       1249:                     secondsPerAction = queue.secondsPerAction,
-       1250:                     startedAt = queue.startedAt
+--- TERM: SellToVendor ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:841]
+       836:                                         onItemSelected = { selectedMarketItemId = it },
+       837:                                         myBuyOrders = myBuyOrdersUi,
+       838:                                         mySellOrders = mySellOrdersUi,
+       839:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+       840:                                         vendorSellableItems = inventoryItems,
+    >> 841:                                         onSellToVendor = { sellItemId, quantity ->
+       842:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
+       843:                                         }
+       844:                                     )
+       845:                                 }
+       846:                             }
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:70]
+       65:     myBuyOrders: List<MarketOrderSummary>,
+       66:     mySellOrders: List<MarketOrderSummary>,
+       67:     onCancelOrder: (String) -> Unit,
+       68:     // Sell to Vendor
+       69:     vendorSellableItems: List<InventoryItemSummary>,
+    >> 70:     onSellToVendor: (String, Int) -> Unit,
+       71:     modifier: Modifier = Modifier
+       72: ) {
+       73:     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+       74:         Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
+       75:         Spacer(modifier = Modifier.height(12.dp))
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:103]
+       98:         Spacer(modifier = Modifier.height(16.dp))
+       99: 
+       100:         when (currentTab) {
+       101:             MarketTab.BROWSE -> BrowseTab(listings, showingBuyOrders, onToggleBrowseMode, onItemSelected)
+       102:             MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder)
+    >> 103:             MarketTab.SELL_TO_VENDOR -> SellToVendorTab(vendorSellableItems, onSellToVendor)
+       104:         }
+       105:     }
+       106: }
+       107: 
+       108: @Composable
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:243]
+       238: }
+       239: 
+       240: // ---------------- Sell to Vendor ----------------
+       241: 
+       242: @Composable
+    >> 243: private fun SellToVendorTab(items: List<InventoryItemSummary>, onSell: (String, Int) -> Unit) {
+       244:     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+       245:         items(items) { item ->
+       246:             VendorItemRow(item, onSell)
+       247:         }
+       248:     }
 
---- TERM: inventoryService.add ---
+--- TERM: VendorScreen ---
 
---- TERM: InventoryService ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:52]
-       48:     private val repository = GameStateRepository(application)
-       49: 
-       50:     val accountService = AccountService()
-       51:     val progressionService = ProgressionService()
-    >> 52:     val inventoryService = InventoryService()
-       53:     val sessionManager = SessionManager(application)
-       54:     // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
-       55:     // Skilling queues don't consume materials, only crafting does, so this is unused for now.
-       56:     val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
-  [./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:2099]
-       2095:     val autoHealThresholdPercent: Int,
-       2096:     val autoFleeThresholdPercent: Int
-       2097: )
-       2098: 
-    >> 2099: class InventoryService {
-       2100:     private val inventories: MutableMap<String, Inventory> = mutableMapOf()
-       2101: 
-       2102:     fun inventoryFor(characterId: String): Inventory =
-       2103:         inventories.getOrPut(characterId) { Inventory() }
+--- TERM: MarketScreen ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:830]
+       825:                                             selectedMarketItemId = null
+       826:                                             prefilledSellQuantity = null
+       827:                                         }
+       828:                                     )
+       829:                                 } else {
+    >> 830:                                     MarketScreen(
+       831:                                         currentTab = marketTab,
+       832:                                         onTabSelected = { marketTab = it },
+       833:                                         listings = marketListingsUi,
+       834:                                         showingBuyOrders = showingBuyOrders,
+       835:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:56]
+       51:     val bestSellPrice: Long?,
+       52:     val recentTrades: List<PriceHistoryRow>
+       53: )
+       54: 
+       55: @Composable
+    >> 56: fun MarketScreen(
+       57:     currentTab: MarketTab,
+       58:     onTabSelected: (MarketTab) -> Unit,
+       59:     // Browse
+       60:     listings: List<MarketListingSummary>,
+       61:     showingBuyOrders: Boolean,
 
---- TERM: fun addItem ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:17]
+--- TERM: fun sellToVendor ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:287]
+       282:     fun vendorPayoutPerUnit(itemId: String): Long {
+       283:         val baseValue = ItemCatalog.baseValueFor(itemId)
+       284:         return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
+       285:     }
+       286: 
+    >> 287:     fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
+       288:         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
+       289:         val account = accounts.getValue(characterId)
+       290:         val item = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+       291: 
+       292:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+  [./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt:73]
+       68:         client.postgrest.rpc("market_cancel_order", buildJsonObject {
+       69:             put("p_order_id", orderId)
+       70:         }).decodeAs<MarketCancelRpcResult>()
+       71:     }
+       72: 
+    >> 73:     suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching {
+       74:         client.postgrest.rpc("market_sell_to_vendor", buildJsonObject {
+       75:             put("p_character_id", characterId)
+       76:             put("p_item_id", itemId)
+       77:             put("p_quantity", quantity)
+       78:             put("p_payout_per_unit", payoutPerUnit)
+
+--- TERM: market_sell_to_vendor ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt:74]
+       69:             put("p_order_id", orderId)
+       70:         }).decodeAs<MarketCancelRpcResult>()
+       71:     }
+       72: 
+       73:     suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching {
+    >> 74:         client.postgrest.rpc("market_sell_to_vendor", buildJsonObject {
+       75:             put("p_character_id", characterId)
+       76:             put("p_item_id", itemId)
+       77:             put("p_quantity", quantity)
+       78:             put("p_payout_per_unit", payoutPerUnit)
+       79:         }).decodeAs<Long>()
+
+--- TERM: baseValueFor ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:283]
+       278:     }
+       279: 
+       280:     // ---------------- NPC vendor fallback ----------------
+       281: 
+       282:     fun vendorPayoutPerUnit(itemId: String): Long {
+    >> 283:         val baseValue = ItemCatalog.baseValueFor(itemId)
+       284:         return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
+       285:     }
+       286: 
+       287:     fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
+       288:         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1372]
+       1367:     fun sellItemToVendor(itemId: String, quantity: Int) {
+       1368:         val characterId = _currentCharacterId.value ?: return
+       1369:         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+       1370:         val realInventory = inventoryService.inventoryFor(characterId)
+       1371:         if (realInventory.quantityOf(itemId) < quantity) return
+    >> 1372:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
+       1373: 
+       1374:         realInventory.removeItem(itemId, quantity)
+       1375:         refreshInventory()
+       1376: 
+       1377:         viewModelScope.launch {
+  [./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:96]
+       91: 
+       92:     fun find(itemId: String): ItemDefinition? = items.find { it.id == itemId }
+       93:     fun findByNameAndRarity(name: String, rarity: Rarity): ItemDefinition? =
+       94:         items.find { it.name == name && it.rarity == rarity }
+       95: 
+    >> 96:     fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
+       97:         "oak_log" -> 8L
+       98:         else -> 5L
+       99:     }
+       100: }
+
+--- TERM: currencyBalance ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:14]
+       9: 
+       10: class PlayerEconomyAccount(
+       11:     val characterId: String,
+       12:     val accountId: String,
        13:     var isMainCharacter: Boolean,
-       14:     var currencyBalance: Long,
+    >> 14:     var currencyBalance: Long,
        15:     val inventory: MutableMap<String, Int> = mutableMapOf()
        16: ) {
-    >> 17:     fun addItem(itemId: String, qty: Int) {
+       17:     fun addItem(itemId: String, qty: Int) {
        18:         inventory[itemId] = (inventory[itemId] ?: 0) + qty
        19:     }
-       20: 
-       21:     fun removeItem(itemId: String, qty: Int): Boolean {
-  [./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1923]
-       1919:     var autoFleeThresholdPercent: Int = 10
-       1920: ) {
-       1921:     fun usedSlots(): Int = entries.size
-       1922: 
-    >> 1923:     fun addItem(itemId: String, quantity: Int): ServiceResult<Unit> {
-       1924:         val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
-       1925:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
-       1926: 
-       1927:         val existing = entries[itemId]
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:148]
+       143:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+       144:         if (pricePerUnit <= 0) return ServiceResult.Failure("Price must be positive.")
+       145:         if (ItemCatalog.find(itemId) == null) return ServiceResult.Failure("Unknown item.")
+       146: 
+       147:         val totalCost = pricePerUnit * quantity
+    >> 148:         if (account.currencyBalance < totalCost) {
+       149:             return ServiceResult.Failure("Insufficient currency to escrow this order.")
+       150:         }
+       151: 
+       152:         account.currencyBalance -= totalCost
+       153: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:152]
+       147:         val totalCost = pricePerUnit * quantity
+       148:         if (account.currencyBalance < totalCost) {
+       149:             return ServiceResult.Failure("Insufficient currency to escrow this order.")
+       150:         }
+       151: 
+    >> 152:         account.currencyBalance -= totalCost
+       153: 
+       154:         val order = MarketOrder(
+       155:             characterId = characterId,
+       156:             itemId = itemId,
+       157:             side = OrderSide.BUY,
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:230]
+       225:         val sellerProceeds = grossAmount - tax
+       226: 
+       227:         val buyerEscrowedAtOriginalPrice = buyOrder.pricePerUnit * quantity
+       228:         val refundToBuyer = buyerEscrowedAtOriginalPrice - grossAmount
+       229:         if (refundToBuyer > 0) {
+    >> 230:             buyerAccount.currencyBalance += refundToBuyer
+       231:         }
+       232: 
+       233:         sellerAccount.currencyBalance += sellerProceeds
+       234:         buyerAccount.addItem(buyOrder.itemId, quantity)
+       235: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:233]
+       228:         val refundToBuyer = buyerEscrowedAtOriginalPrice - grossAmount
+       229:         if (refundToBuyer > 0) {
+       230:             buyerAccount.currencyBalance += refundToBuyer
+       231:         }
+       232: 
+    >> 233:         sellerAccount.currencyBalance += sellerProceeds
+       234:         buyerAccount.addItem(buyOrder.itemId, quantity)
+       235: 
+       236:         buyOrder.remainingQuantity -= quantity
+       237:         sellOrder.remainingQuantity -= quantity
+       238:         buyOrder.status = if (buyOrder.remainingQuantity == 0) OrderStatus.FILLED else OrderStatus.PARTIALLY_FILLED
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:270]
+       265:         }
+       266: 
+       267:         val account = accounts.getValue(order.characterId)
+       268:         if (order.side == OrderSide.BUY) {
+       269:             val refund = order.pricePerUnit * order.remainingQuantity
+    >> 270:             account.currencyBalance += refund
+       271:         } else {
+       272:             account.addItem(order.itemId, order.remainingQuantity)
+       273:         }
+       274: 
+       275:         order.remainingQuantity = 0
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:298]
+       293:         if (!account.removeItem(itemId, quantity)) {
+       294:             return ServiceResult.Failure("Insufficient item quantity to sell.")
+       295:         }
+       296: 
+       297:         val payout = vendorPayoutPerUnit(item.id) * quantity
+    >> 298:         account.currencyBalance += payout
+       299:         monitoring.recordVendorPayout(payout)
+       300: 
+       301:         return ServiceResult.Success(payout)
+       302:     }
+       303: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:340]
+       335:     fun exportAccounts(): List<PlayerEconomyAccountExport> = accounts.values.map {
+       336:         PlayerEconomyAccountExport(
+       337:             characterId = it.characterId,
+       338:             accountId = it.accountId,
+       339:             isMainCharacter = it.isMainCharacter,
+    >> 340:             currencyBalance = it.currencyBalance,
+       341:             inventory = it.inventory.toMap()
+       342:         )
+       343:     }
+       344: 
+       345:     fun restoreAccount(export: PlayerEconomyAccountExport) {
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:350]
+       345:     fun restoreAccount(export: PlayerEconomyAccountExport) {
+       346:         accounts[export.characterId] = PlayerEconomyAccount(
+       347:             characterId = export.characterId,
+       348:             accountId = export.accountId,
+       349:             isMainCharacter = export.isMainCharacter,
+    >> 350:             currencyBalance = export.currencyBalance,
+       351:             inventory = export.inventory.toMutableMap()
+       352:         )
+       353:     }
+       354: 
+       355:     fun exportOrders(): List<MarketOrderExport> = (buyOrders + sellOrders).map {
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:411]
+       406: 
+       407: data class PlayerEconomyAccountExport(
+       408:     val characterId: String,
+       409:     val accountId: String,
+       410:     val isMainCharacter: Boolean,
+    >> 411:     val currencyBalance: Long,
+       412:     val inventory: Map<String, Int>
+       413: )
+       414: 
+       415: data class MarketOrderExport(
+       416:     val id: String,
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:156]
+       151:         marketAccounts.forEach { acc ->
+       152:             val obj = JSONObject()
+       153:             obj.put("characterId", acc.characterId)
+       154:             obj.put("accountId", acc.accountId)
+       155:             obj.put("isMainCharacter", acc.isMainCharacter)
+    >> 156:             obj.put("currencyBalance", acc.currencyBalance)
+       157:             val inventoryObj = JSONObject()
+       158:             acc.inventory.forEach { (itemId, qty) -> inventoryObj.put(itemId, qty) }
+       159:             obj.put("inventory", inventoryObj)
+       160:             marketAccountsArray.put(obj)
+       161:         }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:323]
+       318:             marketAccounts.add(
+       319:                 PlayerEconomyAccountExport(
+       320:                     characterId = obj.getString("characterId"),
+       321:                     accountId = obj.getString("accountId"),
+       322:                     isMainCharacter = obj.getBoolean("isMainCharacter"),
+    >> 323:                     currencyBalance = obj.getLong("currencyBalance"),
+       324:                     inventory = inventory
+       325:                 )
+       326:             )
+       327:         }
+       328: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1051]
+       1046:             marketService.registerAccount(
+       1047:                 PlayerEconomyAccount(
+       1048:                     characterId = characterId,
+       1049:                     accountId = _currentAccountId.value ?: "",
+       1050:                     isMainCharacter = character?.isMainCharacter ?: true,
+    >> 1051:                     currencyBalance = 0L
+       1052:                 )
+       1053:             )
+       1054:         }
+       1055:         refreshCurrency()
+       1056:         refreshMarketListings()
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1267]
+       1262:     fun refreshCurrency() {
+       1263:         val accountId = _currentAccountId.value ?: return
+       1264:         val account = accountService.accountById(accountId) ?: return
+       1265:         val characterId = _currentSupabaseCharacterId.value ?: return
+       1266:         viewModelScope.launch {
+    >> 1267:             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
+       1268:             _currency.value = gold to account.premiumCurrency
+       1269:         }
+       1270:     }
+       1271: 
+       1272:     // =========================================================
+  [./app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:210]
+       205:     private val creationCost: Long = 100_000
+       206: 
+       207:     private val failedVoteCooldown: Duration = Duration.ofDays(7)
+       208:     private val sameTargetVoteCooldown: Duration = Duration.ofDays(14)
+       209: 
+    >> 210:     fun createGuild(accountId: String, founderCharacterId: String, name: String, currencyBalance: Long): ServiceResult<Guild> {
+       211:         val isFree = !accountsWithFreeCreationUsed.contains(accountId)
+       212:         if (!isFree && currencyBalance < creationCost) {
+       213:             return ServiceResult.Failure("Guild creation costs " + creationCost + " currency; insufficient balance.")
+       214:         }
+       215:         if (name.isBlank() || name.length < 3 || name.length > 24) {
+  [./app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:212]
+       207:     private val failedVoteCooldown: Duration = Duration.ofDays(7)
+       208:     private val sameTargetVoteCooldown: Duration = Duration.ofDays(14)
+       209: 
+       210:     fun createGuild(accountId: String, founderCharacterId: String, name: String, currencyBalance: Long): ServiceResult<Guild> {
+       211:         val isFree = !accountsWithFreeCreationUsed.contains(accountId)
+    >> 212:         if (!isFree && currencyBalance < creationCost) {
+       213:             return ServiceResult.Failure("Guild creation costs " + creationCost + " currency; insufficient balance.")
+       214:         }
+       215:         if (name.isBlank() || name.length < 3 || name.length > 24) {
+       216:             return ServiceResult.Failure("Guild name must be between 3 and 24 characters.")
+       217:         }
+  [./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt:82]
+       77:             put("p_quantity", quantity)
+       78:             put("p_payout_per_unit", payoutPerUnit)
+       79:         }).decodeAs<Long>()
+       80:     }
+       81: 
+    >> 82:     suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
+       83:         client.postgrest.rpc("market_currency_balance", buildJsonObject {
+       84:             put("p_character_id", characterId)
+       85:         }).decodeAs<Long>()
+       86:     }
+       87: 
 
---- TERM: fun grantItem ---
+--- TERM: fun refreshCurrency ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1262]
+       1257:             )
+       1258:             else -> null
+       1259:         }
+       1260:     }
+       1261: 
+    >> 1262:     fun refreshCurrency() {
+       1263:         val accountId = _currentAccountId.value ?: return
+       1264:         val account = accountService.accountById(accountId) ?: return
+       1265:         val characterId = _currentSupabaseCharacterId.value ?: return
+       1266:         viewModelScope.launch {
+       1267:             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
 
---- TERM: fun resolveSkillingCompletion ---
+--- TERM: MarketService ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:113]
+       108: // MARKET SERVICE
+       109: // (ServiceResult now comes from SharedTypes.kt. Item validation
+       110: //  now uses the shared ItemCatalog instead of a separate MarketItem list.)
+       111: // =========================================================
+       112: 
+    >> 113: class MarketService(private val monitoring: EconomyMonitoringService) {
+       114: 
+       115:     private val accounts: MutableMap<String, PlayerEconomyAccount> = mutableMapOf()
+       116:     private val buyOrders: MutableList<MarketOrder> = mutableListOf()
+       117:     private val sellOrders: MutableList<MarketOrder> = mutableListOf()
+       118:     private val priceHistory: MutableList<PriceHistoryEntry> = mutableListOf()
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:79]
+       74: 
+       75:     private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+       76:     val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+       77: 
+       78:     val economyMonitoring = EconomyMonitoringService()
+    >> 79:     val marketService = MarketService(economyMonitoring)
+       80:     val combatService = CombatService()
+       81: 
+       82:     // =========================================================
+       83:     // SUPABASE AUTH (guild/chat multiplayer only - local play never depends on this)
+       84:     // =========================================================
 
---- TERM: fun processSkillingQueue ---
-
---- TERM: fun tickSkilling ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1080]
-       1076:         skillActionProgressSeconds = 0
-       1077:         refreshActiveQueue()
-       1078:     }
-       1079: 
-    >> 1080:     private fun tickSkilling() {
-       1081:         val characterId = _currentCharacterId.value ?: return
-       1082:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
-       1083: 
-       1084:         skillActionProgressSeconds += 1
+--- TERM: SupabaseMarketRepository ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1267]
+       1262:     fun refreshCurrency() {
+       1263:         val accountId = _currentAccountId.value ?: return
+       1264:         val account = accountService.accountById(accountId) ?: return
+       1265:         val characterId = _currentSupabaseCharacterId.value ?: return
+       1266:         viewModelScope.launch {
+    >> 1267:             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
+       1268:             _currency.value = gold to account.premiumCurrency
+       1269:         }
+       1270:     }
+       1271: 
+       1272:     // =========================================================
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1278]
+       1273:     // MARKET (server-side via Supabase - shared order book across all players)
+       1274:     // =========================================================
+       1275: 
+       1276:     fun refreshMarketListings() {
+       1277:         viewModelScope.launch {
+    >> 1278:             val listings = SupabaseMarketRepository.listings().getOrNull() ?: emptyList()
+       1279:             _marketListings.value = listings.map { MarketPriceSummary(it.itemId, it.bestBuyPrice, it.bestBuyQuantity, it.bestSellPrice, it.bestSellQuantity) }
+       1280:         }
+       1281:     }
+       1282: 
+       1283:     private fun MarketOrderRow.toDomain(): MarketOrder = MarketOrder(
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1298]
+       1293:     )
+       1294: 
+       1295:     fun refreshMyOrders() {
+       1296:         val characterId = _currentSupabaseCharacterId.value ?: return
+       1297:         viewModelScope.launch {
+    >> 1298:             val orders = SupabaseMarketRepository.myOrders(characterId).getOrNull()?.map { it.toDomain() } ?: emptyList()
+       1299:             _myBuyOrders.value = orders.filter { it.side == OrderSide.BUY }
+       1300:             _mySellOrders.value = orders.filter { it.side == OrderSide.SELL }
+       1301:         }
+       1302:     }
+       1303: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1308]
+       1303: 
+       1304:     fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+       1305:         val characterId = _currentCharacterId.value ?: return
+       1306:         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+       1307:         viewModelScope.launch {
+    >> 1308:             val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
+       1309:             result.onFailure { _marketActionError.value = it.message ?: it.toString() }
+       1310:             result.onSuccess { order ->
+       1311:                 _marketActionError.value = null
+       1312:                 val filled = order.originalQuantity - order.remainingQuantity
+       1313:                 if (filled > 0) {
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1334]
+       1329: 
+       1330:         realInventory.removeItem(itemId, quantity)
+       1331:         refreshInventory()
+       1332: 
+       1333:         viewModelScope.launch {
+    >> 1334:             val result = SupabaseMarketRepository.placeSellOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
+       1335:             result.onFailure {
+       1336:                 _marketActionError.value = it.message ?: it.toString()
+       1337:                 realInventory.addItem(itemId, quantity)
+       1338:                 refreshInventory()
+       1339:             }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1352]
+       1347:     }
+       1348: 
+       1349:     fun cancelMarketOrder(orderId: String) {
+       1350:         val characterId = _currentCharacterId.value ?: return
+       1351:         viewModelScope.launch {
+    >> 1352:             val result = SupabaseMarketRepository.cancelOrder(orderId)
+       1353:             result.onFailure { _marketActionError.value = it.message ?: it.toString() }
+       1354:             result.onSuccess { cancelled ->
+       1355:                 _marketActionError.value = null
+       1356:                 if (cancelled.side == "SELL" && cancelled.remainingQuantityBeforeCancel > 0) {
+       1357:                     inventoryService.inventoryFor(characterId).addItem(cancelled.itemId, cancelled.remainingQuantityBeforeCancel)
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1378]
+       1373: 
+       1374:         realInventory.removeItem(itemId, quantity)
+       1375:         refreshInventory()
+       1376: 
+       1377:         viewModelScope.launch {
+    >> 1378:             val result = SupabaseMarketRepository.sellToVendor(supabaseCharacterId, itemId, quantity, payoutPerUnit)
+       1379:             result.onFailure {
+       1380:                 _marketActionError.value = it.message ?: it.toString()
+       1381:                 realInventory.addItem(itemId, quantity)
+       1382:                 refreshInventory()
+       1383:             }
+  [./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt:46]
+       41:     val remainingQuantity: Int,
+       42:     val status: String,
+       43:     val createdAt: String
+       44: )
+       45: 
+    >> 46: object SupabaseMarketRepository {
+       47:     private val client get() = SupabaseClientProvider.client
+       48: 
+       49:     suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
+       50:         client.postgrest.rpc("market_place_buy_order", buildJsonObject {
+       51:             put("p_character_id", characterId)
