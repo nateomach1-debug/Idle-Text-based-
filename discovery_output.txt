@@ -1,168 +1,359 @@
-=== FILE LISTING (.kt / .sql) with sizes ===
-./ModerationScreen.kt  (8793 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt  (12519 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt  (41614 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/AntiCheatServerAuthoritySystem.kt  (5701 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt  (4603 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/ChatBanner.kt  (10390 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt  (11914 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt  (6907 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt  (16544 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt  (3518 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/EventsLiveOpsSystem.kt  (15345 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt  (17478 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt  (62947 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt  (84563 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt  (20817 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/GuildCreateJoinScreen.kt  (3344 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt  (9616 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt  (6925 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt  (11633 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt  (79720 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt  (6875 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/LoginScreen.kt  (3392 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt  (52989 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt  (10929 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/MemberActionPopup.kt  (2476 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt  (39087 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt  (8793 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt  (7729 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt  (739 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt  (12573 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt  (6583 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/PatternBackground.kt  (2678 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt  (13431 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/RecoveryBar.kt  (3429 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/ReportMessageDialog.kt  (2580 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt  (1091 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt  (4263 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt  (4964 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt  (8691 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt  (9361 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt  (8763 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt  (13593 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt  (12966 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SupabaseCharacterRepository.kt  (2413 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt  (10841 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SupabaseClient.kt  (939 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt  (11093 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt  (3338 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/SupabaseModerationRepository.kt  (7175 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt  (5989 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/ZoneSelectScreen.kt  (4049 bytes)
-./app/src/main/kotlin/com/yourname/idlerpg/create_profile_trigger.sql  (1268 bytes)
-./check_phase_b_rls.sql  (1416 bytes)
-./fix_blocks_insert_policy.sql  (815 bytes)
-./fix_create_guild_channel.sql  (2190 bytes)
-./fix_guild_chat_participants.sql  (3912 bytes)
-./fix_missing_select_policies.sql  (777 bytes)
-./fix_missing_select_policies_phase_b.sql  (1349 bytes)
-./fix_send_message_blocks_check.sql  (2964 bytes)
+=== FULL FUNCTION/BLOCK DUMPS (generous margin: +50 lines from marker) ===
 
-=== TERM SEARCH (whole repo, +/-5 lines context) ===
+--- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt :: from 'fun sellItemToVendor' ---
+1367:     fun sellItemToVendor(itemId: String, quantity: Int) {
+1368:         val characterId = _currentCharacterId.value ?: return
+1369:         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+1370:         val realInventory = inventoryService.inventoryFor(characterId)
+1371:         if (realInventory.quantityOf(itemId) < quantity) return
+1372:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
+1373: 
+1374:         realInventory.removeItem(itemId, quantity)
+1375:         refreshInventory()
+1376: 
+1377:         viewModelScope.launch {
+1378:             val result = SupabaseMarketRepository.sellToVendor(supabaseCharacterId, itemId, quantity, payoutPerUnit)
+1379:             result.onFailure {
+1380:                 _marketActionError.value = it.message ?: it.toString()
+1381:                 realInventory.addItem(itemId, quantity)
+1382:                 refreshInventory()
+1383:             }
+1384:             result.onSuccess {
+1385:                 _marketActionError.value = null
+1386:                 refreshCurrency()
+1387:             }
+1388:         }
+1389:     }
+1390: }
+1391: 
 
---- TERM: sellItemToVendor ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1367]
-       1362:                 refreshMyOrders()
-       1363:             }
-       1364:         }
-       1365:     }
-       1366: 
-    >> 1367:     fun sellItemToVendor(itemId: String, quantity: Int) {
-       1368:         val characterId = _currentCharacterId.value ?: return
-       1369:         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-       1370:         val realInventory = inventoryService.inventoryFor(characterId)
-       1371:         if (realInventory.quantityOf(itemId) < quantity) return
-       1372:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:842]
-       837:                                         myBuyOrders = myBuyOrdersUi,
-       838:                                         mySellOrders = mySellOrdersUi,
-       839:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
-       840:                                         vendorSellableItems = inventoryItems,
-       841:                                         onSellToVendor = { sellItemId, quantity ->
-    >> 842:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
-       843:                                         }
-       844:                                     )
-       845:                                 }
-       846:                             }
-       847: 
+--- app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt :: from 'private fun SellToVendorTab' ---
+243: private fun SellToVendorTab(items: List<InventoryItemSummary>, onSell: (String, Int) -> Unit) {
+244:     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+245:         items(items) { item ->
+246:             VendorItemRow(item, onSell)
+247:         }
+248:     }
+249: }
+250: 
+251: @Composable
+252: private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
+253:     var quantityText by remember(item.itemId, item.quantity) { mutableStateOf(item.quantity.toString()) }
+254:     val enteredQuantity = quantityText.toIntOrNull()
+255:     val isValidQuantity = enteredQuantity != null && enteredQuantity in 1..item.quantity
+256: 
+257:     Column(
+258:         modifier = Modifier
+259:             .fillMaxWidth()
+260:             .clip(RoundedCornerShape(12.dp))
+261:             .background(MaterialTheme.colorScheme.surface)
+262:             .padding(14.dp)
+263:     ) {
+264:         Text(
+265:             text = item.displayName,
+266:             style = MaterialTheme.typography.titleMedium,
+267:             maxLines = 1,
+268:             softWrap = false,
+269:             overflow = TextOverflow.Ellipsis
+270:         )
+271:         Text(
+272:             text = "x" + item.quantity + " — " + item.npcValuePerUnit + " each",
+273:             style = MaterialTheme.typography.labelSmall,
+274:             maxLines = 1,
+275:             softWrap = false,
+276:             overflow = TextOverflow.Ellipsis
+277:         )
+278:         Spacer(modifier = Modifier.height(10.dp))
+279:         Row(
+280:             horizontalArrangement = Arrangement.spacedBy(8.dp),
+281:             verticalAlignment = Alignment.CenterVertically
+282:         ) {
+283:             OutlinedTextField(
+284:                 value = quantityText,
+285:                 onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
+286:                 modifier = Modifier.width(56.dp),
+287:                 singleLine = true,
+288:                 textStyle = MaterialTheme.typography.bodyMedium,
+289:                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+290:             )
+291:             Button(
+292:                 onClick = { enteredQuantity?.let { onSell(item.itemId, it) } },
 
---- TERM: onSellToVendor ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:841]
-       836:                                         onItemSelected = { selectedMarketItemId = it },
-       837:                                         myBuyOrders = myBuyOrdersUi,
-       838:                                         mySellOrders = mySellOrdersUi,
-       839:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
-       840:                                         vendorSellableItems = inventoryItems,
-    >> 841:                                         onSellToVendor = { sellItemId, quantity ->
-       842:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
-       843:                                         }
-       844:                                     )
-       845:                                 }
-       846:                             }
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:70]
+=== TERM SEARCH (whole repo, +/-6 lines context) ===
+
+--- TERM: enum class MarketTab ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:26]
+       20: // MARKET SCREENS
+       21: // Three separate screens (Browse, My Orders, Sell to Vendor),
+       22: // navigated via top buttons. Cosmetic-only price warning on
+       23: // order placement -- no backend validation tied to it.
+       24: // =========================================================
+       25: 
+    >> 26: enum class MarketTab { BROWSE, MY_ORDERS, SELL_TO_VENDOR }
+       27: 
+       28: data class MarketListingSummary(
+       29:     val itemId: String,
+       30:     val displayName: String,
+       31:     val bestBuyPrice: Long?,   // highest current buy order, null if none
+       32:     val bestBuyQuantity: Int?, // total quantity available at bestBuyPrice
+
+--- TERM: VendorItemRow ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:246]
+       240: // ---------------- Sell to Vendor ----------------
+       241: 
+       242: @Composable
+       243: private fun SellToVendorTab(items: List<InventoryItemSummary>, onSell: (String, Int) -> Unit) {
+       244:     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+       245:         items(items) { item ->
+    >> 246:             VendorItemRow(item, onSell)
+       247:         }
+       248:     }
+       249: }
+       250: 
+       251: @Composable
+       252: private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:252]
+       246:             VendorItemRow(item, onSell)
+       247:         }
+       248:     }
+       249: }
+       250: 
+       251: @Composable
+    >> 252: private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
+       253:     var quantityText by remember(item.itemId, item.quantity) { mutableStateOf(item.quantity.toString()) }
+       254:     val enteredQuantity = quantityText.toIntOrNull()
+       255:     val isValidQuantity = enteredQuantity != null && enteredQuantity in 1..item.quantity
+       256: 
+       257:     Column(
+       258:         modifier = Modifier
+
+--- TERM: InventoryItemSummary ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:54]
+       48:     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+       49:     prefs.edit().putString(KEY_INVENTORY_VIEW_MODE, mode.name).apply()
+       50: }
+       51: 
+       52: enum class InventoryCategory { WEAPON, ARMOR, ACCESSORY, TOOL, MATERIAL, CONSUMABLE }
+       53: 
+    >> 54: data class InventoryItemSummary(
+       55:     val itemId: String,
+       56:     val displayName: String,
+       57:     val category: InventoryCategory,
+       58:     val quantity: Int,
+       59:     val isEquippable: Boolean,
+       60:     val isConsumable: Boolean,
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:67]
+       61:     val npcValuePerUnit: Long,
+       62:     val statsDescription: String? = null // e.g. "ATK +5, ACC +10" -- only for equippable items
+       63: )
+       64: 
+       65: @Composable
+       66: fun InventoryScreen(
+    >> 67:     items: List<InventoryItemSummary>,
+       68:     onOpenEquipment: () -> Unit,
+       69:     onOpenLoadout: () -> Unit,
+       70:     onUseItem: (String) -> Unit,
+       71:     onSellOnMarket: (String) -> Unit,
+       72:     onEquipItem: (String) -> Unit,
+       73:     canEquip: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canEquip, lockReasonIfNot)
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:73]
+       67:     items: List<InventoryItemSummary>,
+       68:     onOpenEquipment: () -> Unit,
+       69:     onOpenLoadout: () -> Unit,
+       70:     onUseItem: (String) -> Unit,
+       71:     onSellOnMarket: (String) -> Unit,
+       72:     onEquipItem: (String) -> Unit,
+    >> 73:     canEquip: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canEquip, lockReasonIfNot)
+       74:     modifier: Modifier = Modifier
+       75: ) {
+       76:     val context = LocalContext.current
+       77:     var viewMode by remember { mutableStateOf(loadSavedInventoryViewMode(context)) }
+       78:     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
+       79: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:78]
+       72:     onEquipItem: (String) -> Unit,
+       73:     canEquip: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canEquip, lockReasonIfNot)
+       74:     modifier: Modifier = Modifier
+       75: ) {
+       76:     val context = LocalContext.current
+       77:     var viewMode by remember { mutableStateOf(loadSavedInventoryViewMode(context)) }
+    >> 78:     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
+       79: 
+       80:     val grouped = remember(items) {
+       81:         InventoryCategory.values().mapNotNull { category ->
+       82:             val categoryItems = items.filter { it.category == category }
+       83:             if (categoryItems.isEmpty()) null else category to categoryItems
+       84:         }
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:151]
+       145:         )
+       146:     }
+       147: }
+       148: 
+       149: @Composable
+       150: private fun InventoryListView(
+    >> 151:     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
+       152:     onItemSelected: (InventoryItemSummary) -> Unit
+       153: ) {
+       154:     LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+       155:         grouped.forEach { (category, categoryItems) ->
+       156:             item { CategoryHeader(category.name) }
+       157:             items(categoryItems) { invItem ->
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:152]
+       146:     }
+       147: }
+       148: 
+       149: @Composable
+       150: private fun InventoryListView(
+       151:     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
+    >> 152:     onItemSelected: (InventoryItemSummary) -> Unit
+       153: ) {
+       154:     LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+       155:         grouped.forEach { (category, categoryItems) ->
+       156:             item { CategoryHeader(category.name) }
+       157:             items(categoryItems) { invItem ->
+       158:                 ItemListRow(invItem, onClick = { onItemSelected(invItem) })
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:166]
+       160:         }
+       161:     }
+       162: }
+       163: 
+       164: @Composable
+       165: private fun InventoryGridView(
+    >> 166:     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
+       167:     onItemSelected: (InventoryItemSummary) -> Unit
+       168: ) {
+       169:     LazyVerticalGrid(
+       170:         columns = GridCells.Fixed(3),
+       171:         verticalArrangement = Arrangement.spacedBy(10.dp),
+       172:         horizontalArrangement = Arrangement.spacedBy(10.dp)
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:167]
+       161:     }
+       162: }
+       163: 
+       164: @Composable
+       165: private fun InventoryGridView(
+       166:     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
+    >> 167:     onItemSelected: (InventoryItemSummary) -> Unit
+       168: ) {
+       169:     LazyVerticalGrid(
+       170:         columns = GridCells.Fixed(3),
+       171:         verticalArrangement = Arrangement.spacedBy(10.dp),
+       172:         horizontalArrangement = Arrangement.spacedBy(10.dp)
+       173:     ) {
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:193]
+       187:         style = MaterialTheme.typography.labelSmall,
+       188:         modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+       189:     )
+       190: }
+       191: 
+       192: @Composable
+    >> 193: private fun ItemListRow(item: InventoryItemSummary, onClick: () -> Unit) {
+       194:     Row(
+       195:         modifier = Modifier
+       196:             .fillMaxWidth()
+       197:             .clip(RoundedCornerShape(12.dp))
+       198:             .background(MaterialTheme.colorScheme.surface)
+       199:             .clickable { onClick() }
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:210]
+       204:         Text(text = item.displayName, style = MaterialTheme.typography.titleMedium)
+       205:         Text(text = "x" + item.quantity, style = MaterialTheme.typography.labelSmall)
+       206:     }
+       207: }
+       208: 
+       209: @Composable
+    >> 210: private fun ItemGridTile(item: InventoryItemSummary, onClick: () -> Unit) {
+       211:     Column(
+       212:         modifier = Modifier
+       213:             .clip(RoundedCornerShape(12.dp))
+       214:             .background(MaterialTheme.colorScheme.surface)
+       215:             .clickable { onClick() }
+       216:             .padding(12.dp)
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:228]
+       222:         Text(text = "x" + item.quantity, style = MaterialTheme.typography.titleMedium)
+       223:     }
+       224: }
+       225: 
+       226: @Composable
+       227: private fun ItemActionSheet(
+    >> 228:     item: InventoryItemSummary,
+       229:     canEquip: Pair<Boolean, String?>,
+       230:     onUse: () -> Unit,
+       231:     onSell: () -> Unit,
+       232:     onEquip: () -> Unit,
+       233:     onDismiss: () -> Unit
+       234: ) {
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:251]
+       245:     ItemCategory.COSMETIC -> InventoryCategory.MATERIAL
+       246: }
+       247: 
+       248: private fun buildInventoryItemSummaries(
+       249:     entries: List<InventorySlotEntry>,
+       250:     vendorPayoutFor: (String) -> Long
+    >> 251: ): List<InventoryItemSummary> {
+       252:     return entries.map { entry ->
+       253:         val definition = ItemCatalog.find(entry.itemId)
+       254:         if (definition != null) {
+       255:             val statsText = if (!definition.stats.isAllZero()) {
+       256:                 listOfNotNull(
+       257:                     definition.stats.attackBonus.takeIf { it != 0 }?.let { "ATK +" + it },
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:265]
+       259:                     definition.stats.maxHitBonus.takeIf { it != 0 }?.let { "Max Hit +" + it },
+       260:                     definition.stats.defenseBonus.takeIf { it != 0 }?.let { "DEF +" + it },
+       261:                     definition.stats.strengthBonus.takeIf { it != 0 }?.let { "STR +" + it }
+       262:                 ).joinToString(", ")
+       263:             } else null
+       264: 
+    >> 265:             InventoryItemSummary(
+       266:                 itemId = entry.itemId,
+       267:                 displayName = definition.name,
+       268:                 category = mapItemCategory(definition.category),
+       269:                 quantity = entry.quantity,
+       270:                 isEquippable = definition.equipSlot != null,
+       271:                 isConsumable = definition.category == ItemCategory.CONSUMABLE,
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:277]
+       271:                 isConsumable = definition.category == ItemCategory.CONSUMABLE,
+       272:                 npcValuePerUnit = vendorPayoutFor(entry.itemId),
+       273:                 statsDescription = statsText
+       274:             )
+       275:         } else {
+       276:             // Not yet defined in ItemCatalog (e.g. some gathered materials) -- graceful fallback.
+    >> 277:             InventoryItemSummary(
+       278:                 itemId = entry.itemId,
+       279:                 displayName = entry.itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } },
+       280:                 category = InventoryCategory.MATERIAL,
+       281:                 quantity = entry.quantity,
+       282:                 isEquippable = false,
+       283:                 isConsumable = false,
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:490]
+       484:     LaunchedEffect(combatViewData) {
+       485:         if (combatViewData != null && combatScreenState == CombatScreenState.ZoneSelect) {
+       486:             combatScreenState = CombatScreenState.InZone
+       487:         }
+       488:     }
+       489: 
+    >> 490:     fun canEquip(item: InventoryItemSummary): Pair<Boolean, String?> {
+       491:         if (item.category == InventoryCategory.TOOL) return true to null
+       492:         val locked = combatViewData?.viewState == CombatViewState.IN_COMBAT
+       493:         return if (locked) false to "Locked during combat" else true to null
+       494:     }
+       495: 
+       496:     val lockedEquipSlots = remember(combatViewData) {
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:69]
+       63:     onItemSelected: (String) -> Unit,
+       64:     // My Orders
        65:     myBuyOrders: List<MarketOrderSummary>,
        66:     mySellOrders: List<MarketOrderSummary>,
        67:     onCancelOrder: (String) -> Unit,
        68:     // Sell to Vendor
-       69:     vendorSellableItems: List<InventoryItemSummary>,
-    >> 70:     onSellToVendor: (String, Int) -> Unit,
+    >> 69:     vendorSellableItems: List<InventoryItemSummary>,
+       70:     onSellToVendor: (String, Int) -> Unit,
        71:     modifier: Modifier = Modifier
        72: ) {
        73:     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
        74:         Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
        75:         Spacer(modifier = Modifier.height(12.dp))
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:103]
-       98:         Spacer(modifier = Modifier.height(16.dp))
-       99: 
-       100:         when (currentTab) {
-       101:             MarketTab.BROWSE -> BrowseTab(listings, showingBuyOrders, onToggleBrowseMode, onItemSelected)
-       102:             MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder)
-    >> 103:             MarketTab.SELL_TO_VENDOR -> SellToVendorTab(vendorSellableItems, onSellToVendor)
-       104:         }
-       105:     }
-       106: }
-       107: 
-       108: @Composable
-
---- TERM: SellToVendor ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:841]
-       836:                                         onItemSelected = { selectedMarketItemId = it },
-       837:                                         myBuyOrders = myBuyOrdersUi,
-       838:                                         mySellOrders = mySellOrdersUi,
-       839:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
-       840:                                         vendorSellableItems = inventoryItems,
-    >> 841:                                         onSellToVendor = { sellItemId, quantity ->
-       842:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
-       843:                                         }
-       844:                                     )
-       845:                                 }
-       846:                             }
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:70]
-       65:     myBuyOrders: List<MarketOrderSummary>,
-       66:     mySellOrders: List<MarketOrderSummary>,
-       67:     onCancelOrder: (String) -> Unit,
-       68:     // Sell to Vendor
-       69:     vendorSellableItems: List<InventoryItemSummary>,
-    >> 70:     onSellToVendor: (String, Int) -> Unit,
-       71:     modifier: Modifier = Modifier
-       72: ) {
-       73:     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
-       74:         Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
-       75:         Spacer(modifier = Modifier.height(12.dp))
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:103]
-       98:         Spacer(modifier = Modifier.height(16.dp))
-       99: 
-       100:         when (currentTab) {
-       101:             MarketTab.BROWSE -> BrowseTab(listings, showingBuyOrders, onToggleBrowseMode, onItemSelected)
-       102:             MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder)
-    >> 103:             MarketTab.SELL_TO_VENDOR -> SellToVendorTab(vendorSellableItems, onSellToVendor)
-       104:         }
-       105:     }
-       106: }
-       107: 
-       108: @Composable
   [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:243]
+       237:     }
        238: }
        239: 
        240: // ---------------- Sell to Vendor ----------------
@@ -174,452 +365,92 @@
        246:             VendorItemRow(item, onSell)
        247:         }
        248:     }
+       249: }
+  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:252]
+       246:             VendorItemRow(item, onSell)
+       247:         }
+       248:     }
+       249: }
+       250: 
+       251: @Composable
+    >> 252: private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
+       253:     var quantityText by remember(item.itemId, item.quantity) { mutableStateOf(item.quantity.toString()) }
+       254:     val enteredQuantity = quantityText.toIntOrNull()
+       255:     val isValidQuantity = enteredQuantity != null && enteredQuantity in 1..item.quantity
+       256: 
+       257:     Column(
+       258:         modifier = Modifier
 
---- TERM: VendorScreen ---
+--- TERM: data class InventoryItemSummary ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:54]
+       48:     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+       49:     prefs.edit().putString(KEY_INVENTORY_VIEW_MODE, mode.name).apply()
+       50: }
+       51: 
+       52: enum class InventoryCategory { WEAPON, ARMOR, ACCESSORY, TOOL, MATERIAL, CONSUMABLE }
+       53: 
+    >> 54: data class InventoryItemSummary(
+       55:     val itemId: String,
+       56:     val displayName: String,
+       57:     val category: InventoryCategory,
+       58:     val quantity: Int,
+       59:     val isEquippable: Boolean,
+       60:     val isConsumable: Boolean,
 
---- TERM: MarketScreen ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:830]
-       825:                                             selectedMarketItemId = null
-       826:                                             prefilledSellQuantity = null
-       827:                                         }
-       828:                                     )
-       829:                                 } else {
-    >> 830:                                     MarketScreen(
-       831:                                         currentTab = marketTab,
-       832:                                         onTabSelected = { marketTab = it },
-       833:                                         listings = marketListingsUi,
-       834:                                         showingBuyOrders = showingBuyOrders,
-       835:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:56]
-       51:     val bestSellPrice: Long?,
-       52:     val recentTrades: List<PriceHistoryRow>
-       53: )
-       54: 
-       55: @Composable
-    >> 56: fun MarketScreen(
-       57:     currentTab: MarketTab,
-       58:     onTabSelected: (MarketTab) -> Unit,
-       59:     // Browse
-       60:     listings: List<MarketListingSummary>,
-       61:     showingBuyOrders: Boolean,
-
---- TERM: fun sellToVendor ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:287]
-       282:     fun vendorPayoutPerUnit(itemId: String): Long {
-       283:         val baseValue = ItemCatalog.baseValueFor(itemId)
-       284:         return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
-       285:     }
-       286: 
-    >> 287:     fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
-       288:         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
-       289:         val account = accounts.getValue(characterId)
-       290:         val item = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
-       291: 
-       292:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
-  [./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt:73]
-       68:         client.postgrest.rpc("market_cancel_order", buildJsonObject {
-       69:             put("p_order_id", orderId)
-       70:         }).decodeAs<MarketCancelRpcResult>()
-       71:     }
-       72: 
-    >> 73:     suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching {
-       74:         client.postgrest.rpc("market_sell_to_vendor", buildJsonObject {
-       75:             put("p_character_id", characterId)
-       76:             put("p_item_id", itemId)
-       77:             put("p_quantity", quantity)
-       78:             put("p_payout_per_unit", payoutPerUnit)
-
---- TERM: market_sell_to_vendor ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt:74]
-       69:             put("p_order_id", orderId)
-       70:         }).decodeAs<MarketCancelRpcResult>()
-       71:     }
-       72: 
-       73:     suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching {
-    >> 74:         client.postgrest.rpc("market_sell_to_vendor", buildJsonObject {
-       75:             put("p_character_id", characterId)
-       76:             put("p_item_id", itemId)
-       77:             put("p_quantity", quantity)
-       78:             put("p_payout_per_unit", payoutPerUnit)
-       79:         }).decodeAs<Long>()
-
---- TERM: baseValueFor ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:283]
-       278:     }
-       279: 
-       280:     // ---------------- NPC vendor fallback ----------------
-       281: 
-       282:     fun vendorPayoutPerUnit(itemId: String): Long {
-    >> 283:         val baseValue = ItemCatalog.baseValueFor(itemId)
-       284:         return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
-       285:     }
-       286: 
-       287:     fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
-       288:         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1372]
-       1367:     fun sellItemToVendor(itemId: String, quantity: Int) {
-       1368:         val characterId = _currentCharacterId.value ?: return
-       1369:         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-       1370:         val realInventory = inventoryService.inventoryFor(characterId)
-       1371:         if (realInventory.quantityOf(itemId) < quantity) return
-    >> 1372:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
-       1373: 
-       1374:         realInventory.removeItem(itemId, quantity)
-       1375:         refreshInventory()
-       1376: 
-       1377:         viewModelScope.launch {
-  [./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt:96]
-       91: 
-       92:     fun find(itemId: String): ItemDefinition? = items.find { it.id == itemId }
-       93:     fun findByNameAndRarity(name: String, rarity: Rarity): ItemDefinition? =
-       94:         items.find { it.name == name && it.rarity == rarity }
-       95: 
-    >> 96:     fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
-       97:         "oak_log" -> 8L
-       98:         else -> 5L
-       99:     }
-       100: }
-
---- TERM: currencyBalance ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:14]
-       9: 
-       10: class PlayerEconomyAccount(
-       11:     val characterId: String,
-       12:     val accountId: String,
-       13:     var isMainCharacter: Boolean,
-    >> 14:     var currencyBalance: Long,
-       15:     val inventory: MutableMap<String, Int> = mutableMapOf()
-       16: ) {
-       17:     fun addItem(itemId: String, qty: Int) {
-       18:         inventory[itemId] = (inventory[itemId] ?: 0) + qty
-       19:     }
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:148]
-       143:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
-       144:         if (pricePerUnit <= 0) return ServiceResult.Failure("Price must be positive.")
-       145:         if (ItemCatalog.find(itemId) == null) return ServiceResult.Failure("Unknown item.")
-       146: 
-       147:         val totalCost = pricePerUnit * quantity
-    >> 148:         if (account.currencyBalance < totalCost) {
-       149:             return ServiceResult.Failure("Insufficient currency to escrow this order.")
-       150:         }
-       151: 
-       152:         account.currencyBalance -= totalCost
-       153: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:152]
-       147:         val totalCost = pricePerUnit * quantity
-       148:         if (account.currencyBalance < totalCost) {
-       149:             return ServiceResult.Failure("Insufficient currency to escrow this order.")
-       150:         }
-       151: 
-    >> 152:         account.currencyBalance -= totalCost
-       153: 
-       154:         val order = MarketOrder(
-       155:             characterId = characterId,
-       156:             itemId = itemId,
-       157:             side = OrderSide.BUY,
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:230]
-       225:         val sellerProceeds = grossAmount - tax
-       226: 
-       227:         val buyerEscrowedAtOriginalPrice = buyOrder.pricePerUnit * quantity
-       228:         val refundToBuyer = buyerEscrowedAtOriginalPrice - grossAmount
-       229:         if (refundToBuyer > 0) {
-    >> 230:             buyerAccount.currencyBalance += refundToBuyer
-       231:         }
-       232: 
-       233:         sellerAccount.currencyBalance += sellerProceeds
-       234:         buyerAccount.addItem(buyOrder.itemId, quantity)
-       235: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:233]
-       228:         val refundToBuyer = buyerEscrowedAtOriginalPrice - grossAmount
-       229:         if (refundToBuyer > 0) {
-       230:             buyerAccount.currencyBalance += refundToBuyer
-       231:         }
-       232: 
-    >> 233:         sellerAccount.currencyBalance += sellerProceeds
-       234:         buyerAccount.addItem(buyOrder.itemId, quantity)
-       235: 
-       236:         buyOrder.remainingQuantity -= quantity
-       237:         sellOrder.remainingQuantity -= quantity
-       238:         buyOrder.status = if (buyOrder.remainingQuantity == 0) OrderStatus.FILLED else OrderStatus.PARTIALLY_FILLED
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:270]
-       265:         }
-       266: 
-       267:         val account = accounts.getValue(order.characterId)
-       268:         if (order.side == OrderSide.BUY) {
-       269:             val refund = order.pricePerUnit * order.remainingQuantity
-    >> 270:             account.currencyBalance += refund
-       271:         } else {
-       272:             account.addItem(order.itemId, order.remainingQuantity)
-       273:         }
-       274: 
-       275:         order.remainingQuantity = 0
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:298]
-       293:         if (!account.removeItem(itemId, quantity)) {
-       294:             return ServiceResult.Failure("Insufficient item quantity to sell.")
-       295:         }
-       296: 
-       297:         val payout = vendorPayoutPerUnit(item.id) * quantity
-    >> 298:         account.currencyBalance += payout
-       299:         monitoring.recordVendorPayout(payout)
-       300: 
-       301:         return ServiceResult.Success(payout)
-       302:     }
-       303: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:340]
-       335:     fun exportAccounts(): List<PlayerEconomyAccountExport> = accounts.values.map {
-       336:         PlayerEconomyAccountExport(
-       337:             characterId = it.characterId,
-       338:             accountId = it.accountId,
-       339:             isMainCharacter = it.isMainCharacter,
-    >> 340:             currencyBalance = it.currencyBalance,
-       341:             inventory = it.inventory.toMap()
-       342:         )
-       343:     }
-       344: 
-       345:     fun restoreAccount(export: PlayerEconomyAccountExport) {
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:350]
-       345:     fun restoreAccount(export: PlayerEconomyAccountExport) {
-       346:         accounts[export.characterId] = PlayerEconomyAccount(
-       347:             characterId = export.characterId,
-       348:             accountId = export.accountId,
-       349:             isMainCharacter = export.isMainCharacter,
-    >> 350:             currencyBalance = export.currencyBalance,
-       351:             inventory = export.inventory.toMutableMap()
-       352:         )
-       353:     }
-       354: 
-       355:     fun exportOrders(): List<MarketOrderExport> = (buyOrders + sellOrders).map {
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:411]
-       406: 
-       407: data class PlayerEconomyAccountExport(
-       408:     val characterId: String,
-       409:     val accountId: String,
-       410:     val isMainCharacter: Boolean,
-    >> 411:     val currencyBalance: Long,
-       412:     val inventory: Map<String, Int>
-       413: )
-       414: 
-       415: data class MarketOrderExport(
-       416:     val id: String,
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:156]
-       151:         marketAccounts.forEach { acc ->
-       152:             val obj = JSONObject()
-       153:             obj.put("characterId", acc.characterId)
-       154:             obj.put("accountId", acc.accountId)
-       155:             obj.put("isMainCharacter", acc.isMainCharacter)
-    >> 156:             obj.put("currencyBalance", acc.currencyBalance)
-       157:             val inventoryObj = JSONObject()
-       158:             acc.inventory.forEach { (itemId, qty) -> inventoryObj.put(itemId, qty) }
-       159:             obj.put("inventory", inventoryObj)
-       160:             marketAccountsArray.put(obj)
-       161:         }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:323]
-       318:             marketAccounts.add(
-       319:                 PlayerEconomyAccountExport(
-       320:                     characterId = obj.getString("characterId"),
-       321:                     accountId = obj.getString("accountId"),
-       322:                     isMainCharacter = obj.getBoolean("isMainCharacter"),
-    >> 323:                     currencyBalance = obj.getLong("currencyBalance"),
-       324:                     inventory = inventory
-       325:                 )
-       326:             )
-       327:         }
-       328: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1051]
-       1046:             marketService.registerAccount(
-       1047:                 PlayerEconomyAccount(
-       1048:                     characterId = characterId,
-       1049:                     accountId = _currentAccountId.value ?: "",
-       1050:                     isMainCharacter = character?.isMainCharacter ?: true,
-    >> 1051:                     currencyBalance = 0L
-       1052:                 )
-       1053:             )
-       1054:         }
-       1055:         refreshCurrency()
-       1056:         refreshMarketListings()
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1267]
-       1262:     fun refreshCurrency() {
-       1263:         val accountId = _currentAccountId.value ?: return
-       1264:         val account = accountService.accountById(accountId) ?: return
-       1265:         val characterId = _currentSupabaseCharacterId.value ?: return
-       1266:         viewModelScope.launch {
-    >> 1267:             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
-       1268:             _currency.value = gold to account.premiumCurrency
-       1269:         }
-       1270:     }
-       1271: 
-       1272:     // =========================================================
-  [./app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:210]
-       205:     private val creationCost: Long = 100_000
-       206: 
-       207:     private val failedVoteCooldown: Duration = Duration.ofDays(7)
-       208:     private val sameTargetVoteCooldown: Duration = Duration.ofDays(14)
-       209: 
-    >> 210:     fun createGuild(accountId: String, founderCharacterId: String, name: String, currencyBalance: Long): ServiceResult<Guild> {
-       211:         val isFree = !accountsWithFreeCreationUsed.contains(accountId)
-       212:         if (!isFree && currencyBalance < creationCost) {
-       213:             return ServiceResult.Failure("Guild creation costs " + creationCost + " currency; insufficient balance.")
-       214:         }
-       215:         if (name.isBlank() || name.length < 3 || name.length > 24) {
-  [./app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt:212]
-       207:     private val failedVoteCooldown: Duration = Duration.ofDays(7)
-       208:     private val sameTargetVoteCooldown: Duration = Duration.ofDays(14)
-       209: 
-       210:     fun createGuild(accountId: String, founderCharacterId: String, name: String, currencyBalance: Long): ServiceResult<Guild> {
-       211:         val isFree = !accountsWithFreeCreationUsed.contains(accountId)
-    >> 212:         if (!isFree && currencyBalance < creationCost) {
-       213:             return ServiceResult.Failure("Guild creation costs " + creationCost + " currency; insufficient balance.")
-       214:         }
-       215:         if (name.isBlank() || name.length < 3 || name.length > 24) {
-       216:             return ServiceResult.Failure("Guild name must be between 3 and 24 characters.")
-       217:         }
-  [./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt:82]
-       77:             put("p_quantity", quantity)
-       78:             put("p_payout_per_unit", payoutPerUnit)
-       79:         }).decodeAs<Long>()
-       80:     }
-       81: 
-    >> 82:     suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
-       83:         client.postgrest.rpc("market_currency_balance", buildJsonObject {
-       84:             put("p_character_id", characterId)
-       85:         }).decodeAs<Long>()
-       86:     }
-       87: 
-
---- TERM: fun refreshCurrency ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1262]
-       1257:             )
-       1258:             else -> null
-       1259:         }
-       1260:     }
-       1261: 
-    >> 1262:     fun refreshCurrency() {
-       1263:         val accountId = _currentAccountId.value ?: return
-       1264:         val account = accountService.accountById(accountId) ?: return
-       1265:         val characterId = _currentSupabaseCharacterId.value ?: return
-       1266:         viewModelScope.launch {
-       1267:             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
-
---- TERM: MarketService ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:113]
-       108: // MARKET SERVICE
-       109: // (ServiceResult now comes from SharedTypes.kt. Item validation
-       110: //  now uses the shared ItemCatalog instead of a separate MarketItem list.)
-       111: // =========================================================
-       112: 
-    >> 113: class MarketService(private val monitoring: EconomyMonitoringService) {
-       114: 
-       115:     private val accounts: MutableMap<String, PlayerEconomyAccount> = mutableMapOf()
-       116:     private val buyOrders: MutableList<MarketOrder> = mutableListOf()
-       117:     private val sellOrders: MutableList<MarketOrder> = mutableListOf()
-       118:     private val priceHistory: MutableList<PriceHistoryEntry> = mutableListOf()
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:79]
+--- TERM: val inventoryItems ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:285]
+       279:         val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+       280:         for (i in 0 until lastSeenArray.length()) {
+       281:             val obj = lastSeenArray.getJSONObject(i)
+       282:             lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+       283:         }
+       284: 
+    >> 285:         val inventoryItems = mutableListOf<InventorySlotExport>()
+       286:         val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+       287:         for (i in 0 until inventoryArray.length()) {
+       288:             val obj = inventoryArray.getJSONObject(i)
+       289:             inventoryItems.add(
+       290:                 InventorySlotExport(
+       291:                     characterId = obj.getString("characterId"),
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:392]
+       386:     val accounts: List<AccountExport>,
+       387:     val characters: List<CharacterExport>,
+       388:     val skills: List<SkillExport>,
+       389:     val skillingQueues: List<SkillingQueueExport>,
+       390:     val craftingQueues: List<CraftingQueueExport>,
+       391:     val lastSeen: List<LastSeenExport>,
+    >> 392:     val inventoryItems: List<InventorySlotExport>,
+       393:     val equippedSlots: List<EquippedSlotExport>,
+       394:     val loadoutSettings: List<LoadoutSettingsExport>,
+       395:     val marketAccounts: List<PlayerEconomyAccountExport>,
+       396:     val marketOrders: List<MarketOrderExport>,
+       397:     val marketPriceHistory: List<PriceHistoryExport>
+       398: )
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:73]
+       67:     val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+       68: 
+       69:     private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+       70:     val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+       71: 
+       72:     private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+    >> 73:     val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
        74: 
        75:     private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
        76:     val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
        77: 
        78:     val economyMonitoring = EconomyMonitoringService()
-    >> 79:     val marketService = MarketService(economyMonitoring)
-       80:     val combatService = CombatService()
-       81: 
-       82:     // =========================================================
-       83:     // SUPABASE AUTH (guild/chat multiplayer only - local play never depends on this)
-       84:     // =========================================================
-
---- TERM: SupabaseMarketRepository ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1267]
-       1262:     fun refreshCurrency() {
-       1263:         val accountId = _currentAccountId.value ?: return
-       1264:         val account = accountService.accountById(accountId) ?: return
-       1265:         val characterId = _currentSupabaseCharacterId.value ?: return
-       1266:         viewModelScope.launch {
-    >> 1267:             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
-       1268:             _currency.value = gold to account.premiumCurrency
-       1269:         }
-       1270:     }
-       1271: 
-       1272:     // =========================================================
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1278]
-       1273:     // MARKET (server-side via Supabase - shared order book across all players)
-       1274:     // =========================================================
-       1275: 
-       1276:     fun refreshMarketListings() {
-       1277:         viewModelScope.launch {
-    >> 1278:             val listings = SupabaseMarketRepository.listings().getOrNull() ?: emptyList()
-       1279:             _marketListings.value = listings.map { MarketPriceSummary(it.itemId, it.bestBuyPrice, it.bestBuyQuantity, it.bestSellPrice, it.bestSellQuantity) }
-       1280:         }
-       1281:     }
-       1282: 
-       1283:     private fun MarketOrderRow.toDomain(): MarketOrder = MarketOrder(
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1298]
-       1293:     )
-       1294: 
-       1295:     fun refreshMyOrders() {
-       1296:         val characterId = _currentSupabaseCharacterId.value ?: return
-       1297:         viewModelScope.launch {
-    >> 1298:             val orders = SupabaseMarketRepository.myOrders(characterId).getOrNull()?.map { it.toDomain() } ?: emptyList()
-       1299:             _myBuyOrders.value = orders.filter { it.side == OrderSide.BUY }
-       1300:             _mySellOrders.value = orders.filter { it.side == OrderSide.SELL }
-       1301:         }
-       1302:     }
-       1303: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1308]
-       1303: 
-       1304:     fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
-       1305:         val characterId = _currentCharacterId.value ?: return
-       1306:         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-       1307:         viewModelScope.launch {
-    >> 1308:             val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
-       1309:             result.onFailure { _marketActionError.value = it.message ?: it.toString() }
-       1310:             result.onSuccess { order ->
-       1311:                 _marketActionError.value = null
-       1312:                 val filled = order.originalQuantity - order.remainingQuantity
-       1313:                 if (filled > 0) {
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1334]
-       1329: 
-       1330:         realInventory.removeItem(itemId, quantity)
-       1331:         refreshInventory()
-       1332: 
-       1333:         viewModelScope.launch {
-    >> 1334:             val result = SupabaseMarketRepository.placeSellOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
-       1335:             result.onFailure {
-       1336:                 _marketActionError.value = it.message ?: it.toString()
-       1337:                 realInventory.addItem(itemId, quantity)
-       1338:                 refreshInventory()
-       1339:             }
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1352]
-       1347:     }
-       1348: 
-       1349:     fun cancelMarketOrder(orderId: String) {
-       1350:         val characterId = _currentCharacterId.value ?: return
-       1351:         viewModelScope.launch {
-    >> 1352:             val result = SupabaseMarketRepository.cancelOrder(orderId)
-       1353:             result.onFailure { _marketActionError.value = it.message ?: it.toString() }
-       1354:             result.onSuccess { cancelled ->
-       1355:                 _marketActionError.value = null
-       1356:                 if (cancelled.side == "SELL" && cancelled.remainingQuantityBeforeCancel > 0) {
-       1357:                     inventoryService.inventoryFor(characterId).addItem(cancelled.itemId, cancelled.remainingQuantityBeforeCancel)
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1378]
-       1373: 
-       1374:         realInventory.removeItem(itemId, quantity)
-       1375:         refreshInventory()
-       1376: 
-       1377:         viewModelScope.launch {
-    >> 1378:             val result = SupabaseMarketRepository.sellToVendor(supabaseCharacterId, itemId, quantity, payoutPerUnit)
-       1379:             result.onFailure {
-       1380:                 _marketActionError.value = it.message ?: it.toString()
-       1381:                 realInventory.addItem(itemId, quantity)
-       1382:                 refreshInventory()
-       1383:             }
-  [./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt:46]
-       41:     val remainingQuantity: Int,
-       42:     val status: String,
-       43:     val createdAt: String
-       44: )
-       45: 
-    >> 46: object SupabaseMarketRepository {
-       47:     private val client get() = SupabaseClientProvider.client
-       48: 
-       49:     suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-       50:         client.postgrest.rpc("market_place_buy_order", buildJsonObject {
-       51:             put("p_character_id", characterId)
+       79:     val marketService = MarketService(economyMonitoring)
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:426]
+       420: 
+       421:     val allSkills by gameViewModel.skills.collectAsState()
+       422:     val zones = gameViewModel.zoneSummaries
+       423:     val trainingSkill by gameViewModel.trainingSkill.collectAsState()
+       424:     val trainingSkillLevel by gameViewModel.trainingSkillLevel.collectAsState()
+       425:     val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
+    >> 426:     val inventoryItems = remember(inventoryItemEntries) {
+       427:         buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
+       428:     }
+       429:     val inventoryQuantities = remember(inventoryItemEntries) {
+       430:         inventoryItemEntries.associate { it.itemId to it.quantity }
+       431:     }
+       432:     val equippedBackend by gameViewModel.equippedItems.collectAsState()
