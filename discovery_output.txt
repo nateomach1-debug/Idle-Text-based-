@@ -1,216 +1,51 @@
-
---- MarketScreen.kt header + top composable + tab dispatch: app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt lines 1-100 ---
-1: package com.yourname.idlerpg.ui.screens
-2: 
-3: import androidx.compose.foundation.background
-4: import androidx.compose.foundation.clickable
-5: import androidx.compose.foundation.layout.*
-6: import androidx.compose.foundation.lazy.LazyColumn
-7: import androidx.compose.foundation.lazy.items
-8: import androidx.compose.foundation.shape.RoundedCornerShape
-9: import androidx.compose.foundation.text.KeyboardOptions
-10: import androidx.compose.material3.*
-11: import androidx.compose.runtime.*
-12: import androidx.compose.ui.Alignment
-13: import androidx.compose.ui.Modifier
-14: import androidx.compose.ui.draw.clip
-15: import androidx.compose.ui.text.input.KeyboardType
-16: import androidx.compose.ui.text.style.TextOverflow
-17: import androidx.compose.ui.unit.dp
-18: 
-19: // =========================================================
-20: // MARKET SCREENS
-21: // Three separate screens (Browse, My Orders, Sell to Vendor),
-22: // navigated via top buttons. Cosmetic-only price warning on
-23: // order placement -- no backend validation tied to it.
-24: // =========================================================
-25: 
-26: enum class MarketTab { BROWSE, MY_ORDERS, SELL_TO_VENDOR }
-27: 
-28: data class MarketListingSummary(
-29:     val itemId: String,
-30:     val displayName: String,
-31:     val bestBuyPrice: Long?,   // highest current buy order, null if none
-32:     val bestBuyQuantity: Int?, // total quantity available at bestBuyPrice
-33:     val bestSellPrice: Long?,  // lowest current sell order, null if none
-34:     val bestSellQuantity: Int? // total quantity available at bestSellPrice
-35: )
-36: 
-37: data class MarketOrderSummary(
-38:     val orderId: String,
-39:     val itemId: String,
-40:     val displayName: String,
-41:     val pricePerUnit: Long,
-42:     val remainingQuantity: Int
-43: )
-44: 
-45: data class PriceHistoryRow(val pricePerUnit: Long, val quantity: Int, val timeAgo: String)
-46: 
-47: data class ItemOrderBookDetail(
-48:     val itemId: String,
-49:     val displayName: String,
-50:     val bestBuyPrice: Long?,
-51:     val bestSellPrice: Long?,
-52:     val recentTrades: List<PriceHistoryRow>
-53: )
-54: 
-55: @Composable
-56: fun MarketScreen(
-57:     currentTab: MarketTab,
-58:     onTabSelected: (MarketTab) -> Unit,
-59:     // Browse
-60:     listings: List<MarketListingSummary>,
-61:     showingBuyOrders: Boolean,
-62:     onToggleBrowseMode: () -> Unit,
-63:     onItemSelected: (String) -> Unit,
-64:     // My Orders
-65:     myBuyOrders: List<MarketOrderSummary>,
-66:     mySellOrders: List<MarketOrderSummary>,
-67:     onCancelOrder: (String) -> Unit,
-68:     // Sell to Vendor
-69:     vendorSellableItems: List<InventoryItemSummary>,
-70:     onSellToVendor: (String, Int) -> Unit,
-71:     modifier: Modifier = Modifier
-72: ) {
-73:     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
-74:         Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
-75:         Spacer(modifier = Modifier.height(12.dp))
-76: 
-77:         Row(
-78:             modifier = Modifier.fillMaxWidth(),
-79:             horizontalArrangement = Arrangement.spacedBy(8.dp)
-80:         ) {
-81:             MarketTabButton(
-82:                 label = "Browse",
-83:                 isSelected = currentTab == MarketTab.BROWSE,
-84:                 modifier = Modifier.weight(1f)
-85:             ) { onTabSelected(MarketTab.BROWSE) }
-86:             MarketTabButton(
-87:                 label = "Orders",
-88:                 isSelected = currentTab == MarketTab.MY_ORDERS,
-89:                 modifier = Modifier.weight(1f)
-90:             ) { onTabSelected(MarketTab.MY_ORDERS) }
-91:             MarketTabButton(
-92:                 label = "Vendor",
-93:                 isSelected = currentTab == MarketTab.SELL_TO_VENDOR,
-94:                 modifier = Modifier.weight(1f)
-95:             ) { onTabSelected(MarketTab.SELL_TO_VENDOR) }
-96:         }
-97: 
-98:         Spacer(modifier = Modifier.height(16.dp))
-99: 
 100:         when (currentTab) {
-
---- MainActivity.kt call site: app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt around 'MarketScreen(' ---
-  [match at line 830]
-       820:                                             if (side == OrderSideUi.BUY) {
-       821:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
-       822:                                             } else {
-       823:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
-       824:                                             }
-       825:                                             selectedMarketItemId = null
-       826:                                             prefilledSellQuantity = null
-       827:                                         }
-       828:                                     )
-       829:                                 } else {
-    >> 830:                                     MarketScreen(
-       831:                                         currentTab = marketTab,
-       832:                                         onTabSelected = { marketTab = it },
-       833:                                         listings = marketListingsUi,
-       834:                                         showingBuyOrders = showingBuyOrders,
-       835:                                         onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
-       836:                                         onItemSelected = { selectedMarketItemId = it },
-       837:                                         myBuyOrders = myBuyOrdersUi,
-       838:                                         mySellOrders = mySellOrdersUi,
-       839:                                         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
-       840:                                         vendorSellableItems = inventoryItems,
-       841:                                         onSellToVendor = { sellItemId, quantity ->
-       842:                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
-       843:                                         }
-       844:                                     )
-       845:                                 }
-       846:                             }
-       847: 
-       848:                             AppDestination.GUILD -> {
-       849:                                 val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
-       850:                                 val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
-       851:                                 val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
-       852: 
-       853:                                 LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
-       854:                                 LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
-       855:                                 LaunchedEffect(Unit) { gameViewModel.checkModeratorStatus() }
-       856:                                 val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
-       857:                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
-       858:                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
-       859:                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
-       860:                                 val debugChatError by gameViewModel.chatActionError.collectAsState()
-       861:                                 val debugMarketError by gameViewModel.marketActionError.collectAsState()
-       862:                                 var showDebugDialog by remember { mutableStateOf(false) }
-       863:                                 LaunchedEffect(debugAuthError, debugCharSyncError, debugMarketError) {
-       864:                                     if (debugAuthError != null || debugCharSyncError != null || debugChatError != null || debugMarketError != null) {
-       865:                                         showDebugDialog = true
-       866:                                     }
-       867:                                 }
-       868:                                 if (showDebugDialog) {
-       869:                                     androidx.compose.material3.AlertDialog(
-       870:                                         onDismissRequest = { showDebugDialog = false },
-       871:                                         title = { androidx.compose.material3.Text("Debug: Supabase Sync") },
-       872:                                         text = {
-       873:                                             androidx.compose.foundation.layout.Column {
-       874:                                                 androidx.compose.material3.Text("Auth: $debugAuthState")
-
---- GameViewModel.kt vendorSellableItems source: app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt around 'vendorSellableItems' ---
-!!! TERM NOT FOUND: vendorSellableItems
-
---- RecipeCatalog object header: app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt around 'object RecipeCatalog' ---
-  [match at line 26]
-       24: )
-       25: 
-    >> 26: object RecipeCatalog {
-       27:     val recipes = listOf(
-       28:         Recipe(
-       29:             outputItemId = "bronze_dagger",
-       30:             outputQuantity = 1,
-       31:             ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
-       32:             skillRequired = "SMITHING",
-       33:             levelRequired = 5
-       34:         ),
-       35:         Recipe(
-       36:             outputItemId = "bronze_sword",
-       37:             outputQuantity = 1,
-       38:             ingredients = listOf(RecipeIngredient("bronze_bar", 1)),
-       39:             skillRequired = "SMITHING",
-       40:             levelRequired = 6
-
---- RecipeCatalog.forOutput + tail of recipes list: app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt around 'fun forOutput' ---
-  [match at line 1857]
-       1837:             ingredients = listOf(RecipeIngredient("amulet_u", 1), RecipeIngredient("zenyte", 1), RecipeIngredient("bowstring", 1)),
-       1838:             skillRequired = "CRAFTING",
-       1839:             levelRequired = 75
-       1840:         ),
-       1841:         Recipe(
-       1842:             outputItemId = "enchanted_circlet",
-       1843:             outputQuantity = 1,
-       1844:             ingredients = listOf(RecipeIngredient("gold_bar", 1), RecipeIngredient("dragonstone", 1)),
-       1845:             skillRequired = "CRAFTING",
-       1846:             levelRequired = 80
-       1847:         ),
-       1848:         Recipe(
-       1849:             outputItemId = "celestial_diadem",
-       1850:             outputQuantity = 1,
-       1851:             ingredients = listOf(RecipeIngredient("amulet_u", 1), RecipeIngredient("celestial_crystal", 1), RecipeIngredient("bowstring", 1)),
-       1852:             skillRequired = "CRAFTING",
-       1853:             levelRequired = 90
-       1854:         )
-       1855:     )
-       1856: 
-    >> 1857:     fun forOutput(itemId: String): Recipe? = recipes.find { it.outputItemId == itemId }
-       1858: }
-       1859: 
-       1860: // =========================================================
-       1861: // CRAFTING SUCCESS CALCULATION
-       1862: // =========================================================
-       1863: 
-       1864: object CraftingSuccessCalculator {
-       1865:     private const val BASE_SUCCESS_PERCENT = 80.0
-       1866:     private const val PERCENT_PER_LEVEL_ABOVE = 1.0
+101:             MarketTab.BROWSE -> BrowseTab(listings, showingBuyOrders, onToggleBrowseMode, onItemSelected)
+102:             MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder)
+103:             MarketTab.SELL_TO_VENDOR -> SellToVendorTab(vendorSellableItems, onSellToVendor)
+104:         }
+105:     }
+106: }
+107: 
+108: @Composable
+109: private fun MarketTabButton(
+110:     label: String,
+111:     isSelected: Boolean,
+112:     modifier: Modifier = Modifier,
+113:     onClick: () -> Unit
+114: ) {
+115:     val tabPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+116:     if (isSelected) {
+117:         Button(onClick = onClick, modifier = modifier, contentPadding = tabPadding) {
+118:             Text(
+119:                 text = label,
+120:                 style = MaterialTheme.typography.labelMedium,
+121:                 maxLines = 1,
+122:                 softWrap = false,
+123:                 overflow = TextOverflow.Ellipsis
+124:             )
+125:         }
+126:     } else {
+127:         OutlinedButton(onClick = onClick, modifier = modifier, contentPadding = tabPadding) {
+128:             Text(
+129:                 text = label,
+130:                 style = MaterialTheme.typography.labelMedium,
+131:                 maxLines = 1,
+132:                 softWrap = false,
+133:                 overflow = TextOverflow.Ellipsis
+134:             )
+135:         }
+136:     }
+137: }
+138: 
+139: // ---------------- Browse ----------------
+140: 
+141: @Composable
+142: private fun BrowseTab(
+143:     listings: List<MarketListingSummary>,
+144:     showingBuyOrders: Boolean,
+145:     onToggleMode: () -> Unit,
+146:     onItemSelected: (String) -> Unit
+147: ) {
+148:     Column {
+149:         Row(
+150:             modifier = Modifier.fillMaxWidth(),
