@@ -1,456 +1,180 @@
-=== FULL FUNCTION/BLOCK DUMPS (generous margin: +50 lines from marker) ===
-
---- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt :: from 'fun sellItemToVendor' ---
-1367:     fun sellItemToVendor(itemId: String, quantity: Int) {
-1368:         val characterId = _currentCharacterId.value ?: return
-1369:         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-1370:         val realInventory = inventoryService.inventoryFor(characterId)
-1371:         if (realInventory.quantityOf(itemId) < quantity) return
-1372:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
-1373: 
-1374:         realInventory.removeItem(itemId, quantity)
-1375:         refreshInventory()
-1376: 
-1377:         viewModelScope.launch {
-1378:             val result = SupabaseMarketRepository.sellToVendor(supabaseCharacterId, itemId, quantity, payoutPerUnit)
-1379:             result.onFailure {
-1380:                 _marketActionError.value = it.message ?: it.toString()
-1381:                 realInventory.addItem(itemId, quantity)
-1382:                 refreshInventory()
-1383:             }
-1384:             result.onSuccess {
-1385:                 _marketActionError.value = null
-1386:                 refreshCurrency()
-1387:             }
-1388:         }
-1389:     }
-1390: }
-1391: 
-
---- app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt :: from 'private fun SellToVendorTab' ---
-243: private fun SellToVendorTab(items: List<InventoryItemSummary>, onSell: (String, Int) -> Unit) {
-244:     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-245:         items(items) { item ->
-246:             VendorItemRow(item, onSell)
-247:         }
-248:     }
-249: }
-250: 
-251: @Composable
-252: private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
-253:     var quantityText by remember(item.itemId, item.quantity) { mutableStateOf(item.quantity.toString()) }
-254:     val enteredQuantity = quantityText.toIntOrNull()
-255:     val isValidQuantity = enteredQuantity != null && enteredQuantity in 1..item.quantity
-256: 
-257:     Column(
-258:         modifier = Modifier
-259:             .fillMaxWidth()
-260:             .clip(RoundedCornerShape(12.dp))
-261:             .background(MaterialTheme.colorScheme.surface)
-262:             .padding(14.dp)
-263:     ) {
-264:         Text(
-265:             text = item.displayName,
-266:             style = MaterialTheme.typography.titleMedium,
-267:             maxLines = 1,
-268:             softWrap = false,
-269:             overflow = TextOverflow.Ellipsis
-270:         )
-271:         Text(
-272:             text = "x" + item.quantity + " — " + item.npcValuePerUnit + " each",
-273:             style = MaterialTheme.typography.labelSmall,
-274:             maxLines = 1,
-275:             softWrap = false,
-276:             overflow = TextOverflow.Ellipsis
-277:         )
-278:         Spacer(modifier = Modifier.height(10.dp))
-279:         Row(
-280:             horizontalArrangement = Arrangement.spacedBy(8.dp),
-281:             verticalAlignment = Alignment.CenterVertically
-282:         ) {
-283:             OutlinedTextField(
-284:                 value = quantityText,
-285:                 onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
-286:                 modifier = Modifier.width(56.dp),
-287:                 singleLine = true,
-288:                 textStyle = MaterialTheme.typography.bodyMedium,
-289:                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-290:             )
-291:             Button(
-292:                 onClick = { enteredQuantity?.let { onSell(item.itemId, it) } },
-
-=== TERM SEARCH (whole repo, +/-6 lines context) ===
-
---- TERM: enum class MarketTab ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:26]
-       20: // MARKET SCREENS
-       21: // Three separate screens (Browse, My Orders, Sell to Vendor),
-       22: // navigated via top buttons. Cosmetic-only price warning on
-       23: // order placement -- no backend validation tied to it.
-       24: // =========================================================
-       25: 
-    >> 26: enum class MarketTab { BROWSE, MY_ORDERS, SELL_TO_VENDOR }
-       27: 
-       28: data class MarketListingSummary(
-       29:     val itemId: String,
-       30:     val displayName: String,
-       31:     val bestBuyPrice: Long?,   // highest current buy order, null if none
-       32:     val bestBuyQuantity: Int?, // total quantity available at bestBuyPrice
-
---- TERM: VendorItemRow ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:246]
-       240: // ---------------- Sell to Vendor ----------------
-       241: 
-       242: @Composable
-       243: private fun SellToVendorTab(items: List<InventoryItemSummary>, onSell: (String, Int) -> Unit) {
-       244:     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-       245:         items(items) { item ->
-    >> 246:             VendorItemRow(item, onSell)
-       247:         }
-       248:     }
-       249: }
-       250: 
-       251: @Composable
-       252: private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:252]
-       246:             VendorItemRow(item, onSell)
-       247:         }
-       248:     }
-       249: }
-       250: 
-       251: @Composable
-    >> 252: private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
-       253:     var quantityText by remember(item.itemId, item.quantity) { mutableStateOf(item.quantity.toString()) }
-       254:     val enteredQuantity = quantityText.toIntOrNull()
-       255:     val isValidQuantity = enteredQuantity != null && enteredQuantity in 1..item.quantity
-       256: 
-       257:     Column(
-       258:         modifier = Modifier
-
---- TERM: InventoryItemSummary ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:54]
-       48:     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-       49:     prefs.edit().putString(KEY_INVENTORY_VIEW_MODE, mode.name).apply()
-       50: }
-       51: 
-       52: enum class InventoryCategory { WEAPON, ARMOR, ACCESSORY, TOOL, MATERIAL, CONSUMABLE }
-       53: 
-    >> 54: data class InventoryItemSummary(
-       55:     val itemId: String,
-       56:     val displayName: String,
-       57:     val category: InventoryCategory,
-       58:     val quantity: Int,
-       59:     val isEquippable: Boolean,
-       60:     val isConsumable: Boolean,
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:67]
-       61:     val npcValuePerUnit: Long,
-       62:     val statsDescription: String? = null // e.g. "ATK +5, ACC +10" -- only for equippable items
-       63: )
-       64: 
-       65: @Composable
-       66: fun InventoryScreen(
-    >> 67:     items: List<InventoryItemSummary>,
-       68:     onOpenEquipment: () -> Unit,
-       69:     onOpenLoadout: () -> Unit,
-       70:     onUseItem: (String) -> Unit,
-       71:     onSellOnMarket: (String) -> Unit,
-       72:     onEquipItem: (String) -> Unit,
-       73:     canEquip: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canEquip, lockReasonIfNot)
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:73]
-       67:     items: List<InventoryItemSummary>,
-       68:     onOpenEquipment: () -> Unit,
-       69:     onOpenLoadout: () -> Unit,
-       70:     onUseItem: (String) -> Unit,
-       71:     onSellOnMarket: (String) -> Unit,
-       72:     onEquipItem: (String) -> Unit,
-    >> 73:     canEquip: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canEquip, lockReasonIfNot)
-       74:     modifier: Modifier = Modifier
-       75: ) {
-       76:     val context = LocalContext.current
-       77:     var viewMode by remember { mutableStateOf(loadSavedInventoryViewMode(context)) }
-       78:     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
-       79: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:78]
-       72:     onEquipItem: (String) -> Unit,
-       73:     canEquip: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canEquip, lockReasonIfNot)
-       74:     modifier: Modifier = Modifier
-       75: ) {
-       76:     val context = LocalContext.current
-       77:     var viewMode by remember { mutableStateOf(loadSavedInventoryViewMode(context)) }
-    >> 78:     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
-       79: 
-       80:     val grouped = remember(items) {
-       81:         InventoryCategory.values().mapNotNull { category ->
-       82:             val categoryItems = items.filter { it.category == category }
-       83:             if (categoryItems.isEmpty()) null else category to categoryItems
-       84:         }
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:151]
-       145:         )
-       146:     }
-       147: }
-       148: 
-       149: @Composable
-       150: private fun InventoryListView(
-    >> 151:     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
-       152:     onItemSelected: (InventoryItemSummary) -> Unit
-       153: ) {
-       154:     LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-       155:         grouped.forEach { (category, categoryItems) ->
-       156:             item { CategoryHeader(category.name) }
-       157:             items(categoryItems) { invItem ->
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:152]
-       146:     }
-       147: }
-       148: 
-       149: @Composable
-       150: private fun InventoryListView(
-       151:     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
-    >> 152:     onItemSelected: (InventoryItemSummary) -> Unit
-       153: ) {
-       154:     LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-       155:         grouped.forEach { (category, categoryItems) ->
-       156:             item { CategoryHeader(category.name) }
-       157:             items(categoryItems) { invItem ->
-       158:                 ItemListRow(invItem, onClick = { onItemSelected(invItem) })
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:166]
-       160:         }
-       161:     }
-       162: }
-       163: 
-       164: @Composable
-       165: private fun InventoryGridView(
-    >> 166:     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
-       167:     onItemSelected: (InventoryItemSummary) -> Unit
-       168: ) {
-       169:     LazyVerticalGrid(
-       170:         columns = GridCells.Fixed(3),
-       171:         verticalArrangement = Arrangement.spacedBy(10.dp),
-       172:         horizontalArrangement = Arrangement.spacedBy(10.dp)
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:167]
-       161:     }
-       162: }
-       163: 
-       164: @Composable
-       165: private fun InventoryGridView(
-       166:     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
-    >> 167:     onItemSelected: (InventoryItemSummary) -> Unit
-       168: ) {
-       169:     LazyVerticalGrid(
-       170:         columns = GridCells.Fixed(3),
-       171:         verticalArrangement = Arrangement.spacedBy(10.dp),
-       172:         horizontalArrangement = Arrangement.spacedBy(10.dp)
-       173:     ) {
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:193]
-       187:         style = MaterialTheme.typography.labelSmall,
-       188:         modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
-       189:     )
-       190: }
-       191: 
-       192: @Composable
-    >> 193: private fun ItemListRow(item: InventoryItemSummary, onClick: () -> Unit) {
-       194:     Row(
-       195:         modifier = Modifier
-       196:             .fillMaxWidth()
-       197:             .clip(RoundedCornerShape(12.dp))
-       198:             .background(MaterialTheme.colorScheme.surface)
-       199:             .clickable { onClick() }
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:210]
-       204:         Text(text = item.displayName, style = MaterialTheme.typography.titleMedium)
-       205:         Text(text = "x" + item.quantity, style = MaterialTheme.typography.labelSmall)
-       206:     }
-       207: }
-       208: 
-       209: @Composable
-    >> 210: private fun ItemGridTile(item: InventoryItemSummary, onClick: () -> Unit) {
-       211:     Column(
-       212:         modifier = Modifier
-       213:             .clip(RoundedCornerShape(12.dp))
-       214:             .background(MaterialTheme.colorScheme.surface)
-       215:             .clickable { onClick() }
-       216:             .padding(12.dp)
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:228]
-       222:         Text(text = "x" + item.quantity, style = MaterialTheme.typography.titleMedium)
-       223:     }
-       224: }
-       225: 
-       226: @Composable
-       227: private fun ItemActionSheet(
-    >> 228:     item: InventoryItemSummary,
-       229:     canEquip: Pair<Boolean, String?>,
-       230:     onUse: () -> Unit,
-       231:     onSell: () -> Unit,
-       232:     onEquip: () -> Unit,
-       233:     onDismiss: () -> Unit
-       234: ) {
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:251]
-       245:     ItemCategory.COSMETIC -> InventoryCategory.MATERIAL
-       246: }
-       247: 
-       248: private fun buildInventoryItemSummaries(
-       249:     entries: List<InventorySlotEntry>,
-       250:     vendorPayoutFor: (String) -> Long
-    >> 251: ): List<InventoryItemSummary> {
-       252:     return entries.map { entry ->
-       253:         val definition = ItemCatalog.find(entry.itemId)
-       254:         if (definition != null) {
-       255:             val statsText = if (!definition.stats.isAllZero()) {
-       256:                 listOfNotNull(
-       257:                     definition.stats.attackBonus.takeIf { it != 0 }?.let { "ATK +" + it },
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:265]
-       259:                     definition.stats.maxHitBonus.takeIf { it != 0 }?.let { "Max Hit +" + it },
-       260:                     definition.stats.defenseBonus.takeIf { it != 0 }?.let { "DEF +" + it },
-       261:                     definition.stats.strengthBonus.takeIf { it != 0 }?.let { "STR +" + it }
-       262:                 ).joinToString(", ")
-       263:             } else null
-       264: 
-    >> 265:             InventoryItemSummary(
-       266:                 itemId = entry.itemId,
-       267:                 displayName = definition.name,
-       268:                 category = mapItemCategory(definition.category),
-       269:                 quantity = entry.quantity,
-       270:                 isEquippable = definition.equipSlot != null,
-       271:                 isConsumable = definition.category == ItemCategory.CONSUMABLE,
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:277]
-       271:                 isConsumable = definition.category == ItemCategory.CONSUMABLE,
-       272:                 npcValuePerUnit = vendorPayoutFor(entry.itemId),
-       273:                 statsDescription = statsText
-       274:             )
-       275:         } else {
-       276:             // Not yet defined in ItemCatalog (e.g. some gathered materials) -- graceful fallback.
-    >> 277:             InventoryItemSummary(
-       278:                 itemId = entry.itemId,
-       279:                 displayName = entry.itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } },
-       280:                 category = InventoryCategory.MATERIAL,
-       281:                 quantity = entry.quantity,
-       282:                 isEquippable = false,
-       283:                 isConsumable = false,
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:490]
-       484:     LaunchedEffect(combatViewData) {
-       485:         if (combatViewData != null && combatScreenState == CombatScreenState.ZoneSelect) {
-       486:             combatScreenState = CombatScreenState.InZone
-       487:         }
-       488:     }
-       489: 
-    >> 490:     fun canEquip(item: InventoryItemSummary): Pair<Boolean, String?> {
-       491:         if (item.category == InventoryCategory.TOOL) return true to null
-       492:         val locked = combatViewData?.viewState == CombatViewState.IN_COMBAT
-       493:         return if (locked) false to "Locked during combat" else true to null
-       494:     }
-       495: 
-       496:     val lockedEquipSlots = remember(combatViewData) {
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:69]
-       63:     onItemSelected: (String) -> Unit,
-       64:     // My Orders
-       65:     myBuyOrders: List<MarketOrderSummary>,
-       66:     mySellOrders: List<MarketOrderSummary>,
-       67:     onCancelOrder: (String) -> Unit,
-       68:     // Sell to Vendor
-    >> 69:     vendorSellableItems: List<InventoryItemSummary>,
-       70:     onSellToVendor: (String, Int) -> Unit,
-       71:     modifier: Modifier = Modifier
-       72: ) {
-       73:     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
-       74:         Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
-       75:         Spacer(modifier = Modifier.height(12.dp))
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:243]
-       237:     }
-       238: }
-       239: 
-       240: // ---------------- Sell to Vendor ----------------
-       241: 
-       242: @Composable
-    >> 243: private fun SellToVendorTab(items: List<InventoryItemSummary>, onSell: (String, Int) -> Unit) {
-       244:     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-       245:         items(items) { item ->
-       246:             VendorItemRow(item, onSell)
-       247:         }
-       248:     }
-       249: }
-  [./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt:252]
-       246:             VendorItemRow(item, onSell)
-       247:         }
-       248:     }
-       249: }
-       250: 
-       251: @Composable
-    >> 252: private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
-       253:     var quantityText by remember(item.itemId, item.quantity) { mutableStateOf(item.quantity.toString()) }
-       254:     val enteredQuantity = quantityText.toIntOrNull()
-       255:     val isValidQuantity = enteredQuantity != null && enteredQuantity in 1..item.quantity
-       256: 
-       257:     Column(
-       258:         modifier = Modifier
-
---- TERM: data class InventoryItemSummary ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt:54]
-       48:     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-       49:     prefs.edit().putString(KEY_INVENTORY_VIEW_MODE, mode.name).apply()
-       50: }
-       51: 
-       52: enum class InventoryCategory { WEAPON, ARMOR, ACCESSORY, TOOL, MATERIAL, CONSUMABLE }
-       53: 
-    >> 54: data class InventoryItemSummary(
-       55:     val itemId: String,
-       56:     val displayName: String,
-       57:     val category: InventoryCategory,
-       58:     val quantity: Int,
-       59:     val isEquippable: Boolean,
-       60:     val isConsumable: Boolean,
-
---- TERM: val inventoryItems ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:285]
-       279:         val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
-       280:         for (i in 0 until lastSeenArray.length()) {
-       281:             val obj = lastSeenArray.getJSONObject(i)
-       282:             lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-       283:         }
-       284: 
-    >> 285:         val inventoryItems = mutableListOf<InventorySlotExport>()
-       286:         val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
-       287:         for (i in 0 until inventoryArray.length()) {
-       288:             val obj = inventoryArray.getJSONObject(i)
-       289:             inventoryItems.add(
-       290:                 InventorySlotExport(
-       291:                     characterId = obj.getString("characterId"),
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:392]
-       386:     val accounts: List<AccountExport>,
-       387:     val characters: List<CharacterExport>,
-       388:     val skills: List<SkillExport>,
-       389:     val skillingQueues: List<SkillingQueueExport>,
-       390:     val craftingQueues: List<CraftingQueueExport>,
-       391:     val lastSeen: List<LastSeenExport>,
-    >> 392:     val inventoryItems: List<InventorySlotExport>,
-       393:     val equippedSlots: List<EquippedSlotExport>,
-       394:     val loadoutSettings: List<LoadoutSettingsExport>,
-       395:     val marketAccounts: List<PlayerEconomyAccountExport>,
-       396:     val marketOrders: List<MarketOrderExport>,
-       397:     val marketPriceHistory: List<PriceHistoryExport>
-       398: )
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:73]
-       67:     val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
-       68: 
-       69:     private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
-       70:     val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
-       71: 
-       72:     private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
-    >> 73:     val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
-       74: 
-       75:     private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
-       76:     val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
-       77: 
-       78:     val economyMonitoring = EconomyMonitoringService()
-       79:     val marketService = MarketService(economyMonitoring)
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:426]
-       420: 
-       421:     val allSkills by gameViewModel.skills.collectAsState()
-       422:     val zones = gameViewModel.zoneSummaries
-       423:     val trainingSkill by gameViewModel.trainingSkill.collectAsState()
-       424:     val trainingSkillLevel by gameViewModel.trainingSkillLevel.collectAsState()
-       425:     val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
-    >> 426:     val inventoryItems = remember(inventoryItemEntries) {
-       427:         buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
-       428:     }
-       429:     val inventoryQuantities = remember(inventoryItemEntries) {
-       430:         inventoryItemEntries.associate { it.itemId to it.quantity }
-       431:     }
-       432:     val equippedBackend by gameViewModel.equippedItems.collectAsState()
+1101:     // CRAFTING -- mirrors the SkillingQueue flow above. Recipe.levelRequired
+1102:     // (via CraftingTierCurve) is the source of truth for timing/XP, decoupled
+1103:     // from ActionCatalog since production item ids don't line up with
+1104:     // ActionCatalog's generic class-action ids (see Step 5 handoff notes).
+1105:     // =========================================================
+1106: 
+1107:     private var craftActionProgressSeconds: Long = 0
+1108: 
+1109:     private val craftingService = CraftingService()
+1110: 
+1111:     private data class CraftBatchResult(val successfulCrafts: Int, val itemsProduced: Int, val xpGranted: Long)
+1112: 
+1113:     private fun craftItems(characterId: String, itemId: String, attempts: Int): CraftBatchResult {
+1114:         val recipe = RecipeCatalog.forOutput(itemId) ?: return CraftBatchResult(0, 0, 0)
+1115:         val skillType = SkillType.valueOf(recipe.skillRequired)
+1116:         val book = progressionService.skillBookFor(characterId)
+1117:         val skill = book.all().find { it.type == skillType }
+1118:         val playerLevel = if (skill != null) LevelCurve.levelForXp(skill.xp) else 1
+1119:         val inventory = inventoryService.inventoryFor(characterId)
+1120:         val xpPerAttempt = CraftingTierCurve.xpFor(recipe.levelRequired)
+1121: 
+1122:         var successes = 0
+1123:         var totalProduced = 0
+1124:         var xpGranted = 0L
+1125:         for (i in 0 until attempts) {
+1126:             val result = craftingService.craftOnce(inventory, itemId, playerLevel)
+1127:             if (result is ServiceResult.Success) {
+1128:                 xpGranted += xpPerAttempt
+1129:                 if (result.value.succeeded) {
+1130:                     successes += 1
+1131:                     totalProduced += result.value.quantityProduced
+1132:                 }
+1133:             } else {
+1134:                 break
+1135:             }
+1136:         }
+1137:         if (xpGranted > 0) {
+1138:             progressionService.grantXp(characterId, skillType, xpGranted)
+1139:         }
+1140:         return CraftBatchResult(successes, totalProduced, xpGranted)
+1141:     }
+1142: 
+1143:     fun startCraftingAction(itemId: String, targetQuantity: Int? = null) {
+1144:         val characterId = _currentCharacterId.value ?: return
+1145:         val recipe = RecipeCatalog.forOutput(itemId) ?: return
+1146:         // Starting crafting stops any active combat session - only one
+1147:         // activity can run at a time.
+1148:         leaveCombatZone()
+1149:         offlineIdleService.stopQueue(characterId)
+1150:         offlineIdleService.startCraftingQueue(
+1151:             characterId,
+1152:             itemId,
+1153:             CraftingTierCurve.secondsFor(recipe.levelRequired),
+1154:             targetQuantity
+1155:         )
+1156:         offlineIdleService.recordLastSeen(characterId)
+1157:         craftActionProgressSeconds = 0
+1158:         refreshActiveQueue()
+1159:     }
+1160: 
+1161:     fun stopCraftingAction() {
+1162:         val characterId = _currentCharacterId.value ?: return
+1163:         offlineIdleService.stopQueue(characterId)
+1164:         craftActionProgressSeconds = 0
+1165:         refreshActiveQueue()
+1166:     }
+1167: 
+1168:     private fun tickCrafting() {
+1169:         val characterId = _currentCharacterId.value ?: return
+1170:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue ?: return
+1171: 
+1172:         craftActionProgressSeconds += 1
+1173:         if (craftActionProgressSeconds < queue.secondsPerAction) return
+1174: 
+1175:         val attempts = (craftActionProgressSeconds / queue.secondsPerAction).toInt()
+1176:         craftActionProgressSeconds %= queue.secondsPerAction
+1177: 
+1178:         val remainingToTarget = queue.targetQuantity?.let { it - queue.quantityCompleted }
+1179:         val cappedAttempts = if (remainingToTarget != null) minOf(attempts, remainingToTarget) else attempts
+1180:         if (cappedAttempts <= 0) return
+1181: 
+1182:         val batch = craftItems(characterId, queue.itemId, cappedAttempts)
+1183:         queue.quantityCompleted += batch.successfulCrafts
+1184:         refreshSkills()
+1185:         refreshInventory()
+1186: 
+1187:         if (queue.isTargetReached()) {
+1188:             offlineIdleService.stopQueue(characterId)
+1189:             refreshActiveQueue()
+1190:         }
+1191:     }
+1192: 
+1193:     fun refreshSkills() {
+1194:         val characterId = _currentCharacterId.value ?: return
+1195:         val book = progressionService.skillBookFor(characterId)
+1196:         _skills.value = book.all().associate { skill ->
+1197:             val level = LevelCurve.levelForXp(skill.xp)
+1198:             val xpAtLevelStart = LevelCurve.xpRequiredForLevel(level)
+1199:             val xpAtNextLevel = LevelCurve.xpRequiredForLevel(level + 1)
+1200:             val displayName = skill.type.name.lowercase().replaceFirstChar { it.uppercase() }
+1201:             skill.type.name to SkillSummary(
+1202:                 skillId = skill.type.name,
+1203:                 displayName = displayName,
+1204:                 level = level,
+1205:                 currentXp = skill.xp - xpAtLevelStart,
+1206:                 xpToNextLevel = xpAtNextLevel - skill.xp
+1207:             )
+1208:         }
+1209:         _trainingSkillLevel.value = _skills.value[_trainingSkill.value.name]?.level ?: 1
+1210:     }
+1211: 
+1212:     fun refreshInventory() {
+1213:         val characterId = _currentCharacterId.value ?: return
+1214:         val inv = inventoryService.inventoryFor(characterId)
+1215:         _inventoryItems.value = inv.allItems()
+1216:         _equippedItems.value = inv.allEquipped()
+1217:         _loadoutSettings.value = LoadoutSettingsSnapshot(
+1218:             inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
+1219:             inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
+1220:         )
+1221:     }
+1222: 
+1223:     fun equipItem(itemId: String): ServiceResult<Unit> {
+1224:         val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+1225:         val playerSkillLevels = progressionService.skillBookFor(characterId).all()
+1226:             .associate { it.type.name to LevelCurve.levelForXp(it.xp) }
+1227:         val playerLevel = playerSkillLevels.values.maxOrNull() ?: 1
+1228:         val result = inventoryService.inventoryFor(characterId).equip(itemId, playerLevel, playerSkillLevels) { true }
+1229:         if (result is ServiceResult.Success) refreshInventory()
+1230:         return result
+1231:     }
+1232: 
+1233:     fun unequipSlot(slot: EquipSlot): ServiceResult<Unit> {
+1234:         val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+1235:         val result = inventoryService.inventoryFor(characterId).unequip(slot) { true }
+1236:         if (result is ServiceResult.Success) refreshInventory()
+1237:         return result
+1238:     }
+1239: 
+1240:     fun refreshActiveQueue() {
+1241:         val characterId = _currentCharacterId.value
+1242:         val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
+1243:         _activeQueueInfo.value = when (queue) {
+1244:             is ActiveQueue.SkillingQueue -> {
+1245:                 val skillType = SkillType.valueOf(queue.skillId)
+1246:                 val action = ActionCatalog.find(skillType, queue.itemId)
+1247:                 ActiveQueueInfo(
+1248:                     label = action?.displayName ?: formatItemName(queue.itemId),
+1249:                     secondsPerAction = queue.secondsPerAction,
+1250:                     startedAt = queue.startedAt
+1251:                 )
+1252:             }
+1253:             is ActiveQueue.CraftingQueue -> ActiveQueueInfo(
+1254:                 label = "Crafting " + formatItemName(queue.itemId),
+1255:                 secondsPerAction = queue.secondsPerAction,
+1256:                 startedAt = queue.startedAt
+1257:             )
+1258:             else -> null
+1259:         }
+1260:     }
+1261: 
+1262:     fun refreshCurrency() {
+1263:         val accountId = _currentAccountId.value ?: return
+1264:         val account = accountService.accountById(accountId) ?: return
+1265:         val characterId = _currentSupabaseCharacterId.value ?: return
+1266:         viewModelScope.launch {
+1267:             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
+1268:             _currency.value = gold to account.premiumCurrency
+1269:         }
+1270:     }
+1271: 
+1272:     // =========================================================
+1273:     // MARKET (server-side via Supabase - shared order book across all players)
+1274:     // =========================================================
+1275: 
+1276:     fun refreshMarketListings() {
+1277:         viewModelScope.launch {
+1278:             val listings = SupabaseMarketRepository.listings().getOrNull() ?: emptyList()
+1279:             _marketListings.value = listings.map { MarketPriceSummary(it.itemId, it.bestBuyPrice, it.bestBuyQuantity, it.bestSellPrice, it.bestSellQuantity) }
+1280:         }
