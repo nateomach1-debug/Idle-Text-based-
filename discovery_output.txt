@@ -1,188 +1,504 @@
-Total Recipe( ... ) blocks parsed: 261
-Total unique recipe output ids: 261
-Total unique action-produced item ids: 273
-Total unique combat loot item ids: 5
-Total unique ids in GeneratedItemCatalog ItemDefinitions: 324
-Total unique recipe ingredient ids to classify: 125
+=== FILE LISTING (.kt) with sizes ===
+./ModerationScreen.kt  (8793 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt  (12519 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt  (41614 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/AntiCheatServerAuthoritySystem.kt  (5701 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt  (4603 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ChatBanner.kt  (10390 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt  (11914 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt  (6907 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt  (16544 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt  (3518 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/EventsLiveOpsSystem.kt  (15345 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt  (17478 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt  (62947 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt  (84563 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt  (20817 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GuildCreateJoinScreen.kt  (3344 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt  (9616 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt  (6925 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt  (11633 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt  (79720 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt  (6875 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/LoginScreen.kt  (3392 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt  (52989 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt  (10929 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MemberActionPopup.kt  (2476 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt  (39087 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt  (8793 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt  (7729 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt  (739 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt  (12573 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt  (6583 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/PatternBackground.kt  (2678 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt  (13431 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/RecoveryBar.kt  (3429 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ReportMessageDialog.kt  (2580 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt  (1091 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt  (4263 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt  (4964 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt  (8691 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt  (9361 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt  (8763 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt  (13593 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt  (12966 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseCharacterRepository.kt  (2413 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt  (10841 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseClient.kt  (939 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt  (11093 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt  (3338 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/SupabaseModerationRepository.kt  (7175 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt  (5989 bytes)
+./app/src/main/kotlin/com/yourname/idlerpg/ZoneSelectScreen.kt  (4049 bytes)
 
-=== CLASSIFICATION OF EVERY RECIPE-INGREDIENT ITEM ===
-(OBTAINABLE = reachable via gathering action, combat loot, or a chain of recipes bottoming out in those)
+=== TERM SEARCH (whole repo, +/-4 lines context) ===
 
-OK   adamant_arrowheads  <-  Recipe(from adamantite_bar)
-OK   adamantite_bar  <-  Recipe(from adamantite_ore, coal)
-OK   adamantite_ore  <-  ActionCatalog:MINING
-OK   amulet_u  <-  Recipe(from gold_bar)
-OK   ancient_ironbark_logs  <-  ActionCatalog:WOODCUTTING
-OK   arrow_shafts  <-  ActionCatalog:FLETCHING
-OK   avantoe  <-  ActionCatalog:FARMING
-OK   bamboo  <-  ActionCatalog:WOODCUTTING
-GAP  blue_dragonhide  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-OK   bolt_frame  <-  Recipe(from iron_bar)
-GAP  bowstring  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  bread_dough  [catalog def: yes] (has Recipe but blocked on: needs ['flour', 'vial_of_water'])
-OK   bronze_arrowheads  <-  Recipe(from bronze_bar)
-OK   bronze_bar  <-  Recipe(from copper_ore, tin_ore)
-OK   cake  <-  ActionCatalog:COOKING
-GAP  cake_mix  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-OK   celestial_alloy_bar  <-  Recipe(from celestial_silver, coal)
-OK   celestial_crystal  <-  ActionCatalog:CRAFTING
-OK   celestial_herb  <-  ActionCatalog:FARMING
-OK   celestial_silver  <-  ActionCatalog:MINING
-OK   coal  <-  ActionCatalog:MINING
-OK   cooked_anglerfish  <-  Recipe(from raw_anglerfish)
-GAP  cooked_beef  [catalog def: yes] (has Recipe but blocked on: needs ['raw_beef'])
-OK   cooked_monkfish  <-  Recipe(from raw_monkfish)
-OK   cooked_shark  <-  Recipe(from raw_shark)
-OK   copper_bar  <-  Recipe(from copper_ore)
-OK   copper_ore  <-  ActionCatalog:MINING
-GAP  cowhide  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-OK   crossbow_frame  <-  ActionCatalog:FLETCHING
-OK   diamond  <-  ActionCatalog:CRAFTING
-OK   dragonstone  <-  ActionCatalog:CRAFTING
-OK   elder_logs  <-  ActionCatalog:WOODCUTTING
-OK   emerald  <-  ActionCatalog:CRAFTING
-GAP  feathers  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  flax  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  flour  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-OK   gold_bar  <-  Recipe(from gold_ore)
-OK   gold_necklace  <-  ActionCatalog:CRAFTING
-OK   gold_ore  <-  ActionCatalog:MINING
-OK   gold_ring  <-  ActionCatalog:CRAFTING
-OK   gourmet_feast  <-  ActionCatalog:COOKING
-GAP  green_dragonhide  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-OK   guam_leaf  <-  ActionCatalog:FARMING
-OK   harralander  <-  ActionCatalog:FARMING
-OK   irit_leaf  <-  ActionCatalog:FARMING
-OK   iron_arrowheads  <-  Recipe(from iron_bar)
-OK   iron_bar  <-  Recipe(from iron_ore)
-OK   iron_ore  <-  ActionCatalog:MINING
-OK   ironwood_logs  <-  ActionCatalog:WOODCUTTING
-OK   kwuarm  <-  ActionCatalog:FARMING
-OK   leather  <-  ActionCatalog:CRAFTING
-OK   leather_body  <-  ActionCatalog:CRAFTING
-OK   leather_chaps  <-  ActionCatalog:CRAFTING
-OK   leviathan_spawn  <-  ActionCatalog:FISHING
-OK   logs  <-  ActionCatalog:WOODCUTTING
-OK   longbow_u  <-  Recipe(from logs)
-OK   magic_logs  <-  ActionCatalog:WOODCUTTING
-OK   mahogany_logs  <-  ActionCatalog:WOODCUTTING
-OK   maple_logs  <-  ActionCatalog:WOODCUTTING
-OK   marrentill  <-  ActionCatalog:FARMING
-OK   mithril_arrowheads  <-  Recipe(from mithril_bar)
-OK   mithril_bar  <-  Recipe(from mithril_ore, coal)
-OK   mithril_ore  <-  ActionCatalog:MINING
-OK   oak_logs  <-  ActionCatalog:WOODCUTTING
-OK   onyx  <-  ActionCatalog:CRAFTING
-OK   orichalcum_arrowheads  <-  Recipe(from orichalcum_bar)
-OK   orichalcum_bar  <-  Recipe(from orichalcum_ore, coal)
-OK   orichalcum_ore  <-  ActionCatalog:MINING
-GAP  pie_shell  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-OK   potato  <-  ActionCatalog:FARMING
-OK   ranarr_weed  <-  ActionCatalog:FARMING
-OK   raw_anchovies  <-  ActionCatalog:FISHING
-OK   raw_anglerfish  <-  ActionCatalog:FISHING
-GAP  raw_beef  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  raw_chicken  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-OK   raw_crab  <-  ActionCatalog:FISHING
-OK   raw_crayfish  <-  ActionCatalog:FISHING
-OK   raw_deep_sea_cod  <-  ActionCatalog:FISHING
-OK   raw_eel  <-  ActionCatalog:FISHING
-OK   raw_herring  <-  ActionCatalog:FISHING
-OK   raw_lobster  <-  ActionCatalog:FISHING
-OK   raw_mackerel  <-  ActionCatalog:FISHING
-OK   raw_manta_ray  <-  ActionCatalog:FISHING
-OK   raw_monkfish  <-  ActionCatalog:FISHING
-OK   raw_salmon  <-  ActionCatalog:FISHING
-OK   raw_sardine  <-  ActionCatalog:FISHING
-OK   raw_shark  <-  ActionCatalog:FISHING
-OK   raw_shrimp  <-  ActionCatalog:FISHING
-OK   raw_swordfish  <-  ActionCatalog:FISHING
-OK   raw_trout  <-  ActionCatalog:FISHING
-OK   raw_tuna  <-  ActionCatalog:FISHING
-OK   ruby  <-  ActionCatalog:CRAFTING
-OK   rune_arrowheads  <-  Recipe(from runite_bar)
-OK   runite_bar  <-  Recipe(from runite_ore, coal)
-OK   runite_ore  <-  ActionCatalog:MINING
-OK   sandstone  <-  ActionCatalog:MINING
-OK   sapphire  <-  ActionCatalog:CRAFTING
-OK   shortbow_u  <-  Recipe(from logs)
-OK   silver_ore  <-  ActionCatalog:MINING
-GAP  snake_hide  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-OK   snapdragon  <-  ActionCatalog:FARMING
-OK   spirit_logs  <-  ActionCatalog:WOODCUTTING
-OK   steel_arrowheads  <-  Recipe(from steel_bar)
-OK   steel_bar  <-  Recipe(from iron_ore, coal)
-OK   tarromin  <-  ActionCatalog:FARMING
-OK   teak_logs  <-  ActionCatalog:WOODCUTTING
-OK   tin_ore  <-  ActionCatalog:MINING
-OK   toadflax  <-  ActionCatalog:FARMING
-OK   torstol  <-  ActionCatalog:FARMING
-GAP  uncut_celestial_crystal  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_diamond  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_dragonstone  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_emerald  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_jade  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_onyx  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_opal  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_red_topaz  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_ruby  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_sapphire  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  uncut_zenyte  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-GAP  vial_of_water  [catalog def: yes] (no Recipe produces this id at all, and no gathering action or combat drop produces it)
-OK   volcanic_rock  <-  ActionCatalog:MINING
-OK   willow_logs  <-  ActionCatalog:WOODCUTTING
-OK   yew_logs  <-  ActionCatalog:WOODCUTTING
-OK   zenyte  <-  ActionCatalog:CRAFTING
+--- TERM: SkillingQueue ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:26]
+       22:     fun save(
+       23:         accounts: List<AccountExport>,
+       24:         characters: List<CharacterExport>,
+       25:         skills: List<SkillExport>,
+    >> 26:         skillingQueues: List<SkillingQueueExport>,
+       27:         craftingQueues: List<CraftingQueueExport>,
+       28:         lastSeen: List<LastSeenExport>,
+       29:         inventoryItems: List<InventorySlotExport>,
+       30:         equippedSlots: List<EquippedSlotExport>,
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:247]
+       243:                 )
+       244:             )
+       245:         }
+       246: 
+    >> 247:         val skillingQueues = mutableListOf<SkillingQueueExport>()
+       248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+       249:         for (i in 0 until queuesArray.length()) {
+       250:             val obj = queuesArray.getJSONObject(i)
+       251:             skillingQueues.add(
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:252]
+       248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+       249:         for (i in 0 until queuesArray.length()) {
+       250:             val obj = queuesArray.getJSONObject(i)
+       251:             skillingQueues.add(
+    >> 252:                 SkillingQueueExport(
+       253:                     characterId = obj.getString("characterId"),
+       254:                     skillId = obj.getString("skillId"),
+       255:                     itemId = obj.getString("itemId"),
+       256:                     secondsPerAction = obj.getLong("secondsPerAction"),
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:389]
+       385: data class SavedGameState(
+       386:     val accounts: List<AccountExport>,
+       387:     val characters: List<CharacterExport>,
+       388:     val skills: List<SkillExport>,
+    >> 389:     val skillingQueues: List<SkillingQueueExport>,
+       390:     val craftingQueues: List<CraftingQueueExport>,
+       391:     val lastSeen: List<LastSeenExport>,
+       392:     val inventoryItems: List<InventorySlotExport>,
+       393:     val equippedSlots: List<EquippedSlotExport>,
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:812]
+       808:         val saved = repository.load() ?: return
+       809:         saved.accounts.forEach { accountService.restoreAccount(it) }
+       810:         saved.characters.forEach { accountService.restoreCharacter(it) }
+       811:         saved.skills.forEach { progressionService.restoreSkill(it) }
+    >> 812:         saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+       813:         saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+       814:         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+       815:         saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+       816:         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:859]
+       855: 
+       856:     recovered.accounts.forEach { accountService.restoreAccount(it) }
+       857:     recovered.characters.forEach { accountService.restoreCharacter(it) }
+       858:     recovered.skills.forEach { progressionService.restoreSkill(it) }
+    >> 859:     recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+       860:     recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+       861:     recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+       862:     recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+       863:     recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:919]
+       915:         repository.save(
+       916:             accountService.exportAllAccounts(),
+       917:             accountService.exportAllCharacters(),
+       918:             progressionService.exportAllSkills(),
+    >> 919:             offlineIdleService.exportSkillingQueues(),
+       920:             offlineIdleService.exportCraftingQueues(),
+       921:             offlineIdleService.exportLastSeen(),
+       922:             inventoryService.exportAllItems(),
+       923:             inventoryService.exportAllEquipped(),
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:963]
+       959:                             if (recovered != null) {
+       960:                                 recovered.accounts.forEach { accountService.restoreAccount(it) }
+       961:                                 recovered.characters.forEach { accountService.restoreCharacter(it) }
+       962:                                 recovered.skills.forEach { progressionService.restoreSkill(it) }
+    >> 963:                                 recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+       964:                                 recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+       965:                                 recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+       966:                                 recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+       967:                                 recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:998]
+       994:     // the "real" one in that scenario, so re-resolving against the recovered
+       995:     // character's actual data is the correct behavior, not just a race-condition
+       996:     // workaround.
+       997:     private fun resolveOfflineRewardsAndSync(characterId: String) {
+    >> 998:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+       999:         if (queue != null) {
+       1000:             val result = offlineIdleService.resolveOfflineProgress(characterId)
+       1001:             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+       1002:                 val skillType = SkillType.valueOf(queue.skillId)
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1067]
+       1063:         // Starting a skill stops any active combat session - only one
+       1064:         // activity can run at a time.
+       1065:         leaveCombatZone()
+       1066:         offlineIdleService.stopQueue(characterId)
+    >> 1067:         offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+       1068:         offlineIdleService.recordLastSeen(characterId)
+       1069:         skillActionProgressSeconds = 0
+       1070:         refreshActiveQueue()
+       1071:     }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1082]
+       1078:     }
+       1079: 
+       1080:     private fun tickSkilling() {
+       1081:         val characterId = _currentCharacterId.value ?: return
+    >> 1082:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+       1083: 
+       1084:         skillActionProgressSeconds += 1
+       1085:         if (skillActionProgressSeconds < queue.secondsPerAction) return
+       1086: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1101]
+       1097:         }
+       1098:     }
+       1099: 
+       1100:     // =========================================================
+    >> 1101:     // CRAFTING -- mirrors the SkillingQueue flow above. Recipe.levelRequired
+       1102:     // (via CraftingTierCurve) is the source of truth for timing/XP, decoupled
+       1103:     // from ActionCatalog since production item ids don't line up with
+       1104:     // ActionCatalog's generic class-action ids (see Step 5 handoff notes).
+       1105:     // =========================================================
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1244]
+       1240:     fun refreshActiveQueue() {
+       1241:         val characterId = _currentCharacterId.value
+       1242:         val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
+       1243:         _activeQueueInfo.value = when (queue) {
+    >> 1244:             is ActiveQueue.SkillingQueue -> {
+       1245:                 val skillType = SkillType.valueOf(queue.skillId)
+       1246:                 val action = ActionCatalog.find(skillType, queue.itemId)
+       1247:                 ActiveQueueInfo(
+       1248:                     label = action?.displayName ?: formatItemName(queue.itemId),
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:17]
+       13:     abstract val characterId: String
+       14:     abstract val startedAt: Instant
+       15:     abstract val type: QueueType
+       16: 
+    >> 17:     data class SkillingQueue(
+       18:         override val characterId: String,
+       19:         val skillId: String,
+       20:         val itemId: String,
+       21:         val secondsPerAction: Long,
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:134]
+       130:     val wasFlagged: Boolean,
+       131:     val queueExhausted: Boolean
+       132: )
+       133: 
+    >> 134: data class SkillingQueueExport(
+       135:     val characterId: String,
+       136:     val skillId: String,
+       137:     val itemId: String,
+       138:     val secondsPerAction: Long,
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:163]
+       159:     private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
+       160:     private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
+       161:     private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
+       162: 
+    >> 163:     fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
+       164:         if (activeQueues.containsKey(characterId)) {
+       165:             return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
+       166:         }
+       167:         val queue = ActiveQueue.SkillingQueue(characterId, skillId, itemId, secondsPerAction)
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:167]
+       163:     fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
+       164:         if (activeQueues.containsKey(characterId)) {
+       165:             return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
+       166:         }
+    >> 167:         val queue = ActiveQueue.SkillingQueue(characterId, skillId, itemId, secondsPerAction)
+       168:         activeQueues[characterId] = queue
+       169:         return ServiceResult.Success(queue)
+       170:     }
+       171: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:229]
+       225:         var actionsCompleted = 0
+       226:         var queueExhausted = false
+       227: 
+       228:         when (queue) {
+    >> 229:             is ActiveQueue.SkillingQueue -> {
+       230:                 actionsCompleted = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+       231:             }
+       232:             is ActiveQueue.CraftingQueue -> {
+       233:                 var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:283]
+       279:     }
+       280: 
+       281:     fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
+       282: 
+    >> 283:     fun exportSkillingQueues(): List<SkillingQueueExport> =
+       284:         activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
+       285:             SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
+       286:         }
+       287: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:284]
+       280: 
+       281:     fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
+       282: 
+       283:     fun exportSkillingQueues(): List<SkillingQueueExport> =
+    >> 284:         activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
+       285:             SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
+       286:         }
+       287: 
+       288:     fun exportCraftingQueues(): List<CraftingQueueExport> =
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:285]
+       281:     fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
+       282: 
+       283:     fun exportSkillingQueues(): List<SkillingQueueExport> =
+       284:         activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
+    >> 285:             SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
+       286:         }
+       287: 
+       288:     fun exportCraftingQueues(): List<CraftingQueueExport> =
+       289:         activeQueues.values.filterIsInstance<ActiveQueue.CraftingQueue>().map {
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:303]
+       299: 
+       300:     fun exportLastSeen(): List<LastSeenExport> =
+       301:         lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
+       302: 
+    >> 303:     fun restoreSkillingQueue(export: SkillingQueueExport) {
+       304:         activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+       305:             characterId = export.characterId,
+       306:             skillId = export.skillId,
+       307:             itemId = export.itemId,
+  [./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt:304]
+       300:     fun exportLastSeen(): List<LastSeenExport> =
+       301:         lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
+       302: 
+       303:     fun restoreSkillingQueue(export: SkillingQueueExport) {
+    >> 304:         activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+       305:             characterId = export.characterId,
+       306:             skillId = export.skillId,
+       307:             itemId = export.itemId,
+       308:             secondsPerAction = export.secondsPerAction,
 
-=== SUMMARY: 26 unobtainable ingredient item(s) ===
-  - blue_dragonhide
-  - bowstring
-  - bread_dough
-  - cake_mix
-  - cooked_beef
-  - cowhide
-  - feathers
-  - flax
-  - flour
-  - green_dragonhide
-  - pie_shell
-  - raw_beef
-  - raw_chicken
-  - snake_hide
-  - uncut_celestial_crystal
-  - uncut_diamond
-  - uncut_dragonstone
-  - uncut_emerald
-  - uncut_jade
-  - uncut_onyx
-  - uncut_opal
-  - uncut_red_topaz
-  - uncut_ruby
-  - uncut_sapphire
-  - uncut_zenyte
-  - vial_of_water
+--- TERM: skillingQueue ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:26]
+       22:     fun save(
+       23:         accounts: List<AccountExport>,
+       24:         characters: List<CharacterExport>,
+       25:         skills: List<SkillExport>,
+    >> 26:         skillingQueues: List<SkillingQueueExport>,
+       27:         craftingQueues: List<CraftingQueueExport>,
+       28:         lastSeen: List<LastSeenExport>,
+       29:         inventoryItems: List<InventorySlotExport>,
+       30:         equippedSlots: List<EquippedSlotExport>,
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:84]
+       80:         }
+       81:         root.put("skills", skillsArray)
+       82: 
+       83:         val queuesArray = JSONArray()
+    >> 84:         skillingQueues.forEach { queue ->
+       85:             val obj = JSONObject()
+       86:             obj.put("characterId", queue.characterId)
+       87:             obj.put("skillId", queue.skillId)
+       88:             obj.put("itemId", queue.itemId)
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:93]
+       89:             obj.put("secondsPerAction", queue.secondsPerAction)
+       90:             obj.put("startedAt", queue.startedAt)
+       91:             queuesArray.put(obj)
+       92:         }
+    >> 93:         root.put("skillingQueues", queuesArray)
+       94: 
+       95:         val craftingQueuesArray = JSONArray()
+       96:         craftingQueues.forEach { queue ->
+       97:             val obj = JSONObject()
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:247]
+       243:                 )
+       244:             )
+       245:         }
+       246: 
+    >> 247:         val skillingQueues = mutableListOf<SkillingQueueExport>()
+       248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+       249:         for (i in 0 until queuesArray.length()) {
+       250:             val obj = queuesArray.getJSONObject(i)
+       251:             skillingQueues.add(
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:248]
+       244:             )
+       245:         }
+       246: 
+       247:         val skillingQueues = mutableListOf<SkillingQueueExport>()
+    >> 248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+       249:         for (i in 0 until queuesArray.length()) {
+       250:             val obj = queuesArray.getJSONObject(i)
+       251:             skillingQueues.add(
+       252:                 SkillingQueueExport(
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:251]
+       247:         val skillingQueues = mutableListOf<SkillingQueueExport>()
+       248:         val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+       249:         for (i in 0 until queuesArray.length()) {
+       250:             val obj = queuesArray.getJSONObject(i)
+    >> 251:             skillingQueues.add(
+       252:                 SkillingQueueExport(
+       253:                     characterId = obj.getString("characterId"),
+       254:                     skillId = obj.getString("skillId"),
+       255:                     itemId = obj.getString("itemId"),
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:379]
+       375:             )
+       376:         }
+       377: 
+       378:         return SavedGameState(
+    >> 379:             accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
+       380:             loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
+       381:         )
+       382:     }
+       383: }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt:389]
+       385: data class SavedGameState(
+       386:     val accounts: List<AccountExport>,
+       387:     val characters: List<CharacterExport>,
+       388:     val skills: List<SkillExport>,
+    >> 389:     val skillingQueues: List<SkillingQueueExport>,
+       390:     val craftingQueues: List<CraftingQueueExport>,
+       391:     val lastSeen: List<LastSeenExport>,
+       392:     val inventoryItems: List<InventorySlotExport>,
+       393:     val equippedSlots: List<EquippedSlotExport>,
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:812]
+       808:         val saved = repository.load() ?: return
+       809:         saved.accounts.forEach { accountService.restoreAccount(it) }
+       810:         saved.characters.forEach { accountService.restoreCharacter(it) }
+       811:         saved.skills.forEach { progressionService.restoreSkill(it) }
+    >> 812:         saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+       813:         saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+       814:         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+       815:         saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+       816:         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:859]
+       855: 
+       856:     recovered.accounts.forEach { accountService.restoreAccount(it) }
+       857:     recovered.characters.forEach { accountService.restoreCharacter(it) }
+       858:     recovered.skills.forEach { progressionService.restoreSkill(it) }
+    >> 859:     recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+       860:     recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+       861:     recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+       862:     recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+       863:     recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:963]
+       959:                             if (recovered != null) {
+       960:                                 recovered.accounts.forEach { accountService.restoreAccount(it) }
+       961:                                 recovered.characters.forEach { accountService.restoreCharacter(it) }
+       962:                                 recovered.skills.forEach { progressionService.restoreSkill(it) }
+    >> 963:                                 recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+       964:                                 recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+       965:                                 recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+       966:                                 recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+       967:                                 recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
 
-=== POTENTIAL ID MISMATCHES (recipe outputs whose name doesn't match anything ever used as an ingredient elsewhere, or vice versa - possible typos) ===
-  Recipe output 'bread' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['bread_dough']
-  Recipe output 'shortbow' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['shortbow_u']
-  Recipe output 'longbow' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['longbow_u']
-  Recipe output 'crossbow' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['crossbow_frame']
-  Recipe output 'leather_gloves' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['leather']
-  Recipe output 'leather_boots' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['leather']
-  Recipe output 'leather_cowl' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['leather']
-  Recipe output 'leather_vambraces' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['leather']
-  Recipe output 'hardleather_body' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['leather', 'leather_body']
-  Recipe output 'opal' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['uncut_opal']
-  Recipe output 'jade' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['uncut_jade']
-  Recipe output 'red_topaz' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['uncut_red_topaz']
-  Recipe output 'sapphire_ring' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['sapphire']
-  Recipe output 'emerald_amulet' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['emerald']
-  Recipe output 'flax_into_bowstring' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['bowstring', 'flax']
-  Recipe output 'ruby_ring' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['ruby']
-  Recipe output 'diamond_necklace' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['diamond']
-  Recipe output 'dragonstone_amulet' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['dragonstone']
-  Recipe output 'onyx_ring' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['onyx']
-  Recipe output 'zenyte_amulet' is never used as an ingredient anywhere, but similar id(s) ARE used as ingredients: ['zenyte']
+--- TERM: ActionCatalog.find ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1003]
+       999:         if (queue != null) {
+       1000:             val result = offlineIdleService.resolveOfflineProgress(characterId)
+       1001:             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+       1002:                 val skillType = SkillType.valueOf(queue.skillId)
+    >> 1003:                 val action = ActionCatalog.find(skillType, queue.itemId)
+       1004:                 if (action != null) {
+       1005:                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
+       1006:                     progressionService.grantXp(characterId, skillType, xpEarned)
+       1007:                     inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1062]
+       1058:     }
+       1059: 
+       1060:     fun startSkillAction(skillType: SkillType, itemId: String) {
+       1061:         val characterId = _currentCharacterId.value ?: return
+    >> 1062:         val action = ActionCatalog.find(skillType, itemId) ?: return
+       1063:         // Starting a skill stops any active combat session - only one
+       1064:         // activity can run at a time.
+       1065:         leaveCombatZone()
+       1066:         offlineIdleService.stopQueue(characterId)
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1091]
+       1087:         val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
+       1088:         skillActionProgressSeconds %= queue.secondsPerAction
+       1089: 
+       1090:         val skillType = SkillType.valueOf(queue.skillId)
+    >> 1091:         val action = ActionCatalog.find(skillType, queue.itemId)
+       1092:         if (action != null) {
+       1093:             progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+       1094:             inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
+       1095:             refreshSkills()
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1246]
+       1242:         val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
+       1243:         _activeQueueInfo.value = when (queue) {
+       1244:             is ActiveQueue.SkillingQueue -> {
+       1245:                 val skillType = SkillType.valueOf(queue.skillId)
+    >> 1246:                 val action = ActionCatalog.find(skillType, queue.itemId)
+       1247:                 ActiveQueueInfo(
+       1248:                     label = action?.displayName ?: formatItemName(queue.itemId),
+       1249:                     secondsPerAction = queue.secondsPerAction,
+       1250:                     startedAt = queue.startedAt
 
-=== ALL RECIPE OUTPUT IDS THAT ARE THEMSELVES NEVER REQUIRED AS AN INGREDIENT BY ANY OTHER RECIPE (for reference; expected for most final equipment/consumables) ===
-  (218 such outputs, listing first 30) adamant_2h_sword, adamant_arrows, adamant_battleaxe, adamant_chainmail_body, adamant_claws, adamant_dagger, adamant_full_helm, adamant_halberd, adamant_kiteshield, adamant_mace, adamant_platebody, adamant_platelegs, adamant_sword, adamant_throwing_knives, adamant_warhammer, ambrosia_banquet, ancient_ironbark_bow, antidote_plus, antifire_potion, antipoison, attack_potion, barbed_bolts, basket, battlestaff, blue_dhide_body, blue_dhide_chaps, bolts, bread, brew_of_vigor, broad_arrows
+--- TERM: inventoryService.add ---
+
+--- TERM: InventoryService ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:52]
+       48:     private val repository = GameStateRepository(application)
+       49: 
+       50:     val accountService = AccountService()
+       51:     val progressionService = ProgressionService()
+    >> 52:     val inventoryService = InventoryService()
+       53:     val sessionManager = SessionManager(application)
+       54:     // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
+       55:     // Skilling queues don't consume materials, only crafting does, so this is unused for now.
+       56:     val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
+  [./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:2099]
+       2095:     val autoHealThresholdPercent: Int,
+       2096:     val autoFleeThresholdPercent: Int
+       2097: )
+       2098: 
+    >> 2099: class InventoryService {
+       2100:     private val inventories: MutableMap<String, Inventory> = mutableMapOf()
+       2101: 
+       2102:     fun inventoryFor(characterId: String): Inventory =
+       2103:         inventories.getOrPut(characterId) { Inventory() }
+
+--- TERM: fun addItem ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:17]
+       13:     var isMainCharacter: Boolean,
+       14:     var currencyBalance: Long,
+       15:     val inventory: MutableMap<String, Int> = mutableMapOf()
+       16: ) {
+    >> 17:     fun addItem(itemId: String, qty: Int) {
+       18:         inventory[itemId] = (inventory[itemId] ?: 0) + qty
+       19:     }
+       20: 
+       21:     fun removeItem(itemId: String, qty: Int): Boolean {
+  [./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt:1923]
+       1919:     var autoFleeThresholdPercent: Int = 10
+       1920: ) {
+       1921:     fun usedSlots(): Int = entries.size
+       1922: 
+    >> 1923:     fun addItem(itemId: String, quantity: Int): ServiceResult<Unit> {
+       1924:         val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+       1925:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+       1926: 
+       1927:         val existing = entries[itemId]
+
+--- TERM: fun grantItem ---
+
+--- TERM: fun resolveSkillingCompletion ---
+
+--- TERM: fun processSkillingQueue ---
+
+--- TERM: fun tickSkilling ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1080]
+       1076:         skillActionProgressSeconds = 0
+       1077:         refreshActiveQueue()
+       1078:     }
+       1079: 
+    >> 1080:     private fun tickSkilling() {
+       1081:         val characterId = _currentCharacterId.value ?: return
+       1082:         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+       1083: 
+       1084:         skillActionProgressSeconds += 1
