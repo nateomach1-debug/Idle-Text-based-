@@ -1,40 +1,101 @@
-1: package com.yourname.idlerpg.data
-2: 
-3: import io.github.jan.supabase.auth.status.SessionStatus
-4: 
-5: import android.app.Application
-6: import androidx.lifecycle.AndroidViewModel
-7: import androidx.lifecycle.viewModelScope
-8: import com.yourname.idlerpg.*
-9: import com.yourname.idlerpg.ui.screens.SkillSummary
-10: import com.yourname.idlerpg.ui.screens.CombatViewData
-11: import com.yourname.idlerpg.ui.screens.CombatViewState
-12: import com.yourname.idlerpg.ui.screens.CombatLogEntry
-13: import com.yourname.idlerpg.ui.screens.ZoneSummary
-14: import com.yourname.idlerpg.ui.screens.GuildHomeState
-15: import com.yourname.idlerpg.ui.screens.GuildLeaderboardEntry
-16: import kotlinx.coroutines.Dispatchers
-17: import kotlinx.coroutines.delay
-18: import kotlinx.coroutines.flow.MutableStateFlow
-19: import kotlinx.coroutines.flow.StateFlow
-20: import kotlinx.coroutines.flow.asStateFlow
-21: import kotlinx.coroutines.launch
-22: import java.time.Instant
-23: import kotlin.random.Random
-24: import io.github.jan.supabase.auth.auth
-25: import com.yourname.idlerpg.ui.components.ChatChannelUi
-26: import com.yourname.idlerpg.ui.components.ChatMessageUi
-27: import com.yourname.idlerpg.ui.components.DmConversationSummary
-28: 
-29: data class OfflineSummary(
-30:     val awaySeconds: Long,
-31:     val skillActionName: String,
-32:     val itemName: String,
-33:     val quantity: Int,
-34:     val xpEarned: Long
-35: )
-36: 
-37: data class ActiveQueueInfo(
-38:     val label: String,
-39:     val secondsPerAction: Long,
-40:     val startedAt: Instant
+1320:             skillRequired = "FLETCHING",
+1321:             levelRequired = 99
+1322:         ),
+1323:         Recipe(
+1324:             outputItemId = "arrow_shafts",
+1325:             outputQuantity = 15,
+1326:             ingredients = listOf(RecipeIngredient("logs", 1)),
+1327:             skillRequired = "FLETCHING",
+1328:             levelRequired = 1
+1329:         ),
+1330:         Recipe(
+1331:             outputItemId = "bronze_arrows",
+1332:             outputQuantity = 15,
+1333:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("bronze_arrowheads", 15)),
+1334:             skillRequired = "FLETCHING",
+1335:             levelRequired = 5
+1336:         ),
+1337:         Recipe(
+1338:             outputItemId = "iron_arrows",
+1339:             outputQuantity = 15,
+1340:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("iron_arrowheads", 15)),
+1341:             skillRequired = "FLETCHING",
+1342:             levelRequired = 15
+1343:         ),
+1344:         Recipe(
+1345:             outputItemId = "bolt_frame",
+1346:             outputQuantity = 1,
+1347:             ingredients = listOf(RecipeIngredient("iron_bar", 1)),
+1348:             skillRequired = "FLETCHING",
+1349:             levelRequired = 20
+1350:         ),
+1351:         Recipe(
+1352:             outputItemId = "bolts",
+1353:             outputQuantity = 15,
+1354:             ingredients = listOf(RecipeIngredient("bolt_frame", 15), RecipeIngredient("feathers", 15)),
+1355:             skillRequired = "FLETCHING",
+1356:             levelRequired = 20
+1357:         ),
+1358:         Recipe(
+1359:             outputItemId = "steel_arrows",
+1360:             outputQuantity = 15,
+1361:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("steel_arrowheads", 15)),
+1362:             skillRequired = "FLETCHING",
+1363:             levelRequired = 25
+1364:         ),
+1365:         Recipe(
+1366:             outputItemId = "mithril_arrows",
+1367:             outputQuantity = 15,
+1368:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("mithril_arrowheads", 15)),
+1369:             skillRequired = "FLETCHING",
+1370:             levelRequired = 35
+1371:         ),
+1372:         Recipe(
+1373:             outputItemId = "adamant_arrows",
+1374:             outputQuantity = 15,
+1375:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("adamant_arrowheads", 15)),
+1376:             skillRequired = "FLETCHING",
+1377:             levelRequired = 45
+1378:         ),
+1379:         Recipe(
+1380:             outputItemId = "rune_arrows",
+1381:             outputQuantity = 15,
+1382:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("rune_arrowheads", 15)),
+1383:             skillRequired = "FLETCHING",
+1384:             levelRequired = 55
+1385:         ),
+1386:         Recipe(
+1387:             outputItemId = "barbed_bolts",
+1388:             outputQuantity = 15,
+1389:             ingredients = listOf(RecipeIngredient("bolt_frame", 15), RecipeIngredient("feathers", 15)),
+1390:             skillRequired = "FLETCHING",
+1391:             levelRequired = 60
+1392:         ),
+1393:         Recipe(
+1394:             outputItemId = "broad_arrows",
+1395:             outputQuantity = 15,
+1396:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("rune_arrowheads", 15)),
+1397:             skillRequired = "FLETCHING",
+1398:             levelRequired = 70
+1399:         ),
+1400:         Recipe(
+1401:             outputItemId = "dragon_arrows",
+1402:             outputQuantity = 15,
+1403:             ingredients = listOf(RecipeIngredient("arrow_shafts", 15), RecipeIngredient("feathers", 15), RecipeIngredient("orichalcum_arrowheads", 15)),
+1404:             skillRequired = "FLETCHING",
+1405:             levelRequired = 80
+1406:         ),
+1407:         Recipe(
+1408:             outputItemId = "enchanted_bolts",
+1409:             outputQuantity = 15,
+1410:             ingredients = listOf(RecipeIngredient("bolt_frame", 15), RecipeIngredient("feathers", 15), RecipeIngredient("celestial_herb", 1)),
+1411:             skillRequired = "FLETCHING",
+1412:             levelRequired = 90
+1413:         ),
+1414:         Recipe(
+1415:             outputItemId = "attack_potion",
+1416:             outputQuantity = 1,
+1417:             ingredients = listOf(RecipeIngredient("guam_leaf", 1), RecipeIngredient("vial_of_water", 1)),
+1418:             skillRequired = "ALCHEMY",
+1419:             levelRequired = 1
+1420:         ),
