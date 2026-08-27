@@ -1,320 +1,114 @@
 
---- HomeScreen.kt header/package + HomeScreenState: app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt lines 1-45 ---
-1: package com.yourname.idlerpg.ui.screens
-2: 
-3: import androidx.compose.foundation.background
-4: import androidx.compose.foundation.layout.*
-5: import androidx.compose.foundation.rememberScrollState
-6: import androidx.compose.foundation.verticalScroll
-7: import androidx.compose.foundation.shape.RoundedCornerShape
-8: import androidx.compose.material3.*
-9: import androidx.compose.runtime.*
-10: import androidx.compose.ui.Alignment
-11: import androidx.compose.ui.Modifier
-12: import androidx.compose.ui.draw.clip
-13: import androidx.compose.ui.text.style.TextAlign
-14: import androidx.compose.ui.unit.dp
-15: import com.yourname.idlerpg.data.ActiveQueueInfo
-16: import kotlinx.coroutines.delay
-17: import java.time.Duration
-18: import java.time.Instant
-19: 
-20: // =========================================================
-21: // HOME / CHECK-IN SCREEN
-22: // Per the locked spec: queue status + time remaining, currency,
-23: // HP (only if relevant), notification badge summary. Loot collects
-24: // automatically on reopen, so there's no manual collect step here.
-25: // The countdown reflects time remaining in the *current* action cycle --
-26: // skilling/crafting loops repeat indefinitely, they don't have a fixed
-27: // overall end -- computed live from the queue's startedAt + secondsPerAction
-28: // rather than a single server end-timestamp.
-29: // =========================================================
-30: 
-31: data class HomeScreenState(
-32:     val activeQueue: ActiveQueueInfo?, // null if no active queue
-33:     val softCurrency: Long,
-34:     val premiumCurrency: Long,
-35:     val currentHp: Int?,              // null if not in/near combat -- hides the HP bar entirely
-36:     val maxHp: Int?,
-37:     val isRecovering: Boolean,
-38:     val unreadNotificationCount: Int
-39: )
-40: 
-41: @Composable
-42: fun HomeScreen(
-43:     state: HomeScreenState,
-44:     modifier: Modifier = Modifier
-45: ) {
+--- TERM: activeQueueInfo ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:753]
+       748:     val myBuyOrders: StateFlow<List<MarketOrder>> = _myBuyOrders.asStateFlow()
+       749: 
+       750:     private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+       751:     val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
+       752: 
+    >> 753:     private val _activeQueueInfo = MutableStateFlow<ActiveQueueInfo?>(null)
+       754:     val activeQueueInfo: StateFlow<ActiveQueueInfo?> = _activeQueueInfo.asStateFlow()
+       755: 
+       756:     private val _currency = MutableStateFlow(0L to 0L)
+       757:     val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
+       758: 
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:754]
+       749: 
+       750:     private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
+       751:     val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
+       752: 
+       753:     private val _activeQueueInfo = MutableStateFlow<ActiveQueueInfo?>(null)
+    >> 754:     val activeQueueInfo: StateFlow<ActiveQueueInfo?> = _activeQueueInfo.asStateFlow()
+       755: 
+       756:     private val _currency = MutableStateFlow(0L to 0L)
+       757:     val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
+       758: 
+       759:     init {
+  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1250]
+       1245:     }
+       1246: 
+       1247:     fun refreshActiveQueue() {
+       1248:         val characterId = _currentCharacterId.value
+       1249:         val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
+    >> 1250:         _activeQueueInfo.value = when (queue) {
+       1251:             is ActiveQueue.SkillingQueue -> {
+       1252:                 val skillType = SkillType.valueOf(queue.skillId)
+       1253:                 val action = ActionCatalog.find(skillType, queue.itemId)
+       1254:                 ActiveQueueInfo(
+       1255:                     label = action?.displayName ?: formatItemName(queue.itemId),
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:460]
+       455:         }
+       456:     }
+       457:     val skillsListScrollState = rememberLazyListState()
+       458:     val skillsGridScrollState = rememberLazyGridState()
+       459: 
+    >> 460:     val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
+       461:     val currency by gameViewModel.currency.collectAsState()
+       462:     val combatHp by gameViewModel.combatHp.collectAsState()
+       463:     val homeState = HomeScreenState(
+       464:         activeQueue = activeQueue,
+       465:         softCurrency = currency.first,
 
---- HomeScreen.kt QueueCard + CycleCountdown full bodies: app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt lines 130-200 ---
-130:         Spacer(modifier = Modifier.height(2.dp))
-131:         Text(text = "$current / $max", style = MaterialTheme.typography.labelSmall)
-132:     }
-133: }
-134: 
-135: @Composable
-136: private fun QueueCard(queue: ActiveQueueInfo?) {
-137:     Column(
-138:         modifier = Modifier
-139:             .fillMaxWidth()
-140:             .clip(RoundedCornerShape(14.dp))
-141:             .background(MaterialTheme.colorScheme.surface)
-142:             .padding(16.dp)
-143:     ) {
-144:         if (queue == null) {
-145:             Text(text = "No active queue", style = MaterialTheme.typography.bodyMedium)
-146:             return@Column
-147:         }
-148: 
-149:         Text(text = queue.label, style = MaterialTheme.typography.titleMedium)
-150:         Spacer(modifier = Modifier.height(8.dp))
-151:         CycleCountdown(queue = queue)
-152:     }
-153: }
-154: 
-155: /**
-156:  * Skilling/crafting loops repeat every `secondsPerAction` and don't have a
-157:  * fixed overall end -- so this ticks down the time remaining in the
-158:  * *current* cycle, computed live from startedAt + secondsPerAction against
-159:  * wall-clock time, and rolls back to the full duration once the next cycle
-160:  * begins. Ticks every 100ms so short cycles still show a smooth countdown.
-161:  */
-162: @Composable
-163: private fun CycleCountdown(queue: ActiveQueueInfo) {
-164:     fun remainingSecondsNow(): Double {
-165:         val elapsedMs = Duration.between(queue.startedAt, Instant.now()).toMillis().coerceAtLeast(0)
-166:         val cycleMs = queue.secondsPerAction * 1000
-167:         if (cycleMs <= 0) return 0.0
-168:         val remainingMs = cycleMs - (elapsedMs % cycleMs)
-169:         return remainingMs / 1000.0
-170:     }
-171: 
-172:     var remainingSeconds by remember(queue.startedAt, queue.secondsPerAction) {
-173:         mutableStateOf(remainingSecondsNow())
-174:     }
-175: 
-176:     LaunchedEffect(queue.startedAt, queue.secondsPerAction) {
-177:         while (true) {
-178:             remainingSeconds = remainingSecondsNow()
-179:             delay(100)
-180:         }
-181:     }
-182: 
-183:     val displayText = if (remainingSeconds >= 60.0) {
-184:         val totalSeconds = remainingSeconds.toLong()
-185:         val minutes = totalSeconds / 60
-186:         val seconds = totalSeconds % 60
-187:         String.format("%d:%02d remaining", minutes, seconds)
-188:     } else {
-189:         String.format("%.2fs left", remainingSeconds)
-190:     }
-191: 
-192:     Text(text = displayText, style = MaterialTheme.typography.bodyMedium)
-193: }
-194: 
-195: @Composable
-196: private fun NotificationSummary(count: Int) {
-197:     Text(
-198:         text = "$count new notification" + if (count == 1) "" else "s",
-199:         style = MaterialTheme.typography.labelSmall,
-200:         textAlign = TextAlign.Start
+--- TERM: HomeScreen( ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt:62]
+       57:     val quests: List<GuildQuestSummary>,
+       58:     val viewerRole: GuildMemberRole
+       59: )
+       60: 
+       61: @Composable
+    >> 62: fun GuildHomeScreen(
+       63:     state: GuildHomeState,
+       64:     leaderboardEntries: List<GuildLeaderboardEntry>,
+       65:     leaderboardShowingDaily: Boolean,
+       66:     onToggleLeaderboardPeriod: () -> Unit,
+       67:     onMemberTapped: (GuildMemberSummary) -> Unit,
+  [./app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:42]
+       37:     val isRecovering: Boolean,
+       38:     val unreadNotificationCount: Int
+       39: )
+       40: 
+       41: @Composable
+    >> 42: fun HomeScreen(
+       43:     state: HomeScreenState,
+       44:     modifier: Modifier = Modifier
+       45: ) {
+       46:     Column(
+       47:         modifier = modifier
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:637]
+       632:                         CompositionLocalProvider(LocalDensity provides adaptiveDensity()) {
+       633:                         Box(modifier = Modifier.weight(1f)) {
+       634:                         when (currentDestination) {
+       635:                             AppDestination.HOME -> {
+       636:                                 LaunchedEffect(Unit) { gameViewModel.refreshCurrency() }
+    >> 637:                                 HomeScreen(state = homeState)
+       638:                             }
+       639: 
+       640:                             AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+       641:                                 is SkillsScreenState.List -> SkillsScreen(
+       642:                                     allSkills = allSkills,
+  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:902]
+       897:                                         browsableGuilds = currentBrowsableGuilds,
+       898:                                         onCreateGuild = { name -> gameViewModel.createGuild(name) },
+       899:                                         onJoinGuild = { guildId -> gameViewModel.joinGuild(guildId) }
+       900:                                     )
+       901:                                 } else {
+    >> 902:                                     GuildHomeScreen(
+       903:                                         state = guildState,
+       904:                                         leaderboardEntries = currentGuildLeaderboard,
+       905:                                         leaderboardShowingDaily = leaderboardShowingDaily,
+       906:                                         onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
+       907:                                         onMemberTapped = { selectedGuildMember = it },
 
---- TERM: SkillDetailState ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:119]
-       114:             null
-       115:         }
-       116:     }
-       117: }
-       118: 
-    >> 119: private fun buildSkillDetailState(
-       120:     skillId: String,
-       121:     summary: SkillSummary,
-       122:     inventoryQuantities: Map<String, Int>
-       123: ): SkillDetailState {
-       124:     val skillType = SkillType.valueOf(skillId)
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:123]
-       118: 
-       119: private fun buildSkillDetailState(
-       120:     skillId: String,
-       121:     summary: SkillSummary,
-       122:     inventoryQuantities: Map<String, Int>
-    >> 123: ): SkillDetailState {
-       124:     val skillType = SkillType.valueOf(skillId)
-       125: 
-       126:     val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
-       127:         SkillUnlockSummary(
-       128:             description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:161]
-       156:         ActionCatalog.allFor(skillType)
-       157:             .filter { it.levelRequired <= summary.level }
-       158:             .map { SkillActionSummary(it.itemId, it.displayName, it.levelRequired) }
-       159:     }
-       160: 
-    >> 161:     return SkillDetailState(
-       162:         skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
-       163:         currentXp = summary.currentXp, xpToNextLevel = summary.xpToNextLevel,
-       164:         earnedUnlocks = earned,
-       165:         nextUnlock = next,
-       166:         availableActions = actions
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:664]
-       659:                                                 buildSmithingState(it, inventoryQuantities),
-       660:                                                 { skillsScreenState = SkillsScreenState.List },
-       661:                                                 { itemId -> gameViewModel.startCraftingAction(itemId) }
-       662:                                             )
-       663:                                             in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
-    >> 664:                                                 buildSkillDetailState(screen.skillId, it, inventoryQuantities),
-       665:                                                 { skillsScreenState = SkillsScreenState.List },
-       666:                                                 { itemId -> gameViewModel.startCraftingAction(itemId) },
-       667:                                                 startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
-       668:                                             )
-       669:                                             else -> SkillDetailScreen(
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:670]
-       665:                                                 { skillsScreenState = SkillsScreenState.List },
-       666:                                                 { itemId -> gameViewModel.startCraftingAction(itemId) },
-       667:                                                 startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
-       668:                                             )
-       669:                                             else -> SkillDetailScreen(
-    >> 670:                                                 buildSkillDetailState(screen.skillId, it, inventoryQuantities),
-       671:                                                 { skillsScreenState = SkillsScreenState.List },
-       672:                                                 { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
-       673:                                             )
-       674:                                         }
-       675:                                     }
-  [./app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt:38]
-       33:     val displayName: String,
-       34:     val levelRequired: Int,
-       35:     val missingIngredients: List<MissingIngredientSummary> = emptyList()
-       36: )
-       37: 
-    >> 38: data class SkillDetailState(
-       39:     val skillId: String,
-       40:     val displayName: String,
-       41:     val level: Int,
-       42:     val currentXp: Long,
-       43:     val xpToNextLevel: Long,
-  [./app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt:51]
-       46:     val availableActions: List<SkillActionSummary>
-       47: )
-       48: 
-       49: @Composable
-       50: fun SkillDetailScreen(
-    >> 51:     state: SkillDetailState,
-       52:     onBack: () -> Unit,
-       53:     onStartAction: (String) -> Unit,
-       54:     modifier: Modifier = Modifier,
-       55:     startButtonLabel: String = "Start " + state.displayName
-       56: ) {
-
---- TERM: SkillDetailScreen ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:663]
-       658:                                             "SMITHING" -> SmithingScreen(
-       659:                                                 buildSmithingState(it, inventoryQuantities),
-       660:                                                 { skillsScreenState = SkillsScreenState.List },
-       661:                                                 { itemId -> gameViewModel.startCraftingAction(itemId) }
-       662:                                             )
-    >> 663:                                             in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
-       664:                                                 buildSkillDetailState(screen.skillId, it, inventoryQuantities),
-       665:                                                 { skillsScreenState = SkillsScreenState.List },
-       666:                                                 { itemId -> gameViewModel.startCraftingAction(itemId) },
-       667:                                                 startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
-       668:                                             )
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:669]
-       664:                                                 buildSkillDetailState(screen.skillId, it, inventoryQuantities),
-       665:                                                 { skillsScreenState = SkillsScreenState.List },
-       666:                                                 { itemId -> gameViewModel.startCraftingAction(itemId) },
-       667:                                                 startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
-       668:                                             )
-    >> 669:                                             else -> SkillDetailScreen(
-       670:                                                 buildSkillDetailState(screen.skillId, it, inventoryQuantities),
-       671:                                                 { skillsScreenState = SkillsScreenState.List },
-       672:                                                 { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
-       673:                                             )
-       674:                                         }
-  [./app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt:50]
-       45:     val nextUnlock: SkillUnlockSummary?,       // null if none remaining
-       46:     val availableActions: List<SkillActionSummary>
-       47: )
-       48: 
-       49: @Composable
-    >> 50: fun SkillDetailScreen(
-       51:     state: SkillDetailState,
-       52:     onBack: () -> Unit,
-       53:     onStartAction: (String) -> Unit,
-       54:     modifier: Modifier = Modifier,
-       55:     startButtonLabel: String = "Start " + state.displayName
-
---- TERM: fun placeSellOrder ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt:167]
-       162:         buyOrders.add(order)
-       163:         matchOrders(itemId)
-       164:         return ServiceResult.Success(order)
-       165:     }
-       166: 
-    >> 167:     fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): ServiceResult<MarketOrder> {
-       168:         requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
-       169:         val account = accounts.getValue(characterId)
-       170: 
-       171:         if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
-       172:         if (pricePerUnit <= 0) return ServiceResult.Failure("Price must be positive.")
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1331]
-       1326:                 refreshMyOrders()
-       1327:             }
-       1328:         }
-       1329:     }
-       1330: 
-    >> 1331:     fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
-       1332:         val characterId = _currentCharacterId.value ?: return
-       1333:         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-       1334:         val realInventory = inventoryService.inventoryFor(characterId)
-       1335:         if (realInventory.quantityOf(itemId) < quantity) return
-       1336: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt:58]
-       53:             put("p_quantity", quantity)
-       54:             put("p_price_per_unit", pricePerUnit)
-       55:         }).decodeAs<MarketOrderRpcResult>()
-       56:     }
-       57: 
-    >> 58:     suspend fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-       59:         client.postgrest.rpc("market_place_sell_order", buildJsonObject {
-       60:             put("p_character_id", characterId)
-       61:             put("p_item_id", itemId)
-       62:             put("p_quantity", quantity)
-       63:             put("p_price_per_unit", pricePerUnit)
-
---- TERM: onPlaceOrder ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:819]
-       814:                                     }
-       815:                                     OrderBookScreen(
-       816:                                         detail = orderBookDetail,
-       817:                                         prefilledQuantity = prefilledSellQuantity,
-       818:                                         onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
-    >> 819:                                         onPlaceOrder = { side, qty, price ->
-       820:                                             if (side == OrderSideUi.BUY) {
-       821:                                                 gameViewModel.placeBuyOrder(itemId, qty, price)
-       822:                                             } else {
-       823:                                                 gameViewModel.placeSellOrder(itemId, qty, price)
-       824:                                             }
-  [./app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt:33]
-       28: @Composable
-       29: fun OrderBookScreen(
-       30:     detail: ItemOrderBookDetail,
-       31:     prefilledQuantity: Int? = null, // set when arriving from "Sell on Market" in Inventory
-       32:     onBack: () -> Unit,
-    >> 33:     onPlaceOrder: (OrderSideUi, Int, Long) -> Unit,
-       34:     modifier: Modifier = Modifier
-       35: ) {
-       36:     var showAdvanced by remember { mutableStateOf(false) }
-       37:     var side by remember { mutableStateOf(if (prefilledQuantity != null) OrderSideUi.SELL else OrderSideUi.BUY) }
-       38:     var quantityText by remember { mutableStateOf(prefilledQuantity?.toString() ?: "") }
-  [./app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt:119]
-       114:         Button(
-       115:             onClick = {
-       116:                 val qty = quantityText.toIntOrNull()
-       117:                 val price = enteredPrice
-       118:                 if (qty != null && qty > 0 && price != null && price > 0) {
-    >> 119:                     onPlaceOrder(side, qty, price)
-       120:                 }
-       121:             },
-       122:             modifier = Modifier.fillMaxWidth()
-       123:         ) {
-       124:             Text(text = "Place " + (if (side == OrderSideUi.BUY) "Buy" else "Sell") + " Order")
+--- TERM: import com.yourname.idlerpg.data.ActiveQueueInfo ---
+  [./app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:15]
+       10: import androidx.compose.ui.Alignment
+       11: import androidx.compose.ui.Modifier
+       12: import androidx.compose.ui.draw.clip
+       13: import androidx.compose.ui.text.style.TextAlign
+       14: import androidx.compose.ui.unit.dp
+    >> 15: import com.yourname.idlerpg.data.ActiveQueueInfo
+       16: import kotlinx.coroutines.delay
+       17: import java.time.Duration
+       18: import java.time.Instant
+       19: 
+       20: // =========================================================
