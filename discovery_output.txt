@@ -1,51 +1,40 @@
-100:         when (currentTab) {
-101:             MarketTab.BROWSE -> BrowseTab(listings, showingBuyOrders, onToggleBrowseMode, onItemSelected)
-102:             MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder)
-103:             MarketTab.SELL_TO_VENDOR -> SellToVendorTab(vendorSellableItems, onSellToVendor)
-104:         }
-105:     }
-106: }
-107: 
-108: @Composable
-109: private fun MarketTabButton(
-110:     label: String,
-111:     isSelected: Boolean,
-112:     modifier: Modifier = Modifier,
-113:     onClick: () -> Unit
-114: ) {
-115:     val tabPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-116:     if (isSelected) {
-117:         Button(onClick = onClick, modifier = modifier, contentPadding = tabPadding) {
-118:             Text(
-119:                 text = label,
-120:                 style = MaterialTheme.typography.labelMedium,
-121:                 maxLines = 1,
-122:                 softWrap = false,
-123:                 overflow = TextOverflow.Ellipsis
-124:             )
-125:         }
-126:     } else {
-127:         OutlinedButton(onClick = onClick, modifier = modifier, contentPadding = tabPadding) {
-128:             Text(
-129:                 text = label,
-130:                 style = MaterialTheme.typography.labelMedium,
-131:                 maxLines = 1,
-132:                 softWrap = false,
-133:                 overflow = TextOverflow.Ellipsis
-134:             )
-135:         }
-136:     }
-137: }
-138: 
-139: // ---------------- Browse ----------------
-140: 
-141: @Composable
-142: private fun BrowseTab(
-143:     listings: List<MarketListingSummary>,
-144:     showingBuyOrders: Boolean,
-145:     onToggleMode: () -> Unit,
-146:     onItemSelected: (String) -> Unit
-147: ) {
-148:     Column {
-149:         Row(
-150:             modifier = Modifier.fillMaxWidth(),
+1: package com.yourname.idlerpg.data
+2: 
+3: import io.github.jan.supabase.auth.status.SessionStatus
+4: 
+5: import android.app.Application
+6: import androidx.lifecycle.AndroidViewModel
+7: import androidx.lifecycle.viewModelScope
+8: import com.yourname.idlerpg.*
+9: import com.yourname.idlerpg.ui.screens.SkillSummary
+10: import com.yourname.idlerpg.ui.screens.CombatViewData
+11: import com.yourname.idlerpg.ui.screens.CombatViewState
+12: import com.yourname.idlerpg.ui.screens.CombatLogEntry
+13: import com.yourname.idlerpg.ui.screens.ZoneSummary
+14: import com.yourname.idlerpg.ui.screens.GuildHomeState
+15: import com.yourname.idlerpg.ui.screens.GuildLeaderboardEntry
+16: import kotlinx.coroutines.Dispatchers
+17: import kotlinx.coroutines.delay
+18: import kotlinx.coroutines.flow.MutableStateFlow
+19: import kotlinx.coroutines.flow.StateFlow
+20: import kotlinx.coroutines.flow.asStateFlow
+21: import kotlinx.coroutines.launch
+22: import java.time.Instant
+23: import kotlin.random.Random
+24: import io.github.jan.supabase.auth.auth
+25: import com.yourname.idlerpg.ui.components.ChatChannelUi
+26: import com.yourname.idlerpg.ui.components.ChatMessageUi
+27: import com.yourname.idlerpg.ui.components.DmConversationSummary
+28: 
+29: data class OfflineSummary(
+30:     val awaySeconds: Long,
+31:     val skillActionName: String,
+32:     val itemName: String,
+33:     val quantity: Int,
+34:     val xpEarned: Long
+35: )
+36: 
+37: data class ActiveQueueInfo(
+38:     val label: String,
+39:     val secondsPerAction: Long,
+40:     val startedAt: Instant
