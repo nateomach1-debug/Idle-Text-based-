@@ -455,7 +455,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val combatLogFor: MutableMap<String, MutableList<CombatLogEntry>> = mutableMapOf()
 
     val zoneSummaries: List<ZoneSummary>
-        get() = ZoneCatalog.zones.map { zone ->
+        get() = ZoneCatalog.zones.sortedBy { it.levelRequirement }.map { zone ->
             ZoneSummary(
                 zoneId = zone.id,
                 name = zone.name,
