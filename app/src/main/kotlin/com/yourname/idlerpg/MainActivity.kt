@@ -664,12 +664,14 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                                 buildSkillDetailState(screen.skillId, it, inventoryQuantities),
                                                 { skillsScreenState = SkillsScreenState.List },
                                                 { itemId -> gameViewModel.startCraftingAction(itemId) },
-                                                startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId)
+                                                startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId),
+                                                activeQueue = activeQueue
                                             )
                                             else -> SkillDetailScreen(
                                                 buildSkillDetailState(screen.skillId, it, inventoryQuantities),
                                                 { skillsScreenState = SkillsScreenState.List },
-                                                { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
+                                                { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) },
+                                                activeQueue = activeQueue
                                             )
                                         }
                                     }

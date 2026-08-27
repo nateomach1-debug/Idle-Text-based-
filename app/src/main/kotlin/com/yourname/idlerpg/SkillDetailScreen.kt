@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.yourname.idlerpg.data.ActiveQueueInfo
 
 // =========================================================
 // SKILL DETAIL SCREEN
@@ -52,7 +53,8 @@ fun SkillDetailScreen(
     onBack: () -> Unit,
     onStartAction: (String) -> Unit,
     modifier: Modifier = Modifier,
-    startButtonLabel: String = "Start " + state.displayName
+    startButtonLabel: String = "Start " + state.displayName,
+    activeQueue: ActiveQueueInfo? = null
 ) {
     var showAdvanced by remember { mutableStateOf(false) }
     var showActionPicker by remember { mutableStateOf(false) }
@@ -64,6 +66,11 @@ fun SkillDetailScreen(
             }
             Spacer(modifier = Modifier.width(4.dp))
             Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        activeQueue?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            CycleCountdown(queue = it)
         }
 
         Spacer(modifier = Modifier.height(20.dp))

@@ -160,7 +160,7 @@ private fun QueueCard(queue: ActiveQueueInfo?) {
  * begins. Ticks every 100ms so short cycles still show a smooth countdown.
  */
 @Composable
-private fun CycleCountdown(queue: ActiveQueueInfo) {
+fun CycleCountdown(queue: ActiveQueueInfo) {
     fun remainingSecondsNow(): Double {
         val elapsedMs = Duration.between(queue.startedAt, Instant.now()).toMillis().coerceAtLeast(0)
         val cycleMs = queue.secondsPerAction * 1000
