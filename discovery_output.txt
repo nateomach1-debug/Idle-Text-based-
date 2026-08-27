@@ -1,114 +1,91 @@
-
---- TERM: activeQueueInfo ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:753]
-       748:     val myBuyOrders: StateFlow<List<MarketOrder>> = _myBuyOrders.asStateFlow()
-       749: 
-       750:     private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
-       751:     val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
-       752: 
-    >> 753:     private val _activeQueueInfo = MutableStateFlow<ActiveQueueInfo?>(null)
-       754:     val activeQueueInfo: StateFlow<ActiveQueueInfo?> = _activeQueueInfo.asStateFlow()
-       755: 
-       756:     private val _currency = MutableStateFlow(0L to 0L)
-       757:     val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
-       758: 
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:754]
-       749: 
-       750:     private val _mySellOrders = MutableStateFlow<List<MarketOrder>>(emptyList())
-       751:     val mySellOrders: StateFlow<List<MarketOrder>> = _mySellOrders.asStateFlow()
-       752: 
-       753:     private val _activeQueueInfo = MutableStateFlow<ActiveQueueInfo?>(null)
-    >> 754:     val activeQueueInfo: StateFlow<ActiveQueueInfo?> = _activeQueueInfo.asStateFlow()
-       755: 
-       756:     private val _currency = MutableStateFlow(0L to 0L)
-       757:     val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
-       758: 
-       759:     init {
-  [./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt:1250]
-       1245:     }
-       1246: 
-       1247:     fun refreshActiveQueue() {
-       1248:         val characterId = _currentCharacterId.value
-       1249:         val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
-    >> 1250:         _activeQueueInfo.value = when (queue) {
-       1251:             is ActiveQueue.SkillingQueue -> {
-       1252:                 val skillType = SkillType.valueOf(queue.skillId)
-       1253:                 val action = ActionCatalog.find(skillType, queue.itemId)
-       1254:                 ActiveQueueInfo(
-       1255:                     label = action?.displayName ?: formatItemName(queue.itemId),
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:460]
-       455:         }
-       456:     }
-       457:     val skillsListScrollState = rememberLazyListState()
-       458:     val skillsGridScrollState = rememberLazyGridState()
-       459: 
-    >> 460:     val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
-       461:     val currency by gameViewModel.currency.collectAsState()
-       462:     val combatHp by gameViewModel.combatHp.collectAsState()
-       463:     val homeState = HomeScreenState(
-       464:         activeQueue = activeQueue,
-       465:         softCurrency = currency.first,
-
---- TERM: HomeScreen( ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt:62]
-       57:     val quests: List<GuildQuestSummary>,
-       58:     val viewerRole: GuildMemberRole
-       59: )
-       60: 
-       61: @Composable
-    >> 62: fun GuildHomeScreen(
-       63:     state: GuildHomeState,
-       64:     leaderboardEntries: List<GuildLeaderboardEntry>,
-       65:     leaderboardShowingDaily: Boolean,
-       66:     onToggleLeaderboardPeriod: () -> Unit,
-       67:     onMemberTapped: (GuildMemberSummary) -> Unit,
-  [./app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:42]
-       37:     val isRecovering: Boolean,
-       38:     val unreadNotificationCount: Int
-       39: )
-       40: 
-       41: @Composable
-    >> 42: fun HomeScreen(
-       43:     state: HomeScreenState,
-       44:     modifier: Modifier = Modifier
-       45: ) {
-       46:     Column(
-       47:         modifier = modifier
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:637]
-       632:                         CompositionLocalProvider(LocalDensity provides adaptiveDensity()) {
-       633:                         Box(modifier = Modifier.weight(1f)) {
-       634:                         when (currentDestination) {
-       635:                             AppDestination.HOME -> {
-       636:                                 LaunchedEffect(Unit) { gameViewModel.refreshCurrency() }
-    >> 637:                                 HomeScreen(state = homeState)
-       638:                             }
-       639: 
-       640:                             AppDestination.SKILLS -> when (val screen = skillsScreenState) {
-       641:                                 is SkillsScreenState.List -> SkillsScreen(
-       642:                                     allSkills = allSkills,
-  [./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt:902]
-       897:                                         browsableGuilds = currentBrowsableGuilds,
-       898:                                         onCreateGuild = { name -> gameViewModel.createGuild(name) },
-       899:                                         onJoinGuild = { guildId -> gameViewModel.joinGuild(guildId) }
-       900:                                     )
-       901:                                 } else {
-    >> 902:                                     GuildHomeScreen(
-       903:                                         state = guildState,
-       904:                                         leaderboardEntries = currentGuildLeaderboard,
-       905:                                         leaderboardShowingDaily = leaderboardShowingDaily,
-       906:                                         onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
-       907:                                         onMemberTapped = { selectedGuildMember = it },
-
---- TERM: import com.yourname.idlerpg.data.ActiveQueueInfo ---
-  [./app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt:15]
-       10: import androidx.compose.ui.Alignment
-       11: import androidx.compose.ui.Modifier
-       12: import androidx.compose.ui.draw.clip
-       13: import androidx.compose.ui.text.style.TextAlign
-       14: import androidx.compose.ui.unit.dp
-    >> 15: import com.yourname.idlerpg.data.ActiveQueueInfo
-       16: import kotlinx.coroutines.delay
-       17: import java.time.Duration
-       18: import java.time.Instant
-       19: 
-       20: // =========================================================
+Total lines: 251
+1: package com.yourname.idlerpg.ui.screens
+2: 
+3: import androidx.compose.foundation.background
+4: import androidx.compose.foundation.clickable
+5: import androidx.compose.foundation.layout.*
+6: import androidx.compose.foundation.lazy.LazyColumn
+7: import androidx.compose.foundation.lazy.items
+8: import androidx.compose.foundation.shape.RoundedCornerShape
+9: import androidx.compose.material.icons.Icons
+10: import androidx.compose.material.icons.filled.ArrowBack
+11: import androidx.compose.material3.*
+12: import androidx.compose.runtime.*
+13: import androidx.compose.ui.Alignment
+14: import androidx.compose.ui.Modifier
+15: import androidx.compose.ui.draw.clip
+16: import androidx.compose.ui.unit.dp
+17: 
+18: // =========================================================
+19: // SKILL DETAIL SCREEN
+20: // Simple view: level, XP bar, earned unlocks.
+21: // Advanced view (toggle): exact XP numbers, XP-to-next-level,
+22: // next unlock preview.
+23: // Includes "Start" action to queue a gather/craft action for
+24: // this skill directly from this screen.
+25: // =========================================================
+26: 
+27: data class SkillUnlockSummary(val description: String, val levelRequired: Int)
+28: 
+29: data class MissingIngredientSummary(val displayName: String, val required: Int, val have: Int)
+30: 
+31: data class SkillActionSummary(
+32:     val actionId: String,
+33:     val displayName: String,
+34:     val levelRequired: Int,
+35:     val missingIngredients: List<MissingIngredientSummary> = emptyList()
+36: )
+37: 
+38: data class SkillDetailState(
+39:     val skillId: String,
+40:     val displayName: String,
+41:     val level: Int,
+42:     val currentXp: Long,
+43:     val xpToNextLevel: Long,
+44:     val earnedUnlocks: List<SkillUnlockSummary>,
+45:     val nextUnlock: SkillUnlockSummary?,       // null if none remaining
+46:     val availableActions: List<SkillActionSummary>
+47: )
+48: 
+49: @Composable
+50: fun SkillDetailScreen(
+51:     state: SkillDetailState,
+52:     onBack: () -> Unit,
+53:     onStartAction: (String) -> Unit,
+54:     modifier: Modifier = Modifier,
+55:     startButtonLabel: String = "Start " + state.displayName
+56: ) {
+57:     var showAdvanced by remember { mutableStateOf(false) }
+58:     var showActionPicker by remember { mutableStateOf(false) }
+59: 
+60:     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+61:         Row(verticalAlignment = Alignment.CenterVertically) {
+62:             IconButton(onClick = onBack) {
+63:                 Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+64:             }
+65:             Spacer(modifier = Modifier.width(4.dp))
+66:             Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+67:         }
+68: 
+69:         Spacer(modifier = Modifier.height(20.dp))
+70: 
+71:         Text(text = "Level " + state.level, style = MaterialTheme.typography.titleMedium)
+72:         Spacer(modifier = Modifier.height(8.dp))
+73:         ThinProgressBarPublic(skillProgressFractionPublic(state.currentXp, state.xpToNextLevel))
+74: 
+75:         if (showAdvanced) {
+76:             Spacer(modifier = Modifier.height(8.dp))
+77:             Text(
+78:                 text = "XP: " + state.currentXp + "  |  " + state.xpToNextLevel + " to next level",
+79:                 style = MaterialTheme.typography.labelSmall
+80:             )
+81:             state.nextUnlock?.let {
+82:                 Spacer(modifier = Modifier.height(4.dp))
+83:                 Text(
+84:                     text = "Next unlock at level " + it.levelRequired + ": " + it.description,
+85:                     style = MaterialTheme.typography.labelSmall
+86:                 )
+87:             }
+88:         }
+89: 
+90:         Spacer(modifier = Modifier.height(12.dp))
