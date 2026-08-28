@@ -1,495 +1,132 @@
-ITEM 4 DISCOVERY: offline-summary popup pattern + lastSeenAt persistence
+LAST-SEEN EXPORT/RESTORE PATTERN + RESTORE CALL SITES DISCOVERY
 
 ====================================================================================================
-offline summary / popup StateFlow declaration + population in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
+LastSeenExport data class + recordLastSeen/exportLastSeen/restoreLastSeen in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt
 ====================================================================================================
 
---- match #1 at offset 1190 ---
-omponents.DmConversationSummary
-import com.yourname.idlerpg.ui.screens.VendorBuyCatalog
-
-data class OfflineSummary(
-    val awaySeconds: Long,
-    val skillActionName: String,
-    val itemName: String,
-    val quantity: Int,
-    val xpEarned: Long
+--- match #1 at offset 4761 ---
+Completed: Int,
+    val startedAt: String
 )
 
-data class ActiveQueueInfo(
-    val label: String,
-    val secondsPerAction: Long,
-    val startedAt: Instant
-)
+data class LastSeenExport(val characterId: String, val lastSeenAt: String)
 
-private fun formatItemName(itemId: String): String =
-    itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+// =========================================================
+// OFFLINE/IDLE SERVICE
+// =========================================================
 
-class GameViewModel(application: Application) : AndroidViewModel(application) {
+class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
 
-    private val repository = GameStateRepository(application)
+    private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
+    private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
+    private val flaggedAccounts: MutableList<OfflineFlagRecord> = mu
 
-    val accountService = AccountService()
-    val progressionService = ProgressionService()
-    val inventoryService = InventoryService()
-    val sessionManager = SessionManager(application)
-    // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
-    // Skilling queues don't consume materials, only crafting does, so this is unused 
+--- match #2 at offset 7317 ---
+g): ActiveQueue? = activeQueues[characterId]
 
---- match #2 at offset 2424 ---
-ll)
-    val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
+    fun recordLastSeen(characterId: String, now: Instant = Instant.now()) {
+        lastSeenAt[characterId] = now
+    }
 
-    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
-    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
+        val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
+        val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
 
-    private val _currentCharacterId = MutableStateFlow<String?>(null)
-    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+        val claimedElapsed = Duration.between(lastSeen, no
 
-    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
-    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+--- match #3 at offset 11437 ---
+startedAt.toString()
+            )
+        }
 
-    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
-    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+    fun exportLastSeen(): List<LastSeenExport> =
+        lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
 
-    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
-    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+    fun restoreSkillingQueue(export: SkillingQueueExport) {
+        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+            characterId = export.characterId,
+            skillId = export.skillId,
+            itemId = export.itemId,
+            secondsPerAction = export.secondsPerAction,
+            startedAt = Instant.parse(export.startedAt)
+        )
 
-    val economyMonitoring = EconomyMonitoringService()
-    val marketService = MarketService(economyM
+--- match #4 at offset 12445 ---
+tiveQueues[export.characterId] = queue
+    }
 
---- match #3 at offset 2459 ---
-Flow<String?> = _currentAccountId.asStateFlow()
-
-    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
-    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
-
-    private val _currentCharacterId = MutableStateFlow<String?>(null)
-    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
-
-    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
-    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
-
-    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
-    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
-
-    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
-    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
-
-    val economyMonitoring = EconomyMonitoringService()
-    val marketService = MarketService(economyMonitoring)
-    val combatService =
-
---- match #4 at offset 2490 ---
-Id.asStateFlow()
-
-    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
-    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
-
-    private val _currentCharacterId = MutableStateFlow<String?>(null)
-    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
-
-    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
-    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
-
-    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
-    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
-
-    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
-    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
-
-    val economyMonitoring = EconomyMonitoringService()
-    val marketService = MarketService(economyMonitoring)
-    val combatService = CombatService()
-
-    // ======
-
---- match #5 at offset 2516 ---
-ate val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
-    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
-
-    private val _currentCharacterId = MutableStateFlow<String?>(null)
-    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
-
-    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
-    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
-
-    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
-    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
-
-    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
-    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
-
-    val economyMonitoring = EconomyMonitoringService()
-    val marketService = MarketService(economyMonitoring)
-    val combatService = CombatService()
-
-    // ================================
-
---- match #6 at offset 2535 ---
-mary = MutableStateFlow<OfflineSummary?>(null)
-    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
-
-    private val _currentCharacterId = MutableStateFlow<String?>(null)
-    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
-
-    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
-    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
-
-    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
-    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
-
-    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
-    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
-
-    val economyMonitoring = EconomyMonitoringService()
-    val marketService = MarketService(economyMonitoring)
-    val combatService = CombatService()
-
-    // ====================================================
-
---- match #7 at offset 40535 ---
-arSession()
-    _currentAccountId.value = null
-    _currentCharacterId.value = null
+    fun restoreLastSeen(export: LastSeenExport) {
+        lastSeenAt[export.characterId] = Instant.parse(export.lastSeenAt)
+    }
 }
 
-    fun clearOfflineSummary() {
-        _offlineSummary.value = null
-    }
-    fun saveGame() {
-        repository.save(
-            accountService.exportAllAccounts(),
-            accountService.exportAllCharacters(),
-            progressionService.exportAllSkills(),
-            offlineIdleService.exportSkillingQueues(),
-            offlineIdleService.exportCraftingQueues(),
-            offlineIdleService.exportLastSeen(),
-            inventoryService.exportAllItems(),
-            inventoryService.exportAllEquipped(),
-            inventoryService.exportAllLoadoutSettings(),
-            marketService.exportAccounts(),
-            marketService.exportOrders(),
-            marketService.exportPriceHistory()
-        )
-        val supabaseCharacterId = _currentSupabaseCharacterId.value
-        val json = repository.currentSaveJson()
-        if (supabaseCharacterId != null && json != null) {
-            viewModelScope.
 
---- match #8 at offset 40562 ---
-ountId.value = null
-    _currentCharacterId.value = null
-}
+total matches: 4
 
-    fun clearOfflineSummary() {
-        _offlineSummary.value = null
-    }
-    fun saveGame() {
-        repository.save(
-            accountService.exportAllAccounts(),
-            accountService.exportAllCharacters(),
-            progressionService.exportAllSkills(),
-            offlineIdleService.exportSkillingQueues(),
-            offlineIdleService.exportCraftingQueues(),
-            offlineIdleService.exportLastSeen(),
-            inventoryService.exportAllItems(),
-            inventoryService.exportAllEquipped(),
-            inventoryService.exportAllLoadoutSettings(),
-            marketService.exportAccounts(),
-            marketService.exportOrders(),
-            marketService.exportPriceHistory()
-        )
-        val supabaseCharacterId = _currentSupabaseCharacterId.value
-        val json = repository.currentSaveJson()
-        if (supabaseCharacterId != null && json != null) {
-            viewModelScope.launch {
-                Sup
+====================================================================================================
+lastSeen JSON write in save() in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt
+====================================================================================================
 
---- match #9 at offset 46773 ---
-inventoryFor(characterId), result.value.actionsCompleted)
-                    }
-                    _offlineSummary.value = OfflineSummary(
-                        awaySeconds = result.value.claimedElapsed.seconds,
-                        skillActionName = action.displayName,
-                        itemName = formatItemName(queue.itemId),
-                        quantity = result.value.actionsCompleted,
-                        xpEarned = xpEarned
-                    )
-                }
-            }
+--- match #1 at offset 4520 ---
+raftingQueuesArray)
+
+        val lastSeenArray = JSONArray()
+        lastSeen.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
         }
+        root.put("lastSeen", lastSeenArray)
 
-        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
-        if (craftingQueue != null) {
-            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
-            if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
-                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
-                if (batch.xpGranted > 0) {
-                    
-
---- match #10 at offset 46797 ---
-), result.value.actionsCompleted)
-                    }
-                    _offlineSummary.value = OfflineSummary(
-                        awaySeconds = result.value.claimedElapsed.seconds,
-                        skillActionName = action.displayName,
-                        itemName = formatItemName(queue.itemId),
-                        quantity = result.value.actionsCompleted,
-                        xpEarned = xpEarned
-                    )
-                }
-            }
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("itemId", entry.itemId)
+            obj.put("quantity", entry.quantity)
+            inventoryArray.put(obj)
         }
+        root.put("inventoryItems", inventoryArray)
 
-        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
-        if (craftingQueue != null) {
-            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
-            if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
-                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
-                if (batch.xpGranted > 0) {
-                    _offlineSummary.value =
+        val equippedArray = JSONArray()
+        equippedSlots.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("slot", entry.slot)
+          
 
---- match #11 at offset 47688 ---
- craftResult.value.actionsCompleted)
-                if (batch.xpGranted > 0) {
-                    _offlineSummary.value = OfflineSummary(
-                        awaySeconds = craftResult.value.claimedElapsed.seconds,
-                        skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
-                        itemName = formatItemName(craftingQueue.itemId),
-                        quantity = batch.itemsProduced,
-                        xpEarned = batch.xpGranted
-                    )
-                }
-            }
-        }
-
-        offlineIdleService.recordLastSeen(characterId)
-        skillActionProgressSeconds = 0
-        craftActionProgressSeconds = 0
-        refreshSkills()
-        refreshInventory()
-        refreshActiveQueue()
-
-        if (marketService.accountFor(characterId) == null) {
-            val character = accountService.charactersFor(_currentAccountId.value ?: "")
-                .find { it.id == characterId }
-            marketService.registerAccount(
-      
-
---- match #12 at offset 47712 ---
-nsCompleted)
-                if (batch.xpGranted > 0) {
-                    _offlineSummary.value = OfflineSummary(
-                        awaySeconds = craftResult.value.claimedElapsed.seconds,
-                        skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
-                        itemName = formatItemName(craftingQueue.itemId),
-                        quantity = batch.itemsProduced,
-                        xpEarned = batch.xpGranted
-                    )
-                }
-            }
-        }
-
-        offlineIdleService.recordLastSeen(characterId)
-        skillActionProgressSeconds = 0
-        craftActionProgressSeconds = 0
-        refreshSkills()
-        refreshInventory()
-        refreshActiveQueue()
-
-        if (marketService.accountFor(characterId) == null) {
-            val character = accountService.charactersFor(_currentAccountId.value ?: "")
-                .find { it.id == characterId }
-            marketService.registerAccount(
-                PlayerEconomy
-
-total matches: 12
-
-====================================================================================================
-lastSeenAt read/write/persist references in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
-====================================================================================================
-(no matches found)
-
-total matches: 0
-
-====================================================================================================
-recordLastSeen() definition in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
-====================================================================================================
-(no matches found)
-
-total matches: 0
-
-====================================================================================================
-offline summary popup UI (Dialog/AlertDialog) in MainActivity.kt in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt
-====================================================================================================
-
---- match #1 at offset 15877 ---
-pFlowState.CharacterCreate else AppFlowState.CharacterSelect
-            }
-        }
-    }
-
-    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
-    offlineSummary?.let { summary ->
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { gameViewModel.clearOfflineSummary() },
-            title = { androidx.compose.material3.Text("Welcome back!") },
-            text = {
-                val minutes = summary.awaySeconds / 60
-                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
-                androidx.compose.material3.Text(
-                    "You were away for " + awayText + ".\n\n" +
-                    "While gone, you were " + summary.skillActionName + ":\n" +
-                    "+" + summary.xpEarned + " XP\n" +
-                    "Gathered " + summary.quantity + "x " + summary.itemName
+--- match #2 at offset 11885 ---
+tInt("targetQuantity"),
+                    quantityCompleted = obj.getInt("quantityCompleted"),
+                    startedAt = obj.getString("startedAt")
                 )
-            },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
-                    androidx.compose.material3.Text("Nice!")
-                }
-            }
-        )
-    }
-
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
-    var skillsScreenState by remember { mutable
-
---- match #2 at offset 15909 ---
-AppFlowState.CharacterSelect
-            }
+            )
         }
-    }
 
-    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
-    offlineSummary?.let { summary ->
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { gameViewModel.clearOfflineSummary() },
-            title = { androidx.compose.material3.Text("Welcome back!") },
-            text = {
-                val minutes = summary.awaySeconds / 60
-                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
-                androidx.compose.material3.Text(
-                    "You were away for " + awayText + ".\n\n" +
-                    "While gone, you were " + summary.skillActionName + ":\n" +
-                    "+" + summary.xpEarned + " XP\n" +
-                    "Gathered " + summary.quantity + "x " + summary.itemName
-                )
-            },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
-                    androidx.compose.material3.Text("Nice!")
-                }
-            }
-        )
-    }
-
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
-    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(Skill
-
---- match #3 at offset 15945 ---
-     }
+        val lastSeen = mutableListOf<LastSeenExport>()
+        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
         }
-    }
 
-    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
-    offlineSummary?.let { summary ->
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { gameViewModel.clearOfflineSummary() },
-            title = { androidx.compose.material3.Text("Welcome back!") },
-            text = {
-                val minutes = summary.awaySeconds / 60
-                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
-                androidx.compose.material3.Text(
-                    "You were away for " + awayText + ".\n\n" +
-                    "While gone, you were " + summary.skillActionName + ":\n" +
-                    "+" + summary.xpEarned + " XP\n" +
-                    "Gathered " + summary.quantity + "x " + summary.itemName
-                )
-            },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
-                    androidx.compose.material3.Text("Nice!")
-                }
-            }
-        )
-    }
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+        for (i in 0 until inventoryArray.length()) {
+            val obj = inventoryArray.getJSONObject(i)
+            inventoryItems.add(
+                InventorySlotExport(
+                  
 
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
-    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
-    var combatS
-
---- match #4 at offset 16078 ---
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { gameViewModel.clearOfflineSummary() },
-            title = { androidx.compose.material3.Text("Welcome back!") },
-            text = {
-                val minutes = summary.awaySeconds / 60
-                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
-                androidx.compose.material3.Text(
-                    "You were away for " + awayText + ".\n\n" +
-                    "While gone, you were " + summary.skillActionName + ":\n" +
-                    "+" + summary.xpEarned + " XP\n" +
-                    "Gathered " + summary.quantity + "x " + summary.itemName
-                )
-            },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
-                    androidx.compose.material3.Text("Nice!")
-                }
-            }
-        )
-    }
-
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
-    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
-    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
-    var inventoryScreenState by remember {
-
---- match #5 at offset 16825 ---
-firmButton = {
-                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
-                    androidx.compose.material3.Text("Nice!")
-                }
-            }
-        )
-    }
-
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
-    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
-    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
-    var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
-
-    val allSkills by gameViewModel.skills.collectAsState()
-    val zones = gameViewModel.zoneSummaries
-    val trainingSkill by gameViewModel.trainingSkill.collectAsState()
-    val trainingSkillLevel by gameViewModel.trainingSkillLevel.collectAsState()
-    val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
-    val inventoryItems = remember(inventoryItemEntries) {
-        buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
-    }
-    val inventoryQuantities = remember(inventoryItemEntries) {
-        inventoryItemEntries.associate { it.itemId to it.quantity }
-    }
-    val equippedBackend by gameViewMod
-
-total matches: 5
+total matches: 2
 
 ====================================================================================================
-GameStateRepository.save() full signature in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt
+lastSeen JSON read/parse side in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt
 ====================================================================================================
 
---- match #1 at offset 790 ---
-ng) {
-        saveFile.writeText(json)
-    }
-
-    fun save(
-        accounts: List<AccountExport>,
-        characters: List<CharacterExport>,
-        skills: List<SkillExport>,
-        skillingQueues: List<SkillingQueueExport>,
+--- match #1 at offset 1027 ---
+illingQueues: List<SkillingQueueExport>,
         craftingQueues: List<CraftingQueueExport>,
         lastSeen: List<LastSeenExport>,
         inventoryItems: List<InventorySlotExport>,
@@ -501,30 +138,289 @@ ng) {
     ) {
         val root = JSONObject()
 
-        val accountsArray = JSONArray()
-        accounts.forEach { acc ->
-            val obj = JSONObject()
-            obj.put("id", acc.id)
-            obj.put("email", acc.email)
-            obj.put("username", acc.username)
-            obj.put("passwordHash", acc.passwordHash)
-            obj.put("passwordSalt", acc.passwordSalt)
-            obj.put("createdAt", acc.createdAt)
-            obj.put("lastLoginAt", acc.lastLoginAt)
-            obj.put("ageBracket", acc.ageBracket)
-            obj.put("region", acc.region)
-            obj.put("isBanned", acc.isBanned)
-            obj.put("banReason", acc.banReason)
-            obj.put("mutedUntil", acc.mutedUntil)
-            obj.put("subscriptionTier", acc.subscriptionTier)
-            obj.put("premiumCurrency", acc.premiumCurrency)
-            accountsArray.put(obj)
+        val accountsArr
+
+--- match #2 at offset 4253 ---
+QueuesArray.put(obj)
         }
-        root.put("accounts", accountsArray)
+        root.put("craftingQueues", craftingQueuesArray)
 
-  
+        val lastSeenArray = JSONArray()
+        lastSeen.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
 
-total matches: 1
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObje
+
+--- match #3 at offset 4289 ---
+   root.put("craftingQueues", craftingQueuesArray)
+
+        val lastSeenArray = JSONArray()
+        lastSeen.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
+
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterI
+
+--- match #4 at offset 4427 ---
+  val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
+
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("itemId", entry.itemId)
+            obj.put("quantity", entry.quantity)
+            inventoryAr
+
+--- match #5 at offset 4446 ---
+ect()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
+
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("itemId", entry.itemId)
+            obj.put("quantity", entry.quantity)
+            inventoryArray.put(obj)
+      
+
+--- match #6 at offset 4470 ---
+t("characterId", entry.characterId)
+            obj.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
+
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("itemId", entry.itemId)
+            obj.put("quantity", entry.quantity)
+            inventoryArray.put(obj)
+        }
+        root.put("in
+
+--- match #7 at offset 4521 ---
+.put("lastSeenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
+
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("itemId", entry.itemId)
+            obj.put("quantity", entry.quantity)
+            inventoryArray.put(obj)
+        }
+        root.put("inventoryItems", inventoryArray)
+
+        val equippe
+
+--- match #8 at offset 4532 ---
+eenAt", entry.lastSeenAt)
+            lastSeenArray.put(obj)
+        }
+        root.put("lastSeen", lastSeenArray)
+
+        val inventoryArray = JSONArray()
+        inventoryItems.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("itemId", entry.itemId)
+            obj.put("quantity", entry.quantity)
+            inventoryArray.put(obj)
+        }
+        root.put("inventoryItems", inventoryArray)
+
+        val equippedArray = JS
+
+--- match #9 at offset 11796 ---
+      startedAt = obj.getString("startedAt")
+                )
+            )
+        }
+
+        val lastSeen = mutableListOf<LastSeenExport>()
+        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<Invent
+
+--- match #10 at offset 11851 ---
+      )
+            )
+        }
+
+        val lastSeen = mutableListOf<LastSeenExport>()
+        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJ
+
+--- match #11 at offset 11886 ---
+      val lastSeen = mutableListOf<LastSeenExport>()
+        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONA
+
+--- match #12 at offset 11938 ---
+
+        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+        for (i in 0 until inventoryArray.leng
+
+--- match #13 at offset 11986 ---
+lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+        for (i in 0 until inventoryArray.length()) {
+            val obj = inventoryArray.get
+
+--- match #14 at offset 12029 ---
+ 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+        for (i in 0 until inventoryArray.length()) {
+            val obj = inventoryArray.getJSONObject(i)
+            inventoryItems.ad
+
+--- match #15 at offset 12101 ---
+etJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+        for (i in 0 until inventoryArray.length()) {
+            val obj = inventoryArray.getJSONObject(i)
+            inventoryItems.add(
+                InventorySlotExport(
+                    characterId 
+
+--- match #16 at offset 12129 ---
+lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+        for (i in 0 until inventoryArray.length()) {
+            val obj = inventoryArray.getJSONObject(i)
+            inventoryItems.add(
+                InventorySlotExport(
+                    characterId = obj.getString("characterId
+
+--- match #17 at offset 16740 ---
+   return SavedGameState(
+            accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
+            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
+        )
+    }
+}
+
+data class SavedGameState(
+    val accounts: List<AccountExport>,
+    val characters: List<CharacterExport>,
+    val skills: List<SkillExport>,
+    val skillingQueues: List<SkillingQueueExport>,
+    val craftingQueues: List<CraftingQueueExport>,
+    val lastSeen: List<L
+
+--- match #18 at offset 17132 ---
+illingQueues: List<SkillingQueueExport>,
+    val craftingQueues: List<CraftingQueueExport>,
+    val lastSeen: List<LastSeenExport>,
+    val inventoryItems: List<InventorySlotExport>,
+    val equippedSlots: List<EquippedSlotExport>,
+    val loadoutSettings: List<LoadoutSettingsExport>,
+    val marketAccounts: List<PlayerEconomyAccountExport>,
+    val marketOrders: List<MarketOrderExport>,
+    val marketPriceHistory: List<PriceHistoryExport>
+)
+
+
+total matches: 18
+
+====================================================================================================
+ALL restoreLastSeen call sites (loadGame + cloud recovery paths) in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
+====================================================================================================
+
+--- match #1 at offset 35737 ---
+nService.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equip
+
+--- match #2 at offset 38310 ---
+nService.restoreSkill(it) }
+    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equip
+
+--- match #3 at offset 43762 ---
+.forEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreIt
+
+total matches: 3
 
 
 DONE
