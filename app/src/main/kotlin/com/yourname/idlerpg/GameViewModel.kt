@@ -35,6 +35,12 @@ data class OfflineSummary(
     val xpEarned: Long
 )
 
+data class SaleNotification(
+    val itemName: String,
+    val quantity: Int,
+    val netProceeds: Long
+)
+
 data class ActiveQueueInfo(
     val label: String,
     val secondsPerAction: Long,
@@ -63,6 +69,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
     val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+
+    private val _pendingSaleNotifications = MutableStateFlow<List<SaleNotification>>(emptyList())
+    val pendingSaleNotifications: StateFlow<List<SaleNotification>> = _pendingSaleNotifications.asStateFlow()
 
     private val _currentCharacterId = MutableStateFlow<String?>(null)
     val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
@@ -818,6 +827,7 @@ init {
         saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
         saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
         saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
         saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
         saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
         saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
@@ -865,6 +875,7 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
     recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
     recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
     recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
     recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
     recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
@@ -917,6 +928,33 @@ fun logout() {
     fun clearOfflineSummary() {
         _offlineSummary.value = null
     }
+
+    fun dismissSaleNotification() {
+        _pendingSaleNotifications.value = _pendingSaleNotifications.value.drop(1)
+    }
+
+    private fun checkForRecentSales(characterId: String) {
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val since = offlineIdleService.lastSaleCheckFor(characterId)?.toString()
+            ?: Instant.now().minusSeconds(86400).toString()
+        offlineIdleService.recordSaleCheck(characterId)
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.myRecentSales(supabaseCharacterId, since)
+            result.onSuccess { rows ->
+                if (rows.isNotEmpty()) {
+                    val notifications = rows.map { row ->
+                        val netProceeds = (row.pricePerUnit * row.quantity) - row.taxCollected
+                        SaleNotification(
+                            itemName = ItemCatalog.find(row.itemId)?.name ?: formatItemName(row.itemId),
+                            quantity = row.quantity,
+                            netProceeds = netProceeds
+                        )
+                    }
+                    _pendingSaleNotifications.value = _pendingSaleNotifications.value + notifications
+                }
+            }
+        }
+    }
     fun saveGame() {
         repository.save(
             accountService.exportAllAccounts(),
@@ -925,6 +963,7 @@ fun logout() {
             offlineIdleService.exportSkillingQueues(),
             offlineIdleService.exportCraftingQueues(),
             offlineIdleService.exportLastSeen(),
+            offlineIdleService.exportLastSaleCheck(),
             inventoryService.exportAllItems(),
             inventoryService.exportAllEquipped(),
             inventoryService.exportAllLoadoutSettings(),
@@ -969,6 +1008,7 @@ fun logout() {
                                 recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
                                 recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
                                 recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
                                 recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
                                 recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
                                 recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
@@ -1043,6 +1083,7 @@ fun logout() {
         }
 
         offlineIdleService.recordLastSeen(characterId)
+        checkForRecentSales(characterId)
         skillActionProgressSeconds = 0
         craftActionProgressSeconds = 0
         refreshSkills()
@@ -1075,6 +1116,7 @@ fun logout() {
         offlineIdleService.stopQueue(characterId)
         offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
         offlineIdleService.recordLastSeen(characterId)
+        checkForRecentSales(characterId)
         skillActionProgressSeconds = 0
         refreshActiveQueue()
     }

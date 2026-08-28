@@ -26,6 +26,7 @@ class GameStateRepository(private val context: Context) {
         skillingQueues: List<SkillingQueueExport>,
         craftingQueues: List<CraftingQueueExport>,
         lastSeen: List<LastSeenExport>,
+        lastSaleCheck: List<LastSaleCheckExport>,
         inventoryItems: List<InventorySlotExport>,
         equippedSlots: List<EquippedSlotExport>,
         loadoutSettings: List<LoadoutSettingsExport>,
@@ -113,6 +114,15 @@ class GameStateRepository(private val context: Context) {
             lastSeenArray.put(obj)
         }
         root.put("lastSeen", lastSeenArray)
+
+        val lastSaleCheckArray = JSONArray()
+        lastSaleCheck.forEach { entry ->
+            val obj = JSONObject()
+            obj.put("characterId", entry.characterId)
+            obj.put("lastSaleCheckAt", entry.lastSaleCheckAt)
+            lastSaleCheckArray.put(obj)
+        }
+        root.put("lastSaleCheck", lastSaleCheckArray)
 
         val inventoryArray = JSONArray()
         inventoryItems.forEach { entry ->
@@ -282,6 +292,13 @@ class GameStateRepository(private val context: Context) {
             lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
         }
 
+        val lastSaleCheck = mutableListOf<LastSaleCheckExport>()
+        val lastSaleCheckArray = root.optJSONArray("lastSaleCheck") ?: JSONArray()
+        for (i in 0 until lastSaleCheckArray.length()) {
+            val obj = lastSaleCheckArray.getJSONObject(i)
+            lastSaleCheck.add(LastSaleCheckExport(characterId = obj.getString("characterId"), lastSaleCheckAt = obj.getString("lastSaleCheckAt")))
+        }
+
         val inventoryItems = mutableListOf<InventorySlotExport>()
         val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
         for (i in 0 until inventoryArray.length()) {
@@ -376,7 +393,7 @@ class GameStateRepository(private val context: Context) {
         }
 
         return SavedGameState(
-            accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
+            accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, lastSaleCheck, inventoryItems, equippedSlots,
             loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
         )
     }
@@ -389,6 +406,7 @@ data class SavedGameState(
     val skillingQueues: List<SkillingQueueExport>,
     val craftingQueues: List<CraftingQueueExport>,
     val lastSeen: List<LastSeenExport>,
+    val lastSaleCheck: List<LastSaleCheckExport>,
     val inventoryItems: List<InventorySlotExport>,
     val equippedSlots: List<EquippedSlotExport>,
     val loadoutSettings: List<LoadoutSettingsExport>,

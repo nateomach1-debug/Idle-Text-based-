@@ -43,6 +43,15 @@ data class MarketOrderRow(
     val createdAt: String
 )
 
+@Serializable
+data class MarketSaleRow(
+    val itemId: String,
+    val quantity: Int,
+    val pricePerUnit: Long,
+    val taxCollected: Long,
+    val executedAt: String
+)
+
 object SupabaseMarketRepository {
     private val client get() = SupabaseClientProvider.client
 
@@ -84,6 +93,13 @@ object SupabaseMarketRepository {
             put("p_character_id", characterId)
             put("p_amount", amount)
         }).decodeAs<Long>()
+    }
+
+    suspend fun myRecentSales(characterId: String, since: String): Result<List<MarketSaleRow>> = runCatching {
+        client.postgrest.rpc("market_my_recent_sales", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_since", since)
+        }).decodeList<MarketSaleRow>()
     }
 
     suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {

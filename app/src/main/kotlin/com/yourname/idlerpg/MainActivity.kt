@@ -413,6 +413,25 @@ fun AppRoot(gameViewModel: GameViewModel) {
         )
     }
 
+    val pendingSaleNotifications by gameViewModel.pendingSaleNotifications.collectAsState()
+    pendingSaleNotifications.firstOrNull()?.let { sale ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.dismissSaleNotification() },
+            title = { androidx.compose.material3.Text("Item Sold!") },
+            text = {
+                androidx.compose.material3.Text(
+                    "Sold " + sale.quantity + "x " + sale.itemName + "\n" +
+                    "You received " + sale.netProceeds + " coins (after tax)."
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.dismissSaleNotification() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
     var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
     var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }

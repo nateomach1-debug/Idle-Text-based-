@@ -150,6 +150,8 @@ data class CraftingQueueExport(
 
 data class LastSeenExport(val characterId: String, val lastSeenAt: String)
 
+data class LastSaleCheckExport(val characterId: String, val lastSaleCheckAt: String)
+
 // =========================================================
 // OFFLINE/IDLE SERVICE
 // =========================================================
@@ -158,6 +160,7 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
 
     private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
     private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
+    private val lastSaleCheckAt: MutableMap<String, Instant> = mutableMapOf()
     private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
 
     fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
@@ -206,6 +209,12 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
     fun recordLastSeen(characterId: String, now: Instant = Instant.now()) {
         lastSeenAt[characterId] = now
     }
+
+    fun recordSaleCheck(characterId: String, now: Instant = Instant.now()) {
+        lastSaleCheckAt[characterId] = now
+    }
+
+    fun lastSaleCheckFor(characterId: String): Instant? = lastSaleCheckAt[characterId]
 
     fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
         val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
@@ -300,6 +309,9 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
     fun exportLastSeen(): List<LastSeenExport> =
         lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
 
+    fun exportLastSaleCheck(): List<LastSaleCheckExport> =
+        lastSaleCheckAt.map { (characterId, instant) -> LastSaleCheckExport(characterId, instant.toString()) }
+
     fun restoreSkillingQueue(export: SkillingQueueExport) {
         activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
             characterId = export.characterId,
@@ -324,5 +336,9 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
 
     fun restoreLastSeen(export: LastSeenExport) {
         lastSeenAt[export.characterId] = Instant.parse(export.lastSeenAt)
+    }
+
+    fun restoreLastSaleCheck(export: LastSaleCheckExport) {
+        lastSaleCheckAt[export.characterId] = Instant.parse(export.lastSaleCheckAt)
     }
 }
