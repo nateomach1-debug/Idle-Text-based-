@@ -1,372 +1,238 @@
-VENDOR TAB EMPTY-DATA DISCOVERY (Buy works, Vendor/Sell doesn't)
+ITEM 3 DESIGN DISCOVERY: combat XP grant + save/load JSON aggregation shape
 
 ====================================================================================================
-inventoryItems StateFlow declaration (_inventoryItems / inventoryItems) in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
+combat XP granting (grantXp calls near combat attack handling) in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
 ====================================================================================================
 
---- match #1 at offset 2896 ---
-ummary>> = _skills.asStateFlow()
+--- match #1 at offset 27661 ---
+  lastHitChancePercent = (accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0
+            lastDamageDealt = attack.damageDealt
 
-    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
-    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+            if (attack.didHit) {
+                log.add(CombatLogEntry("You hit for " + attack.damageDealt + "."))
+                val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong())
+                if (xpGrant is ServiceResult.Success) refreshSkills()
+            } else {
+                log.add(CombatLogEntry("You missed."))
+            }
 
-    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
-    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+            if (attack.monst
 
-    val economyMonitoring = EconomyMonitoringService()
-    val marketService = MarketService(economyMonitoring)
-    val combatService = CombatService()
+--- match #2 at offset 46110 ---
+               val skillType = SkillType.valueOf(queue.skillId)
+                val action = ActionCatalog.find(skillType, queue.itemId)
+                if (action != null) {
+                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+                    progressionService.grantXp(characterId, skillType, xpEarned)
+                    inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+                    if (skillType == SkillType.MINING) {
+                        Mi
 
-    // ===============
+--- match #3 at offset 50198 ---
+ = skillActionProgressSeconds / queue.secondsPerAction
+        skillActionProgressSeconds %= queue.secondsPerAction
 
---- match #2 at offset 2974 ---
-teFlow<List<InventorySlotEntry>>(emptyList())
-    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+        val skillType = SkillType.valueOf(queue.skillId)
+        val action = ActionCatalog.find(skillType, queue.itemId)
+        if (action != null) {
+            progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
+            inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
+            if (skillType == SkillType.MINING) {
+                MiningBonusGemTable.rollAndGran
 
-    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
-    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
-
-    val economyMonitoring = EconomyMonitoringService()
-    val marketService = MarketService(economyMonitoring)
-    val combatService = CombatService()
-
-    // =========================================================
-    // SUPABASE AUTH (guild/chat mult
-
-total matches: 2
-
-====================================================================================================
-refreshInventory() full definition in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
-====================================================================================================
-
---- match #1 at offset 55464 ---
-_trainingSkill.value.name]?.level ?: 1
+--- match #4 at offset 52477 ---
+ttempt
+                if (result.value.succeeded) {
+                    successes += 1
+                    totalProduced += result.value.quantityProduced
+                }
+            } else {
+                break
+            }
+        }
+        if (xpGranted > 0) {
+            progressionService.grantXp(characterId, skillType, xpGranted)
+        }
+        return CraftBatchResult(successes, totalProduced, xpGranted)
     }
 
-    fun refreshInventory() {
-        val characterId = _currentCharacterId.value ?: return
-        val inv = inventoryService.inventoryFor(characterId)
-        _inventoryItems.value = inv.allItems()
-        _equippedItems.value = inv.allEquipped()
-        _loadoutSettings.value = LoadoutSettingsSnapshot(
-            inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
-            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
+    fun startCraftingAction(itemId: String, targetQuantity: Int? = null) {
+        val characterId = _currentChar
+
+total matches: 4
+
+====================================================================================================
+saveGame() full definition in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
+====================================================================================================
+
+--- match #1 at offset 40327 ---
+ {
+        _offlineSummary.value = null
+    }
+    fun saveGame() {
+        repository.save(
+            accountService.exportAllAccounts(),
+            accountService.exportAllCharacters(),
+            progressionService.exportAllSkills(),
+            offlineIdleService.exportSkillingQueues(),
+            offlineIdleService.exportCraftingQueues(),
+            offlineIdleService.exportLastSeen(),
+            inventoryService.exportAllItems(),
+            inventoryService.exportAllEquipped(),
+            inventoryService.exportAllLoadoutSettings(),
+            marketService.exportAccounts(),
+            marketService.exportOrders(),
+            marketService.exportPriceHistory()
         )
+        val supabaseCharacterId = _currentSupabaseCharacterId.value
+        val json = repository.currentSaveJson()
+        if (supabaseCharacterId != null && json != null) {
+            viewModelScope.launch {
+                SupabaseCharacterRepository.uploadCharacterSave(supabaseCharacterId, json)
+            }
+        }
     }
 
-    fun equipItem(itemId: String): ServiceResult<Unit> {
-        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
-        val playerSkillLevels = progressionService.skillBookFor(characterId).all()
-            .associate { it.type.name to LevelCurve.levelForXp(it.xp) }
-        val playerLevel = playerSkillLevels.values.maxOrNull() ?: 1
-        val result = inventoryService.inventoryFor(characterId).equip(itemId, playerLevel, playerSkillLevels) { true }
-        if (result is ServiceResult.Success) refreshInventory()
-        return result
-    }
+    fun selectCharacter(characterId: String) {
+        _currentCharacterId.value = characterId
 
-    fun unequipSlot(slot: EquipSlot): ServiceResult<Unit> {
-        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
-        val result = inventoryService.inventoryFor(characterId).unequip(slot) { true }
-        if (result is ServiceResult.Success) refreshInventory()
-        return result
-    }
-
-    fun refreshActiveQueue() {
-        val characterId = _currentCharacterId.value
-        v
+        val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
+        if (selectedCharacter != null) {
+            viewModelScope.launch {
+                val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+                result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
+                result.onSuccess { _characterSyncError.value = null }
+                _currentSupabaseCharacterId.value = result.getOrNull()
+                val supabaseCharacterId = result.getOrNull()
+                if (supabaseCharacterId != null) {
+                    val remoteLocalId = SupabaseCharacterRepository.getCharacterLocalId(supabaseCharacterId).getOrNull()
+                    if (remoteLocalId != null && remoteLocalId != characterId) {
+                        // The server returned an EXISTING character from a different
+                        // device/install, not the one just created locally - recover
+                        // its real save instead of keeping the throwaway new one.
+                        val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
+                        if (cloudJson != null) {
+                            repository.overwriteRawJson(cloudJson)
+                            val recovered = repository.load()
+                            if (recovered != null) {
+                                recovered.accounts.forEach { accountService.restoreAccount(it) }
+                                recovered.characters.forEach { accountService.restoreCharacter(it) }
+                                recovered.skills.forEach { progressionService.restoreSkill(it) }
+                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.cra
 
 total matches: 1
 
 ====================================================================================================
-all call sites of refreshInventory() in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
+loadGame() full definition in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
 ====================================================================================================
 
---- match #1 at offset 28389 ---
-                   loot.value.forEach { entry -> inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty) }
-                    refreshInventory()
-                }
-            }
+--- match #1 at offset 34910 ---
+veGame()
+}
+    private var hasLoaded = false
 
-            // M
-
---- match #2 at offset 30385 ---
- = _currentCharacterId.value ?: return
-        inventoryService.inventoryFor(characterId).autoHealThresholdPercent = percent.coerceIn(0, 100)
-        refreshInventory()
+    fun loadGame() {
+        if (hasLoaded) return
+        hasLoaded = true
+        val saved = repository.load() ?: return
+        saved.accounts.forEach { accountService.restoreAccount(it) }
+        saved.characters.forEach { accountService.restoreCharacter(it) }
+        saved.skills.forEach { progressionService.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
     }
-
-    fun setAutoFleeThreshold(percent: Int)
-
---- match #3 at offset 30629 ---
- = _currentCharacterId.value ?: return
-        inventoryService.inventoryFor(characterId).autoFleeThresholdPercent = percent.coerceIn(0, 100)
-        refreshInventory()
-    }
-
-    fun selectFood(itemId: String?) {
-    
-
---- match #4 at offset 30833 ---
-tring?) {
-        val characterId = _currentCharacterId.value ?: return
-        inventoryService.inventoryFor(characterId).selectFood(itemId)
-        refreshInventory()
-    }
-
-    fun selectPotion(itemId: String?) {
-  
-
---- match #5 at offset 31041 ---
-ing?) {
-        val characterId = _currentCharacterId.value ?: return
-        inventoryService.inventoryFor(characterId).selectPotion(itemId)
-        refreshInventory()
-    }
-
-    fun useInventoryItem(itemId: String) {
-
---- match #6 at offset 31563 ---
-emId, 1)
-        if (removed is ServiceResult.Success) {
-            combatService.healCharacter(characterId, definition.healAmount ?: 0)
-            refreshInventory()
-        }
-    }
-
-    private fun tickConsumables(
-
---- match #7 at offset 32654 ---
-ion ->
-                    inventory.potionTimerRemainingSeconds = potion.buffDurationSeconds ?: 0
-                }
-            }
-        }
-
-        refreshInventory()
-        refreshCombatHp()
-    }
-
-    private val 
-
---- match #8 at offset 48035 ---
-IdleService.recordLastSeen(characterId)
-        skillActionProgressSeconds = 0
-        craftActionProgressSeconds = 0
-        refreshSkills()
-        refreshInventory()
-        refreshActiveQueue()
-
-        if (marketS
-
---- match #9 at offset 50594 ---
-onusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), actionsCompleted.toInt())
-            }
-            refreshSkills()
-            refreshInventory()
-        }
-    }
-
-    // =========================
-
---- match #10 at offset 54402 ---
-tch = craftItems(characterId, queue.itemId, cappedAttempts)
-        queue.quantityCompleted += batch.successfulCrafts
-        refreshSkills()
-        refreshInventory()
-
-        if (queue.isTargetReached()) {
-         
-
---- match #11 at offset 56495 ---
-sult = inventoryService.inventoryFor(characterId).equip(itemId, playerLevel, playerSkillLevels) { true }
-        if (result is ServiceResult.Success) refreshInventory()
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
+            refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = false)
         return result
     }
-
-    fun unequipSlot(
-
---- match #12 at offset 56845 ---
-acter selected.")
-        val result = inventoryService.inventoryFor(characterId).unequip(slot) { true }
-        if (result is ServiceResult.Success) refreshInventory()
-        return result
-    }
-
-    fun refreshActiv
-
---- match #13 at offset 60432 ---
-Quantity
-                if (filled > 0) {
-                    inventoryService.inventoryFor(characterId).addItem(itemId, filled)
-                    refreshInventory()
-                }
-                refreshCurrency
-
---- match #14 at offset 61019 ---
-inventoryFor(characterId)
-        if (realInventory.quantityOf(itemId) < quantity) return
-
-        realInventory.removeItem(itemId, quantity)
-        refreshInventory()
-
-        viewModelScope.launch {
-            val 
-
---- match #15 at offset 61363 ---
-lure {
-                _marketActionError.value = it.message ?: it.toString()
-                realInventory.addItem(itemId, quantity)
-                refreshInventory()
-            }
-            result.onSuccess {
-    
-
---- match #16 at offset 62249 ---
-                    inventoryService.inventoryFor(characterId).addItem(cancelled.itemId, cancelled.remainingQuantityBeforeCancel)
-                    refreshInventory()
-                }
-                refreshCurrency
-
---- match #17 at offset 62907 ---
-
-        val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
-
-        realInventory.removeItem(itemId, quantity)
-        refreshInventory()
-
-        viewModelScope.launch {
-            val 
-
---- match #18 at offset 63250 ---
-lure {
-                _marketActionError.value = it.message ?: it.toString()
-                realInventory.addItem(itemId, quantity)
-                refreshInventory()
-            }
-            result.onSuccess {
-    
-
---- match #19 at offset 63891 ---
-items.find { it.itemId == itemId }?.pricePerUnit ?: return
-        if (quantity <= 0) return
-
-        realInventory.addItem(itemId, quantity)
-        refreshInventory()
-
-        viewModelScope.launch {
-            val 
-
---- match #20 at offset 64237 ---
-e {
-                _marketActionError.value = it.message ?: it.toString()
-                realInventory.removeItem(itemId, quantity)
-                refreshInventory()
-            }
-            result.onSuccess {
-    
-
-total matches: 20
-
-====================================================================================================
-InventoryService class full definition in app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt
-====================================================================================================
-
---- match #1 at offset 78549 ---
-class InventoryService {
-    private val inventories: MutableMap<String, Inventory> = mutableMapOf()
-
-    fun inventoryFor(characterId: String): Inventory =
-        inventories.getOrPut(characterId) { Inventory() }
-
-    fun exportAllItems(): List<InventorySlotExport> = inventories.flatMap { (characterId, inv) ->
-        inv.allItems().map { InventorySlotExport(characterId, it.itemId, it.quantity) }
-    }
-
-    fun exportAllEquipped(): List<EquippedSlotExport> = inventories.flatMap { (characterId, inv) ->
-        inv.allEquipped().map { (slot, itemId) -> EquippedSlotExport(characterId, slot.name, itemId) }
-    }
-
-    fun restoreItem(export: InventorySlotExport) {
-        inventoryFor(export.characterId).restoreItem(export.itemId, export.quantity)
-    }
-
-    fun restoreEquipped(export: EquippedSlotExport) {
-        inventoryFor(export.characterId).restoreEquipped(EquipSlot.valueOf(export.slot), export.itemId)
-    }
-
-    fun exportAllLoadoutSettings(): List<LoadoutSettingsExport> = inventories.map { (characterId, inv) ->
-        LoadoutSettingsExport(
-            characterId, inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
-            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
-        )
-    }
-
-    fun restoreLoadoutSettings(export: LoadoutSettingsExport) {
-        val inv = inventoryFor(export.characterId)
-        inv.selectedFoodId = export.selectedFoodId
-        inv.selectedPotionId = export.selectedPotionId
-        inv.potionTimerRemainingSeconds = export.potionTimerRemainingSeconds
-        inv.autoHealThresholdPercent = export.autoHealThresholdPercent
-        inv.autoFleeThresholdPercent = export.autoFleeThresholdPercent
-    }
+    return attemptCloudRecoveryLogin(email, password)
 }
 
+private suspend fun attemptCloudRecoveryLogin(email: String, password: String): ServiceResult<Account> {
+    try {
+        SupabaseClientProvider.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+            this.email = email
+            this.password = password
+        }
+    } catch (e: Exception) {
+        return ServiceResult.Failure("No local account found, and no matching cloud account either. (${e.message})")
+    }
+
+    val placeholderLocalId = java.util.UUID.randomUUID().toString()
+    val charResult = SupabaseCharacterRepository.getOrCreateCharacter(placeholderLocalId, "Recovered")
+    val supabaseCharacterId = charResult.getOrNull()
+        ?: return ServiceResult.Failure("Found a cloud account but couldn't sync a character to it.")
+
+    val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
+        ?: return ServiceResult.Failure("This account has no cloud backup saved yet - its local data can't be recovered.")
+
+    repository.overwriteRawJson(cloudJson)
+    val recovered = repository.load()
+        ?: return ServiceResult.Failure("Recovered cloud data was corrupted or empty.")
+
+    recovered.accounts.forEach { accountService.restoreAccount(it) }
+    recovered.characters.forEach { accountService.restoreCharacter(it) }
+    recovered.skills.forEach { progressionService.restoreSkill(it) }
+    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQu
 
 total matches: 1
 
 ====================================================================================================
-InventorySlotEntry / entries listing method in app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt
+GameStateRepository save/load DTO shape in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt
 ====================================================================================================
 
---- match #1 at offset 70771 ---
-================================================
+--- match #1 at offset 468 ---
+o no separate serialization format is needed.
+    fun currentSaveJson(): String? = if (saveFile.exists()) saveFile.readText() else null
 
-data class InventorySlotEntry(val itemId: String, val quantity: Int)
-
-class Inventory(
-    var maxSlots: Int = 100,
-    private val entries: MutableMap<String, InventorySlotEntry> = mutableMapOf(),
-    private val equipped: MutableMap<EquipSlot, String> = mutableMapOf(),
-    var selectedFoodId: String? = null,
-    var selectedPotionId: String? = null,
-    var potionTimerRemainingSeconds: Int = 0,
-    var autoHealThresholdPercent: Int = 30,
-    var autoFleeThresholdPercent: Int = 10
-) {
-    fun usedSlots(): Int = entries.size
-
-    fun addItem(itemId: String, quantity: Int): ServiceResult<Unit> {
-        val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
-        if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
-
-        val existing = entries[itemId]
-  
-
---- match #2 at offset 74739 ---
-): Map<EquipSlot, String> = equipped.toMap()
-
-    fun allItems(): List<InventorySlotEntry> = entries.values.toList()
-
-    fun restoreItem(itemId: String, quantity: Int) {
-        entries[itemId] = InventorySlotEntry(itemId, quantity)
+    // Used when restoring a character's save downloaded from the cloud -
+    // overwrites local state with the recovered JSON before re-loading it.
+    fun overwriteRawJson(json: String) {
+        saveFile.writeText(json)
     }
 
-    fun restoreEquipped(slot: EquipSlot, itemId: String) {
-        equipped[slot] = itemId
+    fun save(
+        accounts: List<AccountExport>,
+        characters: List<CharacterExport>,
+        skills: List<SkillExport>,
+        skillingQueues: List<SkillingQueueExport>,
+        craftingQueues: List<CraftingQueueExport>,
+        lastSeen: List<LastSeenExport>,
+        inventoryItems: List
+
+--- match #2 at offset 709 ---
+with the recovered JSON before re-loading it.
+    fun overwriteRawJson(json: String) {
+        saveFile.writeText(json)
     }
 
-    // ---------------- Food / Potion selection ----------------
-
-    fun selectFood(itemId: String?): ServiceResult<Unit> {
-        if (itemId != null) {
-            val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
-            if (definition.consumableType != ConsumableType.FOOD) return ServiceResult.Failure("Not a food item.")
-        }
-        selectedFoodId = itemId
-        return ServiceResult.Success(Unit)
-    }
-
-    fun selectPotion(itemId: String?): ServiceResult<Unit>
+    fun save(
+        accounts: List<AccountExport>,
+        characters: List<CharacterExport>,
+        skills: List<SkillExport>,
+        skillingQueues: List<SkillingQueueExport>,
+        craftingQueues: List<CraftingQueueExport>,
+        lastSeen: List<LastSeenExport>,
+        inventoryItems: List<InventorySlotExport>,
+        equippedSlots: List<EquippedSlotExport>,
+        loadoutSettings: List<LoadoutSettingsExport>,
+        marketAccounts: List<PlayerEconomyAccountExport>,
+        marketOrders: List<MarketOrderExport>,
+        mar
 
 total matches: 2
 
