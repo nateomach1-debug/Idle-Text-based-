@@ -1,426 +1,161 @@
-LAST-SEEN EXPORT/RESTORE PATTERN + RESTORE CALL SITES DISCOVERY
+SERIALIZABLE ROW CLASS FORMAT DISCOVERY
 
 ====================================================================================================
-LastSeenExport data class + recordLastSeen/exportLastSeen/restoreLastSeen in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt
+MarketOrderRow / MarketListingRow / MarketCancelRpcResult data class definitions in app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt
 ====================================================================================================
 
---- match #1 at offset 4761 ---
-Completed: Int,
-    val startedAt: String
+--- match #1 at offset 381 ---
+ val originalQuantity: Int,
+    val remainingQuantity: Int,
+    val status: String
 )
 
-data class LastSeenExport(val characterId: String, val lastSeenAt: String)
-
-// =========================================================
-// OFFLINE/IDLE SERVICE
-// =========================================================
-
-class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
-
-    private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
-    private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
-    private val flaggedAccounts: MutableList<OfflineFlagRecord> = mu
-
---- match #2 at offset 7317 ---
-g): ActiveQueue? = activeQueues[characterId]
-
-    fun recordLastSeen(characterId: String, now: Instant = Instant.now()) {
-        lastSeenAt[characterId] = now
-    }
-
-    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
-        val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
-        val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
-
-        val claimedElapsed = Duration.between(lastSeen, no
-
---- match #3 at offset 11437 ---
-startedAt.toString()
-            )
-        }
-
-    fun exportLastSeen(): List<LastSeenExport> =
-        lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
-
-    fun restoreSkillingQueue(export: SkillingQueueExport) {
-        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
-            characterId = export.characterId,
-            skillId = export.skillId,
-            itemId = export.itemId,
-            secondsPerAction = export.secondsPerAction,
-            startedAt = Instant.parse(export.startedAt)
-        )
-
---- match #4 at offset 12445 ---
-tiveQueues[export.characterId] = queue
-    }
-
-    fun restoreLastSeen(export: LastSeenExport) {
-        lastSeenAt[export.characterId] = Instant.parse(export.lastSeenAt)
-    }
-}
-
-
-total matches: 4
-
-====================================================================================================
-lastSeen JSON write in save() in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt
-====================================================================================================
-
---- match #1 at offset 4520 ---
-raftingQueuesArray)
-
-        val lastSeenArray = JSONArray()
-        lastSeen.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("lastSeenAt", entry.lastSeenAt)
-            lastSeenArray.put(obj)
-        }
-        root.put("lastSeen", lastSeenArray)
-
-        val inventoryArray = JSONArray()
-        inventoryItems.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("itemId", entry.itemId)
-            obj.put("quantity", entry.quantity)
-            inventoryArray.put(obj)
-        }
-        root.put("inventoryItems", inventoryArray)
-
-        val equippedArray = JSONArray()
-        equippedSlots.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("slot", entry.slot)
-          
-
---- match #2 at offset 11885 ---
-tInt("targetQuantity"),
-                    quantityCompleted = obj.getInt("quantityCompleted"),
-                    startedAt = obj.getString("startedAt")
-                )
-            )
-        }
-
-        val lastSeen = mutableListOf<LastSeenExport>()
-        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
-        for (i in 0 until lastSeenArray.length()) {
-            val obj = lastSeenArray.getJSONObject(i)
-            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-        }
-
-        val inventoryItems = mutableListOf<InventorySlotExport>()
-        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
-        for (i in 0 until inventoryArray.length()) {
-            val obj = inventoryArray.getJSONObject(i)
-            inventoryItems.add(
-                InventorySlotExport(
-                  
-
-total matches: 2
-
-====================================================================================================
-lastSeen JSON read/parse side in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt
-====================================================================================================
-
---- match #1 at offset 1027 ---
-illingQueues: List<SkillingQueueExport>,
-        craftingQueues: List<CraftingQueueExport>,
-        lastSeen: List<LastSeenExport>,
-        inventoryItems: List<InventorySlotExport>,
-        equippedSlots: List<EquippedSlotExport>,
-        loadoutSettings: List<LoadoutSettingsExport>,
-        marketAccounts: List<PlayerEconomyAccountExport>,
-        marketOrders: List<MarketOrderExport>,
-        marketPriceHistory: List<PriceHistoryExport>
-    ) {
-        val root = JSONObject()
-
-        val accountsArr
-
---- match #2 at offset 4253 ---
-QueuesArray.put(obj)
-        }
-        root.put("craftingQueues", craftingQueuesArray)
-
-        val lastSeenArray = JSONArray()
-        lastSeen.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("lastSeenAt", entry.lastSeenAt)
-            lastSeenArray.put(obj)
-        }
-        root.put("lastSeen", lastSeenArray)
-
-        val inventoryArray = JSONArray()
-        inventoryItems.forEach { entry ->
-            val obj = JSONObje
-
---- match #3 at offset 4289 ---
-   root.put("craftingQueues", craftingQueuesArray)
-
-        val lastSeenArray = JSONArray()
-        lastSeen.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("lastSeenAt", entry.lastSeenAt)
-            lastSeenArray.put(obj)
-        }
-        root.put("lastSeen", lastSeenArray)
-
-        val inventoryArray = JSONArray()
-        inventoryItems.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterI
-
---- match #4 at offset 4427 ---
-  val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("lastSeenAt", entry.lastSeenAt)
-            lastSeenArray.put(obj)
-        }
-        root.put("lastSeen", lastSeenArray)
-
-        val inventoryArray = JSONArray()
-        inventoryItems.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("itemId", entry.itemId)
-            obj.put("quantity", entry.quantity)
-            inventoryAr
-
---- match #5 at offset 4446 ---
-ect()
-            obj.put("characterId", entry.characterId)
-            obj.put("lastSeenAt", entry.lastSeenAt)
-            lastSeenArray.put(obj)
-        }
-        root.put("lastSeen", lastSeenArray)
-
-        val inventoryArray = JSONArray()
-        inventoryItems.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("itemId", entry.itemId)
-            obj.put("quantity", entry.quantity)
-            inventoryArray.put(obj)
-      
-
---- match #6 at offset 4470 ---
-t("characterId", entry.characterId)
-            obj.put("lastSeenAt", entry.lastSeenAt)
-            lastSeenArray.put(obj)
-        }
-        root.put("lastSeen", lastSeenArray)
-
-        val inventoryArray = JSONArray()
-        inventoryItems.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("itemId", entry.itemId)
-            obj.put("quantity", entry.quantity)
-            inventoryArray.put(obj)
-        }
-        root.put("in
-
---- match #7 at offset 4521 ---
-.put("lastSeenAt", entry.lastSeenAt)
-            lastSeenArray.put(obj)
-        }
-        root.put("lastSeen", lastSeenArray)
-
-        val inventoryArray = JSONArray()
-        inventoryItems.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("itemId", entry.itemId)
-            obj.put("quantity", entry.quantity)
-            inventoryArray.put(obj)
-        }
-        root.put("inventoryItems", inventoryArray)
-
-        val equippe
-
---- match #8 at offset 4532 ---
-eenAt", entry.lastSeenAt)
-            lastSeenArray.put(obj)
-        }
-        root.put("lastSeen", lastSeenArray)
-
-        val inventoryArray = JSONArray()
-        inventoryItems.forEach { entry ->
-            val obj = JSONObject()
-            obj.put("characterId", entry.characterId)
-            obj.put("itemId", entry.itemId)
-            obj.put("quantity", entry.quantity)
-            inventoryArray.put(obj)
-        }
-        root.put("inventoryItems", inventoryArray)
-
-        val equippedArray = JS
-
---- match #9 at offset 11796 ---
-      startedAt = obj.getString("startedAt")
-                )
-            )
-        }
-
-        val lastSeen = mutableListOf<LastSeenExport>()
-        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
-        for (i in 0 until lastSeenArray.length()) {
-            val obj = lastSeenArray.getJSONObject(i)
-            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-        }
-
-        val inventoryItems = mutableListOf<Invent
-
---- match #10 at offset 11851 ---
-      )
-            )
-        }
-
-        val lastSeen = mutableListOf<LastSeenExport>()
-        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
-        for (i in 0 until lastSeenArray.length()) {
-            val obj = lastSeenArray.getJSONObject(i)
-            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-        }
-
-        val inventoryItems = mutableListOf<InventorySlotExport>()
-        val inventoryArray = root.optJ
-
---- match #11 at offset 11886 ---
-      val lastSeen = mutableListOf<LastSeenExport>()
-        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
-        for (i in 0 until lastSeenArray.length()) {
-            val obj = lastSeenArray.getJSONObject(i)
-            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-        }
-
-        val inventoryItems = mutableListOf<InventorySlotExport>()
-        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONA
-
---- match #12 at offset 11938 ---
-
-        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
-        for (i in 0 until lastSeenArray.length()) {
-            val obj = lastSeenArray.getJSONObject(i)
-            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-        }
-
-        val inventoryItems = mutableListOf<InventorySlotExport>()
-        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
-        for (i in 0 until inventoryArray.leng
-
---- match #13 at offset 11986 ---
-lastSeen") ?: JSONArray()
-        for (i in 0 until lastSeenArray.length()) {
-            val obj = lastSeenArray.getJSONObject(i)
-            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-        }
-
-        val inventoryItems = mutableListOf<InventorySlotExport>()
-        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
-        for (i in 0 until inventoryArray.length()) {
-            val obj = inventoryArray.get
-
---- match #14 at offset 12029 ---
- 0 until lastSeenArray.length()) {
-            val obj = lastSeenArray.getJSONObject(i)
-            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-        }
-
-        val inventoryItems = mutableListOf<InventorySlotExport>()
-        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
-        for (i in 0 until inventoryArray.length()) {
-            val obj = inventoryArray.getJSONObject(i)
-            inventoryItems.ad
-
---- match #15 at offset 12101 ---
-etJSONObject(i)
-            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-        }
-
-        val inventoryItems = mutableListOf<InventorySlotExport>()
-        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
-        for (i in 0 until inventoryArray.length()) {
-            val obj = inventoryArray.getJSONObject(i)
-            inventoryItems.add(
-                InventorySlotExport(
-                    characterId 
-
---- match #16 at offset 12129 ---
-lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
-        }
-
-        val inventoryItems = mutableListOf<InventorySlotExport>()
-        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
-        for (i in 0 until inventoryArray.length()) {
-            val obj = inventoryArray.getJSONObject(i)
-            inventoryItems.add(
-                InventorySlotExport(
-                    characterId = obj.getString("characterId
-
---- match #17 at offset 16740 ---
-   return SavedGameState(
-            accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, inventoryItems, equippedSlots,
-            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
-        )
-    }
-}
-
-data class SavedGameState(
-    val accounts: List<AccountExport>,
-    val characters: List<CharacterExport>,
-    val skills: List<SkillExport>,
-    val skillingQueues: List<SkillingQueueExport>,
-    val craftingQueues: List<CraftingQueueExport>,
-    val lastSeen: List<L
-
---- match #18 at offset 17132 ---
-illingQueues: List<SkillingQueueExport>,
-    val craftingQueues: List<CraftingQueueExport>,
-    val lastSeen: List<LastSeenExport>,
-    val inventoryItems: List<InventorySlotExport>,
-    val equippedSlots: List<EquippedSlotExport>,
-    val loadoutSettings: List<LoadoutSettingsExport>,
-    val marketAccounts: List<PlayerEconomyAccountExport>,
-    val marketOrders: List<MarketOrderExport>,
-    val marketPriceHistory: List<PriceHistoryExport>
+@Serializable
+data class MarketCancelRpcResult(
+    val id: String,
+    val side: String,
+    val itemId: String,
+    val remainingQuantityBeforeCancel: Int
 )
 
+@Serializable
+data class MarketListingRow(
+    val itemId: String,
+    val bestBuyPrice: Long? = null,
+    val bestBuyQuantity: Int? = null,
+    val bestSellPrice: Long? = null,
+    val bestSellQuantity: Int? = null
+)
 
-total matches: 18
+@Serializable
+data class MarketOrderRow(
+    val id: String,
+    val characterId: String,
+    val itemId: String,
+    val side: String,
+    val pricePerUnit: Long,
+    val originalQuantity: Int,
+    val remainingQuantity: Int,
+    val status: String,
+    val createdA
 
-====================================================================================================
-ALL restoreLastSeen call sites (loadGame + cloud recovery paths) in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
-====================================================================================================
+--- match #2 at offset 541 ---
+l side: String,
+    val itemId: String,
+    val remainingQuantityBeforeCancel: Int
+)
 
---- match #1 at offset 35737 ---
-nService.restoreSkill(it) }
-        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
-        saved.equip
+@Serializable
+data class MarketListingRow(
+    val itemId: String,
+    val bestBuyPrice: Long? = null,
+    val bestBuyQuantity: Int? = null,
+    val bestSellPrice: Long? = null,
+    val bestSellQuantity: Int? = null
+)
 
---- match #2 at offset 38310 ---
-nService.restoreSkill(it) }
-    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
-    recovered.equip
+@Serializable
+data class MarketOrderRow(
+    val id: String,
+    val characterId: String,
+    val itemId: String,
+    val side: String,
+    val pricePerUnit: Long,
+    val originalQuantity: Int,
+    val remainingQuantity: Int,
+    val status: String,
+    val createdAt: String
+)
 
---- match #3 at offset 43762 ---
-.forEach { offlineIdleService.restoreSkillingQueue(it) }
-                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-                                recovered.inventoryItems.forEach { inventoryService.restoreIt
+object SupabaseMarketRepository {
+    private val client get() = SupabaseClientProvider.client
+
+    suspend fun placeBuyOrder(characterId: Str
+
+--- match #3 at offset 760 ---
+= null,
+    val bestSellPrice: Long? = null,
+    val bestSellQuantity: Int? = null
+)
+
+@Serializable
+data class MarketOrderRow(
+    val id: String,
+    val characterId: String,
+    val itemId: String,
+    val side: String,
+    val pricePerUnit: Long,
+    val originalQuantity: Int,
+    val remainingQuantity: Int,
+    val status: String,
+    val createdAt: String
+)
+
+object SupabaseMarketRepository {
+    private val client get() = SupabaseClientProvider.client
+
+    suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
+        client.postgrest.rpc("market_place_buy_order", buildJsonObject {
+            put("p_character_id", characte
 
 total matches: 3
 
+====================================================================================================
+File header / imports of SupabaseMarketRepository.kt
+====================================================================================================
+package com.yourname.idlerpg
+
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+
+@Serializable
+data class MarketOrderRpcResult(
+    val id: String,
+    val originalQuantity: Int,
+    val remainingQuantity: Int,
+    val status: String
+)
+
+@Serializable
+data class MarketCancelRpcResult(
+    val id: String,
+    val side: String,
+    val itemId: String,
+    val remainingQuantityBeforeCancel: Int
+)
+
+@Serializable
+data class MarketListingRow(
+    val itemId: String,
+    val bestBuyPrice: Long? = null,
+    val bestBuyQuantity: Int? = null,
+    val bestSellPrice: Long? = null,
+    val bestSellQuantity: Int? = null
+)
+
+@Serializable
+data class MarketOrderRow(
+    val id: String,
+    val characterId: String,
+    val itemId: String,
+    val side: String,
+    val pricePerUnit: Long,
+    val originalQuantity: Int,
+    val remainingQuantity: Int,
+    val status: String,
+    val createdAt: String
+)
+
+object SupabaseMarketRepository {
+    private val client get() = SupabaseClientProvider.client
+
+    suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
+        client.postgrest.rpc("market_place_buy_order", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_price_per_unit
 
 DONE
