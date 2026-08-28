@@ -1,694 +1,209 @@
-FOLLOW-UP DISCOVERY: vendor blank-screen root cause + combat scheduling/persistence
+VENDOR CRASH THEORY CHECK
 
 ====================================================================================================
-SPAN: Full AppDestination.MARKET branch (app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt)
-====================================================================================================
-AppDestination.MARKET -> {
-                                LaunchedEffect(Unit) {
-                                    gameViewModel.refreshMarketListings()
-                                    gameViewModel.refreshMyOrders()
-                                }
-                                val marketPriceSummaries by gameViewModel.marketListings.collectAsState()
-                                val myBuyOrdersRaw by gameViewModel.myBuyOrders.collectAsState()
-                                val mySellOrdersRaw by gameViewModel.mySellOrders.collectAsState()
-                                val marketListingsUi = remember(marketPriceSummaries) {
-                                    marketPriceSummaries.map {
-                                        MarketListingSummary(
-                                            itemId = it.itemId,
-                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
-                                            bestBuyPrice = it.bestBuyPrice,
-                                            bestBuyQuantity = it.bestBuyQuantity,
-                                            bestSellPrice = it.bestSellPrice,
-                                            bestSellQuantity = it.bestSellQuantity
-                                        )
-                                    }
-                                }
-                                val myBuyOrdersUi = remember(myBuyOrdersRaw) {
-                                    myBuyOrdersRaw.map {
-                                        MarketOrderSummary(
-                                            orderId = it.id,
-                                            itemId = it.itemId,
-                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
-                                            pricePerUnit = it.pricePerUnit,
-                                            remainingQuantity = it.remainingQuantity
-                                        )
-                                    }
-                                }
-                                val mySellOrdersUi = remember(mySellOrdersRaw) {
-                                    mySellOrdersRaw.map {
-                                        MarketOrderSummary(
-                                            orderId = it.id,
-                                            itemId = it.itemId,
-                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
-                                            pricePerUnit = it.pricePerUnit,
-                                            remainingQuantity = it.remainingQuantity
-                                        )
-                                    }
-                                }
-
-                                val itemId = selectedMarketItemId
-                                if (itemId != null) {
-                                    val orderBookDetail = remember(itemId, marketPriceSummaries) {
-                                        val summary = marketPriceSummaries.find { it.itemId == itemId }
-                                        ItemOrderBookDetail(
-                                            itemId = itemId,
-                                            displayName = ItemCatalog.find(itemId)?.name ?: itemId,
-                                            bestBuyPrice = summary?.bestBuyPrice,
-                                            bestSellPrice = summary?.bestSellPrice,
-                                            recentTrades = gameViewModel.marketService.priceHistoryFor(itemId)
-                                                .sortedByDescending { it.executedAt }
-                                                .take(10)
-                                                .map { PriceHistoryRow(it.pricePerUnit, it.quantity, formatTimeAgo(it.executedAt)) }
-                                        )
-                                    }
-                                    OrderBookScreen(
-                                        detail = orderBookDetail,
-                                        prefilledQuantity = prefilledSellQuantity,
-                                        onBack = { selectedMarketItemId = null; prefilledSellQuantity = null },
-                                        onPlaceOrder = { side, qty, price ->
-                                            if (side == OrderSideUi.BUY) {
-                                                gameViewModel.placeBuyOrder(itemId, qty, price)
-                                            } else {
-                                                gameViewModel.placeSellOrder(itemId, qty, price)
-                                            }
-                                            selectedMarketItemId = null
-                                            prefilledSellQuantity = null
-                                        }
-                                    )
-                                } else {
-                                    MarketScreen(
-                                        currentTab = marketTab,
-                                        onTabSelected = { marketTab = it },
-                                        listings = marketListingsUi,
-                                        showingBuyOrders = showingBuyOrders,
-                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
-                                        onItemSelected = { selectedMarketItemId = it },
-                                        myBuyOrders = myBuyOrdersUi,
-                                        mySellOrders = mySellOrdersUi,
-                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
-                                        vendorSellableItems = inventoryItems,
-                                        onSellToVendor = { sellItemId, quantity ->
-                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
-                                        },
-                                        vendorBuyableItems = VendorBuyCatalog.items,
-                                        onBuyFromVendor = { buyItemId, quantity ->
-                                            gameViewModel.buyItemFromVendor(buyItemId, quantity)
-                                        }
-                                    )
-                                }
-                            }
-
-                            
---- end of span (6506 chars) ---
-
-====================================================================================================
-ALL MATCHES: declarations/derivations of `inventoryItems` in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt (pattern: \b(val|var)\s+inventoryItems\b)
+buildInventoryItemSummaries() full definition in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt
 ====================================================================================================
 
---- match #1 at offset 17696 ---
-gameViewModel.inventoryItems.collectAsState()
-    val inventoryItems = remember(inventoryItemEntries) {
-        buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
-    }
-    val inventoryQuantities = remember(inventoryItemEntries) {
-        inventoryItemEntries.associate { it.itemId to it.quantity }
-    }
-    val equippedBackend by gameViewModel.equippedItems.collectAsState()
-    val equipped = remember(equippedBackend) {
-        EquipSlotUi.values().associateWith { uiSlot ->
-            equippedBackend[EquipSlot.valueOf(uiSlot.name)]?.let { itemId ->
-                ItemCatalog.find(itemId)?.let { def -> EquippedItemInfo(itemId, def.name) }
-            }
+--- match #1 at offset 9901 ---
+COSMETIC -> InventoryCategory.MATERIAL
+}
+
+private fun buildInventoryItemSummaries(
+    entries: List<InventorySlotEntry>,
+    vendorPayoutFor: (String) -> Long
+): List<InventoryItemSummary> {
+    return entries.map { entry ->
+        val definition = ItemCatalog.find(entry.itemId)
+        if (definition != null) {
+            val statsText = if (!definition.stats.isAllZero()) {
+                listOfNotNull(
+                    definition.stats.attackBonus.takeIf { it != 0 }?.let { "ATK +" + it },
+                    definition.stats.accuracyBonus.takeIf { it != 0 }?.let { "ACC +" + it },
+                    definition.stats.maxHitBonus.takeIf { it != 0 }?.let { "Max Hit +" + it },
+                    definition.stats.defenseBonus.takeIf { it != 0 }?.let { "DEF +" + it },
+                    definition.stats.strengthBonus.takeIf { it != 0 }?.let { "STR +" + it }
+                ).joinToString(", ")
+            } else null
+
+            InventoryItemSummary(
+                itemId = entry.itemId,
+                displayName = definition.name,
+                category = mapItemCategory(definition.category),
+                quantity = entry.quantity,
+                isEquippable = definition.equipSlot != null,
+                isConsumable = definition.category == ItemCategory.CONSUMABLE,
+                npcValuePerUnit = vendorPayoutFor(entry.itemId),
+                statsDescription = statsText
+            )
+        } else {
+            // Not yet defined in ItemCatalog (e.g. some gathered materials) -- graceful fallback.
+            InventoryItemSummary(
+                itemId = entry.itemId,
+                displayName = entry.itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } },
+                category = InventoryCategory.MATERIAL,
+                quantity = entry.quantity,
+                isEquippable = false,
+                isConsumable = false,
+                npcValuePerUnit = vendorPayoutFor(entry.itemId)
+            )
         }
     }
-    val loadoutSettings by gameViewModel.loadoutSettings.collectAsState()
-    val availableFoodOptions = remember(inventoryItemEntries) {
-  
+}
+
+
+private fun formatTimeAgo(instant: Instant): String {
+    val seconds =
 
 total matches: 1
 
 ====================================================================================================
-ALL MATCHES: declarations/derivations of `marketListingsUi` in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt (pattern: \b(val|var)\s+marketListingsUi\b)
+vendorPayoutPerUnit() full definition in app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt
 ====================================================================================================
 
---- match #1 at offset 37482 ---
-.collectAsState()
-                                val marketListingsUi = remember(marketPriceSummaries) {
-                                    marketPriceSummaries.map {
-                                        MarketListingSummary(
-                                            itemId = it.itemId,
-                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
-                                            bestBuyPrice = it.bestBuyPrice,
-                                            bestBuyQuantity = it.bestBuyQuantity,
-                                            bestSellPrice = it.bestSellPrice,
-                                            bestSellQuantity = it.bestSellQuantity
-                                        )
-                                    }
-                                }
-                                val 
+--- match #1 at offset 10820 ---
+------- NPC vendor fallback ----------------
+
+    fun vendorPayoutPerUnit(itemId: String): Long {
+        val baseValue = ItemCatalog.baseValueFor(itemId)
+        return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
+    }
+
+    fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
+        requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
+        val account = accounts.getValue(characterId)
+        val item = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+
+        if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+        if (!account.removeItem(itemId, quantity)) {
+            return ServiceResult.Failure("Insufficient item quantity to sell.")
+        }
+
+        val payout = vendorPayoutPerUnit(item.id) * quantity
+        account.currencyBalance += payout
+        monitoring.recordVendorPayout(payout)
+
+        return ServiceResult.Success(payout)
+    }
+
+    // ---------------- Public-safe queries ----------------
+
+    fun priceHistoryFor(itemId: String): List<PriceHistoryEntry> = priceHistory.filter { it.itemId == itemId }
+
+    fun openOrdersFor(characterId: String): List<MarketOrder> =
+        (buyOrders + sellOrders).filter { it.characterId == characterId && it.status != OrderStatus.CANCELLED }
+
+    fun allListings(): List<MarketPriceSummary> {
+        val itemIds = (buyOrders + sellOrders)
+            .filter { it.remainingQuantity > 0 }
+            .map { it.itemId }
+            .distinct()
+        return itemIds.map { i
 
 total matches: 1
 
 ====================================================================================================
-ALL MATCHES: declarations/derivations of `myBuyOrdersUi` in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt (pattern: \b(val|var)\s+myBuyOrdersUi\b)
+ItemCatalog.baseValueFor() full definition in app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt
 ====================================================================================================
 
---- match #1 at offset 38298 ---
-                }
-                                val myBuyOrdersUi = remember(myBuyOrdersRaw) {
-                                    myBuyOrdersRaw.map {
-                                        MarketOrderSummary(
-                                            orderId = it.id,
-                                            itemId = it.itemId,
-                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
-                                            pricePerUnit = it.pricePerUnit,
-                                            remainingQuantity = it.remainingQuantity
-                                        )
-                                    }
-                                }
-                                val mySellOrdersUi = remember(mySellOrdersRaw) {
-                                    mySellOrdersRaw.map {
-        
+--- match #1 at offset 4116 ---
+d { it.name == name && it.rarity == rarity }
+
+    fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
+        "oak_log" -> 8L
+        else -> 5L
+    }
+}
+
 
 total matches: 1
 
 ====================================================================================================
-ALL MATCHES: declarations/derivations of `mySellOrdersUi` in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt (pattern: \b(val|var)\s+mySellOrdersUi\b)
+ItemCatalog object - find() and baseValueFor() together in app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt
 ====================================================================================================
 
---- match #1 at offset 39000 ---
-                }
-                                val mySellOrdersUi = remember(mySellOrdersRaw) {
-                                    mySellOrdersRaw.map {
-                                        MarketOrderSummary(
-                                            orderId = it.id,
-                                            itemId = it.itemId,
-                                            displayName = ItemCatalog.find(it.itemId)?.name ?: it.itemId,
-                                            pricePerUnit = it.pricePerUnit,
-                                            remainingQuantity = it.remainingQuantity
-                                        )
-                                    }
-                                }
-
-                                val itemId = selectedMarketItemId
-                                if (itemId != null) {
-                        
-
-total matches: 1
-
-====================================================================================================
-ALL MATCHES: tickCombat() call sites + any combat ticker coroutine in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt (pattern: (tickCombat\(\)|combatTicker|startCombatLoop|combatJob))
-====================================================================================================
-
---- match #1 at offset 24659 ---
-        playerMaxHp = state.maxHp,
-            lastHitChancePercent = lastHitChancePercent,
-            lastDamageDealt = lastDamageDealt,
-            combatLog = log
+--- match #1 at offset 1986 ---
+object ItemCatalog {
+    val items = mutableListOf(
+        ItemDefinition(
+            id = "iron_sword_common", name = "Iron Sword", category = ItemCategory.WEAPON,
+            rarity = Rarity.COMMON, isTradeable = true, isStackable = false,
+            equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE,
+            levelRequired = 10, skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 5, accuracyBonus = 10, maxHitBonus = 6)
+        ),
+        ItemDefinition(
+            id = "iron_sword_rare", name = "Iron Sword", category = ItemCategory.WEAPON,
+            rarity = Rarity.RARE, isTradeable = true, isStackable = false,
+            equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE,
+            levelRequired = 10, skillRequired = "ATTACK",
+            stats = ItemStats(attackBonus = 9, accuracyBonus = 16, maxHitBonus = 10)
+        ),
+        ItemDefinition(
+            id = "leather_boots_common", name = "Leather Boots", category = ItemCategory.ARMOR,
+            rarity = Rarity.COMMON, isTradeable = true, isStackable = false,
+            equipSlot = EquipSlot.BOOTS, levelRequired = 1,
+            stats = ItemStats(defenseBonus = 3)
+        ),
+        ItemDefinition(
+            id = "minor_healing_potion", name = "Minor Healing Potion", category = ItemCategory.CONSUMABLE,
+            isTradeable = true, isStackable = true,
+            consumableType = ConsumableType.POTION, healAmount = 20
+        ),
+        ItemDefinition(
+            id = "smiths_hammer", name = "Smith's Hammer", category = ItemCategory.WEAPON,
+            rarity = Rarity.UNCOMMON, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE, levelRequired = 1,
+            stats = ItemStats(attackBonus = 2, maxHitBonus = 2)
         )
-    }
+   ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
 
-    private fun tickCombat() {
-        val characterId = _currentCharacterId.value ?: return
-        val state = combatService.stateFor(characterId, maxHpFor(characterId))
+    fun find(itemId: String): ItemDefinition? = items.find { it.id == itemId }
+    fun findByNameAndRarity(name: String, rarity: Rarity): ItemDefinition? =
+        items.find { it.name == name && it.rarity == rarity }
 
-        if (state.recovery.isRecovering()) {
-            refreshCombatHp()
-            return
-        }
-        if (combatService.resolveRecoveryIfReady(characterId) is ServiceResult.Success) {
-            refreshCombatHp()
-        }
-
-        val session = state.session ?: return
-
-        if (session.state == SessionState.SEARCHING) {
-            val result = combatService.resolveSearchIfReady(characterId)
-            if (result is ServiceResult.Success) {
-                combatLogFor.getOrPut(characterId) { mutableListOf() }
-                    .add(CombatLogEntry(result.value.name + " appears!"))
-            }
-            refreshCombatView()
-            return
-        }
-
-        if (session.state != SessionState.IN_COMBAT) return
-
-        val weapon = equippedWeapon(characterId)
-        val trainingSkill = _trainingSkill.value
-        val accuracy: Int
-        val maxHit: Int
-        when (weapon?.style) {
-            CombatStyle.MAGIC -> {
-                val magicLevel = skillLevel(characterId, SkillType.MAGIC)
-                accuracy
-
---- match #2 at offset 33723 ---
-iewModelScope.launch(Dispatchers.Default) {
-            while (true) {
-                delay(1000L)
-                tickSkilling()
-            tickCrafting()
-            tickConsumables()
-            tickCombat()
-            }
-        }
-    }
-    init {
-    viewModelScope.launch(Dispatchers.Default) {
-        while (true) {
-            delay(30_000L)
-            saveGame()
-        }
+    fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
+        "oak_log" -> 8L
+        else -> 5L
     }
 }
 
-init {
-        viewModelScope.launch {
-            SupabaseClientProvider.client.auth.sessionStatus.collect { status ->
-                when (status) {
-                    is SessionStatus.Authenticated -> {
-                        _supabaseAuthState.value = SupabaseAuthState.SIGNED_IN
-                        _supabaseAuthError.value = null
-                    }
-                    is SessionStatus.NotAuthenticated -> {
-                        _supabaseAuthState.value = SupabaseAuthState.SIGNED_OUT
-                    }
-                    else -> {
-                        // Covers Initializing/LoadingFromStorage and RefreshFailure,
-                        // whichever names this supabase-kt version uses - all transient.
-                        _supabaseAuthState.value = SupabaseAuthState.SIGNING_IN
-                    }
-                }
-            }
-        }
-    }
 
-    override fun onCleared() {
-    super.onCleared()
-    saveGame()
-}
-    private var hasLoaded = false
-
-    fun loadGame() {
-        
-
-total matches: 2
+total matches: 1
 
 ====================================================================================================
-ALL MATCHES: combatService save/restore/export/import references in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt (pattern: combatService\.\w+)
+CHECK: do new combat-drop item ids appear in ItemCatalog / GeneratedItemCatalog?
 ====================================================================================================
-
---- match #1 at offset 22236 ---
-freshCombatHp() {
-        val characterId = _currentCharacterId.value ?: return
-        val state = combatService.stateFor(characterId, maxHpFor(characterId))
-        _combatHp.value = state.currentHp to state.maxHp
-    }
-
-    fun enterCombatZone(zoneId: String): ServiceResult<CombatSession> {
-        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
-        // Entering combat stops any active skilling/crafting queue - only one
-        // activity can run at a time.
-
---- match #2 at offset 22824 ---
-tionProgressSeconds = 0
-        craftActionProgressSeconds = 0
-        refreshActiveQueue()
-        combatService.stateFor(characterId, maxHpFor(characterId))
-        val result = combatService.enterZone(characterId, zoneId, skillLevel(characterId, _trainingSkill.value))
-        if (result is ServiceResult.Success) {
-            combatLogFor.getOrPut(characterId) { mutableListOf() }.apply {
-                clear()
-                add(CombatLogEntry("Entered " + result.value.zone.name + "."))
-            }
-           
-
---- match #3 at offset 22904 ---
-tiveQueue()
-        combatService.stateFor(characterId, maxHpFor(characterId))
-        val result = combatService.enterZone(characterId, zoneId, skillLevel(characterId, _trainingSkill.value))
-        if (result is ServiceResult.Success) {
-            combatLogFor.getOrPut(characterId) { mutableListOf() }.apply {
-                clear()
-                add(CombatLogEntry("Entered " + result.value.zone.name + "."))
-            }
-            refreshCombatView()
-        }
-        return result
-    }
-
-    fun leaveCombatZo
-
---- match #4 at offset 23404 ---
-
-
-    fun leaveCombatZone() {
-        val characterId = _currentCharacterId.value ?: return
-        combatService.leaveZone(characterId)
-        _combatViewData.value = null
-    }
-
-    private fun refreshCombatView() {
-        val characterId = _currentCharacterId.value ?: return
-        val state = combatService.stateFor(characterId, maxHpFor(characterId))
-        _combatHp.value = state.currentHp to state.maxHp
-        val session = state.session
-        if (session == null) {
-            _combatViewData.value = nul
-
---- match #5 at offset 23605 ---
-eshCombatView() {
-        val characterId = _currentCharacterId.value ?: return
-        val state = combatService.stateFor(characterId, maxHpFor(characterId))
-        _combatHp.value = state.currentHp to state.maxHp
-        val session = state.session
-        if (session == null) {
-            _combatViewData.value = null
-            return
-        }
-        val log = combatLogFor.getOrPut(characterId) { mutableListOf() }
-        _combatViewData.value = CombatViewData(
-            zoneName = session.zone.name,
-      
-
---- match #6 at offset 24756 ---
-un tickCombat() {
-        val characterId = _currentCharacterId.value ?: return
-        val state = combatService.stateFor(characterId, maxHpFor(characterId))
-
-        if (state.recovery.isRecovering()) {
-            refreshCombatHp()
-            return
-        }
-        if (combatService.resolveRecoveryIfReady(characterId) is ServiceResult.Success) {
-            refreshCombatHp()
-        }
-
-        val session = state.session ?: return
-
-        if (session.state == SessionState.SEARCHING) {
-            val result = 
-
---- match #7 at offset 24932 ---
-e.recovery.isRecovering()) {
-            refreshCombatHp()
-            return
-        }
-        if (combatService.resolveRecoveryIfReady(characterId) is ServiceResult.Success) {
-            refreshCombatHp()
-        }
-
-        val session = state.session ?: return
-
-        if (session.state == SessionState.SEARCHING) {
-            val result = combatService.resolveSearchIfReady(characterId)
-            if (result is ServiceResult.Success) {
-                combatLogFor.getOrPut(characterId) { mutableListOf() }
-                    
-
---- match #8 at offset 25178 ---
-.session ?: return
-
-        if (session.state == SessionState.SEARCHING) {
-            val result = combatService.resolveSearchIfReady(characterId)
-            if (result is ServiceResult.Success) {
-                combatLogFor.getOrPut(characterId) { mutableListOf() }
-                    .add(CombatLogEntry(result.value.name + " appears!"))
-            }
-            refreshCombatView()
-            return
-        }
-
-        if (session.state != SessionState.IN_COMBAT) return
-
-        val weapon = equippedWeapon(characterId)
-    
-
---- match #9 at offset 27048 ---
-inventoryService.inventoryFor(characterId).autoFleeThresholdPercent
-        )
-
-        val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit)
-        val log = combatLogFor.getOrPut(characterId) { mutableListOf() }
-
-        if (result is ServiceResult.Success) {
-            val attack = result.value
-            val monsterDefense = session.currentMonster?.defenseRating ?: 1
-            lastHitChancePercent = (accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0
-            lastDamageDealt =
-
---- match #10 at offset 28119 ---
-               log.add(CombatLogEntry("Defeated " + defeatedName + "!"))
-                val loot = combatService.collectLoot(characterId)
-                if (loot is ServiceResult.Success && loot.value.isNotEmpty()) {
-                    loot.value.forEach { entry -> inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty) }
-                    refreshInventory()
-                }
-            }
-
-            // Monsters don't have a dedicated offensive stat yet, so their counter-attack uses a flat
-
-
---- match #11 at offset 28981 ---
-      val dmg = Random.nextInt(1, (monster.defenseRating / 3).coerceAtLeast(1) + 1)
-                combatService.applyDamageToCharacter(characterId, dmg)
-                log.add(CombatLogEntry(monster.name + " hits you for " + dmg + "."))
-            }
-
-            val freshState = combatService.stateFor(characterId, maxHpFor(characterId))
-            if (freshState.currentHp <= 0) {
-                log.add(CombatLogEntry("You were defeated and are recovering."))
-            } else if (freshState.maxHp > 0 &&
-                (fre
-
---- match #12 at offset 29165 ---
-tLogEntry(monster.name + " hits you for " + dmg + "."))
-            }
-
-            val freshState = combatService.stateFor(characterId, maxHpFor(characterId))
-            if (freshState.currentHp <= 0) {
-                log.add(CombatLogEntry("You were defeated and are recovering."))
-            } else if (freshState.maxHp > 0 &&
-                (freshState.currentHp * 100 / freshState.maxHp) <= inventoryService.inventoryFor(characterId).autoFleeThresholdPercent
-            ) {
-                combatService.leaveZone
-
---- match #13 at offset 29564 ---
-inventoryService.inventoryFor(characterId).autoFleeThresholdPercent
-            ) {
-                combatService.leaveZone(characterId)
-                log.add(CombatLogEntry("Fled to safety."))
-            }
-        }
-        refreshCombatView()
-    }
-
-    data class LoadoutSettingsSnapshot(
-        val selectedFoodId: String?,
-        val selectedPotionId: String?,
-        val potionTimerRemainingSeconds: Int,
-        val autoHealThresholdPercent: Int,
-        val autoFleeThresholdPercent: Int
-    )
-
-    private va
-
---- match #14 at offset 31482 ---
-moved = inventory.removeItem(itemId, 1)
-        if (removed is ServiceResult.Success) {
-            combatService.healCharacter(characterId, definition.healAmount ?: 0)
-            refreshInventory()
-        }
-    }
-
-    private fun tickConsumables() {
-        val characterId = _currentCharacterId.value ?: return
-        val inventory = inventoryService.inventoryFor(characterId)
-        val combatState = combatService.stateFor(characterId)
-
-        if (combatState.maxHp > 0) {
-            val hpPercent = (combatState.curr
-
---- match #15 at offset 31790 ---
-return
-        val inventory = inventoryService.inventoryFor(characterId)
-        val combatState = combatService.stateFor(characterId)
-
-        if (combatState.maxHp > 0) {
-            val hpPercent = (combatState.currentHp * 100) / combatState.maxHp
-            if (hpPercent <= inventory.autoHealThresholdPercent) {
-                inventory.consumeSelectedFood()?.let { food ->
-                    combatService.healCharacter(characterId, food.healAmount ?: 0)
-                }
-            }
-        }
-
-        if (in
-
---- match #16 at offset 32092 ---
-esholdPercent) {
-                inventory.consumeSelectedFood()?.let { food ->
-                    combatService.healCharacter(characterId, food.healAmount ?: 0)
-                }
-            }
-        }
-
-        if (inventory.selectedPotionId != null) {
-            if (inventory.potionTimerRemainingSeconds > 0) {
-                inventory.potionTimerRemainingSeconds -= 1
-            }
-            if (inventory.potionTimerRemainingSeconds <= 0) {
-                inventory.consumeSelectedPotion()?.let { potion ->
-        
-
-total matches: 16
-
-====================================================================================================
-ALL MATCHES: combat-related save/restore in GameStateRepository.kt in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt (pattern: (?i)combat)
-====================================================================================================
-(no matches found)
-
-total matches: 0
-
-====================================================================================================
-ALL MATCHES: OfflineCombatQueue/optIntoOfflineCombat references in GameViewModel.kt in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt (pattern: (OfflineCombatQueue|optIntoOfflineCombat|OFFLINE_COMBAT))
-====================================================================================================
-(no matches found)
-
-total matches: 0
-
-====================================================================================================
-ALL MATCHES: OfflineCombatQueue/optIntoOfflineCombat references in MainActivity.kt in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt (pattern: (OfflineCombatQueue|optIntoOfflineCombat|OFFLINE_COMBAT))
-====================================================================================================
-(no matches found)
-
-total matches: 0
-
-====================================================================================================
-ALL MATCHES: OfflineCombatQueue/optIntoOfflineCombat references in OfflineIdleMechanicsSystem.kt in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt (pattern: (OfflineCombatQueue|optIntoOfflineCombat|OFFLINE_COMBAT))
-====================================================================================================
-
---- match #1 at offset 263 ---
-=======================================================
-
-enum class QueueType { SKILLING, CRAFTING, OFFLINE_COMBAT }
-
-sealed class ActiveQueue {
-    abstract val characterId: String
-    abstract val startedAt: Instant
-    abstract val type: QueueType
-
-    data class SkillingQueue(
-        override val characterId: String,
-        val skillId: String,
-        val itemId: String,
-        val secondsPerAction: Long,
-        override val startedAt: Instant = Instant.now()
-    ) : ActiveQueue() {
-        override 
-
---- match #2 at offset 1176 ---
-ed(): Boolean = targetQuantity != null && quantityCompleted >= targetQuantity
-    }
-
-    data class OfflineCombatQueue(
-        override val characterId: String,
-        val zoneId: String,
-        override val startedAt: Instant = Instant.now()
-    ) : ActiveQueue() {
-        override val type = QueueType.OFFLINE_COMBAT
-    }
-}
-
-// =========================================================
-// MATERIAL AVAILABILITY
-// =========================================================
-
-fun interface MaterialAvailabilityChec
-
---- match #3 at offset 1384 ---
-al startedAt: Instant = Instant.now()
-    ) : ActiveQueue() {
-        override val type = QueueType.OFFLINE_COMBAT
-    }
-}
-
-// =========================================================
-// MATERIAL AVAILABILITY
-// =========================================================
-
-fun interface MaterialAvailabilityCheck {
-    fun hasMaterialsFor(characterId: String, itemId: String): Boolean
-}
-
-// =========================================================
-// EFFICIENCY TAPER
-// ===========================================
-
---- match #4 at offset 6522 ---
-       activeQueues[characterId] = queue
-        return ServiceResult.Success(queue)
-    }
-
-    fun optIntoOfflineCombat(characterId: String, zoneId: String): ServiceResult<ActiveQueue> {
-        if (activeQueues.containsKey(characterId)) {
-            return ServiceResult.Failure("Character already has an active queue. Stop it before opting into offline combat.")
-        }
-        val queue = ActiveQueue.OfflineCombatQueue(characterId, zoneId)
-        activeQueues[characterId] = queue
-        return ServiceResult.
-
---- match #5 at offset 6831 ---
-ctive queue. Stop it before opting into offline combat.")
-        }
-        val queue = ActiveQueue.OfflineCombatQueue(characterId, zoneId)
-        activeQueues[characterId] = queue
-        return ServiceResult.Success(queue)
-    }
-
-    fun stopQueue(characterId: String): ServiceResult<Unit> {
-        if (!activeQueues.containsKey(characterId)) return ServiceResult.Failure("No active queue to stop.")
-        activeQueues.remove(characterId)
-        return ServiceResult.Success(Unit)
-    }
-
-    fun activeQueueFor(
-
---- match #6 at offset 8164 ---
- null) flaggedAccounts.add(flag)
-
-        val combatPenaltyMultiplier = if (queue.type == QueueType.OFFLINE_COMBAT) 0.8 else 1.0
-        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed)
-        val penalizedEffectiveMillis = (effectiveElapsed.toMillis() * combatPenaltyMultiplier).toLong()
-        val finalEffectiveElapsed = Duration.ofMillis(penalizedEffectiveMillis)
-
-        var actionsCompleted = 0
-        var queueExhausted = false
-
-        when (queue) {
-            is ActiveQ
-
---- match #7 at offset 9622 ---
-        if (queue.isTargetReached()) queueExhausted = true
-            }
-            is ActiveQueue.OfflineCombatQueue -> {
-                actionsCompleted = 0
-            }
-        }
-
-        if (queueExhausted) {
-            activeQueues.remove(characterId)
-        }
-
-        return ServiceResult.Success(
-            OfflineResolution(
-                characterId = characterId,
-                queueType = queue.type,
-                claimedElapsed = claimedElapsed,
-                cappedElapsed = cappedElapsed
-
-total matches: 7
+Catalog-related files found: ['app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt', 'app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt']
+
+--- presence check in app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt ---
+  cowhide: FOUND
+  raw_beef: FOUND
+  raw_chicken: FOUND
+  feathers: FOUND
+  snake_hide: FOUND
+  uncut_gemstone: FOUND
+  bone: MISSING
+  goblin_ear: MISSING
+  ectoplasm: MISSING
+  wraith_essence: MISSING
+  rusty_dagger: MISSING
+  green_dragonhide: FOUND
+  blue_dragonhide: FOUND
+
+--- presence check in app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt ---
+  cowhide: MISSING
+  raw_beef: MISSING
+  raw_chicken: MISSING
+  feathers: MISSING
+  snake_hide: MISSING
+  uncut_gemstone: MISSING
+  bone: MISSING
+  goblin_ear: MISSING
+  ectoplasm: MISSING
+  wraith_essence: MISSING
+  rusty_dagger: MISSING
+  green_dragonhide: MISSING
+  blue_dragonhide: MISSING
 
 
 DONE
