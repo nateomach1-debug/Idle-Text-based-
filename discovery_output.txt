@@ -1,169 +1,313 @@
-VENDOR CRASH THEORY CHECK
+VENDOR TAB EMPTY-DATA DISCOVERY (Buy works, Vendor/Sell doesn't)
 
 ====================================================================================================
-buildInventoryItemSummaries() full definition in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt
+inventoryItems StateFlow declaration (_inventoryItems / inventoryItems) in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
 ====================================================================================================
 
---- match #1 at offset 9901 ---
-COSMETIC -> InventoryCategory.MATERIAL
-}
+--- match #1 at offset 2896 ---
+ummary>> = _skills.asStateFlow()
 
-private fun buildInventoryItemSummaries(
-    entries: List<InventorySlotEntry>,
-    vendorPayoutFor: (String) -> Long
-): List<InventoryItemSummary> {
-    return entries.map { entry ->
-        val definition = ItemCatalog.find(entry.itemId)
-        if (definition != null) {
-            val statsText = if (!definition.stats.isAllZero()) {
-                listOfNotNull(
-                    definition.stats.attackBonus.takeIf { it != 0 }?.let { "ATK +" + it },
-                    definition.stats.accuracyBonus.takeIf { it != 0 }?.let { "ACC +" + it },
-                    definition.stats.maxHitBonus.takeIf { it != 0 }?.let { "Max Hit +" + it },
-                    definition.stats.defenseBonus.takeIf { it != 0 }?.let { "DEF +" + it },
-                    definition.stats.strengthBonus.takeIf { it != 0 }?.let { "STR +" + it }
-                ).joinToString(", ")
-            } else null
+    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
 
-            InventoryItemSummary(
-                itemId = entry.itemId,
-                displayName = definition.name,
-                category = mapItemCategory(definition.category),
-                quantity = entry.quantity,
-                isEquippable = definition.equipSlot != null,
-                isConsumable = definition.category == ItemCategory.CONSUMABLE,
-                npcValuePerUnit = vendorPayoutFor(entry.itemId),
-                statsDescription = statsText
-            )
-        } else {
-            // Not yet defined in ItemCatalog (e.g. some gathered materials) -- graceful fallback.
-            InventoryItemSummary(
-                itemId = entry.itemId,
-                displayName = entry.itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } },
-                category = InventoryCategory.MATERIAL,
-                quantity = entry.quantity,
-                isEquippable = false,
-                isConsumable = false,
-                npcValuePerUnit = vendorPayoutFor(entry.itemId)
-            )
-        }
-    }
-}
+    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
 
+    val economyMonitoring = EconomyMonitoringService()
+    val marketService = MarketService(economyMonitoring)
+    val combatService = CombatService()
 
-private fun formatTimeAgo(instant: Instant): String {
-    val seconds =
+    // ===============
 
-total matches: 1
+--- match #2 at offset 2974 ---
+teFlow<List<InventorySlotEntry>>(emptyList())
+    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+
+    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+
+    val economyMonitoring = EconomyMonitoringService()
+    val marketService = MarketService(economyMonitoring)
+    val combatService = CombatService()
+
+    // =========================================================
+    // SUPABASE AUTH (guild/chat mult
+
+total matches: 2
 
 ====================================================================================================
-vendorPayoutPerUnit() full definition in app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt
+refreshInventory() full definition in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
 ====================================================================================================
 
---- match #1 at offset 10820 ---
-------- NPC vendor fallback ----------------
-
-    fun vendorPayoutPerUnit(itemId: String): Long {
-        val baseValue = ItemCatalog.baseValueFor(itemId)
-        return ((baseValue * vendorPayoutPercent) / 100.0).toLong()
+--- match #1 at offset 55464 ---
+_trainingSkill.value.name]?.level ?: 1
     }
 
-    fun sellToVendor(characterId: String, itemId: String, quantity: Int): ServiceResult<Long> {
-        requireMainCharacter(characterId)?.let { return it as ServiceResult.Failure }
-        val account = accounts.getValue(characterId)
-        val item = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
-
-        if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
-        if (!account.removeItem(itemId, quantity)) {
-            return ServiceResult.Failure("Insufficient item quantity to sell.")
-        }
-
-        val payout = vendorPayoutPerUnit(item.id) * quantity
-        account.currencyBalance += payout
-        monitoring.recordVendorPayout(payout)
-
-        return ServiceResult.Success(payout)
-    }
-
-    // ---------------- Public-safe queries ----------------
-
-    fun priceHistoryFor(itemId: String): List<PriceHistoryEntry> = priceHistory.filter { it.itemId == itemId }
-
-    fun openOrdersFor(characterId: String): List<MarketOrder> =
-        (buyOrders + sellOrders).filter { it.characterId == characterId && it.status != OrderStatus.CANCELLED }
-
-    fun allListings(): List<MarketPriceSummary> {
-        val itemIds = (buyOrders + sellOrders)
-            .filter { it.remainingQuantity > 0 }
-            .map { it.itemId }
-            .distinct()
-        return itemIds.map { i
-
-total matches: 1
-
-====================================================================================================
-ItemCatalog.baseValueFor() full definition in app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt
-====================================================================================================
-
---- match #1 at offset 4116 ---
-d { it.name == name && it.rarity == rarity }
-
-    fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
-        "oak_log" -> 8L
-        else -> 5L
-    }
-}
-
-
-total matches: 1
-
-====================================================================================================
-ItemCatalog object - find() and baseValueFor() together in app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt
-====================================================================================================
-
---- match #1 at offset 1986 ---
-object ItemCatalog {
-    val items = mutableListOf(
-        ItemDefinition(
-            id = "iron_sword_common", name = "Iron Sword", category = ItemCategory.WEAPON,
-            rarity = Rarity.COMMON, isTradeable = true, isStackable = false,
-            equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE,
-            levelRequired = 10, skillRequired = "ATTACK",
-            stats = ItemStats(attackBonus = 5, accuracyBonus = 10, maxHitBonus = 6)
-        ),
-        ItemDefinition(
-            id = "iron_sword_rare", name = "Iron Sword", category = ItemCategory.WEAPON,
-            rarity = Rarity.RARE, isTradeable = true, isStackable = false,
-            equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE,
-            levelRequired = 10, skillRequired = "ATTACK",
-            stats = ItemStats(attackBonus = 9, accuracyBonus = 16, maxHitBonus = 10)
-        ),
-        ItemDefinition(
-            id = "leather_boots_common", name = "Leather Boots", category = ItemCategory.ARMOR,
-            rarity = Rarity.COMMON, isTradeable = true, isStackable = false,
-            equipSlot = EquipSlot.BOOTS, levelRequired = 1,
-            stats = ItemStats(defenseBonus = 3)
-        ),
-        ItemDefinition(
-            id = "minor_healing_potion", name = "Minor Healing Potion", category = ItemCategory.CONSUMABLE,
-            isTradeable = true, isStackable = true,
-            consumableType = ConsumableType.POTION, healAmount = 20
-        ),
-        ItemDefinition(
-            id = "smiths_hammer", name = "Smith's Hammer", category = ItemCategory.WEAPON,
-            rarity = Rarity.UNCOMMON, isTradeable = false, isStackable = false,
-            equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE, levelRequired = 1,
-            stats = ItemStats(attackBonus = 2, maxHitBonus = 2)
+    fun refreshInventory() {
+        val characterId = _currentCharacterId.value ?: return
+        val inv = inventoryService.inventoryFor(characterId)
+        _inventoryItems.value = inv.allItems()
+        _equippedItems.value = inv.allEquipped()
+        _loadoutSettings.value = LoadoutSettingsSnapshot(
+            inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
+            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
         )
-   ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
+    }
 
-    fun find(itemId: String): ItemDefinition? = items.find { it.id == itemId }
-    fun findByNameAndRarity(name: String, rarity: Rarity): ItemDefinition? =
-        items.find { it.name == name && it.rarity == rarity }
+    fun equipItem(itemId: String): ServiceResult<Unit> {
+        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+        val playerSkillLevels = progressionService.skillBookFor(characterId).all()
+            .associate { it.type.name to LevelCurve.levelForXp(it.xp) }
+        val playerLevel = playerSkillLevels.values.maxOrNull() ?: 1
+        val result = inventoryService.inventoryFor(characterId).equip(itemId, playerLevel, playerSkillLevels) { true }
+        if (result is ServiceResult.Success) refreshInventory()
+        return result
+    }
 
-    fun baseValueFor(itemId: String): Long = GeneratedItemCatalog.values[itemId] ?: when (itemId) {
-        "oak_log" -> 8L
-        else -> 5L
+    fun unequipSlot(slot: EquipSlot): ServiceResult<Unit> {
+        val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
+        val result = inventoryService.inventoryFor(characterId).unequip(slot) { true }
+        if (result is ServiceResult.Success) refreshInventory()
+        return result
+    }
+
+    fun refreshActiveQueue() {
+        val characterId = _currentCharacterId.value
+        v
+
+total matches: 1
+
+====================================================================================================
+all call sites of refreshInventory() in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
+====================================================================================================
+
+--- match #1 at offset 28389 ---
+                   loot.value.forEach { entry -> inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty) }
+                    refreshInventory()
+                }
+            }
+
+            // M
+
+--- match #2 at offset 30385 ---
+ = _currentCharacterId.value ?: return
+        inventoryService.inventoryFor(characterId).autoHealThresholdPercent = percent.coerceIn(0, 100)
+        refreshInventory()
+    }
+
+    fun setAutoFleeThreshold(percent: Int)
+
+--- match #3 at offset 30629 ---
+ = _currentCharacterId.value ?: return
+        inventoryService.inventoryFor(characterId).autoFleeThresholdPercent = percent.coerceIn(0, 100)
+        refreshInventory()
+    }
+
+    fun selectFood(itemId: String?) {
+    
+
+--- match #4 at offset 30833 ---
+tring?) {
+        val characterId = _currentCharacterId.value ?: return
+        inventoryService.inventoryFor(characterId).selectFood(itemId)
+        refreshInventory()
+    }
+
+    fun selectPotion(itemId: String?) {
+  
+
+--- match #5 at offset 31041 ---
+ing?) {
+        val characterId = _currentCharacterId.value ?: return
+        inventoryService.inventoryFor(characterId).selectPotion(itemId)
+        refreshInventory()
+    }
+
+    fun useInventoryItem(itemId: String) {
+
+--- match #6 at offset 31563 ---
+emId, 1)
+        if (removed is ServiceResult.Success) {
+            combatService.healCharacter(characterId, definition.healAmount ?: 0)
+            refreshInventory()
+        }
+    }
+
+    private fun tickConsumables(
+
+--- match #7 at offset 32654 ---
+ion ->
+                    inventory.potionTimerRemainingSeconds = potion.buffDurationSeconds ?: 0
+                }
+            }
+        }
+
+        refreshInventory()
+        refreshCombatHp()
+    }
+
+    private val 
+
+--- match #8 at offset 48035 ---
+IdleService.recordLastSeen(characterId)
+        skillActionProgressSeconds = 0
+        craftActionProgressSeconds = 0
+        refreshSkills()
+        refreshInventory()
+        refreshActiveQueue()
+
+        if (marketS
+
+--- match #9 at offset 50594 ---
+onusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), actionsCompleted.toInt())
+            }
+            refreshSkills()
+            refreshInventory()
+        }
+    }
+
+    // =========================
+
+--- match #10 at offset 54402 ---
+tch = craftItems(characterId, queue.itemId, cappedAttempts)
+        queue.quantityCompleted += batch.successfulCrafts
+        refreshSkills()
+        refreshInventory()
+
+        if (queue.isTargetReached()) {
+         
+
+--- match #11 at offset 56495 ---
+sult = inventoryService.inventoryFor(characterId).equip(itemId, playerLevel, playerSkillLevels) { true }
+        if (result is ServiceResult.Success) refreshInventory()
+        return result
+    }
+
+    fun unequipSlot(
+
+--- match #12 at offset 56845 ---
+acter selected.")
+        val result = inventoryService.inventoryFor(characterId).unequip(slot) { true }
+        if (result is ServiceResult.Success) refreshInventory()
+        return result
+    }
+
+    fun refreshActiv
+
+--- match #13 at offset 60432 ---
+Quantity
+                if (filled > 0) {
+                    inventoryService.inventoryFor(characterId).addItem(itemId, filled)
+                    refreshInventory()
+                }
+                refreshCurrency
+
+--- match #14 at offset 61019 ---
+inventoryFor(characterId)
+        if (realInventory.quantityOf(itemId) < quantity) return
+
+        realInventory.removeItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val 
+
+--- match #15 at offset 61363 ---
+lure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.addItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+    
+
+--- match #16 at offset 62249 ---
+                    inventoryService.inventoryFor(characterId).addItem(cancelled.itemId, cancelled.remainingQuantityBeforeCancel)
+                    refreshInventory()
+                }
+                refreshCurrency
+
+--- match #17 at offset 62907 ---
+
+        val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
+
+        realInventory.removeItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val 
+
+--- match #18 at offset 63250 ---
+lure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.addItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+    
+
+--- match #19 at offset 63891 ---
+items.find { it.itemId == itemId }?.pricePerUnit ?: return
+        if (quantity <= 0) return
+
+        realInventory.addItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val 
+
+--- match #20 at offset 64237 ---
+e {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.removeItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+    
+
+total matches: 20
+
+====================================================================================================
+InventoryService class full definition in app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt
+====================================================================================================
+
+--- match #1 at offset 78549 ---
+class InventoryService {
+    private val inventories: MutableMap<String, Inventory> = mutableMapOf()
+
+    fun inventoryFor(characterId: String): Inventory =
+        inventories.getOrPut(characterId) { Inventory() }
+
+    fun exportAllItems(): List<InventorySlotExport> = inventories.flatMap { (characterId, inv) ->
+        inv.allItems().map { InventorySlotExport(characterId, it.itemId, it.quantity) }
+    }
+
+    fun exportAllEquipped(): List<EquippedSlotExport> = inventories.flatMap { (characterId, inv) ->
+        inv.allEquipped().map { (slot, itemId) -> EquippedSlotExport(characterId, slot.name, itemId) }
+    }
+
+    fun restoreItem(export: InventorySlotExport) {
+        inventoryFor(export.characterId).restoreItem(export.itemId, export.quantity)
+    }
+
+    fun restoreEquipped(export: EquippedSlotExport) {
+        inventoryFor(export.characterId).restoreEquipped(EquipSlot.valueOf(export.slot), export.itemId)
+    }
+
+    fun exportAllLoadoutSettings(): List<LoadoutSettingsExport> = inventories.map { (characterId, inv) ->
+        LoadoutSettingsExport(
+            characterId, inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
+            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
+        )
+    }
+
+    fun restoreLoadoutSettings(export: LoadoutSettingsExport) {
+        val inv = inventoryFor(export.characterId)
+        inv.selectedFoodId = export.selectedFoodId
+        inv.selectedPotionId = export.selectedPotionId
+        inv.potionTimerRemainingSeconds = export.potionTimerRemainingSeconds
+        inv.autoHealThresholdPercent = export.autoHealThresholdPercent
+        inv.autoFleeThresholdPercent = export.autoFleeThresholdPercent
     }
 }
 
@@ -171,39 +315,60 @@ object ItemCatalog {
 total matches: 1
 
 ====================================================================================================
-CHECK: do new combat-drop item ids appear in ItemCatalog / GeneratedItemCatalog?
+InventorySlotEntry / entries listing method in app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt
 ====================================================================================================
-Catalog-related files found: ['app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt', 'app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt']
 
---- presence check in app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt ---
-  cowhide: FOUND
-  raw_beef: FOUND
-  raw_chicken: FOUND
-  feathers: FOUND
-  snake_hide: FOUND
-  uncut_gemstone: FOUND
-  bone: MISSING
-  goblin_ear: MISSING
-  ectoplasm: MISSING
-  wraith_essence: MISSING
-  rusty_dagger: MISSING
-  green_dragonhide: FOUND
-  blue_dragonhide: FOUND
+--- match #1 at offset 70771 ---
+================================================
 
---- presence check in app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt ---
-  cowhide: MISSING
-  raw_beef: MISSING
-  raw_chicken: MISSING
-  feathers: MISSING
-  snake_hide: MISSING
-  uncut_gemstone: MISSING
-  bone: MISSING
-  goblin_ear: MISSING
-  ectoplasm: MISSING
-  wraith_essence: MISSING
-  rusty_dagger: MISSING
-  green_dragonhide: MISSING
-  blue_dragonhide: MISSING
+data class InventorySlotEntry(val itemId: String, val quantity: Int)
+
+class Inventory(
+    var maxSlots: Int = 100,
+    private val entries: MutableMap<String, InventorySlotEntry> = mutableMapOf(),
+    private val equipped: MutableMap<EquipSlot, String> = mutableMapOf(),
+    var selectedFoodId: String? = null,
+    var selectedPotionId: String? = null,
+    var potionTimerRemainingSeconds: Int = 0,
+    var autoHealThresholdPercent: Int = 30,
+    var autoFleeThresholdPercent: Int = 10
+) {
+    fun usedSlots(): Int = entries.size
+
+    fun addItem(itemId: String, quantity: Int): ServiceResult<Unit> {
+        val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+        if (quantity <= 0) return ServiceResult.Failure("Quantity must be positive.")
+
+        val existing = entries[itemId]
+  
+
+--- match #2 at offset 74739 ---
+): Map<EquipSlot, String> = equipped.toMap()
+
+    fun allItems(): List<InventorySlotEntry> = entries.values.toList()
+
+    fun restoreItem(itemId: String, quantity: Int) {
+        entries[itemId] = InventorySlotEntry(itemId, quantity)
+    }
+
+    fun restoreEquipped(slot: EquipSlot, itemId: String) {
+        equipped[slot] = itemId
+    }
+
+    // ---------------- Food / Potion selection ----------------
+
+    fun selectFood(itemId: String?): ServiceResult<Unit> {
+        if (itemId != null) {
+            val definition = ItemCatalog.find(itemId) ?: return ServiceResult.Failure("Unknown item.")
+            if (definition.consumableType != ConsumableType.FOOD) return ServiceResult.Failure("Not a food item.")
+        }
+        selectedFoodId = itemId
+        return ServiceResult.Success(Unit)
+    }
+
+    fun selectPotion(itemId: String?): ServiceResult<Unit>
+
+total matches: 2
 
 
 DONE
