@@ -1,1182 +1,749 @@
-COMBAT ARCHITECTURE DISCOVERY
-
-CANDIDATE FILES FOUND:
-  app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt
-  app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt
-  app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt
-  app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt
-  app/src/main/kotlin/com/yourname/idlerpg/ZoneSelectScreen.kt
-  app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt
+VENDOR REGRESSION DISCOVERY
 
 ====================================================================================================
-FULL FILE: CombatSystem.kt (app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt)
-====================================================================================================
-package com.yourname.idlerpg
-
-import java.time.Duration
-import java.time.Instant
-import kotlin.random.Random
-
-data class Weapon(
-    val name: String,
-    val style: CombatStyle,
-    val attackSpeedSeconds: Double,
-    val baseAccuracy: Int,
-    val baseMaxHit: Int
-)
-
-data class Spell(
-    val name: String,
-    val levelRequired: Int,
-    val attackSpeedSeconds: Double,
-    val baseAccuracy: Int,
-    val baseMaxHit: Int
-)
-
-object SpellBook {
-    private val spells = listOf(
-        Spell("Spark Bolt", levelRequired = 1, attackSpeedSeconds = 2.4, baseAccuracy = 20, baseMaxHit = 4),
-        Spell("Flame Lance", levelRequired = 15, attackSpeedSeconds = 2.8, baseAccuracy = 28, baseMaxHit = 8),
-        Spell("Frost Spike", levelRequired = 30, attackSpeedSeconds = 3.0, baseAccuracy = 35, baseMaxHit = 12)
-    )
-
-    fun availableSpells(magicLevel: Int): List<Spell> = spells.filter { it.levelRequired <= magicLevel }
-}
-
-// Which combat skills a character can select to train, based on the equipped
-// weapon's style. Defense is always trainable regardless of weapon style,
-// matching the classic "defensive style still uses your main weapon" model.
-object CombatSkillRules {
-    fun allowedTrainingSkills(style: CombatStyle): List<SkillType> = when (style) {
-        CombatStyle.MELEE -> listOf(SkillType.ATTACK, SkillType.STRENGTH, SkillType.DEFENSE)
-        CombatStyle.RANGED -> listOf(SkillType.ARCHERY, SkillType.DEFENSE)
-        CombatStyle.MAGIC -> listOf(SkillType.MAGIC, SkillType.DEFENSE)
-    }
-}
-
-data class LootEntry(val itemId: String, val minQty: Int, val maxQty: Int, val dropChancePercent: Double)
-
-data class Monster(
-    val id: String,
-    val name: String,
-    val levelRequirement: Int,
-    val maxHealth: Int,
-    val defenseRating: Int,
-    val mainLootTable: List<LootEntry>,
-    val rareLootTable: List<LootEntry>
-)
-
-data class Zone(
-    val id: String,
-    val name: String,
-    val levelRequirement: Int,
-    val monsters: List<Monster>
-)
-
-object ZoneCatalog {
-    val zones = listOf(
-        Zone(
-            id = "goblin_camp",
-            name = "Goblin Camp",
-            levelRequirement = 1,
-            monsters = listOf(
-                Monster(
-                    id = "goblin_grunt",
-                    name = "Goblin Grunt",
-                    levelRequirement = 1,
-                    maxHealth = 25,
-                    defenseRating = 5,
-                    mainLootTable = listOf(
-                        LootEntry("bone", 1, 1, 60.0),
-                        LootEntry("goblin_ear", 1, 2, 40.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("rusty_dagger", 1, 1, 2.0)
-                    )
-                )
-            )
-        ),
-        Zone(
-            id = "shadow_ruins",
-            name = "Shadow Ruins",
-            levelRequirement = 20,
-            monsters = listOf(
-                Monster(
-                    id = "wraith",
-                    name = "Wraith",
-                    levelRequirement = 20,
-                    maxHealth = 80,
-                    defenseRating = 25,
-                    mainLootTable = listOf(
-                        LootEntry("ectoplasm", 1, 3, 55.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("wraith_essence", 1, 1, 0.5)
-                    )
-                )
-            )
-        ),
-        Zone(
-            id = "farmland_outskirts",
-            name = "Farmland Outskirts",
-            levelRequirement = 1,
-            monsters = listOf(
-                Monster(
-                    id = "wild_cow",
-                    name = "Wild Cow",
-                    levelRequirement = 1,
-                    maxHealth = 20,
-                    defenseRating = 3,
-                    mainLootTable = listOf(
-                        LootEntry("cowhide", 1, 1, 65.0),
-                        LootEntry("raw_beef", 1, 2, 65.0)
-                    ),
-                    rareLootTable = listOf()
-                ),
-                Monster(
-                    id = "feral_chicken",
-                    name = "Feral Chicken",
-                    levelRequirement = 1,
-                    maxHealth = 12,
-                    defenseRating = 1,
-                    mainLootTable = listOf(
-                        LootEntry("raw_chicken", 1, 1, 65.0),
-                        LootEntry("feathers", 1, 5, 70.0)
-                    ),
-                    rareLootTable = listOf()
-                )
-            )
-        ),
-        Zone(
-            id = "serpent_marsh",
-            name = "Serpent Marsh",
-            levelRequirement = 10,
-            monsters = listOf(
-                Monster(
-                    id = "marsh_snake",
-                    name = "Marsh Snake",
-                    levelRequirement = 10,
-                    maxHealth = 35,
-                    defenseRating = 10,
-                    mainLootTable = listOf(
-                        LootEntry("snake_hide", 1, 1, 55.0)
-                    ),
-                    rareLootTable = listOf()
-                )
-            )
-        ),
-        Zone(
-            id = "gem_cavern",
-            name = "Gem Cavern",
-            levelRequirement = 15,
-            monsters = listOf(
-                Monster(
-                    id = "gem_hoarder",
-                    name = "Gem Hoarder",
-                    levelRequirement = 15,
-                    maxHealth = 45,
-                    defenseRating = 15,
-                    mainLootTable = listOf(
-                        LootEntry("uncut_gemstone", 1, 2, 45.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("uncut_opal", 1, 1, 8.0),
-                        LootEntry("uncut_jade", 1, 1, 6.0),
-                        LootEntry("uncut_red_topaz", 1, 1, 5.0),
-                        LootEntry("uncut_sapphire", 1, 1, 4.0),
-                        LootEntry("uncut_emerald", 1, 1, 3.0),
-                        LootEntry("uncut_ruby", 1, 1, 2.0),
-                        LootEntry("uncut_diamond", 1, 1, 1.2),
-                        LootEntry("uncut_dragonstone", 1, 1, 0.6),
-                        LootEntry("uncut_onyx", 1, 1, 0.3),
-                        LootEntry("uncut_zenyte", 1, 1, 0.15),
-                        LootEntry("uncut_celestial_crystal", 1, 1, 0.05)
-                    )
-                )
-            )
-        ),
-        Zone(
-            id = "dragons_lair",
-            name = "Dragon's Lair",
-            levelRequirement = 60,
-            monsters = listOf(
-                Monster(
-                    id = "green_dragon",
-                    name = "Green Dragon",
-                    levelRequirement = 60,
-                    maxHealth = 220,
-                    defenseRating = 65,
-                    mainLootTable = listOf(
-                        LootEntry("green_dragonhide", 1, 1, 60.0)
-                    ),
-                    rareLootTable = listOf()
-                ),
-                Monster(
-                    id = "blue_dragon",
-                    name = "Blue Dragon",
-                    levelRequirement = 65,
-                    maxHealth = 260,
-                    defenseRating = 75,
-                    mainLootTable = listOf(
-                        LootEntry("blue_dragonhide", 1, 1, 55.0)
-                    ),
-                    rareLootTable = listOf()
-                )
-            )
-        )
-    )
-
-    fun zonesAvailableAt(level: Int): List<Zone> = zones.filter { it.levelRequirement <= level }
-}
-
-data class CombatLoadout(
-    val style: CombatStyle,
-    val trainingSkill: SkillType,
-    val equippedWeapon: Weapon?,
-    val equippedSpell: Spell?,
-    val autoHealThresholdPercent: Int,
-    val autoFleeThresholdPercent: Int
-)
-
-enum class SessionState { SEARCHING, PAUSED, IN_COMBAT }
-
-class CombatSession(
-    val zone: Zone,
-    var state: SessionState = SessionState.SEARCHING,
-    var searchEndsAt: Instant? = null,
-    var currentMonster: Monster? = null,
-    var currentMonsterHealth: Int = 0
-)
-
-class RecoveryStatus {
-    var recoveringUntil: Instant? = null
-
-    fun isRecovering(now: Instant = Instant.now()): Boolean {
-        val until = recoveringUntil ?: return false
-        return now.isBefore(until)
-    }
-}
-
-class CharacterCombatState(
-    var currentHp: Int,
-    var maxHp: Int,
-    val recovery: RecoveryStatus = RecoveryStatus(),
-    var session: CombatSession? = null,
-    val lootPool: MutableList<LootEntry> = mutableListOf()
-)
-
-data class AttackResult(
-    val didHit: Boolean,
-    val damageDealt: Int,
-    val monsterHpRemaining: Int,
-    val monsterDefeated: Boolean
-)
-
-class CombatService {
-    private val recoveryDuration: Duration = Duration.ofSeconds(600)
-    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()
-
-    fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
-        states.getOrPut(characterId) { CharacterCombatState(currentHp = maxHp, maxHp = maxHp) }
-
-    // trainingSkillLevel must be the level of whichever SkillType the character
-    // currently has selected to train (loadout.trainingSkill) - NOT a blended
-    // "character level". Each combat skill unlocks zones independently.
-    fun enterZone(characterId: String, zoneId: String, trainingSkillLevel: Int): ServiceResult<CombatSession> {
-        val state = stateFor(characterId)
-        if (state.recovery.isRecovering()) {
-            return ServiceResult.Failure("Cannot enter combat while recovering.")
-        }
-        val zone = ZoneCatalog.zones.find { it.id == zoneId }
-            ?: return ServiceResult.Failure("Zone not found.")
-        if (zone.levelRequirement > trainingSkillLevel) {
-            return ServiceResult.Failure("Requires level " + zone.levelRequirement + " to enter " + zone.name + ".")
-        }
-
-        val session = CombatSession(zone = zone)
-        state.session = session
-        return startSearching(characterId)
-    }
-
-    fun startSearching(characterId: String, now: Instant = Instant.now()): ServiceResult<CombatSession> {
-        val state = stateFor(characterId)
-        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
-        if (state.recovery.isRecovering(now)) {
-            return ServiceResult.Failure("Cannot search while recovering.")
-        }
-
-        val searchSeconds = Random.nextInt(3, 11)
-        session.state = SessionState.SEARCHING
-        session.searchEndsAt = now.plusSeconds(searchSeconds.toLong())
-        session.currentMonster = null
-        return ServiceResult.Success(session)
-    }
-
-    fun pauseSearching(characterId: String): ServiceResult<CombatSession> {
-        val state = stateFor(characterId)
-        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
-        if (session.state != SessionState.SEARCHING) {
-            return ServiceResult.Failure("Can only pause while searching.")
-        }
-        session.state = SessionState.PAUSED
-        return ServiceResult.Success(session)
-    }
-
-    fun resolveSearchIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<Monster> {
-        val state = stateFor(characterId)
-        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
-        if (session.state != SessionState.SEARCHING) {
-            return ServiceResult.Failure("Not currently searching.")
-        }
-        val endsAt = session.searchEndsAt ?: return ServiceResult.Failure("No active search timer.")
-        if (now.isBefore(endsAt)) {
-            return ServiceResult.Failure("Search still in progress.")
-        }
-
-        val monster = session.zone.monsters.random()
-        session.currentMonster = monster
-        session.currentMonsterHealth = monster.maxHealth
-        session.state = SessionState.IN_COMBAT
-        return ServiceResult.Success(monster)
-    }
-
-    fun leaveZone(characterId: String): ServiceResult<Unit> {
-        val state = stateFor(characterId)
-        state.session = null
-        return ServiceResult.Success(Unit)
-    }
-
-    fun canChangeEquipment(characterId: String, slot: EquipmentSlot, now: Instant = Instant.now()): Boolean {
-        if (slot == EquipmentSlot.TOOL) return true
-
-        val state = stateFor(characterId)
-
-        if (state.recovery.isRecovering(now) && slot == EquipmentSlot.WEAPON) return false
-
-        val session = state.session ?: return true
-        return session.state != SessionState.IN_COMBAT
-    }
-
-    fun resolveAttack(
-        characterId: String,
-        loadout: CombatLoadout,
-        attackerAccuracy: Int,
-        attackerMaxHit: Int
-    ): ServiceResult<AttackResult> {
-        val state = stateFor(characterId)
-        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
-        if (session.state != SessionState.IN_COMBAT) {
-            return ServiceResult.Failure("Not currently in combat.")
-        }
-        val monster = session.currentMonster ?: return ServiceResult.Failure("No active target.")
-
-        val hitChancePercent = (attackerAccuracy.toDouble() / (attackerAccuracy + monster.defenseRating)) * 100.0
-        val didHit = Random.nextDouble(0.0, 100.0) < hitChancePercent
-
-        if (!didHit) {
-            return ServiceResult.Success(
-                AttackResult(didHit = false, damageDealt = 0, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = false)
-            )
-        }
-
-        val damage = Random.nextInt(0, attackerMaxHit + 1)
-        session.currentMonsterHealth = (session.currentMonsterHealth - damage).coerceAtLeast(0)
-        val defeated = session.currentMonsterHealth <= 0
-
-        if (defeated) {
-            rollLoot(state, monster)
-            session.currentMonster = null
-            startSearching(characterId)
-        }
-
-        return ServiceResult.Success(
-            AttackResult(didHit = true, damageDealt = damage, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = defeated)
-        )
-    }
-
-    private fun rollLoot(state: CharacterCombatState, monster: Monster) {
-        (monster.mainLootTable + monster.rareLootTable).forEach { entry ->
-            if (Random.nextDouble(0.0, 100.0) < entry.dropChancePercent) {
-                val qty = Random.nextInt(entry.minQty, entry.maxQty + 1)
-                state.lootPool.add(entry.copy(minQty = qty, maxQty = qty))
-            }
-        }
-    }
-
-    fun collectLoot(characterId: String): ServiceResult<List<LootEntry>> {
-        val state = stateFor(characterId)
-        val collected = state.lootPool.toList()
-        state.lootPool.clear()
-        return ServiceResult.Success(collected)
-    }
-
-    fun applyDamageToCharacter(characterId: String, damage: Int, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
-        val state = stateFor(characterId)
-        state.currentHp = (state.currentHp - damage).coerceAtLeast(0)
-
-        if (state.currentHp <= 0) {
-            state.recovery.recoveringUntil = now.plus(recoveryDuration)
-            state.session = null
-        }
-        return ServiceResult.Success(state)
-    }
-
-    fun healCharacter(characterId: String, amount: Int): ServiceResult<CharacterCombatState> {
-        val state = stateFor(characterId)
-        state.currentHp = (state.currentHp + amount).coerceAtMost(state.maxHp)
-        return ServiceResult.Success(state)
-    }
-
-    fun resolveRecoveryIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
-        val state = stateFor(characterId)
-        val until = state.recovery.recoveringUntil
-            ?: return ServiceResult.Failure("Character is not recovering.")
-        if (now.isBefore(until)) {
-            return ServiceResult.Failure("Recovery still in progress.")
-        }
-        state.currentHp = (state.maxHp * 0.5).toInt()
-        state.recovery.recoveringUntil = null
-        return ServiceResult.Success(state)
-    }
-}
-
---- end of CombatSystem.kt (15962 chars, 429 lines) ---
-
-====================================================================================================
-FULL FILE: CombatViewScreen.kt (app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt)
+FULL FILE: MarketScreen.kt (app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt)
 ====================================================================================================
 package com.yourname.idlerpg.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-import java.time.Duration
-import java.time.Instant
 
 // =========================================================
-// COMBAT VIEW SCREEN
-// Two live states: SEARCHING (timer only) and IN_COMBAT
-// (monster + player HP). Advanced toggle adds hit chance,
-// exact damage, and a scrolling combat log in either state.
+// MARKET SCREENS
+// Three separate screens (Browse, My Orders, Sell to Vendor),
+// navigated via top buttons. Cosmetic-only price warning on
+// order placement -- no backend validation tied to it.
 // =========================================================
 
-enum class CombatViewState { SEARCHING, IN_COMBAT }
+enum class MarketTab { BROWSE, MY_ORDERS, SELL_TO_VENDOR, BUY_FROM_VENDOR }
 
-data class CombatLogEntry(
-    val text: String,
-    val timestamp: Instant = Instant.now()
+data class VendorBuyableItem(
+    val itemId: String,
+    val displayName: String,
+    val pricePerUnit: Long
 )
 
-data class CombatViewData(
-    val zoneName: String,
-    val viewState: CombatViewState,
-    val searchEndsAt: Instant?,          // set only when SEARCHING
-    val monsterName: String?,            // set only when IN_COMBAT
-    val monsterCurrentHp: Int?,
-    val monsterMaxHp: Int?,
-    val playerCurrentHp: Int,
-    val playerMaxHp: Int,
-    val lastHitChancePercent: Double?,   // advanced view only
-    val lastDamageDealt: Int?,           // advanced view only
-    val combatLog: List<CombatLogEntry>
+object VendorBuyCatalog {
+    val items = listOf(
+        VendorBuyableItem("flour", "Flour", 2L),
+        VendorBuyableItem("vial_of_water", "Vial of Water", 2L)
+    )
+}
+
+data class MarketListingSummary(
+    val itemId: String,
+    val displayName: String,
+    val bestBuyPrice: Long?,   // highest current buy order, null if none
+    val bestBuyQuantity: Int?, // total quantity available at bestBuyPrice
+    val bestSellPrice: Long?,  // lowest current sell order, null if none
+    val bestSellQuantity: Int? // total quantity available at bestSellPrice
+)
+
+data class MarketOrderSummary(
+    val orderId: String,
+    val itemId: String,
+    val displayName: String,
+    val pricePerUnit: Long,
+    val remainingQuantity: Int
+)
+
+data class PriceHistoryRow(val pricePerUnit: Long, val quantity: Int, val timeAgo: String)
+
+data class ItemOrderBookDetail(
+    val itemId: String,
+    val displayName: String,
+    val bestBuyPrice: Long?,
+    val bestSellPrice: Long?,
+    val recentTrades: List<PriceHistoryRow>
 )
 
 @Composable
-fun CombatViewScreen(
-    data: CombatViewData,
-    onLeaveZone: () -> Unit,
+fun MarketScreen(
+    currentTab: MarketTab,
+    onTabSelected: (MarketTab) -> Unit,
+    // Browse
+    listings: List<MarketListingSummary>,
+    showingBuyOrders: Boolean,
+    onToggleBrowseMode: () -> Unit,
+    onItemSelected: (String) -> Unit,
+    // My Orders
+    myBuyOrders: List<MarketOrderSummary>,
+    mySellOrders: List<MarketOrderSummary>,
+    onCancelOrder: (String) -> Unit,
+    // Sell to Vendor
+    vendorSellableItems: List<InventoryItemSummary>,
+    onSellToVendor: (String, Int) -> Unit,
+    // Buy from Vendor
+    vendorBuyableItems: List<VendorBuyableItem>,
+    onBuyFromVendor: (String, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showAdvanced by remember { mutableStateOf(false) }
-
     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onLeaveZone) {
-                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Leave zone")
+        Text(text = "Market", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MarketTabButton(
+                label = "Browse",
+                isSelected = currentTab == MarketTab.BROWSE,
+                modifier = Modifier.weight(1f)
+            ) { onTabSelected(MarketTab.BROWSE) }
+            MarketTabButton(
+                label = "Orders",
+                isSelected = currentTab == MarketTab.MY_ORDERS,
+                modifier = Modifier.weight(1f)
+            ) { onTabSelected(MarketTab.MY_ORDERS) }
+            MarketTabButton(
+                label = "Vendor",
+                isSelected = currentTab == MarketTab.SELL_TO_VENDOR,
+                modifier = Modifier.weight(1f)
+            ) { onTabSelected(MarketTab.SELL_TO_VENDOR) }
+            MarketTabButton(
+                label = "Buy",
+                isSelected = currentTab == MarketTab.BUY_FROM_VENDOR,
+                modifier = Modifier.weight(1f)
+            ) { onTabSelected(MarketTab.BUY_FROM_VENDOR) }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (currentTab) {
+            MarketTab.BROWSE -> BrowseTab(listings, showingBuyOrders, onToggleBrowseMode, onItemSelected)
+            MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder)
+            MarketTab.SELL_TO_VENDOR -> SellToVendorTab(vendorSellableItems, onSellToVendor)
+            MarketTab.BUY_FROM_VENDOR -> BuyFromVendorTab(vendorBuyableItems, onBuyFromVendor)
+        }
+    }
+}
+
+@Composable
+private fun MarketTabButton(
+    label: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val tabPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+    if (isSelected) {
+        Button(onClick = onClick, modifier = modifier, contentPadding = tabPadding) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    } else {
+        OutlinedButton(onClick = onClick, modifier = modifier, contentPadding = tabPadding) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+// ---------------- Browse ----------------
+
+@Composable
+private fun BrowseTab(
+    listings: List<MarketListingSummary>,
+    showingBuyOrders: Boolean,
+    onToggleMode: () -> Unit,
+    onItemSelected: (String) -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (showingBuyOrders) "Wanted (Buy Orders)" else "For Sale",
+                style = MaterialTheme.typography.titleMedium
+            )
+            TextButton(onClick = onToggleMode) {
+                Text(text = if (showingBuyOrders) "Show For Sale" else "Show Wanted")
             }
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(text = data.zoneName, style = MaterialTheme.typography.headlineMedium)
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        when (data.viewState) {
-            CombatViewState.SEARCHING -> SearchingView(data.searchEndsAt)
-            CombatViewState.IN_COMBAT -> InCombatView(data)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextButton(onClick = { showAdvanced = !showAdvanced }) {
-            Text(text = if (showAdvanced) "Hide details" else "Show details")
-        }
-
-        if (showAdvanced) {
-            Spacer(modifier = Modifier.height(8.dp))
-            AdvancedDetails(data)
-        }
-    }
-}
-
-@Composable
-private fun SearchingView(searchEndsAt: Instant?) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Searching for an enemy...", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        if (searchEndsAt != null) {
-            LiveCountdownText(searchEndsAt)
-        }
-    }
-}
-
-@Composable
-private fun InCombatView(data: CombatViewData) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(20.dp)
-    ) {
-        Text(text = data.monsterName ?: "Unknown", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(6.dp))
-        HpBarRow(
-            label = "Enemy",
-            current = data.monsterCurrentHp ?: 0,
-            max = data.monsterMaxHp ?: 1,
-            color = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(text = "You", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(6.dp))
-        HpBarRow(
-            label = "HP",
-            current = data.playerCurrentHp,
-            max = data.playerMaxHp,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-
-@Composable
-private fun HpBarRow(label: String, current: Int, max: Int, color: androidx.compose.ui.graphics.Color) {
-    val fraction = (current.toFloat() / max.toFloat()).coerceIn(0f, 1f)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(10.dp)
-            .clip(RoundedCornerShape(5.dp))
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(fraction)
-                .fillMaxHeight()
-                .clip(RoundedCornerShape(5.dp))
-                .background(color)
-        )
-    }
-    Spacer(modifier = Modifier.height(2.dp))
-    Text(text = "$current / $max", style = MaterialTheme.typography.labelSmall)
-}
-
-@Composable
-private fun AdvancedDetails(data: CombatViewData) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp)
-    ) {
-        data.lastHitChancePercent?.let {
-            Text(text = "Hit chance: " + String.format("%.1f", it) + "%", style = MaterialTheme.typography.labelSmall)
-        }
-        data.lastDamageDealt?.let {
-            Text(text = "Last hit: " + it + " damage", style = MaterialTheme.typography.labelSmall)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        Text(text = "Combat Log", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(6.dp))
 
-        LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-            items(data.combatLog.reversed()) { entry ->
-                Text(
-                    text = entry.text,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                )
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(listings) { listing ->
+                ListingRow(listing, onClick = { onItemSelected(listing.itemId) })
             }
         }
     }
 }
 
 @Composable
-private fun LiveCountdownText(endsAt: Instant) {
-    var remaining by remember(endsAt) { mutableStateOf(Duration.between(Instant.now(), endsAt)) }
-
-    LaunchedEffect(endsAt) {
-        while (true) {
-            remaining = Duration.between(Instant.now(), endsAt)
-            if (remaining.isNegative || remaining.isZero) break
-            delay(1000)
+private fun ListingRow(listing: MarketListingSummary, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = listing.displayName, style = MaterialTheme.typography.titleMedium)
+        Column(horizontalAlignment = Alignment.End) {
+            Text(text = "Buy: " + (listing.bestBuyPrice?.let { "$it (x${listing.bestBuyQuantity ?: 0})" } ?: "—"), style = MaterialTheme.typography.labelSmall)
+            Text(text = "Sell: " + (listing.bestSellPrice?.let { "$it (x${listing.bestSellQuantity ?: 0})" } ?: "—"), style = MaterialTheme.typography.labelSmall)
         }
-    }
-
-    val text = if (remaining.isNegative || remaining.isZero) {
-        "Encounter starting..."
-    } else {
-        remaining.seconds.toString() + "s remaining"
-    }
-
-    Text(text = text, style = MaterialTheme.typography.bodyMedium)
-}
-
---- end of CombatViewScreen.kt (6907 chars, 209 lines) ---
-
-====================================================================================================
-FULL FILE: OfflineIdleMechanicsSystem.kt (app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt)
-====================================================================================================
-package com.yourname.idlerpg
-
-import java.time.Duration
-import java.time.Instant
-
-// =========================================================
-// QUEUE TYPES
-// =========================================================
-
-enum class QueueType { SKILLING, CRAFTING, OFFLINE_COMBAT }
-
-sealed class ActiveQueue {
-    abstract val characterId: String
-    abstract val startedAt: Instant
-    abstract val type: QueueType
-
-    data class SkillingQueue(
-        override val characterId: String,
-        val skillId: String,
-        val itemId: String,
-        val secondsPerAction: Long,
-        override val startedAt: Instant = Instant.now()
-    ) : ActiveQueue() {
-        override val type = QueueType.SKILLING
-    }
-
-    data class CraftingQueue(
-        override val characterId: String,
-        val itemId: String,
-        val secondsPerAction: Long,
-        val targetQuantity: Int?,
-        var quantityCompleted: Int = 0,
-        override val startedAt: Instant = Instant.now()
-    ) : ActiveQueue() {
-        override val type = QueueType.CRAFTING
-        fun isTargetReached(): Boolean = targetQuantity != null && quantityCompleted >= targetQuantity
-    }
-
-    data class OfflineCombatQueue(
-        override val characterId: String,
-        val zoneId: String,
-        override val startedAt: Instant = Instant.now()
-    ) : ActiveQueue() {
-        override val type = QueueType.OFFLINE_COMBAT
     }
 }
 
-// =========================================================
-// MATERIAL AVAILABILITY
-// =========================================================
+// ---------------- My Orders ----------------
 
-fun interface MaterialAvailabilityCheck {
-    fun hasMaterialsFor(characterId: String, itemId: String): Boolean
-}
-
-// =========================================================
-// EFFICIENCY TAPER
-// =========================================================
-
-object OfflineEfficiencyCurve {
-    private val fullRateWindow: Duration = Duration.ofHours(12)
-    private val reducedRateWindow: Duration = Duration.ofHours(72)
-    private const val FULL_RATE_PERCENT = 100.0
-    private const val REDUCED_RATE_PERCENT = 50.0
-    private const val FLOOR_RATE_PERCENT = 25.0
-
-    fun efficiencyAt(elapsed: Duration): Double {
-        return when {
-            elapsed <= fullRateWindow -> FULL_RATE_PERCENT
-            elapsed <= reducedRateWindow -> REDUCED_RATE_PERCENT
-            else -> FLOOR_RATE_PERCENT
+@Composable
+private fun MyOrdersTab(
+    buyOrders: List<MarketOrderSummary>,
+    sellOrders: List<MarketOrderSummary>,
+    onCancel: (String) -> Unit
+) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        item { Text(text = "Buy Orders", style = MaterialTheme.typography.titleMedium) }
+        if (buyOrders.isEmpty()) {
+            item { Text(text = "No open buy orders.", style = MaterialTheme.typography.bodyMedium) }
         }
-    }
+        items(buyOrders) { order -> OrderRow(order, onCancel) }
 
-    fun effectiveElapsed(elapsed: Duration): Duration {
-        if (elapsed <= fullRateWindow) return elapsed
-
-        val fullMillis = fullRateWindow.toMillis()
-        val reducedEndMillis = minOf(elapsed.toMillis(), reducedRateWindow.toMillis())
-        val reducedMillis = (reducedEndMillis - fullMillis).coerceAtLeast(0)
-        val floorMillis = (elapsed.toMillis() - reducedRateWindow.toMillis()).coerceAtLeast(0)
-
-        val effectiveMillis =
-            (fullMillis * (FULL_RATE_PERCENT / 100.0)) +
-            (reducedMillis * (REDUCED_RATE_PERCENT / 100.0)) +
-            (floorMillis * (FLOOR_RATE_PERCENT / 100.0))
-
-        return Duration.ofMillis(effectiveMillis.toLong())
+        item { Spacer(modifier = Modifier.height(12.dp)); Text(text = "Sell Orders", style = MaterialTheme.typography.titleMedium) }
+        if (sellOrders.isEmpty()) {
+            item { Text(text = "No open sell orders.", style = MaterialTheme.typography.bodyMedium) }
+        }
+        items(sellOrders) { order -> OrderRow(order, onCancel) }
     }
 }
 
-// =========================================================
-// ANTI-CHEAT SANITY CHECK
-// =========================================================
-
-data class OfflineFlagRecord(
-    val characterId: String,
-    val claimedElapsed: Duration,
-    val cappedElapsed: Duration,
-    val flaggedAt: Instant = Instant.now()
-)
-
-object OfflineSanityCheck {
-    val maxPlausibleElapsed: Duration = Duration.ofDays(30)
-
-    fun validate(characterId: String, claimedElapsed: Duration): Pair<Duration, OfflineFlagRecord?> {
-        if (claimedElapsed <= maxPlausibleElapsed) return claimedElapsed to null
-
-        val flag = OfflineFlagRecord(
-            characterId = characterId,
-            claimedElapsed = claimedElapsed,
-            cappedElapsed = maxPlausibleElapsed
-        )
-        return maxPlausibleElapsed to flag
-    }
-}
-
-// =========================================================
-// RESULT TYPES
-// (ServiceResult now comes from SharedTypes.kt.)
-// =========================================================
-
-data class OfflineResolution(
-    val characterId: String,
-    val queueType: QueueType,
-    val claimedElapsed: Duration,
-    val cappedElapsed: Duration,
-    val effectiveElapsed: Duration,
-    val actionsCompleted: Int,
-    val wasFlagged: Boolean,
-    val queueExhausted: Boolean
-)
-
-data class SkillingQueueExport(
-    val characterId: String,
-    val skillId: String,
-    val itemId: String,
-    val secondsPerAction: Long,
-    val startedAt: String
-)
-
-data class CraftingQueueExport(
-    val characterId: String,
-    val itemId: String,
-    val secondsPerAction: Long,
-    val targetQuantity: Int?,
-    val quantityCompleted: Int,
-    val startedAt: String
-)
-
-data class LastSeenExport(val characterId: String, val lastSeenAt: String)
-
-// =========================================================
-// OFFLINE/IDLE SERVICE
-// =========================================================
-
-class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
-
-    private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
-    private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
-    private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
-
-    fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<ActiveQueue> {
-        if (activeQueues.containsKey(characterId)) {
-            return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
-        }
-        val queue = ActiveQueue.SkillingQueue(characterId, skillId, itemId, secondsPerAction)
-        activeQueues[characterId] = queue
-        return ServiceResult.Success(queue)
-    }
-
-    fun startCraftingQueue(
-        characterId: String,
-        itemId: String,
-        secondsPerAction: Long,
-        targetQuantity: Int?
-    ): ServiceResult<ActiveQueue> {
-        if (activeQueues.containsKey(characterId)) {
-            return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
-        }
-        if (targetQuantity != null && targetQuantity <= 0) {
-            return ServiceResult.Failure("Target quantity must be positive if specified.")
-        }
-        val queue = ActiveQueue.CraftingQueue(characterId, itemId, secondsPerAction, targetQuantity)
-        activeQueues[characterId] = queue
-        return ServiceResult.Success(queue)
-    }
-
-    fun optIntoOfflineCombat(characterId: String, zoneId: String): ServiceResult<ActiveQueue> {
-        if (activeQueues.containsKey(characterId)) {
-            return ServiceResult.Failure("Character already has an active queue. Stop it before opting into offline combat.")
-        }
-        val queue = ActiveQueue.OfflineCombatQueue(characterId, zoneId)
-        activeQueues[characterId] = queue
-        return ServiceResult.Success(queue)
-    }
-
-    fun stopQueue(characterId: String): ServiceResult<Unit> {
-        if (!activeQueues.containsKey(characterId)) return ServiceResult.Failure("No active queue to stop.")
-        activeQueues.remove(characterId)
-        return ServiceResult.Success(Unit)
-    }
-
-    fun activeQueueFor(characterId: String): ActiveQueue? = activeQueues[characterId]
-
-    fun recordLastSeen(characterId: String, now: Instant = Instant.now()) {
-        lastSeenAt[characterId] = now
-    }
-
-    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
-        val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
-        val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
-
-        val claimedElapsed = Duration.between(lastSeen, now)
-        if (claimedElapsed.isNegative) return ServiceResult.Failure("Invalid elapsed time (negative duration).")
-
-        val (cappedElapsed, flag) = OfflineSanityCheck.validate(characterId, claimedElapsed)
-        if (flag != null) flaggedAccounts.add(flag)
-
-        val combatPenaltyMultiplier = if (queue.type == QueueType.OFFLINE_COMBAT) 0.8 else 1.0
-        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed)
-        val penalizedEffectiveMillis = (effectiveElapsed.toMillis() * combatPenaltyMultiplier).toLong()
-        val finalEffectiveElapsed = Duration.ofMillis(penalizedEffectiveMillis)
-
-        var actionsCompleted = 0
-        var queueExhausted = false
-
-        when (queue) {
-            is ActiveQueue.SkillingQueue -> {
-                actionsCompleted = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
-            }
-            is ActiveQueue.CraftingQueue -> {
-                var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
-                if (queue.targetQuantity != null) {
-                    val remaining = queue.targetQuantity - queue.quantityCompleted
-                    possibleActions = possibleActions.coerceAtMost(remaining)
-                }
-                var completed = 0
-                for (i in 0 until possibleActions) {
-                    if (!materialCheck.hasMaterialsFor(characterId, queue.itemId)) {
-                        queueExhausted = true
-                        break
-                    }
-                    completed++
-                }
-                queue.quantityCompleted += completed
-                actionsCompleted = completed
-                if (queue.isTargetReached()) queueExhausted = true
-            }
-            is ActiveQueue.OfflineCombatQueue -> {
-                actionsCompleted = 0
-            }
-        }
-
-        if (queueExhausted) {
-            activeQueues.remove(characterId)
-        }
-
-        return ServiceResult.Success(
-            OfflineResolution(
-                characterId = characterId,
-                queueType = queue.type,
-                claimedElapsed = claimedElapsed,
-                cappedElapsed = cappedElapsed,
-                effectiveElapsed = finalEffectiveElapsed,
-                actionsCompleted = actionsCompleted,
-                wasFlagged = flag != null,
-                queueExhausted = queueExhausted
-            )
-        )
-    }
-
-    fun estimatedTimeUntilExhausted(characterId: String): Duration? {
-        val queue = activeQueues[characterId] as? ActiveQueue.CraftingQueue ?: return null
-        val target = queue.targetQuantity ?: return null
-        val remaining = target - queue.quantityCompleted
-        if (remaining <= 0) return Duration.ZERO
-        return Duration.ofSeconds(remaining * queue.secondsPerAction)
-    }
-
-    fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
-
-    fun exportSkillingQueues(): List<SkillingQueueExport> =
-        activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
-            SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
-        }
-
-    fun exportCraftingQueues(): List<CraftingQueueExport> =
-        activeQueues.values.filterIsInstance<ActiveQueue.CraftingQueue>().map {
-            CraftingQueueExport(
-                it.characterId,
-                it.itemId,
-                it.secondsPerAction,
-                it.targetQuantity,
-                it.quantityCompleted,
-                it.startedAt.toString()
+@Composable
+private fun OrderRow(order: MarketOrderSummary, onCancel: (String) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(text = order.displayName, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = order.remainingQuantity.toString() + " remaining @ " + order.pricePerUnit,
+                style = MaterialTheme.typography.labelSmall
             )
         }
-
-    fun exportLastSeen(): List<LastSeenExport> =
-        lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
-
-    fun restoreSkillingQueue(export: SkillingQueueExport) {
-        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
-            characterId = export.characterId,
-            skillId = export.skillId,
-            itemId = export.itemId,
-            secondsPerAction = export.secondsPerAction,
-            startedAt = Instant.parse(export.startedAt)
-        )
-    }
-
-    fun restoreCraftingQueue(export: CraftingQueueExport) {
-        val queue = ActiveQueue.CraftingQueue(
-            characterId = export.characterId,
-            itemId = export.itemId,
-            secondsPerAction = export.secondsPerAction,
-            targetQuantity = export.targetQuantity,
-            startedAt = Instant.parse(export.startedAt)
-        )
-        queue.quantityCompleted = export.quantityCompleted
-        activeQueues[export.characterId] = queue
-    }
-
-    fun restoreLastSeen(export: LastSeenExport) {
-        lastSeenAt[export.characterId] = Instant.parse(export.lastSeenAt)
+        TextButton(onClick = { onCancel(order.orderId) }) {
+            Text(text = "Cancel")
+        }
     }
 }
 
---- end of OfflineIdleMechanicsSystem.kt (12573 chars, 329 lines) ---
+// ---------------- Buy from Vendor ----------------
 
-====================================================================================================
-GREP: tickCombat / tickSkilling / combat queue / fight loop state in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt (pattern: (fun tickCombat|fun tickSkilling|fun resolveOfflineRewards|combatQueue|CombatState|fun startFight|fun attack))
-====================================================================================================
-
---- match at offset 24655 ---
- lastHitChancePercent = lastHitChancePercent,
-            lastDamageDealt = lastDamageDealt,
-            combatLog = log
-        )
+@Composable
+private fun BuyFromVendorTab(items: List<VendorBuyableItem>, onBuy: (String, Int) -> Unit) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(items) { item ->
+            VendorBuyItemRow(item, onBuy)
+        }
     }
+}
 
-    private fun tickCombat() {
-        val characterId = _currentCharacterId.value ?: return
-        val state = combatService.stateFor(characterId, maxHpFor(characterId))
+@Composable
+private fun VendorBuyItemRow(item: VendorBuyableItem, onBuy: (String, Int) -> Unit) {
+    var quantityText by remember(item.itemId) { mutableStateOf("1") }
+    val enteredQuantity = quantityText.toIntOrNull()
+    val isValidQuantity = enteredQuantity != null && enteredQuantity > 0
 
-        if (state.recovery.isRecovering()) {
-            refreshCombatHp()
-            return
-        }
-        if (combatService.resolveRecoveryIfReady(characterId) is ServiceResult.Success) {
-            refreshCombatHp()
-        }
-
-        val session = state.session ?: return
-
-        if (session.state == SessionState.SEARCHING) {
-            val result = combatService.resolveSearchIfReady(characterId)
-            if (result is ServiceResult.Success) {
-                combatLogFor.getOrPut(characterId) { mutableListOf() }
-                    .add(CombatLogEntry(result.value.name + " appears!"))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp)
+    ) {
+        Text(
+            text = item.displayName,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = item.pricePerUnit.toString() + " gold each (unlimited stock)",
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = quantityText,
+                onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
+                modifier = Modifier.width(56.dp),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            Button(
+                onClick = { enteredQuantity?.let { onBuy(item.itemId, it) } },
+                enabled = isValidQuantity
+            ) {
+                Text("Buy")
             }
-            refreshCombatView()
-            return
         }
+    }
+}
 
-        if (session.state != SessionState.IN_COMBAT) return
+// ---------------- Sell to Vendor ----------------
 
-        val weapon = equippedWeapon(characterId)
-        val trainingSkill = _trainingSkill.value
-        val accuracy: Int
-        val maxHit: Int
-        when (weapon?.style) {
-            CombatStyle.MAGIC -> {
-                val magicLevel = skillLevel(characterId, SkillType.MAGIC)
-                accuracy = magicLevel * 2 + weapon.baseAccuracy
-                maxHit = (magicLevel / 3) + weapon.baseMaxHit
-            }
-            CombatStyle.RANGED -> {
-                val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
-                accuracy = archeryLevel * 2 + weapon.baseAccuracy
-                maxHit = (archeryLevel / 3) + weapon.baseMaxHit
-            }
-            else -> {
-                val attackLevel = skillLevel(characterId, SkillType.ATTACK)
-                val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
-                accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
-                maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
+@Composable
+private fun SellToVendorTab(items: List<InventoryItemSummary>, onSell: (String, Int) -> Unit) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(items) { item ->
+            VendorItemRow(item, onSell)
+        }
+    }
+}
+
+@Composable
+private fun VendorItemRow(item: InventoryItemSummary, onSell: (String, Int) -> Unit) {
+    var quantityText by remember(item.itemId, item.quantity) { mutableStateOf(item.quantity.toString()) }
+    val enteredQuantity = quantityText.toIntOrNull()
+    val isValidQuantity = enteredQuantity != null && enteredQuantity in 1..item.quantity
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp)
+    ) {
+        Text(
+            text = item.displayName,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = "x" + item.quantity + " — " + item.npcValuePerUnit + " each",
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = quantityText,
+                onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
+                modifier = Modifier.width(56.dp),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            Button(
+                onClick = { enteredQuantity?.let { onSell(item.itemId, it) } },
+                enabled = isValidQuantity,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(text = "Sell", maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             }
         }
+    }
+}
 
-        val loadout = CombatLoadout(
-            style = weapon?.style ?: C
+--- end of MarketScreen.kt (13824 chars, 384 lines) ---
 
---- match at offset 45459 ---
-o re-resolving against the recovered
-    // character's actual data is the correct behavior, not just a race-condition
-    // workaround.
-    private fun resolveOfflineRewardsAndSync(characterId: String) {
-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
-        if (queue != null) {
-            val result = offlineIdleService.resolveOfflineProgress(characterId)
-            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
-                val skillType = SkillType.valueOf(queue.skillId)
-                val action = ActionCatalog.find(skillType, queue.itemId)
-                if (action != null) {
-                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
-                    progressionService.grantXp(characterId, skillType, xpEarned)
-                    inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
-                    if (skillType == SkillType.MINING) {
-                        MiningBonusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), result.value.actionsCompleted)
-                    }
-                    _offlineSummary.value = OfflineSummary(
-                        awaySeconds = result.value.claimedElapsed.seconds,
-                        skillActionName = action.displayName,
-                        itemName = formatItemName(queue.itemId),
-                        quantity = result.value.actionsCompleted,
-                        xpEarned = xpEarned
-                    )
+====================================================================================================
+GREP: sellItemToVendor + buyItemFromVendor + related state in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt (pattern: (fun sellItemToVendor|fun buyItemFromVendor|MarketTab|VendorBuy))
+====================================================================================================
+
+--- match at offset 1161 ---
+name.idlerpg.ui.components.ChatChannelUi
+import com.yourname.idlerpg.ui.components.ChatMessageUi
+import com.yourname.idlerpg.ui.components.DmConversationSummary
+import com.yourname.idlerpg.ui.screens.VendorBuyCatalog
+
+data class OfflineSummary(
+    val awaySeconds: Long,
+    val skillActionName: String,
+    val itemName: String,
+    val quantity: Int,
+    val xpEarned: Long
+)
+
+data class ActiveQueueInfo(
+    val label: String,
+    val secondsPerAction: Long,
+    val startedAt: Instant
+)
+
+private fun formatItemName(itemId: String): String =
+    itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+
+class GameViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository = GameStateRepository(application)
+
+    val accountService = AccountService()
+    val progressionService = ProgressionService()
+    val inventoryService = InventoryService()
+    val sessionManager = SessionManager(application)
+    // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
+    // Skilling queues don't consume materials, only crafting does, so this is unused for now.
+    val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
+
+    private var skillActionProgressSeconds: Long = 0
+
+    private val _currentAccountId = MutableStateFlow<String?>(null)
+    val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
+
+    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+
+    private val _currentCharacterId = MutableStateFlow<String?>(null)
+    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+
+    private val _skills = MutableStateFlow<Map<Str
+
+--- match at offset 62429 ---
+                    refreshInventory()
                 }
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
             }
         }
-
-        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
-        if (craftingQueue != null) {
-            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
-            if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
-                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
-                if (batch.xpGranted > 0) {
-                    _offlineSummary.value = OfflineSummary(
-                        awaySe
-
---- match at offset 49566 ---
-ue ?: return
-        offlineIdleService.stopQueue(characterId)
-        skillActionProgressSeconds = 0
-        refreshActiveQueue()
     }
 
-    private fun tickSkilling() {
+    fun sellItemToVendor(itemId: String, quantity: Int) {
         val characterId = _currentCharacterId.value ?: return
-        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
+        if (realInventory.quantityOf(itemId) < quantity) return
+        val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
 
-        skillActionProgressSeconds += 1
-        if (skillActionProgressSeconds < queue.secondsPerAction) return
+        realInventory.removeItem(itemId, quantity)
+        refreshInventory()
 
-        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
-        skillActionProgressSeconds %= queue.secondsPerAction
-
-        val skillType = SkillType.valueOf(queue.skillId)
-        val action = ActionCatalog.find(skillType, queue.itemId)
-        if (action != null) {
-            progressionService.grantXp(characterId, skillType, action.xpPerAction * actionsCompleted)
-            inventoryService.inventoryFor(characterId).addItem(queue.itemId, actionsCompleted.toInt())
-            if (skillType == SkillType.MINING) {
-                MiningBonusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), actionsCompleted.toInt())
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.sellToVendor(supabaseCharacterId, itemId, quantity, payoutPerUnit)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.addItem(itemId, quantity)
+                refreshInventory()
             }
-            refreshSkills()
-            refreshInventory()
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+            }
         }
     }
 
-    // =========================================================
-    // CRAFTING -- mirrors the SkillingQueue flow above. Recipe.levelRequired
-    // (via CraftingTierCurve) is the source of truth for timing/XP, decoupled
-    // from ActionCatalog since production item ids don't line up with
-    // ActionCatalog's generic class-action ids (see Step 5 handoff notes).
-    // =========================================================
+    fun buyItemFromVendor(itemId: String, quantity: Int) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
+        val pricePerUnit = VendorBuyCatalog.items.find { it.itemId == itemId }?.pricePerUnit ?: return
+        if (quantity <= 0) return
 
-    private var craftActionProgressSeconds: Long = 0
+        realInventory.addItem(itemId, quantity)
+        refreshInventory()
 
-    private val craftingService = CraftingService()
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.buyFromVendor(supabaseCharacterId, itemId, quantity, pri
 
-    private data class CraftBatchResult(val successfulCrafts: Int, val itemsProduced: Int, val xpGranted: Long)
-
-    private fun craftItems(characterId: String, itemId: String, attempts: Int): CraftBatchResult {
-        val recipe = RecipeCatalog.forOutput(itemId) ?: return CraftBatchResult(0, 0, 0)
-        val skillType = SkillType.valueOf(recipe.skillRequired)
-        val book = progressionService.skillBo
-
-====================================================================================================
-GREP: Monster / loot table definitions (for coin-drop scaling) in app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt (pattern: (class Monster|data class Monster|lootTable|LootTable|object.*Zone))
-====================================================================================================
-
---- match at offset 41897 ---
-killType == skillType }
-}
-
-// Bonus gem drops from Mining, independent of which ore/rock node was mined.
-// Rates are set lower than Gem Cavern's rareLootTable for the same gem -
-// mining is a secondary source, combat is the primary one.
-object MiningBonusGemTable {
-    private val entries = listOf(
-        "uncut_opal" to 2.0,
-        "uncut_jade" to 1.5,
-        "uncut_red_topaz" to 1.2,
-        "uncut_sapphire" to 1.0,
-        "uncut_emerald" to 0.8,
-        "uncut_ruby" to 0.5,
-        "uncut_diamond" to 0.3,
-        "uncut_dragonstone" to 0.15,
-        "uncut_onyx" to 0.08,
-        "uncut_zenyte" to 0.04,
-        "uncut_celestial_crystal" to 0.015
-    )
-
-    fun rollAndGrant(inventory: Inventory, actionsCompleted: Int) {
-        if (actionsCompleted <= 0) return
-        entries.forEach { (itemId, chancePercent) ->
-            var count = 0
-            repeat(actionsCompleted) {
-                if (Random.nextDouble(0.0, 100.0) < chancePercent) count++
+--- match at offset 63431 ---
+y)
+                refreshInventory()
             }
-            if (count > 0) inventory.addItem(itemId, count)
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+            }
+        }
+    }
+
+    fun buyItemFromVendor(itemId: String, quantity: Int) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
+        val pricePerUnit = VendorBuyCatalog.items.find { it.itemId == itemId }?.pricePerUnit ?: return
+        if (quantity <= 0) return
+
+        realInventory.addItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.buyFromVendor(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.removeItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+            }
         }
     }
 }
 
+
+
+--- match at offset 63724 ---
+acterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
+        val pricePerUnit = VendorBuyCatalog.items.find { it.itemId == itemId }?.pricePerUnit ?: return
+        if (quantity <= 0) return
+
+        realInventory.addItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.buyFromVendor(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.removeItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+            }
+        }
+    }
+}
+
+
+
+====================================================================================================
+GREP: onSellToVendor / onBuyFromVendor / Market tab wiring in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt (pattern: (onSellToVendor|onBuyFromVendor|MarketScreen\(|MarketTab))
+====================================================================================================
+
+--- match at offset 21359 ---
+ipSlotUi.RING_2,
+                EquipSlotUi.LEGS, EquipSlotUi.SHIELD, EquipSlotUi.CAPE, EquipSlotUi.AMMO
+            )
+        } else emptySet()
+    }
+
+    var marketTab by remember { mutableStateOf(MarketTab.BROWSE) }
+    var showingBuyOrders by remember { mutableStateOf(false) }
+    var selectedMarketItemId by remember { mutableStateOf<String?>(null) }
+    var prefilledSellQuantity by remember { mutableStateOf<Int?>(null) }
+
+    var leaderboardShowingDaily by remember { mutableStateOf(false) }
+    var selectedGuildMember by remember { mutableStateOf<GuildMemberSummary?>(null) }
+
+    var selectedChatChannel by remember { mutableStateOf(ChatChannelUi.GLOBAL) }
+    var selectedDmCharacterId by remember { mutableStateOf<String?>(null) }
+    var chatMessageInput by remember { mutableStateOf("") }
+    val chatMessages = remember { mutableStateListOf(*demoChatMessages().toTypedArray()) }
+
+    when (flowState) {
+        AppFlowState.Login -> {
+            val loginCoroutineScope = rememberCoroutineScope()
+            LoginScreen(
+                isCreatingAccount = isCreatingAccount,
+                onToggleMode = { isCreatingAccount = !isCreatingAccount; loginError = null },
+                errorMessage = loginError,
+                onLogin = { email, password ->
+                    loginCoroutineScope.launch {
+                        val result = gameViewModel.login(email, password)
+      
+
+--- match at offset 27381 ---
+                   // away and back should return to it, not zone-select.
+                                inventoryScreenState = InventoryScreenState.Items
+                                marketTab = MarketTab.BROWSE
+                                selectedMarketItemId = null
+                            },
+                            badgedDestinations = setOf(AppDestination.GUILD)
+                        )
+
+                        CompositionLocalProvider(LocalDensity provides adaptiveDensity()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                        when (currentDestination) {
+                            AppDestination.HOME -> {
+                                LaunchedEffect(Unit) { gameViewModel.refreshCurrency() }
+                                HomeScreen(state = homeState)
+                            }
+
+                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+                                is SkillsScreenState.List -> SkillsScreen(
+                                    allSkills = allSkills,
+                                    onSkillSelected = { selectedSkillId ->
+                                        if (selectedSkillId in COMBAT_TRAINING_SKILL_IDS) {
+                                            gameViewModel.setTrainingSkill(SkillType.valueOf(selectedSkillId))
+                                            current
+
+--- match at offset 41913 ---
+              prefilledSellQuantity = null
+                                        }
+                                    )
+                                } else {
+                                    MarketScreen(
+                                        currentTab = marketTab,
+                                        onTabSelected = { marketTab = it },
+                                        listings = marketListingsUi,
+                                        showingBuyOrders = showingBuyOrders,
+                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+                                        onItemSelected = { selectedMarketItemId = it },
+                                        myBuyOrders = myBuyOrdersUi,
+                                        mySellOrders = mySellOrdersUi,
+                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+                                        vendorSellableItems = inventoryItems,
+                                        onSellToVendor = { sellItemId, quantity ->
+                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
+                                        },
+                                        vendorBuyableItems = VendorBuyCatalog.items,
+                                        onBuyFromVendor = { buyItemId, quantity ->
+
+
+--- match at offset 42775 ---
+         onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+                                        vendorSellableItems = inventoryItems,
+                                        onSellToVendor = { sellItemId, quantity ->
+                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
+                                        },
+                                        vendorBuyableItems = VendorBuyCatalog.items,
+                                        onBuyFromVendor = { buyItemId, quantity ->
+                                            gameViewModel.buyItemFromVendor(buyItemId, quantity)
+                                        }
+                                    )
+                                }
+                            }
+
+                            AppDestination.GUILD -> {
+                                val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
+                                val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
+                                val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+
+                                LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+                                LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
+                                LaunchedEffect(Unit) { 
+
+--- match at offset 43083 ---
+mToVendor(sellItemId, quantity)
+                                        },
+                                        vendorBuyableItems = VendorBuyCatalog.items,
+                                        onBuyFromVendor = { buyItemId, quantity ->
+                                            gameViewModel.buyItemFromVendor(buyItemId, quantity)
+                                        }
+                                    )
+                                }
+                            }
+
+                            AppDestination.GUILD -> {
+                                val currentGuildHomeState by gameViewModel.guildHomeState.collectAsState()
+                                val currentGuildLeaderboard by gameViewModel.guildLeaderboard.collectAsState()
+                                val currentBrowsableGuilds by gameViewModel.browsableGuilds.collectAsState()
+
+                                LaunchedEffect(Unit) { gameViewModel.refreshGuildHome() }
+                                LaunchedEffect(Unit) { gameViewModel.loadInitialChatState() }
+                                LaunchedEffect(Unit) { gameViewModel.checkModeratorStatus() }
+                                val debugAuthState by gameViewModel.supabaseAuthState.collectAsState()
+                                val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
+                                val debugSupabaseCharId by gameV
+
+====================================================================================================
+GREP: buyFromVendor / sellToVendor RPC wrappers in app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt (pattern: (fun buyFromVendor|fun sellToVendor))
+====================================================================================================
+
+--- match at offset 2281 ---
+RpcResult> = runCatching {
+        client.postgrest.rpc("market_cancel_order", buildJsonObject {
+            put("p_order_id", orderId)
+        }).decodeAs<MarketCancelRpcResult>()
+    }
+
+    suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("market_sell_to_vendor", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_payout_per_unit", payoutPerUnit)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
+        client.postgrest.rpc("market_currency_balance", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun listings(): Result<List<MarketListingRow>> = runCatching {
+        client.postgrest.rpc("market_listings").decodeList<MarketListingRow>()
+    }
+
+    suspend fun myOrders(characterId: String): Result<List<MarketOrderRow>> = runCatching {
+        client.postgrest.rpc("market_my_orders", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeList<MarketOrderRow>()
+    }
+
+    suspend fun buyFromVendor(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<Long> = runCatching {
+        client.postgrest.rpc
+
+--- match at offset 3349 ---
+OrderRow>> = runCatching {
+        client.postgrest.rpc("market_my_orders", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeList<MarketOrderRow>()
+    }
+
+    suspend fun buyFromVendor(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("market_buy_from_vendor", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_price_per_unit", pricePerUnit)
+        }).decodeAs<Long>()
+    }
+}
+
+
+====================================================================================================
+SQL TAX RATE CHECK: match_market_orders()
+====================================================================================================
+SQL files at repo root: ['check_phase_b_rls.sql', 'fix_missing_select_policies.sql', 'fix_send_message_blocks_check.sql', 'fix_blocks_insert_policy.sql', 'fix_missing_select_policies_phase_b.sql', 'fix_guild_chat_participants.sql', 'fix_create_guild_channel.sql']
 
 
 DONE
