@@ -640,6 +640,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     loot.value.forEach { entry -> inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty) }
                     refreshInventory()
                 }
+                val coinsEarned = combatService.collectCoins(characterId)
+                if (coinsEarned > 0) {
+                    log.add(CombatLogEntry("Found " + coinsEarned + " coins."))
+                    grantCombatCoins(characterId, coinsEarned)
+                }
             }
 
             // Monsters don't have a dedicated offensive stat yet, so their counter-attack uses a flat
@@ -1225,6 +1230,20 @@ fun logout() {
             inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
             inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
         )
+    }
+
+    private fun grantCombatCoins(characterId: String, amount: Long) {
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.grantCombatCoins(supabaseCharacterId, amount)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+            }
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+            }
+        }
     }
 
     fun equipItem(itemId: String): ServiceResult<Unit> {

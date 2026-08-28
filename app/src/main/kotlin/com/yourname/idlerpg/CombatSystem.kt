@@ -249,8 +249,18 @@ class CharacterCombatState(
     var maxHp: Int,
     val recovery: RecoveryStatus = RecoveryStatus(),
     var session: CombatSession? = null,
-    val lootPool: MutableList<LootEntry> = mutableListOf()
+    val lootPool: MutableList<LootEntry> = mutableListOf(),
+    var pendingCoins: Long = 0L
 )
+
+object CoinDropTable {
+    fun rollCoins(monsterLevel: Int): Long {
+        val base = (monsterLevel * 3).coerceAtLeast(1)
+        val variance = (base * 0.4).toInt().coerceAtLeast(1)
+        val roll = base - (variance / 2) + Random.nextInt(variance + 1)
+        return roll.toLong().coerceAtLeast(1L)
+    }
+}
 
 data class AttackResult(
     val didHit: Boolean,
@@ -388,6 +398,7 @@ class CombatService {
                 state.lootPool.add(entry.copy(minQty = qty, maxQty = qty))
             }
         }
+        state.pendingCoins += CoinDropTable.rollCoins(monster.levelRequirement)
     }
 
     fun collectLoot(characterId: String): ServiceResult<List<LootEntry>> {
@@ -395,6 +406,13 @@ class CombatService {
         val collected = state.lootPool.toList()
         state.lootPool.clear()
         return ServiceResult.Success(collected)
+    }
+
+    fun collectCoins(characterId: String): Long {
+        val state = stateFor(characterId)
+        val collected = state.pendingCoins
+        state.pendingCoins = 0L
+        return collected
     }
 
     fun applyDamageToCharacter(characterId: String, damage: Int, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {

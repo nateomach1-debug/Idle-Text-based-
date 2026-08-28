@@ -79,6 +79,13 @@ object SupabaseMarketRepository {
         }).decodeAs<Long>()
     }
 
+    suspend fun grantCombatCoins(characterId: String, amount: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("combat_grant_coins", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+        }).decodeAs<Long>()
+    }
+
     suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
         client.postgrest.rpc("market_currency_balance", buildJsonObject {
             put("p_character_id", characterId)
