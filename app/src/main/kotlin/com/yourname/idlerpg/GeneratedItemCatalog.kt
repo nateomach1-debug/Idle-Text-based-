@@ -2626,6 +2626,41 @@ object GeneratedItemCatalog {
         isTradeable = true,
         isStackable = true
     ),
+    ItemDefinition(
+        id = "bone",
+        name = "Bone",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "goblin_ear",
+        name = "Goblin Ear",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "rusty_dagger",
+        name = "Rusty Dagger",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "ectoplasm",
+        name = "Ectoplasm",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "wraith_essence",
+        name = "Wraith Essence",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
     )
 
     val values: Map<String, Long> = mapOf(
@@ -2953,5 +2988,10 @@ object GeneratedItemCatalog {
     "court_officials_purse" to 1200L,
     "dragon_hoard_loot" to 1800L,
     "monarchs_purse" to 3000L,
+    "bone" to 2L,
+    "goblin_ear" to 1L,
+    "rusty_dagger" to 12L,
+    "ectoplasm" to 8L,
+    "wraith_essence" to 30L,
     )
 }

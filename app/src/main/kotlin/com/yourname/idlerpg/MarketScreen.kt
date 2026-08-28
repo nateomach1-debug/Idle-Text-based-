@@ -264,6 +264,9 @@ private fun OrderRow(order: MarketOrderSummary, onCancel: (String) -> Unit) {
 @Composable
 private fun BuyFromVendorTab(items: List<VendorBuyableItem>, onBuy: (String, Int) -> Unit) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (items.isEmpty()) {
+            item { Text(text = "The vendor has nothing for sale right now.", style = MaterialTheme.typography.bodyMedium) }
+        }
         items(items) { item ->
             VendorBuyItemRow(item, onBuy)
         }
@@ -325,6 +328,9 @@ private fun VendorBuyItemRow(item: VendorBuyableItem, onBuy: (String, Int) -> Un
 @Composable
 private fun SellToVendorTab(items: List<InventoryItemSummary>, onSell: (String, Int) -> Unit) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (items.isEmpty()) {
+            item { Text(text = "You have nothing sellable right now.", style = MaterialTheme.typography.bodyMedium) }
+        }
         items(items) { item ->
             VendorItemRow(item, onSell)
         }
