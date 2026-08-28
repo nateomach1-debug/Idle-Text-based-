@@ -1,408 +1,95 @@
-LOOT TABLE ID CHECK + VENDOR/LOADOUT DIVERGENCE DISCOVERY
-Files containing 'Goblin Camp': ['app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt', 'app/src/main/kotlin/com/yourname/idlerpg/ui_context2.txt']
+ITEM 4 DISCOVERY: offline-summary popup pattern + lastSeenAt persistence
 
 ====================================================================================================
-Goblin Camp zone/monster block (full loot tables) in app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt
+offline summary / popup StateFlow declaration + population in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
 ====================================================================================================
 
---- match #1 at offset 2084 ---
-          id = "goblin_camp",
-            name = "Goblin Camp",
-            levelRequirement = 1,
-            monsters = listOf(
-                Monster(
-                    id = "goblin_grunt",
-                    name = "Goblin Grunt",
-                    levelRequirement = 1,
-                    maxHealth = 25,
-                    defenseRating = 5,
-                    mainLootTable = listOf(
-                        LootEntry("bone", 1, 1, 60.0),
-                        LootEntry("goblin_ear", 1, 2, 40.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("rusty_dagger", 1, 1, 2.0)
-                    )
-                )
-            )
-        ),
-        Zone(
-            id = "shadow_ruins",
-            name = "Shadow Ruins",
-            levelRequirement = 20,
-            monsters = listOf(
-                Monster(
-                    id = "wraith",
-                    name = "Wraith",
-                    levelRequirement = 20,
-                    maxHealth = 80,
-                    defenseRating = 25,
-                    mainLootTable = listOf(
-                        LootEntry("ectoplasm", 1, 3, 55.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("wraith_essence", 1, 1, 0.5)
-                    )
-                )
-            )
-        ),
-        Zone(
-            id = "farmland_outskirts",
-            name = "Farmland Outskirts",
-            levelRequirement = 1,
-            monsters = listOf(
-                Monster(
-                    id = "wild_cow",
-                    name = "Wild Cow",
-                    levelRequirement = 1,
-                    maxHealth = 20,
-                    defenseRating = 3,
-                    mainLootTable = listOf(
-                        LootEntry("cowhide", 1, 1, 65.0),
-                        LootEntry("raw_beef", 1, 2, 65.0)
-                    ),
-                    rareLootTable = listOf()
-                ),
-                Monster(
-                    id = "feral_chicken",
-                    name = "Feral Chicken",
-                    levelRequirement = 1,
-                    maxHealth = 12,
-                    defenseRating = 1,
-                    mainLootTable = listOf(
-                        LootEntry("raw_chicken", 1, 1, 65.0),
-                        LootEntry("feathers", 1, 5, 70.0)
-                    ),
-                    rareLootTable = listOf()
-                )
-            )
-        ),
-        Zone(
-            id = "serpent_marsh",
-            name = "Serpent Marsh",
-            levelRequirement = 10,
-            monsters = listOf(
-                Monster(
-                    id = "marsh_snake",
-                    name = "Marsh Snake",
-                    levelRequirement = 10,
-                    maxHealth = 35,
-                    defenseRating = 10,
-                    mainLootTable = listOf(
-                        LootEntry("snake_hide", 1, 1, 55.0)
-                    ),
-                    rareLootTable = listOf()
-                )
-            )
-        ),
-        Zone(
-            id = "gem_cavern",
-            name = "Gem Cavern",
-            levelRequirement = 15,
-            monsters = listOf(
-                Monster(
-                    id = "gem_hoarder",
-                    name = "Gem Hoarder",
-                    levelRequirement = 15,
-                    maxHealth = 45,
-                    defenseRating = 15,
-                    mainLootTable = listOf(
-                        LootEntry("uncut_gemstone", 1, 2, 45.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("uncut_opal", 1, 1, 8.0),
-                        LootEntry("uncut_jade", 1, 1, 6.0),
-                        LootEntry("uncut_red_topaz", 1, 1, 5.0),
-                        LootEntry("uncut_sapphire", 1, 1, 4.0),
-                        LootEntry("uncut_emerald", 1, 1, 3.0),
-                        LootEntry("uncut_ruby", 1, 1, 2.0),
-                        LootEntry("uncut_diamond", 1, 1, 
+--- match #1 at offset 1190 ---
+omponents.DmConversationSummary
+import com.yourname.idlerpg.ui.screens.VendorBuyCatalog
 
-total matches: 1
+data class OfflineSummary(
+    val awaySeconds: Long,
+    val skillActionName: String,
+    val itemName: String,
+    val quantity: Int,
+    val xpEarned: Long
+)
 
-====================================================================================================
-Goblin Camp zone/monster block (full loot tables) in app/src/main/kotlin/com/yourname/idlerpg/ui_context2.txt
-====================================================================================================
+data class ActiveQueueInfo(
+    val label: String,
+    val secondsPerAction: Long,
+    val startedAt: Instant
+)
 
---- match #1 at offset 4155 ---
-ainActivity.kt-91-    ZoneSummary("goblin_camp", "Goblin Camp", 1, listOf("Goblin Grunt")),
-./MainActivity.kt-92-    ZoneSummary("shadow_ruins", "Shadow Ruins", 20, listOf("Wraith")),
-./MainActivity.kt-93-    ZoneSummary("frost_peak", "Frost Peak", 40, listOf("Ice Troll", "Frost Wolf"))
-./MainActivity.kt-94-)
-./MainActivity.kt-95-
-./MainActivity.kt-96-private fun demoWeapons(style: CombatStyleOption): List<WeaponOption> = when (style) {
-./MainActivity.kt-97-    CombatStyleOption.MELEE -> listOf(
-./MainActivity.kt-98-        WeaponOption("bronze_sword", "Bronze Sword", CombatStyleOption.MELEE),
-./MainActivity.kt-99-        WeaponOption("iron_sword_common", "Iron Sword", CombatStyleOption.MELEE)
-./MainActivity.kt-100-    )
-./MainActivity.kt-101-    CombatStyleOption.RANGED -> listOf(WeaponOption("shortbow", "Shortbow", CombatStyleOption.RANGED))
-./MainActivity.kt-102-    CombatStyleOption.MAGIC -> listOf(WeaponOption("spark_bolt", "Spark Bolt Staff", CombatStyleOption.MAGIC))
-./MainActivity.kt-103-}
-./MainActivity.kt-104-
-./MainActivity.kt-105-private fun mapItemCategory(category: ItemCategory): InventoryCategory = when (category) {
-./MainActivity.kt-106-    ItemCategory.WEAPON -> InventoryCategory.WEAPON
---
-./MainActivity.kt-484-                                )
-./MainActivity.kt-485-                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-./MainActivity.kt-486-                                    SkillDetailScreen(
-./MainActivity.kt:487:                                    buildSkillDetailState(screen.skillId, it),
-./MainActivity.kt-488-                                    { skillsScreenState = SkillsScreenState.List },
-./MainActivity.kt-489-                                    { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
-./MainActivity.kt-490-                                )
-./MainActivity.kt-491-                                }
-./MainActivity.kt-492-                            }
-./MainActivity.kt-493-
-./MainActivity.kt-494-                            AppDestination.COMBAT -> when (combatScreenState) {
-./MainActivity.kt-495-                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
-./MainActivity.kt-496-                                    zones = zones, playerLevel = 24,
-./MainActivity.kt-497-                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
-./MainActivity.kt-498-                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
-./MainActivity.kt-499-                                )
-./MainActivity.kt-500-                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
-./MainActivity.kt-501-                                CombatScreenState.Loadout -> LoadoutScreen(
-./MainActivity.kt-502-                                    state = LoadoutState(
-./MainActivity.kt-503-                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
-./MainActivity.kt-504-                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
-./MainActivity.kt-505-                                    ),
-./MainActivity.kt-506-                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
-./MainActivity.kt-507-                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
-./MainActivity.kt-508-                                    onWeaponSelected = { loadoutWeaponId = it },
-./MainActivity.kt-509-                                    onAutoHealChanged = { autoHeal = it },
-./MainActivity.kt-510-                                    onAutoFleeChanged = { autoFlee = it }
-./MainActivity.kt-511-                                )
-./MainActivity.kt-512-                            }
-=== MainActi
+private fun formatItemName(itemId: String): String =
+    itemId.split("_").joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
 
-total matches: 1
+class GameViewModel(application: Application) : AndroidViewModel(application) {
 
-Files containing 'Shadow Ruins': ['app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt', 'app/src/main/kotlin/com/yourname/idlerpg/ui_context2.txt']
+    private val repository = GameStateRepository(application)
 
-====================================================================================================
-Shadow Ruins zone/monster block (full loot tables) in app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt
-====================================================================================================
+    val accountService = AccountService()
+    val progressionService = ProgressionService()
+    val inventoryService = InventoryService()
+    val sessionManager = SessionManager(application)
+    // TODO: replace with a real inventory check once ItemsEquipmentSystem is wired up.
+    // Skilling queues don't consume materials, only crafting does, so this is unused 
 
---- match #1 at offset 2808 ---
-         id = "shadow_ruins",
-            name = "Shadow Ruins",
-            levelRequirement = 20,
-            monsters = listOf(
-                Monster(
-                    id = "wraith",
-                    name = "Wraith",
-                    levelRequirement = 20,
-                    maxHealth = 80,
-                    defenseRating = 25,
-                    mainLootTable = listOf(
-                        LootEntry("ectoplasm", 1, 3, 55.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("wraith_essence", 1, 1, 0.5)
-                    )
-                )
-            )
-        ),
-        Zone(
-            id = "farmland_outskirts",
-            name = "Farmland Outskirts",
-            levelRequirement = 1,
-            monsters = listOf(
-                Monster(
-                    id = "wild_cow",
-                    name = "Wild Cow",
-                    levelRequirement = 1,
-                    maxHealth = 20,
-                    defenseRating = 3,
-                    mainLootTable = listOf(
-                        LootEntry("cowhide", 1, 1, 65.0),
-                        LootEntry("raw_beef", 1, 2, 65.0)
-                    ),
-                    rareLootTable = listOf()
-                ),
-                Monster(
-                    id = "feral_chicken",
-                    name = "Feral Chicken",
-                    levelRequirement = 1,
-                    maxHealth = 12,
-                    defenseRating = 1,
-                    mainLootTable = listOf(
-                        LootEntry("raw_chicken", 1, 1, 65.0),
-                        LootEntry("feathers", 1, 5, 70.0)
-                    ),
-                    rareLootTable = listOf()
-                )
-            )
-        ),
-        Zone(
-            id = "serpent_marsh",
-            name = "Serpent Marsh",
-            levelRequirement = 10,
-            monsters = listOf(
-                Monster(
-                    id = "marsh_snake",
-                    name = "Marsh Snake",
-                    levelRequirement = 10,
-                    maxHealth = 35,
-                    defenseRating = 10,
-                    mainLootTable = listOf(
-                        LootEntry("snake_hide", 1, 1, 55.0)
-                    ),
-                    rareLootTable = listOf()
-                )
-            )
-        ),
-        Zone(
-            id = "gem_cavern",
-            name = "Gem Cavern",
-            levelRequirement = 15,
-            monsters = listOf(
-                Monster(
-                    id = "gem_hoarder",
-                    name = "Gem Hoarder",
-                    levelRequirement = 15,
-                    maxHealth = 45,
-                    defenseRating = 15,
-                    mainLootTable = listOf(
-                        LootEntry("uncut_gemstone", 1, 2, 45.0)
-                    ),
-                    rareLootTable = listOf(
-                        LootEntry("uncut_opal", 1, 1, 8.0),
-                        LootEntry("uncut_jade", 1, 1, 6.0),
-                        LootEntry("uncut_red_topaz", 1, 1, 5.0),
-                        LootEntry("uncut_sapphire", 1, 1, 4.0),
-                        LootEntry("uncut_emerald", 1, 1, 3.0),
-                        LootEntry("uncut_ruby", 1, 1, 2.0),
-                        LootEntry("uncut_diamond", 1, 1, 1.2),
-                        LootEntry("uncut_dragonstone", 1, 1, 0.6),
-                        LootEntry("uncut_onyx", 1, 1, 0.3),
-                        LootEntry("uncut_zenyte", 1, 1, 0.15),
-                        LootEntry("uncut_celestial_crystal", 1, 1, 0.05)
-                    )
-                )
-            )
-        ),
-        Zone(
-            id = "dragons_lair",
-            name = "Dragon's Lair",
-            levelRequirement = 60,
-            monsters = listOf(
-                Monster(
-                    id = "green_dragon",
-                    name = "Green Dragon",
-                    levelRequirement = 60,
-                    maxHealth = 220,
-                    defenseRating = 65,
-             
+--- match #2 at offset 2424 ---
+ll)
+    val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
 
-total matches: 1
+    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
 
-====================================================================================================
-Shadow Ruins zone/monster block (full loot tables) in app/src/main/kotlin/com/yourname/idlerpg/ui_context2.txt
-====================================================================================================
+    private val _currentCharacterId = MutableStateFlow<String?>(null)
+    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
 
---- match #1 at offset 4251 ---
-inActivity.kt-92-    ZoneSummary("shadow_ruins", "Shadow Ruins", 20, listOf("Wraith")),
-./MainActivity.kt-93-    ZoneSummary("frost_peak", "Frost Peak", 40, listOf("Ice Troll", "Frost Wolf"))
-./MainActivity.kt-94-)
-./MainActivity.kt-95-
-./MainActivity.kt-96-private fun demoWeapons(style: CombatStyleOption): List<WeaponOption> = when (style) {
-./MainActivity.kt-97-    CombatStyleOption.MELEE -> listOf(
-./MainActivity.kt-98-        WeaponOption("bronze_sword", "Bronze Sword", CombatStyleOption.MELEE),
-./MainActivity.kt-99-        WeaponOption("iron_sword_common", "Iron Sword", CombatStyleOption.MELEE)
-./MainActivity.kt-100-    )
-./MainActivity.kt-101-    CombatStyleOption.RANGED -> listOf(WeaponOption("shortbow", "Shortbow", CombatStyleOption.RANGED))
-./MainActivity.kt-102-    CombatStyleOption.MAGIC -> listOf(WeaponOption("spark_bolt", "Spark Bolt Staff", CombatStyleOption.MAGIC))
-./MainActivity.kt-103-}
-./MainActivity.kt-104-
-./MainActivity.kt-105-private fun mapItemCategory(category: ItemCategory): InventoryCategory = when (category) {
-./MainActivity.kt-106-    ItemCategory.WEAPON -> InventoryCategory.WEAPON
---
-./MainActivity.kt-484-                                )
-./MainActivity.kt-485-                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-./MainActivity.kt-486-                                    SkillDetailScreen(
-./MainActivity.kt:487:                                    buildSkillDetailState(screen.skillId, it),
-./MainActivity.kt-488-                                    { skillsScreenState = SkillsScreenState.List },
-./MainActivity.kt-489-                                    { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) }
-./MainActivity.kt-490-                                )
-./MainActivity.kt-491-                                }
-./MainActivity.kt-492-                            }
-./MainActivity.kt-493-
-./MainActivity.kt-494-                            AppDestination.COMBAT -> when (combatScreenState) {
-./MainActivity.kt-495-                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
-./MainActivity.kt-496-                                    zones = zones, playerLevel = 24,
-./MainActivity.kt-497-                                    onZoneSelected = { combatScreenState = CombatScreenState.InZone; combatViewState = CombatViewState.SEARCHING },
-./MainActivity.kt-498-                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
-./MainActivity.kt-499-                                )
-./MainActivity.kt-500-                                CombatScreenState.InZone -> CombatViewScreen(data = combatViewData, onLeaveZone = { combatScreenState = CombatScreenState.ZoneSelect })
-./MainActivity.kt-501-                                CombatScreenState.Loadout -> LoadoutScreen(
-./MainActivity.kt-502-                                    state = LoadoutState(
-./MainActivity.kt-503-                                        loadoutStyle, demoWeapons(loadoutStyle), loadoutWeaponId, autoHeal, autoFlee,
-./MainActivity.kt-504-                                        combatViewState == CombatViewState.IN_COMBAT, "Locked during combat"
-./MainActivity.kt-505-                                    ),
-./MainActivity.kt-506-                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
-./MainActivity.kt-507-                                    onStyleSelected = { loadoutStyle = it; loadoutWeaponId = demoWeapons(it).firstOrNull()?.itemId },
-./MainActivity.kt-508-                                    onWeaponSelected = { loadoutWeaponId = it },
-./MainActivity.kt-509-                                    onAutoHealChanged = { autoHeal = it },
-./MainActivity.kt-510-                                    onAutoFleeChanged = { autoFlee = it }
-./MainActivity.kt-511-                                )
-./MainActivity.kt-512-                            }
-=== MainActivity.kt: navigation routing for skill screens ===
-483-                                    onSkill
+    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
 
-total matches: 1
+    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
 
-====================================================================================================
-InventoryService FULL class (looking for allItems/entries filtering) in app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt
-====================================================================================================
+    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
 
---- match #1 at offset 78549 ---
-class InventoryService {
-    private val inventories: MutableMap<String, Inventory> = mutableMapOf()
+    val economyMonitoring = EconomyMonitoringService()
+    val marketService = MarketService(economyM
 
-    fun inventoryFor(characterId: String): Inventory =
-        inventories.getOrPut(characterId) { Inventory() }
+--- match #3 at offset 2459 ---
+Flow<String?> = _currentAccountId.asStateFlow()
 
-    fun exportAllItems(): List<InventorySlotExport> = inventories.flatMap { (characterId, inv) ->
-        inv.allItems().map { InventorySlotExport(characterId, it.itemId, it.quantity) }
-    }
+    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
 
-    fun exportAllEquipped(): List<EquippedSlotExport> = inventories.flatMap { (characterId, inv) ->
-        inv.allEquipped().map { (slot, itemId) -> EquippedSlotExport(characterId, slot.name, itemId) }
-    }
+    private val _currentCharacterId = MutableStateFlow<String?>(null)
+    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
 
-    fun restoreItem(export: InventorySlotExport) {
-        inventoryFor(export.characterId).restoreItem(export.itemId, export.quantity)
-    }
+    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
 
-    fun restoreEquipped(export: EquippedSlotExport) {
-        inventoryFor(export.characterId).restoreEquipped(EquipSlot.valueOf(export.slot), export.itemId)
-    }
+    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
 
-    fun exportAllLoadoutSettings(): List<LoadoutSettingsExport> = inventories.map { (characterId, inv) ->
-        LoadoutSettingsExport(
-            characterId, inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
-            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
-        )
-    }
+    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
 
-    fun restoreLoadoutSettings(export: LoadoutSettingsExport) {
-        val inv = inventoryFor(export.characterId)
-        inv.selectedFoodId = export.selectedFoodId
-        inv.selectedPotionId = export.selectedPotionId
-        inv.potionTimerRemainingSeconds = export.potionTimerRemainingSeconds
-        inv.autoHealThresholdPercent = export.autoHealThresholdPercent
-        inv.autoFleeThresholdPercent = export.autoFleeThresholdPercent
-    }
-}
+    val economyMonitoring = EconomyMonitoringService()
+    val marketService = MarketService(economyMonitoring)
+    val combatService =
 
+--- match #4 at offset 2490 ---
+Id.asStateFlow()
 
-total matches: 1
+    private val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
 
-====================================================================================================
-public inventoryItems StateFlow exposure + backing production in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
-====================================================================================================
+    private val _currentCharacterId = MutableStateFlow<String?>(null)
+    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
 
---- match #1 at offset 2974 ---
- SkillSummary>>(emptyMap())
+    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
     val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
 
     private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
@@ -415,67 +102,368 @@ public inventoryItems StateFlow exposure + backing production in app/src/main/ko
     val marketService = MarketService(economyMonitoring)
     val combatService = CombatService()
 
-    // =========================================================
-    // SUPABASE AUTH (guild/chat multiplayer only - local play never depends on this)
-    // =========================================================
+    // ======
 
-    private val _supabaseAuthState = MutableStateFlow(SupabaseAuthState.SIGNED_OUT)
-    val supabaseAuthState: StateFlow<SupabaseAuthState> = _supabaseAuthState.asStateFlow()
+--- match #5 at offset 2516 ---
+ate val _offlineSummary = MutableStateFlow<OfflineSummary?>(null)
+    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
 
-    private val _supabaseAuthError = MutableStateFlow<String?>(null)
-    va
+    private val _currentCharacterId = MutableStateFlow<String?>(null)
+    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
 
-total matches: 1
+    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+
+    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+
+    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+
+    val economyMonitoring = EconomyMonitoringService()
+    val marketService = MarketService(economyMonitoring)
+    val combatService = CombatService()
+
+    // ================================
+
+--- match #6 at offset 2535 ---
+mary = MutableStateFlow<OfflineSummary?>(null)
+    val offlineSummary: StateFlow<OfflineSummary?> = _offlineSummary.asStateFlow()
+
+    private val _currentCharacterId = MutableStateFlow<String?>(null)
+    val currentCharacterId: StateFlow<String?> = _currentCharacterId.asStateFlow()
+
+    private val _skills = MutableStateFlow<Map<String, SkillSummary>>(emptyMap())
+    val skills: StateFlow<Map<String, SkillSummary>> = _skills.asStateFlow()
+
+    private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
+    val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
+
+    private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
+    val equippedItems: StateFlow<Map<EquipSlot, String>> = _equippedItems.asStateFlow()
+
+    val economyMonitoring = EconomyMonitoringService()
+    val marketService = MarketService(economyMonitoring)
+    val combatService = CombatService()
+
+    // ====================================================
+
+--- match #7 at offset 40535 ---
+arSession()
+    _currentAccountId.value = null
+    _currentCharacterId.value = null
+}
+
+    fun clearOfflineSummary() {
+        _offlineSummary.value = null
+    }
+    fun saveGame() {
+        repository.save(
+            accountService.exportAllAccounts(),
+            accountService.exportAllCharacters(),
+            progressionService.exportAllSkills(),
+            offlineIdleService.exportSkillingQueues(),
+            offlineIdleService.exportCraftingQueues(),
+            offlineIdleService.exportLastSeen(),
+            inventoryService.exportAllItems(),
+            inventoryService.exportAllEquipped(),
+            inventoryService.exportAllLoadoutSettings(),
+            marketService.exportAccounts(),
+            marketService.exportOrders(),
+            marketService.exportPriceHistory()
+        )
+        val supabaseCharacterId = _currentSupabaseCharacterId.value
+        val json = repository.currentSaveJson()
+        if (supabaseCharacterId != null && json != null) {
+            viewModelScope.
+
+--- match #8 at offset 40562 ---
+ountId.value = null
+    _currentCharacterId.value = null
+}
+
+    fun clearOfflineSummary() {
+        _offlineSummary.value = null
+    }
+    fun saveGame() {
+        repository.save(
+            accountService.exportAllAccounts(),
+            accountService.exportAllCharacters(),
+            progressionService.exportAllSkills(),
+            offlineIdleService.exportSkillingQueues(),
+            offlineIdleService.exportCraftingQueues(),
+            offlineIdleService.exportLastSeen(),
+            inventoryService.exportAllItems(),
+            inventoryService.exportAllEquipped(),
+            inventoryService.exportAllLoadoutSettings(),
+            marketService.exportAccounts(),
+            marketService.exportOrders(),
+            marketService.exportPriceHistory()
+        )
+        val supabaseCharacterId = _currentSupabaseCharacterId.value
+        val json = repository.currentSaveJson()
+        if (supabaseCharacterId != null && json != null) {
+            viewModelScope.launch {
+                Sup
+
+--- match #9 at offset 46773 ---
+inventoryFor(characterId), result.value.actionsCompleted)
+                    }
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = result.value.claimedElapsed.seconds,
+                        skillActionName = action.displayName,
+                        itemName = formatItemName(queue.itemId),
+                        quantity = result.value.actionsCompleted,
+                        xpEarned = xpEarned
+                    )
+                }
+            }
+        }
+
+        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
+        if (craftingQueue != null) {
+            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+            if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
+                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
+                if (batch.xpGranted > 0) {
+                    
+
+--- match #10 at offset 46797 ---
+), result.value.actionsCompleted)
+                    }
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = result.value.claimedElapsed.seconds,
+                        skillActionName = action.displayName,
+                        itemName = formatItemName(queue.itemId),
+                        quantity = result.value.actionsCompleted,
+                        xpEarned = xpEarned
+                    )
+                }
+            }
+        }
+
+        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
+        if (craftingQueue != null) {
+            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+            if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
+                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
+                if (batch.xpGranted > 0) {
+                    _offlineSummary.value =
+
+--- match #11 at offset 47688 ---
+ craftResult.value.actionsCompleted)
+                if (batch.xpGranted > 0) {
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = craftResult.value.claimedElapsed.seconds,
+                        skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
+                        itemName = formatItemName(craftingQueue.itemId),
+                        quantity = batch.itemsProduced,
+                        xpEarned = batch.xpGranted
+                    )
+                }
+            }
+        }
+
+        offlineIdleService.recordLastSeen(characterId)
+        skillActionProgressSeconds = 0
+        craftActionProgressSeconds = 0
+        refreshSkills()
+        refreshInventory()
+        refreshActiveQueue()
+
+        if (marketService.accountFor(characterId) == null) {
+            val character = accountService.charactersFor(_currentAccountId.value ?: "")
+                .find { it.id == characterId }
+            marketService.registerAccount(
+      
+
+--- match #12 at offset 47712 ---
+nsCompleted)
+                if (batch.xpGranted > 0) {
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = craftResult.value.claimedElapsed.seconds,
+                        skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
+                        itemName = formatItemName(craftingQueue.itemId),
+                        quantity = batch.itemsProduced,
+                        xpEarned = batch.xpGranted
+                    )
+                }
+            }
+        }
+
+        offlineIdleService.recordLastSeen(characterId)
+        skillActionProgressSeconds = 0
+        craftActionProgressSeconds = 0
+        refreshSkills()
+        refreshInventory()
+        refreshActiveQueue()
+
+        if (marketService.accountFor(characterId) == null) {
+            val character = accountService.charactersFor(_currentAccountId.value ?: "")
+                .find { it.id == characterId }
+            marketService.registerAccount(
+                PlayerEconomy
+
+total matches: 12
 
 ====================================================================================================
-AppDestination.INVENTORY or LOADOUT branch - what item source does it use in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt
+lastSeenAt read/write/persist references in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
 ====================================================================================================
+(no matches found)
 
---- match #1 at offset 34173 ---
-(it) }
-                                )
-                            }
-
-                            AppDestination.INVENTORY -> when (inventoryScreenState) {
-                                InventoryScreenState.Items -> InventoryScreen(
-                                    items = inventoryItems,
-                                    onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
-                                    onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
-                                    onUseItem = { itemId -> gameViewModel.useInventoryItem(itemId) },
-                                    onSellOnMarket = { itemId ->
-                                        val item = inventoryItems.find { it.itemId == itemId }
-                                        selectedMarketItemId = itemId
-                                        prefilledSellQuantity = item?.quantity
-                                        currentDestination = AppDestination.MARKET
-                                    },
-                                    onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
-                                    canEquip = ::canEquip
-                                )
-                                InventoryScreenState.Equipment -> EquipmentScreen(
-                                    state = EquipmentScreenState(equipped, lockedEquipSlots),
-                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
-                                    onSlotTapped = { slot -> gameViewModel.unequipSlot(EquipSlot.valueOf(slot.name)) }
-                                )
-                                InventoryScreenState.Loadout -> LoadoutScreen(
-                                    state = LoadoutState(
-                                        availableFoodOptions, loadoutSettings.selectedFoodId,
-                                        availablePotionOptions, loadoutSettings.selectedPotionId,
-                                        loadoutSettings.potionTimerRemainingSeconds,
-                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
-                                    ),
-                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
-                                    onFoodSelected = { gameViewModel.selectFood(it) },
-                                    onPotionSelected = { gameViewModel.selectPotion(it) },
-                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
-
-total matches: 1
+total matches: 0
 
 ====================================================================================================
-inventoryItemEntries declaration/collection in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt
+recordLastSeen() definition in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
+====================================================================================================
+(no matches found)
+
+total matches: 0
+
+====================================================================================================
+offline summary popup UI (Dialog/AlertDialog) in MainActivity.kt in app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt
 ====================================================================================================
 
---- match #1 at offset 17622 ---
-trainingSkill by gameViewModel.trainingSkill.collectAsState()
+--- match #1 at offset 15877 ---
+pFlowState.CharacterCreate else AppFlowState.CharacterSelect
+            }
+        }
+    }
+
+    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
+    offlineSummary?.let { summary ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+            title = { androidx.compose.material3.Text("Welcome back!") },
+            text = {
+                val minutes = summary.awaySeconds / 60
+                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
+                androidx.compose.material3.Text(
+                    "You were away for " + awayText + ".\n\n" +
+                    "While gone, you were " + summary.skillActionName + ":\n" +
+                    "+" + summary.xpEarned + " XP\n" +
+                    "Gathered " + summary.quantity + "x " + summary.itemName
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
+    var skillsScreenState by remember { mutable
+
+--- match #2 at offset 15909 ---
+AppFlowState.CharacterSelect
+            }
+        }
+    }
+
+    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
+    offlineSummary?.let { summary ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+            title = { androidx.compose.material3.Text("Welcome back!") },
+            text = {
+                val minutes = summary.awaySeconds / 60
+                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
+                androidx.compose.material3.Text(
+                    "You were away for " + awayText + ".\n\n" +
+                    "While gone, you were " + summary.skillActionName + ":\n" +
+                    "+" + summary.xpEarned + " XP\n" +
+                    "Gathered " + summary.quantity + "x " + summary.itemName
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
+    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(Skill
+
+--- match #3 at offset 15945 ---
+     }
+        }
+    }
+
+    val offlineSummary by gameViewModel.offlineSummary.collectAsState()
+    offlineSummary?.let { summary ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+            title = { androidx.compose.material3.Text("Welcome back!") },
+            text = {
+                val minutes = summary.awaySeconds / 60
+                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
+                androidx.compose.material3.Text(
+                    "You were away for " + awayText + ".\n\n" +
+                    "While gone, you were " + summary.skillActionName + ":\n" +
+                    "+" + summary.xpEarned + " XP\n" +
+                    "Gathered " + summary.quantity + "x " + summary.itemName
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
+    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
+    var combatS
+
+--- match #4 at offset 16078 ---
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.clearOfflineSummary() },
+            title = { androidx.compose.material3.Text("Welcome back!") },
+            text = {
+                val minutes = summary.awaySeconds / 60
+                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
+                androidx.compose.material3.Text(
+                    "You were away for " + awayText + ".\n\n" +
+                    "While gone, you were " + summary.skillActionName + ":\n" +
+                    "+" + summary.xpEarned + " XP\n" +
+                    "Gathered " + summary.quantity + "x " + summary.itemName
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
+    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
+    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
+    var inventoryScreenState by remember {
+
+--- match #5 at offset 16825 ---
+firmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.clearOfflineSummary() }) {
+                    androidx.compose.material3.Text("Nice!")
+                }
+            }
+        )
+    }
+
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
+    var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
+    var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
+    var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
+
+    val allSkills by gameViewModel.skills.collectAsState()
+    val zones = gameViewModel.zoneSummaries
+    val trainingSkill by gameViewModel.trainingSkill.collectAsState()
     val trainingSkillLevel by gameViewModel.trainingSkillLevel.collectAsState()
     val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
     val inventoryItems = remember(inventoryItemEntries) {
@@ -484,126 +472,59 @@ trainingSkill by gameViewModel.trainingSkill.collectAsState()
     val inventoryQuantities = remember(inventoryItemEntries) {
         inventoryItemEntries.associate { it.itemId to it.quantity }
     }
-    val equippedBackend by gameViewModel.
+    val equippedBackend by gameViewMod
 
---- match #2 at offset 17726 ---
-l.trainingSkillLevel.collectAsState()
-    val inventoryItemEntries by gameViewModel.inventoryItems.collectAsState()
-    val inventoryItems = remember(inventoryItemEntries) {
-        buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
-    }
-    val inventoryQuantities = remember(inventoryItemEntries) {
-        inventoryItemEntries.associate { it.itemId to it.quantity }
-    }
-    val equippedBackend by gameViewModel.equippedItems.collectAsState()
-    val equipped = remember(equippedBackend) {
-        EquipSlotUi.values
+total matches: 5
 
---- match #3 at offset 17786 ---
-ntries by gameViewModel.inventoryItems.collectAsState()
-    val inventoryItems = remember(inventoryItemEntries) {
-        buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
-    }
-    val inventoryQuantities = remember(inventoryItemEntries) {
-        inventoryItemEntries.associate { it.itemId to it.quantity }
-    }
-    val equippedBackend by gameViewModel.equippedItems.collectAsState()
-    val equipped = remember(equippedBackend) {
-        EquipSlotUi.values().associateWith { uiSlot ->
-            equippedBackend[Equ
+====================================================================================================
+GameStateRepository.save() full signature in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt
+====================================================================================================
 
---- match #4 at offset 17903 ---
-     buildInventoryItemSummaries(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
+--- match #1 at offset 790 ---
+ng) {
+        saveFile.writeText(json)
     }
-    val inventoryQuantities = remember(inventoryItemEntries) {
-        inventoryItemEntries.associate { it.itemId to it.quantity }
-    }
-    val equippedBackend by gameViewModel.equippedItems.collectAsState()
-    val equipped = remember(equippedBackend) {
-        EquipSlotUi.values().associateWith { uiSlot ->
-            equippedBackend[EquipSlot.valueOf(uiSlot.name)]?.let { itemId ->
-                ItemCatalog.find(itemId)?.let { def -> EquippedItemInfo
 
---- match #5 at offset 17935 ---
-(inventoryItemEntries, gameViewModel.marketService::vendorPayoutPerUnit)
-    }
-    val inventoryQuantities = remember(inventoryItemEntries) {
-        inventoryItemEntries.associate { it.itemId to it.quantity }
-    }
-    val equippedBackend by gameViewModel.equippedItems.collectAsState()
-    val equipped = remember(equippedBackend) {
-        EquipSlotUi.values().associateWith { uiSlot ->
-            equippedBackend[EquipSlot.valueOf(uiSlot.name)]?.let { itemId ->
-                ItemCatalog.find(itemId)?.let { def -> EquippedItemInfo(itemId, def.name) }
-           
+    fun save(
+        accounts: List<AccountExport>,
+        characters: List<CharacterExport>,
+        skills: List<SkillExport>,
+        skillingQueues: List<SkillingQueueExport>,
+        craftingQueues: List<CraftingQueueExport>,
+        lastSeen: List<LastSeenExport>,
+        inventoryItems: List<InventorySlotExport>,
+        equippedSlots: List<EquippedSlotExport>,
+        loadoutSettings: List<LoadoutSettingsExport>,
+        marketAccounts: List<PlayerEconomyAccountExport>,
+        marketOrders: List<MarketOrderExport>,
+        marketPriceHistory: List<PriceHistoryExport>
+    ) {
+        val root = JSONObject()
 
---- match #6 at offset 18488 ---
-me) }
-            }
+        val accountsArray = JSONArray()
+        accounts.forEach { acc ->
+            val obj = JSONObject()
+            obj.put("id", acc.id)
+            obj.put("email", acc.email)
+            obj.put("username", acc.username)
+            obj.put("passwordHash", acc.passwordHash)
+            obj.put("passwordSalt", acc.passwordSalt)
+            obj.put("createdAt", acc.createdAt)
+            obj.put("lastLoginAt", acc.lastLoginAt)
+            obj.put("ageBracket", acc.ageBracket)
+            obj.put("region", acc.region)
+            obj.put("isBanned", acc.isBanned)
+            obj.put("banReason", acc.banReason)
+            obj.put("mutedUntil", acc.mutedUntil)
+            obj.put("subscriptionTier", acc.subscriptionTier)
+            obj.put("premiumCurrency", acc.premiumCurrency)
+            accountsArray.put(obj)
         }
-    }
-    val loadoutSettings by gameViewModel.loadoutSettings.collectAsState()
-    val availableFoodOptions = remember(inventoryItemEntries) {
-        inventoryItemEntries.mapNotNull { entry ->
-            val definition = ItemCatalog.find(entry.itemId)
-            if (definition?.consumableType == ConsumableType.FOOD) {
-                ConsumableOption(entry.itemId, definition.name, entry.quantity)
-            } else null
-        }
-    }
-    val availablePotionOptions = remember(inventoryItemEntries) {
-        inventoryItemEntries.m
+        root.put("accounts", accountsArray)
 
---- match #7 at offset 18520 ---
-  }
-    val loadoutSettings by gameViewModel.loadoutSettings.collectAsState()
-    val availableFoodOptions = remember(inventoryItemEntries) {
-        inventoryItemEntries.mapNotNull { entry ->
-            val definition = ItemCatalog.find(entry.itemId)
-            if (definition?.consumableType == ConsumableType.FOOD) {
-                ConsumableOption(entry.itemId, definition.name, entry.quantity)
-            } else null
-        }
-    }
-    val availablePotionOptions = remember(inventoryItemEntries) {
-        inventoryItemEntries.mapNotNull { entry ->
-           
+  
 
---- match #8 at offset 18854 ---
-    ConsumableOption(entry.itemId, definition.name, entry.quantity)
-            } else null
-        }
-    }
-    val availablePotionOptions = remember(inventoryItemEntries) {
-        inventoryItemEntries.mapNotNull { entry ->
-            val definition = ItemCatalog.find(entry.itemId)
-            if (definition?.consumableType == ConsumableType.POTION) {
-                ConsumableOption(entry.itemId, definition.name, entry.quantity)
-            } else null
-        }
-    }
-    val skillsListScrollState = rememberLazyListState()
-    val skillsGridScrollState = rememb
-
---- match #9 at offset 18886 ---
-d, definition.name, entry.quantity)
-            } else null
-        }
-    }
-    val availablePotionOptions = remember(inventoryItemEntries) {
-        inventoryItemEntries.mapNotNull { entry ->
-            val definition = ItemCatalog.find(entry.itemId)
-            if (definition?.consumableType == ConsumableType.POTION) {
-                ConsumableOption(entry.itemId, definition.name, entry.quantity)
-            } else null
-        }
-    }
-    val skillsListScrollState = rememberLazyListState()
-    val skillsGridScrollState = rememberLazyGridState()
-
-    val activ
-
-total matches: 9
+total matches: 1
 
 
 DONE
