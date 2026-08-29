@@ -40,8 +40,8 @@ workflows:
           grep -n -B 2 -A 40 "LaunchedEffect(Unit)" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
       - discovery_output3.txt
-      
-apply-patch:
+
+  apply-patch:
     name: Apply Patch Script
     max_build_duration: 10
     scripts:
