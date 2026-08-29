@@ -10,6 +10,7 @@ import com.yourname.idlerpg.ui.screens.SkillSummary
 import com.yourname.idlerpg.ui.screens.CombatViewData
 import com.yourname.idlerpg.ui.screens.CombatViewState
 import com.yourname.idlerpg.ui.screens.CombatLogEntry
+import com.yourname.idlerpg.ui.screens.SessionDropEntry
 import com.yourname.idlerpg.ui.screens.ZoneSummary
 import com.yourname.idlerpg.ui.screens.GuildHomeState
 import com.yourname.idlerpg.ui.screens.GuildLeaderboardEntry
@@ -462,6 +463,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private var lastHitChancePercent: Double? = null
     private var lastDamageDealt: Int? = null
     private val combatLogFor: MutableMap<String, MutableList<CombatLogEntry>> = mutableMapOf()
+    private val sessionDropsFor: MutableMap<String, MutableMap<String, Int>> = mutableMapOf()
 
     val zoneSummaries: List<ZoneSummary>
         get() = ZoneCatalog.zones.sortedBy { it.levelRequirement }.map { zone ->
@@ -530,6 +532,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 clear()
                 add(CombatLogEntry("Entered " + result.value.zone.name + "."))
             }
+            sessionDropsFor.getOrPut(characterId) { mutableMapOf() }.clear()
             refreshCombatView()
         }
         return result
@@ -562,7 +565,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             playerMaxHp = state.maxHp,
             lastHitChancePercent = lastHitChancePercent,
             lastDamageDealt = lastDamageDealt,
-            combatLog = log
+            combatLog = log,
+            sessionDrops = sessionDropsFor.getOrPut(characterId) { mutableMapOf() }
+                .map { (itemId, qty) -> SessionDropEntry(ItemCatalog.find(itemId)?.name ?: formatItemName(itemId), qty) }
+                .sortedByDescending { it.quantity }
         )
     }
 
@@ -646,7 +652,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 log.add(CombatLogEntry("Defeated " + defeatedName + "!"))
                 val loot = combatService.collectLoot(characterId)
                 if (loot is ServiceResult.Success && loot.value.isNotEmpty()) {
-                    loot.value.forEach { entry -> inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty) }
+                    loot.value.forEach { entry ->
+                        inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty)
+                        sessionDropsFor.getOrPut(characterId) { mutableMapOf() }.merge(entry.itemId, entry.minQty, Int::plus)
+                    }
                     refreshInventory()
                 }
                 val coinsEarned = combatService.collectCoins(characterId)

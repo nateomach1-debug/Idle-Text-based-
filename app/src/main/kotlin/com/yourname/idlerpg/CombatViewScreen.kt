@@ -31,6 +31,11 @@ data class CombatLogEntry(
     val timestamp: Instant = Instant.now()
 )
 
+data class SessionDropEntry(
+    val itemName: String,
+    val quantity: Int
+)
+
 data class CombatViewData(
     val zoneName: String,
     val viewState: CombatViewState,
@@ -42,7 +47,8 @@ data class CombatViewData(
     val playerMaxHp: Int,
     val lastHitChancePercent: Double?,   // advanced view only
     val lastDamageDealt: Int?,           // advanced view only
-    val combatLog: List<CombatLogEntry>
+    val combatLog: List<CombatLogEntry>,
+    val sessionDrops: List<SessionDropEntry>
 )
 
 @Composable
@@ -68,6 +74,9 @@ fun CombatViewScreen(
             CombatViewState.SEARCHING -> SearchingView(data.searchEndsAt)
             CombatViewState.IN_COMBAT -> InCombatView(data)
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        SessionDropsPanel(data.sessionDrops)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -128,6 +137,31 @@ private fun InCombatView(data: CombatViewData) {
             max = data.playerMaxHp,
             color = MaterialTheme.colorScheme.primary
         )
+    }
+}
+
+@Composable
+private fun SessionDropsPanel(drops: List<SessionDropEntry>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(16.dp)
+    ) {
+        Text(text = "Drops This Session", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(6.dp))
+        if (drops.isEmpty()) {
+            Text(text = "No items yet.", style = MaterialTheme.typography.labelSmall)
+        } else {
+            drops.forEach { drop ->
+                Text(
+                    text = drop.itemName + " x" + drop.quantity,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
+            }
+        }
     }
 }
 
