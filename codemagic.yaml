@@ -44,6 +44,9 @@ workflows:
   apply-patch:
     name: Apply Patch Script
     max_build_duration: 10
+    environment:
+      groups:
+        - supabase_secrets
     scripts:
       - name: Run patch script
         script: python3 patch_fix_character_sync_race.py
@@ -53,4 +56,4 @@ workflows:
           git config user.name "Codemagic Bot"
           git add app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
           git commit -m "Fix character sync race condition on cold start"
-          git push
+          git push https://x-access-token:$GH_PAT@github.com/nateomach1-debug/Idle-Text-based-.git main
