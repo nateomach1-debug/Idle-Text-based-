@@ -533,6 +533,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 add(CombatLogEntry("Entered " + result.value.zone.name + "."))
             }
             sessionDropsFor.getOrPut(characterId) { mutableMapOf() }.clear()
+            // Registers an offline-progress queue so combat keeps advancing while
+            // the app is closed, mirroring skilling/crafting queues. Mutual
+            // exclusion is already guaranteed by the stopQueue() call above.
+            offlineIdleService.optIntoOfflineCombat(characterId, zoneId)
             refreshCombatView()
         }
         return result
@@ -541,6 +545,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun leaveCombatZone() {
         val characterId = _currentCharacterId.value ?: return
         combatService.leaveZone(characterId)
+        offlineIdleService.stopQueue(characterId)
         _combatViewData.value = null
     }
 
@@ -843,6 +848,8 @@ init {
         saved.marketAccounts.forEach { marketService.restoreAccount(it) }
         saved.marketOrders.forEach { marketService.restoreOrder(it) }
         saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+        saved.combatSessions.forEach { combatService.restoreSession(it) }
+        saved.offlineCombatQueues.forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
     }
 suspend fun login(email: String, password: String): ServiceResult<Account> {
     val result = accountService.login(email, password)
@@ -891,6 +898,8 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
     recovered.marketOrders.forEach { marketService.restoreOrder(it) }
     recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    recovered.combatSessions.forEach { combatService.restoreSession(it) }
+    recovered.offlineCombatQueues.forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
 
     val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
         ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
@@ -984,7 +993,9 @@ fun logout() {
             inventoryService.exportAllLoadoutSettings(),
             marketService.exportAccounts(),
             marketService.exportOrders(),
-            marketService.exportPriceHistory()
+            marketService.exportPriceHistory(),
+            combatService.exportSessions(),
+            offlineIdleService.exportOfflineCombatQueues()
         )
         val supabaseCharacterId = _currentSupabaseCharacterId.value
         val json = repository.currentSaveJson()
@@ -1030,6 +1041,8 @@ fun logout() {
                                 recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
                                 recovered.marketOrders.forEach { marketService.restoreOrder(it) }
                                 recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                recovered.combatSessions.forEach { combatService.restoreSession(it) }
+                                recovered.offlineCombatQueues.forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
                                 _currentCharacterId.value = remoteLocalId
                                 val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
                                 if (recoveredCharacter != null) {
@@ -1093,6 +1106,63 @@ fun logout() {
                         quantity = batch.itemsProduced,
                         xpEarned = batch.xpGranted
                     )
+                }
+            }
+        }
+
+        val combatQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.OfflineCombatQueue
+        if (combatQueue != null) {
+            val combatResult = offlineIdleService.resolveOfflineProgress(characterId)
+            if (combatResult is ServiceResult.Success) {
+                val elapsedSeconds = combatResult.value.effectiveElapsed.seconds
+                if (elapsedSeconds > 0) {
+                    // Mirrors tickCombat()'s per-style accuracy/max-hit computation exactly,
+                    // using the character's live gear/levels at resolution time.
+                    val weapon = equippedWeapon(characterId)
+                    val trainingSkill = _trainingSkill.value
+                    val accuracy: Int
+                    val maxHit: Int
+                    when (weapon?.style) {
+                        CombatStyle.MAGIC -> {
+                            val magicLevel = skillLevel(characterId, SkillType.MAGIC)
+                            accuracy = magicLevel * 2 + weapon.baseAccuracy
+                            maxHit = (magicLevel / 3) + weapon.baseMaxHit
+                        }
+                        CombatStyle.RANGED -> {
+                            val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
+                            accuracy = archeryLevel * 2 + weapon.baseAccuracy
+                            maxHit = (archeryLevel / 3) + weapon.baseMaxHit
+                        }
+                        else -> {
+                            val attackLevel = skillLevel(characterId, SkillType.ATTACK)
+                            val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
+                            accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
+                            maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
+                        }
+                    }
+                    val outcome = combatService.resolveOfflineCombat(characterId, combatQueue.zoneId, elapsedSeconds, accuracy, maxHit)
+                    if (outcome is ServiceResult.Success && outcome.value.estimatedKills > 0) {
+                        if (outcome.value.xpEarned > 0) {
+                            progressionService.grantXp(characterId, trainingSkill, outcome.value.xpEarned)
+                        }
+                        val loot = combatService.collectLoot(characterId)
+                        if (loot is ServiceResult.Success) {
+                            loot.value.forEach { entry ->
+                                inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty)
+                            }
+                        }
+                        val coinsEarned = combatService.collectCoins(characterId)
+                        if (coinsEarned > 0) {
+                            grantCombatCoins(characterId, coinsEarned)
+                        }
+                        _offlineSummary.value = OfflineSummary(
+                            awaySeconds = combatResult.value.claimedElapsed.seconds,
+                            skillActionName = "Combat",
+                            itemName = "kills",
+                            quantity = outcome.value.estimatedKills,
+                            xpEarned = outcome.value.xpEarned
+                        )
+                    }
                 }
             }
         }
