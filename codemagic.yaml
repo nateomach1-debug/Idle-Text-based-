@@ -19,3 +19,18 @@ workflows:
           ./gradlew assembleDebug --build-cache
     artifacts:
       - app/build/outputs/apk/debug/*.apk
+      
+discovery:
+    name: Discovery Script
+    max_build_duration: 10
+    scripts:
+      - name: Run discovery grep
+        script: |
+          OUT=discovery_output.txt
+          echo "=== get_or_create_character SQL definition (all .sql files) ===" > $OUT
+          grep -rn -A 40 "get_or_create_character" --include="*.sql" . >> $OUT || echo "NO SQL MATCHES FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== getOrCreateCharacter( Kotlin call sites, with surrounding context ===" >> $OUT
+          grep -rn -B 25 -A 5 "getOrCreateCharacter(" --include="*.kt" . >> $OUT || echo "NO KOTLIN MATCHES FOUND" >> $OUT
+    artifacts:
+      - discovery_output.txt
