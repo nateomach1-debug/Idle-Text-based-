@@ -1,161 +1,181 @@
-SERIALIZABLE ROW CLASS FORMAT DISCOVERY
+MATCH-EXECUTION + CHECKPOINT-CALL-SITE DISCOVERY
 
 ====================================================================================================
-MarketOrderRow / MarketListingRow / MarketCancelRpcResult data class definitions in app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt
+any client-side call to match_market_orders RPC in app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt
 ====================================================================================================
+(no matches found)
 
---- match #1 at offset 381 ---
- val originalQuantity: Int,
-    val remainingQuantity: Int,
-    val status: String
-)
-
-@Serializable
-data class MarketCancelRpcResult(
-    val id: String,
-    val side: String,
-    val itemId: String,
-    val remainingQuantityBeforeCancel: Int
-)
-
-@Serializable
-data class MarketListingRow(
-    val itemId: String,
-    val bestBuyPrice: Long? = null,
-    val bestBuyQuantity: Int? = null,
-    val bestSellPrice: Long? = null,
-    val bestSellQuantity: Int? = null
-)
-
-@Serializable
-data class MarketOrderRow(
-    val id: String,
-    val characterId: String,
-    val itemId: String,
-    val side: String,
-    val pricePerUnit: Long,
-    val originalQuantity: Int,
-    val remainingQuantity: Int,
-    val status: String,
-    val createdA
-
---- match #2 at offset 541 ---
-l side: String,
-    val itemId: String,
-    val remainingQuantityBeforeCancel: Int
-)
-
-@Serializable
-data class MarketListingRow(
-    val itemId: String,
-    val bestBuyPrice: Long? = null,
-    val bestBuyQuantity: Int? = null,
-    val bestSellPrice: Long? = null,
-    val bestSellQuantity: Int? = null
-)
-
-@Serializable
-data class MarketOrderRow(
-    val id: String,
-    val characterId: String,
-    val itemId: String,
-    val side: String,
-    val pricePerUnit: Long,
-    val originalQuantity: Int,
-    val remainingQuantity: Int,
-    val status: String,
-    val createdAt: String
-)
-
-object SupabaseMarketRepository {
-    private val client get() = SupabaseClientProvider.client
-
-    suspend fun placeBuyOrder(characterId: Str
-
---- match #3 at offset 760 ---
-= null,
-    val bestSellPrice: Long? = null,
-    val bestSellQuantity: Int? = null
-)
-
-@Serializable
-data class MarketOrderRow(
-    val id: String,
-    val characterId: String,
-    val itemId: String,
-    val side: String,
-    val pricePerUnit: Long,
-    val originalQuantity: Int,
-    val remainingQuantity: Int,
-    val status: String,
-    val createdAt: String
-)
-
-object SupabaseMarketRepository {
-    private val client get() = SupabaseClientProvider.client
-
-    suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-        client.postgrest.rpc("market_place_buy_order", buildJsonObject {
-            put("p_character_id", characte
-
-total matches: 3
+total matches: 0
 
 ====================================================================================================
-File header / imports of SupabaseMarketRepository.kt
+placeBuyOrder/placeSellOrder full functions (does either call match_market_orders?) in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
 ====================================================================================================
-package com.yourname.idlerpg
 
-import io.github.jan.supabase.postgrest.postgrest
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+--- match #1 at offset 62488 ---
+ it.side == OrderSide.SELL }
+        }
+    }
 
-@Serializable
-data class MarketOrderRpcResult(
-    val id: String,
-    val originalQuantity: Int,
-    val remainingQuantity: Int,
-    val status: String
-)
+    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure { _marketActionError.value = it.message ?: it.toString() }
+            result.onSuccess { order ->
+                _marketActionError.value = null
+                val filled = order.originalQuantity - order.remainingQuantity
+                if (filled > 0) {
+                    inventoryService.inventoryFor(characterId).addItem(itemId, filled)
+                    refreshInventory()
+                }
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
+            }
+        }
+    }
 
-@Serializable
-data class MarketCancelRpcResult(
-    val id: String,
-    val side: String,
-    val itemId: String,
-    val remainingQuantityBeforeCancel: Int
-)
+    fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
 
-@Serializable
-data class MarketListingRow(
-    val itemId: String,
-    val bestBuyPrice: Long? = null,
-    val bestBuyQuantity: Int? = null,
-    val bestSellPrice: Long? = null,
-    val bestSellQuantity: Int? = null
-)
+--- match #2 at offset 63423 ---
+reshMyOrders()
+            }
+        }
+    }
 
-@Serializable
-data class MarketOrderRow(
-    val id: String,
-    val characterId: String,
-    val itemId: String,
-    val side: String,
-    val pricePerUnit: Long,
-    val originalQuantity: Int,
-    val remainingQuantity: Int,
-    val status: String,
-    val createdAt: String
-)
+    fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
+        if (realInventory.quantityOf(itemId) < quantity) return
 
-object SupabaseMarketRepository {
-    private val client get() = SupabaseClientProvider.client
+        realInventory.removeItem(itemId, quantity)
+        refreshInventory()
 
-    suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-        client.postgrest.rpc("market_place_buy_order", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_item_id", itemId)
-            put("p_quantity", quantity)
-            put("p_price_per_unit
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.placeSellOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.addItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
+            }
+        }
+    }
+
+    fun cancelMarketOrder(orderId: String) {
+        val characterId = _currentCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.cancelOrder(orderId)
+      
+
+total matches: 2
+
+====================================================================================================
+recordLastSeen occurrences - full enclosing function context in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
+====================================================================================================
+
+--- match #1 at offset 50071 ---
+ant(inventoryService.inventoryFor(characterId), result.value.actionsCompleted)
+                    }
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = result.value.claimedElapsed.seconds,
+                        skillActionName = action.displayName,
+                        itemName = formatItemName(queue.itemId),
+                        quantity = result.value.actionsCompleted,
+                        xpEarned = xpEarned
+                    )
+                }
+            }
+        }
+
+        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
+        if (craftingQueue != null) {
+            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+            if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
+                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
+                if (batch.xpGranted > 0) {
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = craftResult.value.claimedElapsed.seconds,
+                        skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
+                        itemName = formatItemName(craftingQueue.itemId),
+                        quantity = batch.itemsProduced,
+                        xpEarned = batch.xpGranted
+                    )
+                }
+            }
+        }
+
+        offlineIdleService.recordLastSeen(characterId)
+        checkForRecentSales(characterId)
+        skillActionProgressSeconds = 0
+        craftActionProgressSeconds = 0
+        refreshSkills()
+        refreshInventory()
+        refreshActiveQueue()
+
+        if (marketService.accountFor(cha
+
+--- match #2 at offset 51451 ---
+                    xpEarned = batch.xpGranted
+                    )
+                }
+            }
+        }
+
+        offlineIdleService.recordLastSeen(characterId)
+        checkForRecentSales(characterId)
+        skillActionProgressSeconds = 0
+        craftActionProgressSeconds = 0
+        refreshSkills()
+        refreshInventory()
+        refreshActiveQueue()
+
+        if (marketService.accountFor(characterId) == null) {
+            val character = accountService.charactersFor(_currentAccountId.value ?: "")
+                .find { it.id == characterId }
+            marketService.registerAccount(
+                PlayerEconomyAccount(
+                    characterId = characterId,
+                    accountId = _currentAccountId.value ?: "",
+                    isMainCharacter = character?.isMainCharacter ?: true,
+                    currencyBalance = 0L
+                )
+            )
+        }
+        refreshCurrency()
+        refreshMarketListings()
+        refreshMyOrders()
+    }
+
+    fun startSkillAction(skillType: SkillType, itemId: String) {
+        val characterId = _currentCharacterId.value ?: return
+        val action = ActionCatalog.find(skillType, itemId) ?: return
+        // Starting a skill stops any active combat session - only one
+        // activity can run at a time.
+        leaveCombatZone()
+        offlineIdleService.stopQueue(characterId)
+        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+        offlineIdleService.recordLastSeen(characterId)
+        checkForRecentSales(characterId)
+        skillActionProgressSeconds = 0
+        refreshActiveQueue()
+    }
+
+    fun stopSkillAction() {
+        val characterId = _currentCharacterId.value ?: return
+        offlineIdleService.stopQue
+
+total matches: 2
+
 
 DONE
