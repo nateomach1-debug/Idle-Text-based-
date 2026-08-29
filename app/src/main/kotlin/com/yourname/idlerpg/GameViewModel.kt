@@ -1,6 +1,8 @@
 package com.yourname.idlerpg.data
 
 import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.first
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -1012,6 +1014,13 @@ fun logout() {
         val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
         if (selectedCharacter != null) {
             viewModelScope.launch {
+                val authState = withTimeoutOrNull(10_000L) {
+                    supabaseAuthState.first { it != SupabaseAuthState.SIGNING_IN }
+                }
+                if (authState != SupabaseAuthState.SIGNED_IN) {
+                    _characterSyncError.value = "Not signed in to multiplayer services yet - character sync will retry on next action."
+                    return@launch
+                }
                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
                 result.onSuccess { _characterSyncError.value = null }
