@@ -937,9 +937,11 @@ fun logout() {
         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
         val since = offlineIdleService.lastSaleCheckFor(characterId)?.toString()
             ?: Instant.now().minusSeconds(86400).toString()
-        offlineIdleService.recordSaleCheck(characterId)
         viewModelScope.launch {
             val result = SupabaseMarketRepository.myRecentSales(supabaseCharacterId, since)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+            }
             result.onSuccess { rows ->
                 if (rows.isNotEmpty()) {
                     val notifications = rows.map { row ->
@@ -951,6 +953,10 @@ fun logout() {
                         )
                     }
                     _pendingSaleNotifications.value = _pendingSaleNotifications.value + notifications
+                    // Use the server's own latest executed_at as the new checkpoint,
+                    // never the device clock - avoids any client/server clock-skew risk.
+                    val latestServerTimestamp = rows.maxOf { it.executedAt }
+                    offlineIdleService.recordSaleCheckAt(characterId, latestServerTimestamp)
                 }
             }
         }

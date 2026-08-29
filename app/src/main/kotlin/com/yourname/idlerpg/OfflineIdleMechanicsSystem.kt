@@ -216,6 +216,10 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
 
     fun lastSaleCheckFor(characterId: String): Instant? = lastSaleCheckAt[characterId]
 
+    fun recordSaleCheckAt(characterId: String, serverTimestamp: String) {
+        lastSaleCheckAt[characterId] = java.time.OffsetDateTime.parse(serverTimestamp).toInstant()
+    }
+
     fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
         val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
         val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
