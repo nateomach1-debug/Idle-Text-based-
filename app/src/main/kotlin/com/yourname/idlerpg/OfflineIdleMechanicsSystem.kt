@@ -152,6 +152,8 @@ data class LastSeenExport(val characterId: String, val lastSeenAt: String)
 
 data class LastSaleCheckExport(val characterId: String, val lastSaleCheckAt: String)
 
+data class OfflineCombatQueueExport(val characterId: String, val zoneId: String, val startedAt: String)
+
 // =========================================================
 // OFFLINE/IDLE SERVICE
 // =========================================================
@@ -316,6 +318,11 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
     fun exportLastSaleCheck(): List<LastSaleCheckExport> =
         lastSaleCheckAt.map { (characterId, instant) -> LastSaleCheckExport(characterId, instant.toString()) }
 
+    fun exportOfflineCombatQueues(): List<OfflineCombatQueueExport> =
+        activeQueues.values.filterIsInstance<ActiveQueue.OfflineCombatQueue>().map {
+            OfflineCombatQueueExport(it.characterId, it.zoneId, it.startedAt.toString())
+        }
+
     fun restoreSkillingQueue(export: SkillingQueueExport) {
         activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
             characterId = export.characterId,
@@ -344,5 +351,13 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
 
     fun restoreLastSaleCheck(export: LastSaleCheckExport) {
         lastSaleCheckAt[export.characterId] = Instant.parse(export.lastSaleCheckAt)
+    }
+
+    fun restoreOfflineCombatQueue(export: OfflineCombatQueueExport) {
+        activeQueues[export.characterId] = ActiveQueue.OfflineCombatQueue(
+            characterId = export.characterId,
+            zoneId = export.zoneId,
+            startedAt = Instant.parse(export.startedAt)
+        )
     }
 }
