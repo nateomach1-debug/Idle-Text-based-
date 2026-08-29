@@ -32,7 +32,9 @@ class GameStateRepository(private val context: Context) {
         loadoutSettings: List<LoadoutSettingsExport>,
         marketAccounts: List<PlayerEconomyAccountExport>,
         marketOrders: List<MarketOrderExport>,
-        marketPriceHistory: List<PriceHistoryExport>
+        marketPriceHistory: List<PriceHistoryExport>,
+        combatSessions: List<CombatSessionExport> = emptyList(),
+        offlineCombatQueues: List<OfflineCombatQueueExport> = emptyList()
     ) {
         val root = JSONObject()
 
@@ -198,6 +200,32 @@ class GameStateRepository(private val context: Context) {
         }
         root.put("marketPriceHistory", marketPriceHistoryArray)
 
+        val combatSessionsArray = JSONArray()
+        combatSessions.forEach { cs ->
+            val obj = JSONObject()
+            obj.put("characterId", cs.characterId)
+            obj.put("currentHp", cs.currentHp)
+            obj.put("maxHp", cs.maxHp)
+            obj.put("recoveringUntil", cs.recoveringUntil)
+            obj.put("zoneId", cs.zoneId)
+            obj.put("sessionState", cs.sessionState)
+            obj.put("searchEndsAt", cs.searchEndsAt)
+            obj.put("currentMonsterId", cs.currentMonsterId)
+            obj.put("currentMonsterHealth", cs.currentMonsterHealth)
+            combatSessionsArray.put(obj)
+        }
+        root.put("combatSessions", combatSessionsArray)
+
+        val offlineCombatQueuesArray = JSONArray()
+        offlineCombatQueues.forEach { q ->
+            val obj = JSONObject()
+            obj.put("characterId", q.characterId)
+            obj.put("zoneId", q.zoneId)
+            obj.put("startedAt", q.startedAt)
+            offlineCombatQueuesArray.put(obj)
+        }
+        root.put("offlineCombatQueues", offlineCombatQueuesArray)
+
         saveFile.writeText(root.toString())
     }
 
@@ -299,6 +327,38 @@ class GameStateRepository(private val context: Context) {
             lastSaleCheck.add(LastSaleCheckExport(characterId = obj.getString("characterId"), lastSaleCheckAt = obj.getString("lastSaleCheckAt")))
         }
 
+        val combatSessions = mutableListOf<CombatSessionExport>()
+        val combatSessionsArray = root.optJSONArray("combatSessions") ?: JSONArray()
+        for (i in 0 until combatSessionsArray.length()) {
+            val obj = combatSessionsArray.getJSONObject(i)
+            combatSessions.add(
+                CombatSessionExport(
+                    characterId = obj.getString("characterId"),
+                    currentHp = obj.getInt("currentHp"),
+                    maxHp = obj.getInt("maxHp"),
+                    recoveringUntil = if (obj.isNull("recoveringUntil")) null else obj.getString("recoveringUntil"),
+                    zoneId = if (obj.isNull("zoneId")) null else obj.getString("zoneId"),
+                    sessionState = if (obj.isNull("sessionState")) null else obj.getString("sessionState"),
+                    searchEndsAt = if (obj.isNull("searchEndsAt")) null else obj.getString("searchEndsAt"),
+                    currentMonsterId = if (obj.isNull("currentMonsterId")) null else obj.getString("currentMonsterId"),
+                    currentMonsterHealth = obj.getInt("currentMonsterHealth")
+                )
+            )
+        }
+
+        val offlineCombatQueues = mutableListOf<OfflineCombatQueueExport>()
+        val offlineCombatQueuesArray = root.optJSONArray("offlineCombatQueues") ?: JSONArray()
+        for (i in 0 until offlineCombatQueuesArray.length()) {
+            val obj = offlineCombatQueuesArray.getJSONObject(i)
+            offlineCombatQueues.add(
+                OfflineCombatQueueExport(
+                    characterId = obj.getString("characterId"),
+                    zoneId = obj.getString("zoneId"),
+                    startedAt = obj.getString("startedAt")
+                )
+            )
+        }
+
         val inventoryItems = mutableListOf<InventorySlotExport>()
         val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
         for (i in 0 until inventoryArray.length()) {
@@ -394,7 +454,7 @@ class GameStateRepository(private val context: Context) {
 
         return SavedGameState(
             accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, lastSaleCheck, inventoryItems, equippedSlots,
-            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
+            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory, combatSessions, offlineCombatQueues
         )
     }
 }
@@ -412,5 +472,7 @@ data class SavedGameState(
     val loadoutSettings: List<LoadoutSettingsExport>,
     val marketAccounts: List<PlayerEconomyAccountExport>,
     val marketOrders: List<MarketOrderExport>,
-    val marketPriceHistory: List<PriceHistoryExport>
+    val marketPriceHistory: List<PriceHistoryExport>,
+    val combatSessions: List<CombatSessionExport> = emptyList(),
+    val offlineCombatQueues: List<OfflineCombatQueueExport> = emptyList()
 )
