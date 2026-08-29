@@ -26,15 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output2.txt
-          echo "=== SupabaseClientProvider.kt (full file) ===" > $OUT
-          find . -name "SupabaseClientProvider.kt" -exec cat {} \; >> $OUT
+          OUT=discovery_output3.txt
+          echo "=== SupabaseClientProvider actual definition (wherever it lives) ===" > $OUT
+          grep -rn -B 5 -A 30 "object SupabaseClientProvider" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== sessionStatus / awaitInitialization mentions ===" >> $OUT
-          grep -rn "sessionStatus\|awaitInitialization\|SessionStatus" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== GameViewModel.kt sessionStatus listener, full context ===" >> $OUT
+          sed -n '780,830p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== cold-start / saved-session restore call sites ===" >> $OUT
-          grep -rn -B 15 -A 15 "getSavedSession\|selectCharacter(" --include="*.kt" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES IN MainActivity" >> $OUT
-          grep -rn -B 15 "selectCharacter(" --include="*.kt" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt | grep -B 15 "init {" >> $OUT || true
+          echo "=== MainActivity.kt flowState initial value / startup logic ===" >> $OUT
+          grep -n "var flowState\|flowState =\|hasSavedSession\|getSavedSession\|AppFlowState.InGame\|AppFlowState.CharacterSelect" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== MainActivity.kt top-level LaunchedEffect(Unit) blocks, full context ===" >> $OUT
+          grep -n -B 2 -A 40 "LaunchedEffect(Unit)" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output2.txt
+      - discovery_output3.txt
