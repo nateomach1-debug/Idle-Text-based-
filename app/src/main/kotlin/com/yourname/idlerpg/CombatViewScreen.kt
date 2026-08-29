@@ -56,7 +56,7 @@ fun CombatViewScreen(
     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onLeaveZone) {
-                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Leave zone")
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Leave zone", tint = MaterialTheme.colorScheme.onSurface)
             }
             Spacer(modifier = Modifier.width(4.dp))
             Text(text = data.zoneName, style = MaterialTheme.typography.headlineMedium)

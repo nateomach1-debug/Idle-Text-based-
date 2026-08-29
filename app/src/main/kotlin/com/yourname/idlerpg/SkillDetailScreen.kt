@@ -62,7 +62,7 @@ fun SkillDetailScreen(
     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
-                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
             }
             Spacer(modifier = Modifier.width(4.dp))
             Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)

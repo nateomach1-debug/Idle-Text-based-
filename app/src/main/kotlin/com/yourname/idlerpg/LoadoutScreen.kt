@@ -53,7 +53,7 @@ fun LoadoutScreen(
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
-                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
             }
             Spacer(modifier = Modifier.width(4.dp))
             Text(text = "Loadout", style = MaterialTheme.typography.headlineMedium)
