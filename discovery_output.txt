@@ -1,225 +1,737 @@
-COMBAT DROPS PANEL DESIGN DISCOVERY
 
-====================================================================================================
-FULL FILE: CombatViewScreen.kt
-====================================================================================================
-package com.yourname.idlerpg.ui.screens
+=== GameStateRepository.save() signature (in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt) ===
+ter's save downloaded from the cloud -
+    // overwrites local state with the recovered JSON before re-loading it.
+    fun overwriteRawJson(json: String) {
+        saveFile.writeText(json)
+    }
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
+    fun save(
+        accounts: List<AccountExport>,
+        characters: List<CharacterExport>,
+        skills: List<SkillExport>,
+        skillingQueues: List<SkillingQueueExport>,
+        craftingQueues: List<CraftingQueueExport>,
+        lastSeen: List<LastSeenExport>,
+        lastSaleCheck: List<LastSaleCheckExport>,
+        inventoryItems: List<InventorySlotExport>,
+        equippedSlots: List<EquippedSlotExport>,
+        loadoutSettings: List<LoadoutSettingsExport>,
+        marketAccounts: List<PlayerEconomyAccountExport>,
+        marketOrders: List<MarketOrderExport>,
+        marketPriceHistory: List<PriceHistoryExport>
+    ) {
+        val root = JSONObject()
+
+        val accountsArray = JSONArray()
+        accounts.forEach { acc ->
+            val obj = JSONObject()
+            obj.put("id", acc.id)
+            obj.put("email", acc.email)
+            obj.put("username", acc.username)
+            obj.put("passwordHash", acc.passwordHash)
+            obj.put("passwordSalt", acc.passwordSalt)
+            obj.put("createdAt", acc.createdAt)
+            obj.put("lastLoginAt", acc.lastLoginAt)
+            obj.put("ageBracket", acc.ageBracket)
+            obj.put("region", acc.region)
+            obj.put("isBanned", acc.isBanned)
+            obj.put("banReason", acc.banReason)
+            obj.put("mutedUntil", acc.mutedUntil)
+            obj.put("subscriptionTier", acc.subscriptionTier)
+            obj.put("premiumCurrency", acc.premiumCurrency)
+            accountsArray.put(obj)
+        }
+        root.put("accounts", accountsArray)
+
+        val charactersArray = JSONArray()
+        characters.forEach { char ->
+            val obj = JSONObject()
+            obj.put("id", char.id)
+            obj.put("accountId", char.accountId)
+            obj.put("displayName", char.displayName)
+            obj.put("avatarId", char.avatarId)
+            obj.put("createdAt", char.createdAt)
+            obj.put("displayNameLastChangedAt", char.displayNameLastChangedAt)
+            obj.put("isMai
+
+--- match end ---
+
+
+=== loadGame() (in app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt) ===
+NO MATCHES FOUND
+
+
+=== QueueType enum (in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt) ===
+.idlerpg
+
 import java.time.Duration
 import java.time.Instant
 
 // =========================================================
-// COMBAT VIEW SCREEN
-// Two live states: SEARCHING (timer only) and IN_COMBAT
-// (monster + player HP). Advanced toggle adds hit chance,
-// exact damage, and a scrolling combat log in either state.
+// QUEUE TYPES
 // =========================================================
 
-enum class CombatViewState { SEARCHING, IN_COMBAT }
+enum class QueueType { SKILLING, CRAFTING, OFFLINE_COMBAT }
 
-data class CombatLogEntry(
-    val text: String,
-    val timestamp: Instant = Instant.now()
-)
+sealed class ActiveQueue {
+    abstract val characterId: String
+    abstract val startedAt: Instant
+    abstract val type: QueueType
 
-data class CombatViewData(
-    val zoneName: String,
-    val viewState: CombatViewState,
-    val searchEndsAt: Instant?,          // set only when SEARCHING
-    val monsterName: String?,            // set only when IN_COMBAT
-    val monsterCurrentHp: Int?,
-    val monsterMaxHp: Int?,
-    val playerCurrentHp: Int,
-    val playerMaxHp: Int,
-    val lastHitChancePercent: Double?,   // advanced view only
-    val lastDamageDealt: Int?,           // advanced view only
-    val combatLog: List<CombatLogEntry>
-)
+    data class SkillingQueue(
+        override val characterId: String,
+        val skillId: String,
+        val itemId: String,
+        val secondsPerAction: Long,
+        override val startedAt: Instant = Instant.now()
+    ) : ActiveQueue() {
+        override val type = QueueType.SKILLING
+    }
 
-@Composable
-fun CombatViewScreen(
-    data: CombatViewData,
-    onLeaveZone: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var showAdvanced by remember { mutableStateOf(false) }
+    data class CraftingQueue(
+        override val characterId: String,
+        val itemId: String,
+        val secondsPerAction: Long,
+        val targetQuantity: Int?,
+        var quantityCompleted: Int = 0,
+        override val startedAt: Instant = Instant.now()
+    ) : ActiveQueue() {
+        override val type = QueueType.CRAFTING
+        fun isTargetReached(): Boolean = targetQuantity != null && quantityCompleted >= targetQuantity
+    }
 
-    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onLeaveZone) {
-                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Leave zone", tint = MaterialTheme.colorScheme.onSurface)
+    data class OfflineCombatQueue(
+        override val characterId: String,
+        val zoneId: String,
+        override val startedAt: Instant = Instant.now()
+    ) : ActiveQueue() {
+        override val type = QueueType.OFFLINE_COMBAT
+    }
+}
+
+// =============================
+
+--- match end ---
+
+
+=== OfflineCombatQueue (all occurrences) (in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt) ===
+w()
+    ) : ActiveQueue() {
+        override val type = QueueType.CRAFTING
+        fun isTargetReached(): Boolean = targetQuantity != null && quantityCompleted >= targetQuantity
+    }
+
+    data class OfflineCombatQueue(
+        override val characterId: String,
+        val zoneId: String,
+        override val startedAt: Instant = Instant.now()
+    ) : ActiveQueue() {
+        override val type = QueueType.OFFLINE_COMBAT
+    }
+}
+
+// =========================================================
+// MATERIAL AVAILABILITY
+// =========================================================
+
+fun interface MaterialAvailabilityCheck {
+    fun hasMaterialsFor(characterId: String, itemId: String): Boolean
+}
+
+// =========================================================
+// EFFICIENCY TAPER
+// =========================================================
+
+object OfflineEfficiencyCurve {
+    private val fullRateWindow: Duration = Duration.ofHours(12)
+    private val reducedRateWindow: Duration = Duration.ofHours(72)
+    private const val FULL_RATE_PERCENT = 100.0
+    private const val REDUCED_RATE_PERCENT = 50.0
+    private const val FLOOR_RATE_PERCENT = 25.0
+
+    fun efficiencyAt(elapsed: Duration): Double {
+        return when {
+            elapsed <= fullRateWindow -> FULL_RATE_PERCENT
+            elapsed <= reducedRateWindow -> REDUCED_RATE_PERCENT
+            else -> FLOOR_RATE_PERCENT
+        }
+    }
+
+    fun effectiveElapsed(elapsed: Duration): Duration {
+        if (elapsed <= fullRateWindow) return elapsed
+
+        val fullMillis = fullRateWindow.toMillis()
+        val reducedEndMillis = minOf(elapsed.toMillis(), reducedRateWindow.toMillis())
+        val reducedMillis = (reducedEndMillis - fullMillis).coerceAtLeast(0)
+        val floorMillis = (elapsed.toMillis() - reducedRateWindow.toMillis()).coerceAtLeast(
+
+--- match end ---
+
+ues.containsKey(characterId)) {
+            return ServiceResult.Failure("Character already has an active queue. Stop it before opting into offline combat.")
+        }
+        val queue = ActiveQueue.OfflineCombatQueue(characterId, zoneId)
+        activeQueues[characterId] = queue
+        return ServiceResult.Success(queue)
+    }
+
+    fun stopQueue(characterId: String): ServiceResult<Unit> {
+        if (!activeQueues.containsKey(characterId)) return ServiceResult.Failure("No active queue to stop.")
+        activeQueues.remove(characterId)
+        return ServiceResult.Success(Unit)
+    }
+
+    fun activeQueueFor(characterId: String): ActiveQueue? = activeQueues[characterId]
+
+    fun recordLastSeen(characterId: String, now: Instant = Instant.now()) {
+        lastSeenAt[characterId] = now
+    }
+
+    fun recordSaleCheck(characterId: String, now: Instant = Instant.now()) {
+        lastSaleCheckAt[characterId] = now
+    }
+
+    fun lastSaleCheckFor(characterId: String): Instant? = lastSaleCheckAt[characterId]
+
+    fun recordSaleCheckAt(characterId: String, serverTimestamp: String) {
+        lastSaleCheckAt[characterId] = java.time.OffsetDateTime.parse(serverTimestamp).toInstant()
+    }
+
+    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
+        val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
+        val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
+
+        val claimedElapsed = Duration.between(lastSeen, now)
+        if (claimedElapsed.isNegative) return ServiceResult.Failure("Invalid elapsed time (negative duration).")
+
+        val (cappedElapsed, flag) = OfflineSanityCheck.validate(characterId, claimedElapsed)
+        i
+
+--- match end ---
+
+          queue.quantityCompleted += completed
+                actionsCompleted = completed
+                if (queue.isTargetReached()) queueExhausted = true
             }
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(text = data.zoneName, style = MaterialTheme.typography.headlineMedium)
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        when (data.viewState) {
-            CombatViewState.SEARCHING -> SearchingView(data.searchEndsAt)
-            CombatViewState.IN_COMBAT -> InCombatView(data)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextButton(onClick = { showAdvanced = !showAdvanced }) {
-            Text(text = if (showAdvanced) "Hide details" else "Show details")
-        }
-
-        if (showAdvanced) {
-            Spacer(modifier = Modifier.height(8.dp))
-            AdvancedDetails(data)
-        }
-    }
-}
-
-@Composable
-private fun SearchingView(searchEndsAt: Instant?) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Searching for an enemy...", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        if (searchEndsAt != null) {
-            LiveCountdownText(searchEndsAt)
-        }
-    }
-}
-
-@Composable
-private fun InCombatView(data: CombatViewData) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(20.dp)
-    ) {
-        Text(text = data.monsterName ?: "Unknown", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(6.dp))
-        HpBarRow(
-            label = "Enemy",
-            current = data.monsterCurrentHp ?: 0,
-            max = data.monsterMaxHp ?: 1,
-            color = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(text = "You", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(6.dp))
-        HpBarRow(
-            label = "HP",
-            current = data.playerCurrentHp,
-            max = data.playerMaxHp,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-
-@Composable
-private fun HpBarRow(label: String, current: Int, max: Int, color: androidx.compose.ui.graphics.Color) {
-    val fraction = (current.toFloat() / max.toFloat()).coerceIn(0f, 1f)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(10.dp)
-            .clip(RoundedCornerShape(5.dp))
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(fraction)
-                .fillMaxHeight()
-                .clip(RoundedCornerShape(5.dp))
-                .background(color)
-        )
-    }
-    Spacer(modifier = Modifier.height(2.dp))
-    Text(text = "$current / $max", style = MaterialTheme.typography.labelSmall)
-}
-
-@Composable
-private fun AdvancedDetails(data: CombatViewData) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(16.dp)
-    ) {
-        data.lastHitChancePercent?.let {
-            Text(text = "Hit chance: " + String.format("%.1f", it) + "%", style = MaterialTheme.typography.labelSmall)
-        }
-        data.lastDamageDealt?.let {
-            Text(text = "Last hit: " + it + " damage", style = MaterialTheme.typography.labelSmall)
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(text = "Combat Log", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(6.dp))
-
-        LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-            items(data.combatLog.reversed()) { entry ->
-                Text(
-                    text = entry.text,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                )
+            is ActiveQueue.OfflineCombatQueue -> {
+                actionsCompleted = 0
             }
         }
-    }
-}
 
-@Composable
-private fun LiveCountdownText(endsAt: Instant) {
-    var remaining by remember(endsAt) { mutableStateOf(Duration.between(Instant.now(), endsAt)) }
-
-    LaunchedEffect(endsAt) {
-        while (true) {
-            remaining = Duration.between(Instant.now(), endsAt)
-            if (remaining.isNegative || remaining.isZero) break
-            delay(1000)
+        if (queueExhausted) {
+            activeQueues.remove(characterId)
         }
+
+        return ServiceResult.Success(
+            OfflineResolution(
+                characterId = characterId,
+                queueType = queue.type,
+                claimedElapsed = claimedElapsed,
+                cappedElapsed = cappedElapsed,
+                effectiveElapsed = finalEffectiveElapsed,
+                actionsCompleted = actionsCompleted,
+                wasFlagged = flag != null,
+                queueExhausted = queueExhausted
+            )
+        )
     }
 
-    val text = if (remaining.isNegative || remaining.isZero) {
-        "Encounter starting..."
-    } else {
-        remaining.seconds.toString() + "s remaining"
+    fun estimatedTimeUntilExhausted(characterId: String): Duration? {
+        val queue = activeQueues[characterId] as? ActiveQueue.CraftingQueue ?: return null
+        val target = queue.targetQuantity ?: return null
+        val remaining = target - queue.quantityCompleted
+        if (remaining <= 0) return Duration.ZERO
+        return Duration.ofSeconds(remaining * queue.secondsPerAction)
     }
 
-    Text(text = text, style = MaterialTheme.typography.bodyMedium)
+    fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
+
+    fun exportSkillingQueues(): List<SkillingQueueExport> =
+        activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
+            SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
+        }
+
+    fun exportCraftingQueues(): List<CraftingQueueExport> =
+        activeQueues.values.filterIsInstance<ActiveQueue.CraftingQueue>().map {
+            CraftingQueueExport(
+                it.characterId,
+         
+
+--- match end ---
+
+
+=== optIntoOfflineCombat() (in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt) ===
+}
+        val queue = ActiveQueue.CraftingQueue(characterId, itemId, secondsPerAction, targetQuantity)
+        activeQueues[characterId] = queue
+        return ServiceResult.Success(queue)
+    }
+
+    fun optIntoOfflineCombat(characterId: String, zoneId: String): ServiceResult<ActiveQueue> {
+        if (activeQueues.containsKey(characterId)) {
+            return ServiceResult.Failure("Character already has an active queue. Stop it before opting into offline combat.")
+        }
+        val queue = ActiveQueue.OfflineCombatQueue(characterId, zoneId)
+        activeQueues[characterId] = queue
+        return ServiceResult.Success(queue)
+    }
+
+    fun stopQueue(characterId: String): ServiceResult<Unit> {
+        if (!activeQueues.containsKey(characterId)) return ServiceResult.Failure("No active queue to stop.")
+        activeQueues.remove(characterId)
+        return ServiceResult.Success(Unit)
+    }
+
+    fun activeQueueFor(characterId: String): ActiveQueue? = activeQueues[characterId]
+
+    fun recordLastSeen(characterId: String, now: Instant = Instant.now()) {
+        lastSeenAt[characterId] = now
+    }
+
+    fun recordSaleCheck(characterId: String, now: Instant = Instant.now()) {
+        lastSaleCheckAt[characterId] = now
+    }
+
+    fun lastSaleCheckFor(characterId: String): Instant? = lastSaleCheckAt[characterId]
+
+    fun recordSaleCheckAt(characterId: String, serverTimestamp: String) {
+        lastSaleChe
+
+--- match end ---
+
+
+=== resolveOfflineProgress() (in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt) ===
+t[characterId]
+
+    fun recordSaleCheckAt(characterId: String, serverTimestamp: String) {
+        lastSaleCheckAt[characterId] = java.time.OffsetDateTime.parse(serverTimestamp).toInstant()
+    }
+
+    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
+        val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
+        val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
+
+        val claimedElapsed = Duration.between(lastSeen, now)
+        if (claimedElapsed.isNegative) return ServiceResult.Failure("Invalid elapsed time (negative duration).")
+
+        val (cappedElapsed, flag) = OfflineSanityCheck.validate(characterId, claimedElapsed)
+        if (flag != null) flaggedAccounts.add(flag)
+
+        val combatPenaltyMultiplier = if (queue.type == QueueType.OFFLINE_COMBAT) 0.8 else 1.0
+        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed)
+        val penalizedEffectiveMillis = (effectiveElapsed.toMillis() * combatPenaltyMultiplier).toLong()
+        val finalEffectiveElapsed = Duration.ofMillis(penalizedEffectiveMillis)
+
+        var actionsCompleted = 0
+        var queueExhausted = false
+
+        when (queue) {
+            is ActiveQueue.SkillingQueue -> {
+                actionsCompleted = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+            }
+            is ActiveQueue.CraftingQueue -> {
+                var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+                if (queue.targetQuantity != null) {
+                    val remaining = queue.targetQuantity - queue.quantityCompleted
+                    possibleActions = possibleActions.coerceAtMost(remaining)
+                }
+                var completed = 0
+                for (i in 0 until possibleActions) {
+                    if (!materialCheck.hasMaterialsFor(characterId, queue.itemId)) {
+                        queueExhausted = true
+                        break
+                    }
+                    completed++
+                }
+                queue.quantityCompleted += completed
+                actionsCompleted = completed
+                if (queue.isTargetReached()) queueExhausted = true
+            }
+            is ActiveQueue.OfflineCombatQueue -> {
+                actionsCompleted = 0
+            }
+        }
+
+        if (queueExhausted) {
+            activeQueues.remove(characterId)
+        }
+
+        return ServiceResult.Success(
+            OfflineResolution(
+                characterId = characterId,
+                queueType = queue.type,
+                claimedElapsed = claimedElapsed,
+                cappedElapsed = cappedElapsed,
+                effectiveElapsed = finalEffectiveElapsed,
+                actionsCompleted = actionsCompleted,
+                wasFlagged = flag != null,
+                queueExhausted = queueExhausted
+            )
+        )
+    }
+
+    fun estimatedTimeUntilExhausted(characterId: String): Duration? {
+        val queue = activeQueues[characterId] as? ActiveQueue.CraftingQueue ?: return null
+        val target = queue.targetQuantity ?: return null
+        val remaining = target - queue.quantityCompleted
+        if (remaining <= 0) return Duration.ZERO
+        return Duration.ofSeconds(remaining * queue.secondsPerAction)
+    }
+
+    fun allFlaggedAccounts(): List<OfflineFlagRecord> = flaggedAccounts.toList()
+
+    fun exportSkillingQueues(): List<SkillingQueueExport> =
+        activeQueues.values.filterIsInstance<ActiveQueue.SkillingQueue>().map {
+            SkillingQueueExport(it.characterId, it.skillId, it.itemId, it.secondsPerAction, it.startedAt.toString())
+        }
+
+    fun exportCraftingQueues(): List<CraftingQueueExport> =
+        activeQueues.values.filterIsInstance<ActiveQueue.CraftingQueue>().map {
+            CraftingQueueExport(
+                it.characterId,
+                it.itemId,
+                it.secondsPerAction,
+                it.targetQuantity,
+                it.quantityCompleted,
+                it.startedAt.toString()
+            )
+        }
+
+    fun exportLastSeen(): List<
+
+--- match end ---
+
+
+=== LastSeenExport data class (in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt) ===
+aftingQueueExport(
+    val characterId: String,
+    val itemId: String,
+    val secondsPerAction: Long,
+    val targetQuantity: Int?,
+    val quantityCompleted: Int,
+    val startedAt: String
+)
+
+data class LastSeenExport(val characterId: String, val lastSeenAt: String)
+
+data class LastSaleCheckExport(val characterId: String, val lastSaleCheckAt: String)
+
+// =========================================================
+// OFFLINE/IDLE SERVICE
+// =========================================================
+
+class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
+
+    private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
+    private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
+    private val lastSaleCheckAt: MutableMap<String, Instant> = mutableMapOf()
+    private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
+
+    fun startSkillingQueue(characterId: String, skillId: String, itemId: String, secondsPerAction: Long): ServiceResult<A
+
+--- match end ---
+
+
+=== lastSeen export/restore functions (in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt) ===
+ queue to stop.")
+        activeQueues.remove(characterId)
+        return ServiceResult.Success(Unit)
+    }
+
+    fun activeQueueFor(characterId: String): ActiveQueue? = activeQueues[characterId]
+
+    fun recordLastSeen(characterId: String, now: Instant = Instant.now()) {
+        lastSeenAt[characterId] = now
+    }
+
+    fun recordSaleCheck(characterId: String, now: Instant = Instant.now()) {
+        lastSaleCheckAt[characterId] = now
+    }
+
+    fun lastSaleCheckFor(characterId: String): Instant? = lastSaleCheckAt[characterId]
+
+    fun recordSaleCheckAt(characterId: String, serverTimestamp: String) {
+        lastSaleCheckAt[characterId] = java.time.OffsetDateTime.parse(serverTimestamp).toInstant()
+    }
+
+    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
+        val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
+        val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
+
+        val claimedElapsed = Duration.between(lastSeen, now)
+        if (claimedElapsed.isNegative) return ServiceResult.Failure("Invalid elapsed time (negative duration).")
+
+        val (cappedElapsed, flag) = OfflineSanityCheck.validate(characterId, claimedElapsed)
+        if (flag != null) flaggedAccounts.add(flag)
+
+        val combatPenaltyMultiplier = if (
+
+--- match end ---
+
+          it.itemId,
+                it.secondsPerAction,
+                it.targetQuantity,
+                it.quantityCompleted,
+                it.startedAt.toString()
+            )
+        }
+
+    fun exportLastSeen(): List<LastSeenExport> =
+        lastSeenAt.map { (characterId, instant) -> LastSeenExport(characterId, instant.toString()) }
+
+    fun exportLastSaleCheck(): List<LastSaleCheckExport> =
+        lastSaleCheckAt.map { (characterId, instant) -> LastSaleCheckExport(characterId, instant.toString()) }
+
+    fun restoreSkillingQueue(export: SkillingQueueExport) {
+        activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
+            characterId = export.characterId,
+            skillId = export.skillId,
+            itemId = export.itemId,
+            secondsPerAction = export.secondsPerAction,
+            startedAt = Instant.parse(export.startedAt)
+        )
+    }
+
+    fun restoreCraftingQueue(export: CraftingQueueExport) {
+        val queue = ActiveQueue.CraftingQueue(
+            characterId = export.characterId,
+            itemId = export.itemId,
+            secondsPerAction = export.secondsPerAction,
+            targetQuantity = export.targetQuantity,
+            startedAt = Instant.parse(export.startedAt)
+        )
+        queue.quantityCompleted = export.quantityCompleted
+        activeQueues[export.characterId] = queue
+    }
+
+    fun restoreLastSeen(export: LastSeenExp
+
+--- match end ---
+
+argetQuantity,
+            startedAt = Instant.parse(export.startedAt)
+        )
+        queue.quantityCompleted = export.quantityCompleted
+        activeQueues[export.characterId] = queue
+    }
+
+    fun restoreLastSeen(export: LastSeenExport) {
+        lastSeenAt[export.characterId] = Instant.parse(export.lastSeenAt)
+    }
+
+    fun restoreLastSaleCheck(export: LastSaleCheckExport) {
+        lastSaleCheckAt[export.characterId] = Instant.parse(export.lastSaleCheckAt)
+    }
 }
 
---- end (6951 chars, 209 lines) ---
 
-====================================================================================================
-enterCombatZone / leaveCombatZone full functions in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
-====================================================================================================
+--- match end ---
 
---- match #1 at offset 22679 ---
-value = state.currentHp to state.maxHp
+
+=== combatPenaltyMultiplier usage (in app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt) ===
+alid elapsed time (negative duration).")
+
+        val (cappedElapsed, flag) = OfflineSanityCheck.validate(characterId, claimedElapsed)
+        if (flag != null) flaggedAccounts.add(flag)
+
+        val combatPenaltyMultiplier = if (queue.type == QueueType.OFFLINE_COMBAT) 0.8 else 1.0
+        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed)
+        val penalizedEffectiveMillis = (effectiveElapsed.toMillis() * combatPenaltyMultiplier).toLong()
+        val finalEffectiveElapsed = Duration.ofMillis(penalizedEffectiveMillis)
+
+        var actionsCompleted = 0
+        var queueExhausted = false
+
+        when (queue) {
+            is ActiveQueue.SkillingQueue -> {
+                actionsCompleted = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+            }
+            is ActiveQueue.CraftingQueue -> {
+                var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+                if (queue.targetQuantity != null) {
+                
+
+--- match end ---
+
+e == QueueType.OFFLINE_COMBAT) 0.8 else 1.0
+        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed)
+        val penalizedEffectiveMillis = (effectiveElapsed.toMillis() * combatPenaltyMultiplier).toLong()
+        val finalEffectiveElapsed = Duration.ofMillis(penalizedEffectiveMillis)
+
+        var actionsCompleted = 0
+        var queueExhausted = false
+
+        when (queue) {
+            is ActiveQueue.SkillingQueue -> {
+                actionsCompleted = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+            }
+            is ActiveQueue.CraftingQueue -> {
+                var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+                if (queue.targetQuantity != null) {
+                    val remaining = queue.targetQuantity - queue.quantityCompleted
+                    possibleActions = possibleActions.coerceAtMost(remaining)
+                }
+                var completed = 0
+                for (i in 0 until possible
+
+--- match end ---
+
+
+=== CharacterCombatState: FILE NOT FOUND ===
+
+
+=== rollLoot(): FILE NOT FOUND ===
+
+
+=== pendingCoins/collectCoins: FILE NOT FOUND ===
+
+
+=== CoinDropTable.rollCoins (in app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt) ===
+maxHp: Int,
+    val recovery: RecoveryStatus = RecoveryStatus(),
+    var session: CombatSession? = null,
+    val lootPool: MutableList<LootEntry> = mutableListOf(),
+    var pendingCoins: Long = 0L
+)
+
+object CoinDropTable {
+    fun rollCoins(monsterLevel: Int): Long {
+        val base = (monsterLevel * 3).coerceAtLeast(1)
+        val variance = (base * 0.4).toInt().coerceAtLeast(1)
+        val roll = base - (variance / 2) + Random.nextInt(variance + 1)
+        return roll.toLong().coerceAtLeast(1L)
+    }
+}
+
+data class AttackResult(
+    val didHit: Boolean,
+    val damageDealt: Int,
+    val monsterHpRemaining: Int,
+    val monsterDefeated: Boolean
+)
+
+class CombatService {
+    private val recoveryDuration: Duration = Duration.ofSeconds(600)
+    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()
+
+    fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
+        states.getOrPut(characterId) { CharacterCombatState(currentHp = maxHp, maxHp = maxHp) }
+
+    // trainingSkillLevel must be the level of whichever SkillType the character
+    // currently has selected to train (loadout.trainingSkill) - NOT a blended
+    // "character level". Each combat skill unlocks zones independently.
+    fun enterZone(characterId: String, zoneId: String, trainingSkillLevel: Int): ServiceResult<CombatSession> {
+        val state = stateFor(characterId)
+        if (state.recover
+
+--- match end ---
+
+y: RecoveryStatus = RecoveryStatus(),
+    var session: CombatSession? = null,
+    val lootPool: MutableList<LootEntry> = mutableListOf(),
+    var pendingCoins: Long = 0L
+)
+
+object CoinDropTable {
+    fun rollCoins(monsterLevel: Int): Long {
+        val base = (monsterLevel * 3).coerceAtLeast(1)
+        val variance = (base * 0.4).toInt().coerceAtLeast(1)
+        val roll = base - (variance / 2) + Random.nextInt(variance + 1)
+        return roll.toLong().coerceAtLeast(1L)
+    }
+}
+
+data class AttackResult(
+    val didHit: Boolean,
+    val damageDealt: Int,
+    val monsterHpRemaining: Int,
+    val monsterDefeated: Boolean
+)
+
+class CombatService {
+    private val recoveryDuration: Duration = Duration.ofSeconds(600)
+    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()
+
+    fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
+        states.getOrPut(characterId) { CharacterCombatState(currentHp = maxHp, maxHp = maxHp) }
+
+    // trainingSkillLevel must be the level of whichever SkillType the character
+    // currently has selected to train (loadout.trainingSkill) - NOT a blended
+    // "character level". Each combat skill unlocks zones independently.
+    fun enterZone(characterId: String, zoneId: String, trainingSkillLevel: Int): ServiceResult<CombatSession> {
+        val state = stateFor(characterId)
+        if (state.recovery.isRecovering()) {
+
+
+--- match end ---
+
+
+=== tickCombat() (in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt) ===
+             .map { (itemId, qty) -> SessionDropEntry(ItemCatalog.find(itemId)?.name ?: formatItemName(itemId), qty) }
+                .sortedByDescending { it.quantity }
+        )
+    }
+
+    private fun tickCombat() {
+        val characterId = _currentCharacterId.value ?: return
+        val state = combatService.stateFor(characterId, maxHpFor(characterId))
+
+        if (state.recovery.isRecovering()) {
+            refreshCombatHp()
+            return
+        }
+        if (combatService.resolveRecoveryIfReady(characterId) is ServiceResult.Success) {
+            refreshCombatHp()
+        }
+
+        val session = state.session ?: return
+
+        if (session.state == SessionState.SEARCHING) {
+            val result = combatService.resolveSearchIfReady(characterId)
+            if (result is ServiceResult.Success) {
+                combatLogFor.getOrPut(characterId) { mutableListOf() }
+                    .add(CombatLogEntry(result.value.name + " appears!"))
+            }
+            refreshCombatView()
+            return
+        }
+
+        if (session.state != SessionState.IN_COMBAT) return
+
+        val weapon = equippedWeapon(characterId)
+        val trainingSkill = _trainingSkill.value
+        val accuracy: Int
+        val maxHit: Int
+        when (weapon?.style) {
+            CombatStyle.MAGIC -> {
+                val magicLevel = skillLevel(characterId, SkillType.MAGIC)
+                accuracy = magicLevel * 2 + weapon.baseAccuracy
+                maxHit = (magicLevel / 3) + weapon.baseMaxHit
+            }
+            CombatStyle.RANGED -> {
+                val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
+                accuracy = archeryLevel * 2 + weapon.baseAccuracy
+                maxHit = (archeryLevel / 3) + weapon.baseMaxHit
+            }
+            else -> {
+                val attackLevel = skillLevel(characterId, SkillType.ATTACK)
+                val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
+                accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
+                maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
+            }
+        }
+
+        val loadout = CombatLoadout(
+            style = weapon?.style ?: C
+
+--- match end ---
+
+
+=== zone entry/exit functions (in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt) ===
+al characterId = _currentCharacterId.value ?: return
+        val state = combatService.stateFor(characterId, maxHpFor(characterId))
+        _combatHp.value = state.currentHp to state.maxHp
     }
 
     fun enterCombatZone(zoneId: String): ServiceResult<CombatSession> {
@@ -237,22 +749,8 @@ value = state.currentHp to state.maxHp
                 clear()
                 add(CombatLogEntry("Entered " + result.value.zone.name + "."))
             }
+            sessionDropsFor.getOrPut(characterId) { mutableMapOf() }.clear()
             refreshCombatView()
-        }
-        return result
-    }
-
-    fun leaveCombatZone() {
-        val characterId = _currentCharacterId.value ?: return
-        combatService.leaveZone(characterId)
-        _combatViewData.value = null
-    }
-
-    private fun refreshCombatView() {
-        val characterId = _currentCharacterId.value ?: retur
-
---- match #2 at offset 23626 ---
-View()
         }
         return result
     }
@@ -278,189 +776,955 @@ View()
             viewState = if (session.state == SessionState.IN_COMBAT) CombatViewState.IN_COMBAT else CombatViewState.SEARCHING,
             searchEndsAt = session.searchEndsAt,
             monsterName = session.currentMonster?.name,
-            monsterCurrentHp = session.currentMonster?.let { session.currentMonsterHealth },
-            monsterMaxHp = session.currentMonster?.maxHealth,
-            playerCurrentHp = state.currentHp,
-            playerMaxHp = state.maxHp,
-            lastHitChancePercent = l
+            monsterCurrentHp = session.currentMonste
 
-total matches: 2
+--- match end ---
 
-====================================================================================================
-CombatViewData / combat log StateFlow declaration and population in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
-====================================================================================================
 
---- match #1 at offset 328 ---
-dlerpg.*
-import com.yourname.idlerpg.ui.screens.SkillSummary
-import com.yourname.idlerpg.ui.screens.CombatViewData
-import com.yourname.idlerpg.ui.screens.CombatViewState
-import com.yourname.idlerpg.ui.screens.CombatLogEntry
-import com.yourname.idlerpg.ui.screens.ZoneSummary
-import com.yourname.idlerpg.ui.screens.GuildHomeState
-import com.yourname.idlerpg.ui.screens.GuildLeaderboardEntry
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.corouti
-
---- match #2 at offset 19985 ---
-teFlow<Int> = _trainingSkillLevel.asStateFlow()
-
-    private val _combatViewData = MutableStateFlow<CombatViewData?>(null)
-    val combatViewData: StateFlow<CombatViewData?> = _combatViewData.asStateFlow()
-
-    private val _combatHp = MutableStateFlow<Pair<Int, Int>?>(null)
-    val combatHp: StateFlow<Pair<Int, Int>?> = _combatHp.asStateFlow()
-
-    private var lastHitChancePercent: Double? = null
-    private var lastDamageDealt: Int? = null
-    private val combatLogFor: MutableMap<String, MutableList<CombatLogEntry>> = mutableMapOf()
-
-    val zoneSummaries: List<ZoneSummary>
-        get() = ZoneCatalog.zone
-
---- match #3 at offset 20042 ---
-ate val _combatViewData = MutableStateFlow<CombatViewData?>(null)
-    val combatViewData: StateFlow<CombatViewData?> = _combatViewData.asStateFlow()
-
-    private val _combatHp = MutableStateFlow<Pair<Int, Int>?>(null)
-    val combatHp: StateFlow<Pair<Int, Int>?> = _combatHp.asStateFlow()
-
-    private var lastHitChancePercent: Double? = null
-    private var lastDamageDealt: Int? = null
-    private val combatLogFor: MutableMap<String, MutableList<CombatLogEntry>> = mutableMapOf()
-
-    val zoneSummaries: List<ZoneSummary>
-        get() = ZoneCatalog.zones.sortedBy { it.levelRequirement }.map { zone ->
-        
-
---- match #4 at offset 20346 ---
-r lastHitChancePercent: Double? = null
-    private var lastDamageDealt: Int? = null
-    private val combatLogFor: MutableMap<String, MutableList<CombatLogEntry>> = mutableMapOf()
-
-    val zoneSummaries: List<ZoneSummary>
-        get() = ZoneCatalog.zones.sortedBy { it.levelRequirement }.map { zone ->
-            ZoneSummary(
-                zoneId = zone.id,
-                name = zone.name,
-                levelRequirement = zone.levelRequirement,
-                monsterNames = zone.monsters.map { it.name }
-            )
-        }
-
-    val allowedTrainingSkills: List<SkillType>
-        get() {
-       
-
---- match #5 at offset 23371 ---
-evel(characterId, _trainingSkill.value))
-        if (result is ServiceResult.Success) {
-            combatLogFor.getOrPut(characterId) { mutableListOf() }.apply {
-                clear()
-                add(CombatLogEntry("Entered " + result.value.zone.name + "."))
+=== selectCharacter() (mismatch/recovery branch) (in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt) ===
+haracterId != null && json != null) {
+            viewModelScope.launch {
+                SupabaseCharacterRepository.uploadCharacterSave(supabaseCharacterId, json)
             }
-            refreshCombatView()
         }
+    }
+
+    fun selectCharacter(characterId: String) {
+        _currentCharacterId.value = characterId
+
+        val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
+        if (selectedCharacter != null) {
+            viewModelScope.launch {
+                val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+                result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
+                result.onSuccess { _characterSyncError.value = null }
+                _currentSupabaseCharacterId.value = result.getOrNull()
+                val supabaseCharacterId = result.getOrNull()
+                if (supabaseCharacterId != null) {
+                    val remoteLocalId = SupabaseCharacterRepository.getCharacterLocalId(supabaseCharacterId).getOrNull()
+                    if (remoteLocalId != null && remoteLocalId != characterId) {
+                        // The server returned an EXISTING character from a different
+                        // device/install, not the one just created locally - recover
+                        // its real save instead of keeping the throwaway new one.
+                        val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
+                        if (cloudJson != null) {
+                            repository.overwriteRawJson(cloudJson)
+                            val recovered = repository.load()
+                            if (recovered != null) {
+                                recovered.accounts.forEach { accountService.restoreAccount(it) }
+                                recovered.characters.forEach { accountService.restoreCharacter(it) }
+                                recovered.skills.forEach { progressionService.restoreSkill(it) }
+                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                _currentCharacterId.value = remoteLocalId
+                                val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+                                if (recoveredCharacter != null) {
+                                    _currentAccountId.value = recoveredCharacter.accountId
+                                }
+                                resolveOfflineRewardsAndSync(remoteLocalId)
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
+        }
+
+        resolveOfflineRewardsAndSync(characterId)
+    }
+
+    // Grants offline-progress rewards (skilling/crafting), records last-seen, and
+    // syncs currency/market state for the given character. Extracted so it can be
+    // re-run against a cloud-recovered character id after async recovery completes
+    // (see selectCharacter) - a throwaway local character's offline queue is never
+    // the "real" one in that scenario, so re-resolving against the recovered
+    // character's actual data is the correct behavior, not just a race-condition
+    // workaround.
+    private fun resolveOfflineRewardsAndSync(characterId: String) {
+        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+        if (queue != null) {
+            val result = offlineIdleService.resolveOfflineProgress(characterId)
+            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+                val skillType = SkillType.valueOf(queue.skillId)
+                val action = ActionCatalog.find(skillType, queue.itemId)
+                if (action != null) {
+                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+                    progressionService.grantXp(characterId, skillType, xpEarned)
+                    inventoryService.inventoryFor(characterId).ad
+
+--- match end ---
+
+
+=== attemptCloudRecoveryLogin() (in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt) ===
+
+            refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = false)
         return result
     }
+    return attemptCloudRecoveryLogin(email, password)
+}
 
-    fun leaveCombatZone() {
-        val characterId = _currentCharacterId.value ?: return
-        combatService.leaveZone(characterId)
-        _combatViewData.value = null
+private suspend fun attemptCloudRecoveryLogin(email: String, password: String): ServiceResult<Account> {
+    try {
+        SupabaseClientProvider.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+            this.email = email
+            this.password = password
+        }
+    } catch (e: Exception) {
+        return ServiceResult.Failure("No local account found, and no matching cloud account either. (${e.message})")
     }
 
-    private fun refreshCombatView() {
-        val characterId = _currentCharact
+    val placeholderLocalId = java.util.UUID.randomUUID().toString()
+    val charResult = SupabaseCharacterRepository.getOrCreateCharacter(placeholderLocalId, "Recovered")
+    val supabaseCharacterId = charResult.getOrNull()
+        ?: return ServiceResult.Failure("Found a cloud account but couldn't sync a character to it.")
 
---- match #6 at offset 24192 ---
- == null) {
-            _combatViewData.value = null
-            return
-        }
-        val log = combatLogFor.getOrPut(characterId) { mutableListOf() }
-        _combatViewData.value = CombatViewData(
-            zoneName = session.zone.name,
-            viewState = if (session.state == SessionState.IN_COMBAT) CombatViewState.IN_COMBAT else CombatViewState.SEARCHING,
-            searchEndsAt = session.searchEndsAt,
-            monsterName = session.currentMonster?.name,
-            monsterCurrentHp = session.currentMonster?.let { session.currentMonsterHealth },
-            monsterMaxHp = session.curr
+    val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
+        ?: return ServiceResult.Failure("This account has no cloud backup saved yet - its local data can't be recovered.")
 
---- match #7 at offset 24279 ---
-   val log = combatLogFor.getOrPut(characterId) { mutableListOf() }
-        _combatViewData.value = CombatViewData(
-            zoneName = session.zone.name,
-            viewState = if (session.state == SessionState.IN_COMBAT) CombatViewState.IN_COMBAT else CombatViewState.SEARCHING,
-            searchEndsAt = session.searchEndsAt,
-            monsterName = session.currentMonster?.name,
-            monsterCurrentHp = session.currentMonster?.let { session.currentMonsterHealth },
-            monsterMaxHp = session.currentMonster?.maxHealth,
-            playerCurrentHp = state.currentHp,
-            playerMaxH
+    repository.overwriteRawJson(cloudJson)
+    val recovered = repository.load()
+        ?: return ServiceResult.Failure("Recovered cloud data was corrupted or empty.")
 
---- match #8 at offset 24926 ---
-HitChancePercent = lastHitChancePercent,
-            lastDamageDealt = lastDamageDealt,
-            combatLog = log
-        )
+    recovered.accounts.forEach { accountService.restoreAccount(it) }
+    recovered.characters.forEach { accountService.restoreCharacter(it) }
+    recovered.skills.forEach { progressionService.restoreSkill(it) }
+    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+    val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+        ?: return ServiceResult.Failure("Recovered account data but couldn't load it.")
+
+    sessionManager.saveSession(recoveredAccount.id)
+    _currentAccountId.value = recoveredAccount.id
+    refreshCurrency()
+    _currentSupabaseCharacterId.value = supabaseCharacterId
+    _characterSyncError.value = null
+
+    val recoveredCharacter = recovered.characters.firstOrNull { it.accountId == recoveredAccount.id }
+    if (recoveredCharacter != null) {
+        _currentCharacterId.value = recoveredCharacter.id
     }
 
-    private fun tickCombat() {
-        val characterId = _currentCharacterId.value ?: return
-        val state = combatService.stateFor(characterId, maxHpFor(characterId))
+    return ServiceResult.Success(recoveredAccount)
+}
+  fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
+    val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
+            refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = true)
+    }
+    return result
+  }
+  fun tryAutoLogin(): Account? {
+    val accountId = sessionManager.getSavedAccountId() ?: return null
+    val account = accountService.accountById(accountId) ?: return null
+    _currentAccountId.value = account.id
+    refreshCurrency()
+    return account
+}
 
-        if (state.recovery.isRecovering()) {
-            refreshCombatHp()
-            return
-        }
-        if (combatService.resolveRecoveryIfReady(characterId) is ServiceResult.Success) {
-            refreshCombatHp()
-        }
+fun logout() {
+    sessionManager.clearSession()
+    _currentAccountId.value = null
+    _currentCharacterId.value = null
+}
 
-        val session = state.session ?: return
+    fun clearOfflineSummary() {
+        _offlineSummary.value = null
+    }
 
-        if (session.s
+    fun dismissSaleNotification() {
+        _pendingSaleNotifications.value = _pendingSaleNotifications.value.drop(1)
+    }
 
---- match #9 at offset 25609 ---
-esolveSearchIfReady(characterId)
-            if (result is ServiceResult.Success) {
-                combatLogFor.getOrPut(characterId) { mutableListOf() }
-                    .add(CombatLogEntry(result.value.name + " appears!"))
+    private fun checkForRecentSales(characterId: String) {
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val since = offlineIdleService.lastSaleCheckFor(characterId)?.toString()
+            ?: Instant.now().minusSeconds(86400).toString()
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.myRecentSales(supabaseCharacterId, since)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
             }
-            refreshCombatView()
-            return
+            result.onSuccess { rows ->
+                if (rows.isNotEmpty()) {
+                    val notifications = rows.map { row ->
+                        val netProceeds = (row.pricePerUnit * row.quantity) - row.taxCollected
+                        SaleNotification(
+                            itemName = ItemCatalog.find(row.itemId)?.name ?: formatItemName(row.itemId),
+                            quantity =
+
+--- match end ---
+
+
+=== restore forEach call sites (in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt) ===
+per.onCleared()
+    saveGame()
+}
+    private var hasLoaded = false
+
+    fun loadGame() {
+        if (hasLoaded) return
+        hasLoaded = true
+        val saved = repository.load() ?: return
+        saved.accounts.forEach { accountService.restoreAccount(it) }
+        saved.characters.forEach { accountService.restoreCharacter(it) }
+        saved.skills.forEach { progressionService.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.r
+
+--- match end ---
+
+   fun loadGame() {
+        if (hasLoaded) return
+        hasLoaded = true
+        val saved = repository.load() ?: return
+        saved.accounts.forEach { accountService.restoreAccount(it) }
+        saved.characters.forEach { accountService.restoreCharacter(it) }
+        saved.skills.forEach { progressionService.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.
+
+--- match end ---
+
+e
+        val saved = repository.load() ?: return
+        saved.accounts.forEach { accountService.restoreAccount(it) }
+        saved.characters.forEach { accountService.restoreCharacter(it) }
+        saved.skills.forEach { progressionService.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketS
+
+--- match end ---
+
+nts.forEach { accountService.restoreAccount(it) }
+        saved.characters.forEach { accountService.restoreCharacter(it) }
+        saved.skills.forEach { progressionService.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, 
+
+--- match end ---
+
+accountService.restoreCharacter(it) }
+        saved.skills.forEach { progressionService.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(ema
+
+--- match end ---
+
+ce.restoreSkill(it) }
+        saved.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager
+
+--- match end ---
+
+rvice.restoreSkillingQueue(it) }
+        saved.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.valu
+
+--- match end ---
+
+ervice.restoreCraftingQueue(it) }
+        saved.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
+            refreshCurrency()
+            syncSupabaseAuth(email, password, isNe
+
+--- match end ---
+
+IdleService.restoreLastSeen(it) }
+        saved.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
+            refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = false)
+        return result
+    }
+    return attemptCloudReco
+
+--- match end ---
+
+neIdleService.restoreLastSaleCheck(it) }
+        saved.inventoryItems.forEach { inventoryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
+            refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = false)
+        return result
+    }
+    return attemptCloudRecoveryLogin(email, password)
+}
+
+private suspend fun attemptCloudRecoveryLogin(ema
+
+--- match end ---
+
+oryService.restoreItem(it) }
+        saved.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
+            refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = false)
+        return result
+    }
+    return attemptCloudRecoveryLogin(email, password)
+}
+
+private suspend fun attemptCloudRecoveryLogin(email: String, password: String): ServiceResult<Account> {
+    try {
+        SupabaseCli
+
+--- match end ---
+
+ryService.restoreEquipped(it) }
+        saved.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
+            refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = false)
+        return result
+    }
+    return attemptCloudRecoveryLogin(email, password)
+}
+
+private suspend fun attemptCloudRecoveryLogin(email: String, password: String): ServiceResult<Account> {
+    try {
+        SupabaseClientProvider.client.auth.signInWith(io.github.jan.supabase.auth.providers
+
+--- match end ---
+
+{ inventoryService.restoreLoadoutSettings(it) }
+        saved.marketAccounts.forEach { marketService.restoreAccount(it) }
+        saved.marketOrders.forEach { marketService.restoreOrder(it) }
+        saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+    }
+suspend fun login(email: String, password: String): ServiceResult<Account> {
+    val result = accountService.login(email, password)
+    if (result is ServiceResult.Success) {
+        sessionManager.saveSession(result.value.id)
+            _currentAccountId.value = result.value.id
+            refreshCurrency()
+            syncSupabaseAuth(email, password, isNewAccount = false)
+        return result
+    }
+    return attemptCloudRecoveryLogin(email, password)
+}
+
+private suspend fun attemptCloudRecoveryLogin(email: String, password: String): ServiceResult<Account> {
+    try {
+        SupabaseClientProvider.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
+            this.email = email
+            this.password =
+
+--- match end ---
+
+ta can't be recovered.")
+
+    repository.overwriteRawJson(cloudJson)
+    val recovered = repository.load()
+        ?: return ServiceResult.Failure("Recovered cloud data was corrupted or empty.")
+
+    recovered.accounts.forEach { accountService.restoreAccount(it) }
+    recovered.characters.forEach { accountService.restoreCharacter(it) }
+    recovered.skills.forEach { progressionService.restoreSkill(it) }
+    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.r
+
+--- match end ---
+
+    val recovered = repository.load()
+        ?: return ServiceResult.Failure("Recovered cloud data was corrupted or empty.")
+
+    recovered.accounts.forEach { accountService.restoreAccount(it) }
+    recovered.characters.forEach { accountService.restoreCharacter(it) }
+    recovered.skills.forEach { progressionService.restoreSkill(it) }
+    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.
+
+--- match end ---
+
+lure("Recovered cloud data was corrupted or empty.")
+
+    recovered.accounts.forEach { accountService.restoreAccount(it) }
+    recovered.characters.forEach { accountService.restoreCharacter(it) }
+    recovered.skills.forEach { progressionService.restoreSkill(it) }
+    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketS
+
+--- match end ---
+
+ccounts.forEach { accountService.restoreAccount(it) }
+    recovered.characters.forEach { accountService.restoreCharacter(it) }
+    recovered.skills.forEach { progressionService.restoreSkill(it) }
+    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recov
+
+--- match end ---
+
+h { accountService.restoreCharacter(it) }
+    recovered.skills.forEach { progressionService.restoreSkill(it) }
+    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: re
+
+--- match end ---
+
+ervice.restoreSkill(it) }
+    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this 
+
+--- match end ---
+
+leService.restoreSkillingQueue(it) }
+    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+    val recoveredAccount = accountService.accountById(recoveredAccount
+
+--- match end ---
+
+dleService.restoreCraftingQueue(it) }
+    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+    val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+        ?: return ServiceResult.Failure("Recovered account data but couldn
+
+--- match end ---
+
+lineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+    val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+        ?: return ServiceResult.Failure("Recovered account data but couldn't load it.")
+
+    sessionManager.saveSession(recoveredAccount.id)
+    _c
+
+--- match end ---
+
+fflineIdleService.restoreLastSaleCheck(it) }
+    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+    val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+        ?: return ServiceResult.Failure("Recovered account data but couldn't load it.")
+
+    sessionManager.saveSession(recoveredAccount.id)
+    _currentAccountId.value = recoveredAccount.id
+    refreshCurrency()
+    _currentS
+
+--- match end ---
+
+ventoryService.restoreItem(it) }
+    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+    val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+        ?: return ServiceResult.Failure("Recovered account data but couldn't load it.")
+
+    sessionManager.saveSession(recoveredAccount.id)
+    _currentAccountId.value = recoveredAccount.id
+    refreshCurrency()
+    _currentSupabaseCharacterId.value = supabaseCharacterId
+    _characterSyncError.value = null
+
+
+
+--- match end ---
+
+entoryService.restoreEquipped(it) }
+    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+    val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+        ?: return ServiceResult.Failure("Recovered account data but couldn't load it.")
+
+    sessionManager.saveSession(recoveredAccount.id)
+    _currentAccountId.value = recoveredAccount.id
+    refreshCurrency()
+    _currentSupabaseCharacterId.value = supabaseCharacterId
+    _characterSyncError.value = null
+
+    val recoveredCharacter = recovered.characters.firstOrNull { it.accou
+
+--- match end ---
+
+ach { inventoryService.restoreLoadoutSettings(it) }
+    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+
+    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
+        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
+    val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
+        ?: return ServiceResult.Failure("Recovered account data but couldn't load it.")
+
+    sessionManager.saveSession(recoveredAccount.id)
+    _currentAccountId.value = recoveredAccount.id
+    refreshCurrency()
+    _currentSupabaseCharacterId.value = supabaseCharacterId
+    _characterSyncError.value = null
+
+    val recoveredCharacter = recovered.characters.firstOrNull { it.accountId == recoveredAccount.id }
+    if (recoveredCharacter != null) {
+        
+
+--- match end ---
+
+              repository.overwriteRawJson(cloudJson)
+                            val recovered = repository.load()
+                            if (recovered != null) {
+                                recovered.accounts.forEach { accountService.restoreAccount(it) }
+                                recovered.characters.forEach { accountService.restoreCharacter(it) }
+                                recovered.skills.forEach { progressionService.restoreSkill(it) }
+                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                     
+
+--- match end ---
+
+repository.load()
+                            if (recovered != null) {
+                                recovered.accounts.forEach { accountService.restoreAccount(it) }
+                                recovered.characters.forEach { accountService.restoreCharacter(it) }
+                                recovered.skills.forEach { progressionService.restoreSkill(it) }
+                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+               
+
+--- match end ---
+
+  recovered.accounts.forEach { accountService.restoreAccount(it) }
+                                recovered.characters.forEach { accountService.restoreCharacter(it) }
+                                recovered.skills.forEach { progressionService.restoreSkill(it) }
+                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) 
+
+--- match end ---
+
+  recovered.characters.forEach { accountService.restoreCharacter(it) }
+                                recovered.skills.forEach { progressionService.restoreSkill(it) }
+                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+ 
+
+--- match end ---
+
+skills.forEach { progressionService.restoreSkill(it) }
+                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                
+
+--- match end ---
+
+orEach { offlineIdleService.restoreSkillingQueue(it) }
+                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+       
+
+--- match end ---
+
+ingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
+                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                _currentCharacterId.value = remoteLocalId
+                                val reco
+
+--- match end ---
+
+Seen.forEach { offlineIdleService.restoreLastSeen(it) }
+                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                _currentCharacterId.value = remoteLocalId
+                                val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+                                if (
+
+--- match end ---
+
+SaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
+                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                _currentCharacterId.value = remoteLocalId
+                                val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+                                if (recoveredCharacter != null) {
+                                    _currentAccountId.value = recovered
+
+--- match end ---
+
+ed.inventoryItems.forEach { inventoryService.restoreItem(it) }
+                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                _currentCharacterId.value = remoteLocalId
+                                val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+                                if (recoveredCharacter != null) {
+                                    _currentAccountId.value = recoveredCharacter.accountId
+                                }
+                                resolveOfflineRewards
+
+--- match end ---
+
+lots.forEach { inventoryService.restoreEquipped(it) }
+                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                _currentCharacterId.value = remoteLocalId
+                                val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+                                if (recoveredCharacter != null) {
+                                    _currentAccountId.value = recoveredCharacter.accountId
+                                }
+                                resolveOfflineRewardsAndSync(remoteLocalId)
+                            }
+                        }
+                    }
+            
+
+--- match end ---
+
+tSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
+                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                _currentCharacterId.value = remoteLocalId
+                                val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+                                if (recoveredCharacter != null) {
+                                    _currentAccountId.value = recoveredCharacter.accountId
+                                }
+                                resolveOfflineRewardsAndSync(remoteLocalId)
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            _characterSyncError.value = "selectedCharacter was 
+
+--- match end ---
+
+recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
+                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
+                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
+                                _currentCharacterId.value = remoteLocalId
+                                val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
+                                if (recoveredCharacter != null) {
+                                    _currentAccountId.value = recoveredCharacter.accountId
+                                }
+                                resolveOfflineRewardsAndSync(remoteLocalId)
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
         }
 
-        if (session.state != SessionState.IN_COMBAT) return
+        resolveOffline
 
-        val weapon = equippedWeapon(characterId)
-        val trainingSkill = _trainingSkill.value
-        val accuracy: Int
-        val maxHit: Int
-        when (weapon?.style) {
-            CombatStyle.MAGIC -> {
-                val magicLeve
+--- match end ---
 
---- match #10 at offset 27450 ---
- val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit)
-        val log = combatLogFor.getOrPut(characterId) { mutableListOf() }
 
-        if (result is ServiceResult.Success) {
-            val attack = result.value
-            val monsterDefense = session.currentMonster?.defenseRating ?: 1
-            lastHitChancePercent = (accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0
-            lastDamageDealt = attack.damageDealt
-
-            if (attack.didHit) {
+=== combat XP-per-hit formula (in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt) ===
+   if (attack.didHit) {
                 log.add(CombatLogEntry("You hit for " + attack.damageDealt + "."))
-                val xpGrant = p
+                val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong())
+                if (xpGrant is ServiceResult.Success) refreshSkills()
+            } else {
+                log.add(CombatLogEntry("You missed."))
+            }
 
-total matches: 10
+            if (attack.monsterDefeated) {
+                val defeatedName = session.currentMonster?.name ?: "the enemy"
+                log.add(CombatLogEntry("Defeated " + defeatedName + "!"))
+                val loot = combatService.collectLoot(characterId)
+                if (loot is ServiceResult.Success && loot.value.isNotEmpty()) {
+                    loot.value.forEach { entry ->
+                        inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty)
+                        sessionDropsFor.getOrPut(characterId) { mutableMapOf() }.merge(entry.itemId, entry.minQty, Int::plus)
+   
+
+--- match end ---
 
 
-DONE
+=== combat_grant_coins RPC call site (in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt) ===
+NO MATCHES FOUND
