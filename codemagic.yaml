@@ -19,6 +19,7 @@ workflows:
           ./gradlew assembleDebug --build-cache
     artifacts:
       - app/build/outputs/apk/debug/*.apk
+   
       discovery:
     name: Discovery Script
     max_build_duration: 10
