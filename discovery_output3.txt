@@ -1,28 +1,490 @@
 
-================================================================================
-GameViewModel.kt - sellItemToVendor full
-================================================================================
- 1342:     }
- 1343: 
- 1344:     fun sellItemToVendor(itemId: String, quantity: Int) {
- 1345:         val characterId = _currentCharacterId.value ?: return
- 1346:         val realInventory = inventoryService.inventoryFor(characterId)
- 1347:         if (realInventory.quantityOf(itemId) < quantity) return
- 1348:         val payoutPerUnit = ((ItemCatalog.baseValueFor(itemId) * 40.0) / 100.0).toLong()
- 1349: 
- 1350:         realInventory.removeItem(itemId, quantity)
- 1351:         refreshInventory()
- 1352: 
- 1353:         viewModelScope.launch {
- 1354:             val result = SupabaseMarketRepository.sellToVendor(characterId, itemId, quantity, payoutPerUnit)
- 1355:             result.onFailure {
- 1356:                 realInventory.addItem(itemId, quantity)
- 1357:                 refreshInventory()
- 1358:             }
- 1359:             result.onSuccess {
- 1360:                 refreshCurrency()
- 1361:             }
- 1362:         }
- 1363:     }
- 1364: }
- 1365: 
+=== REPO-WIDE: grantCombatCoins call sites (not just definition) ===
+-- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt --
+aracterId)
+                if (coinsEarned > 0) {
+                    log.add(CombatLogEntry("Found " + coinsEarned + " coins."))
+                    grantCombatCoins(characterId, coinsEarned)
+                }
+            }
+
+            // Monsters don't have a dedicated offensive stat yet, so their counter-attack uses a flat
+            // hit chance with damage scaled off defenseRating as a stand-in. Placeholder, same spirit
+            // as the maxHp formula above - safe to retune once real monster balance is worked out.
+            val monster = session.c
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt --
+tedPotionId, inv.potionTimerRemainingSeconds,
+            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
+        )
+    }
+
+    private fun grantCombatCoins(characterId: String, amount: Long) {
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.grantCombatCoins(supabaseCharacterId, amount)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+            }
+            result.onSuccess {
+          
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt --
+l supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.grantCombatCoins(supabaseCharacterId, amount)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+            }
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+            }
+        }
+    }
+
+    fun equipItem(itemId: String): ServiceResult<Unit> {
+        val characterId = _currentCharacterId.value ?:
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt --
+temId)
+            put("p_quantity", quantity)
+            put("p_payout_per_unit", payoutPerUnit)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun grantCombatCoins(characterId: String, amount: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("combat_grant_coins", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun myRecentSales(characterId: String, since: String): Result<List<MarketSaleRow>> = runCatching {
+        client.postgrest.rpc("market_
+--- match end ---
+
+
+=== REPO-WIDE: CharacterCombatState full definition ===
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+isRecovering(now: Instant = Instant.now()): Boolean {
+        val until = recoveringUntil ?: return false
+        return now.isBefore(until)
+    }
+}
+
+class CharacterCombatState(
+    var currentHp: Int,
+    var maxHp: Int,
+    val recovery: RecoveryStatus = RecoveryStatus(),
+    var session: CombatSession? = null,
+    val lootPool: MutableList<LootEntry> = mutableListOf(),
+    var pendingCoins: Long = 0L
+)
+
+object CoinDropTable {
+    fun rollCoins(monsterLevel: Int): Long {
+        val base = (monsterLevel * 3).coerceAtLeast(1)
+        val variance = (base * 0.4).toInt().coerceAtLeast(1)
+        val roll = base - (variance / 2) + Random.nextInt(variance + 1)
+        re
+--- match end ---
+
+
+=== REPO-WIDE: CombatSession full definition ===
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+ll: Spell?,
+    val autoHealThresholdPercent: Int,
+    val autoFleeThresholdPercent: Int
+)
+
+enum class SessionState { SEARCHING, PAUSED, IN_COMBAT }
+
+class CombatSession(
+    val zone: Zone,
+    var state: SessionState = SessionState.SEARCHING,
+    var searchEndsAt: Instant? = null,
+    var currentMonster: Monster? = null,
+    var currentMonsterHealth: Int = 0
+)
+
+class RecoveryStatus {
+    var recoveringUntil: Instant? = null
+
+    fun isRecovering(now: Instant = Instant.now()): Boolean {
+        val until = recoveringUntil ?: return false
+        return now.isBefore(until)
+    }
+}
+
+class CharacterCombatState(
+    var currentHp: Int,
+    var maxHp: Int,
+    val 
+--- match end ---
+
+
+=== REPO-WIDE: RecoveryStatus full definition ===
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+te = SessionState.SEARCHING,
+    var searchEndsAt: Instant? = null,
+    var currentMonster: Monster? = null,
+    var currentMonsterHealth: Int = 0
+)
+
+class RecoveryStatus {
+    var recoveringUntil: Instant? = null
+
+    fun isRecovering(now: Instant = Instant.now()): Boolean {
+        val until = recoveringUntil ?: return false
+        return now.isBefore(until)
+    }
+}
+
+class CharacterCombatState(
+    var currentHp: Int,
+    var maxHp: Int,
+    val recovery: Recover
+--- match end ---
+
+
+=== REPO-WIDE: SessionState enum ===
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+Type,
+    val equippedWeapon: Weapon?,
+    val equippedSpell: Spell?,
+    val autoHealThresholdPercent: Int,
+    val autoFleeThresholdPercent: Int
+)
+
+enum class SessionState { SEARCHING, PAUSED, IN_COMBAT }
+
+class CombatSession(
+    val zone: Zone,
+    var state: SessionState = SessionState.SEARCHING,
+    var searchEndsAt: Instant? = null,
+    var currentMonster: Monster
+--- match end ---
+
+
+=== REPO-WIDE: Monster data class ===
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+illType.MAGIC, SkillType.DEFENSE)
+    }
+}
+
+data class LootEntry(val itemId: String, val minQty: Int, val maxQty: Int, val dropChancePercent: Double)
+
+data class Monster(
+    val id: String,
+    val name: String,
+    val levelRequirement: Int,
+    val maxHealth: Int,
+    val defenseRating: Int,
+    val mainLootTable: List<LootEntry>,
+    val rareLootTable: List<LootEntry>
+)
+
+data class Zone(
+    val id: String,
+    val name: String,
+    val levelRequirement: Int,
+    val monsters: List<Monster>
+)
+
+object ZoneCatalog {
+    val zones = listOf(
+        Zone(
+        
+--- match end ---
+
+
+=== REPO-WIDE: Zone data class ===
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+quirement: Int,
+    val maxHealth: Int,
+    val defenseRating: Int,
+    val mainLootTable: List<LootEntry>,
+    val rareLootTable: List<LootEntry>
+)
+
+data class Zone(
+    val id: String,
+    val name: String,
+    val levelRequirement: Int,
+    val monsters: List<Monster>
+)
+
+object ZoneCatalog {
+    val zones = listOf(
+        Zone(
+            id = "goblin_camp",
+            name = "Goblin Camp",
+            levelRequirement = 1,
+            monsters = listOf(
+ 
+--- match end ---
+
+
+=== REPO-WIDE: ZoneCatalog object ===
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+able: List<LootEntry>
+)
+
+data class Zone(
+    val id: String,
+    val name: String,
+    val levelRequirement: Int,
+    val monsters: List<Monster>
+)
+
+object ZoneCatalog {
+    val zones = listOf(
+        Zone(
+            id = "goblin_camp",
+            name = "Goblin Camp",
+            levelRequirement = 1,
+            monsters = listOf(
+                Monster(
+                    id = "goblin_grunt",
+                    name = "Goblin Grunt",
+                   
+--- match end ---
+
+
+=== REPO-WIDE: OfflineResolution data class ===
+-- app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt --
+=====================
+// RESULT TYPES
+// (ServiceResult now comes from SharedTypes.kt.)
+// =========================================================
+
+data class OfflineResolution(
+    val characterId: String,
+    val queueType: QueueType,
+    val claimedElapsed: Duration,
+    val cappedElapsed: Duration,
+    val effectiveElapsed: Duration,
+    val actionsCompleted: Int,
+    val wasFlagged: Boolean,
+    val queueExhausted: Boolean
+)
+
+data class SkillingQueueExport(
+    val c
+--- match end ---
+
+
+=== REPO-WIDE: resolveOfflineRewardsAndSync full body ===
+-- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt --
+nario, so re-resolving against the recovered
+    // character's actual data is the correct behavior, not just a race-condition
+    // workaround.
+    private fun resolveOfflineRewardsAndSync(characterId: String) {
+        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
+        if (queue != null) {
+            val result = offlineIdleService.resolveOfflineProgress(characterId)
+            if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
+                val skillType = SkillType.valueOf(queue.skillId)
+                val action = ActionCatalog.find(skillType, queue.itemId)
+                if (action != null) {
+                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
+                    progressionService.grantXp(characterId, skillType, xpEarned)
+                    inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
+                    if (skillType == SkillType.MINING) {
+                        MiningBonusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), result.value.actionsCompleted)
+                    }
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = result.value.claimedElapsed.seconds,
+                        skillActionName = action.displayName,
+                        itemName = formatItemName(queue.itemId),
+                        quantity = result.value.actionsCompleted,
+                        xpEarned = xpEarned
+                    )
+                }
+            }
+        }
+
+        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
+        if (craftingQueue != null) {
+            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+            if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
+                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
+                if (batch.xpGranted > 0) {
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = craftResult.value.claimedElapsed.seconds,
+                        skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
+                        itemName = formatItemName(craftingQueue.itemId),
+                        quantity = batch.itemsProduced,
+                        xpEarned = batch.xpGranted
+                    )
+                }
+            }
+        }
+
+        offlineIdleSe
+--- match end ---
+
+
+=== REPO-WIDE: GameStateRepository.save() full body incl JSON writing for lastSeen array ===
+NO MATCHES FOUND ANYWHERE IN REPO
+
+
+=== REPO-WIDE: GameStateRepository.load() full body ===
+-- app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt --
+storyArray.put(obj)
+        }
+        root.put("marketPriceHistory", marketPriceHistoryArray)
+
+        saveFile.writeText(root.toString())
+    }
+
+    fun load(): SavedGameState? {
+        if (!saveFile.exists()) return null
+
+        val root = JSONObject(saveFile.readText())
+
+        val accounts = mutableListOf<AccountExport>()
+        val accountsArray = root.optJSONArray("accounts") ?: JSONArray()
+        for (i in 0 until accountsArray.length()) {
+            val obj = accountsArray.getJSONObject(i)
+            accounts.add(
+                AccountExport(
+                    id = obj.getString("id"), email = obj.getString("email"),
+                    username = obj.getString("username"), passwordHash = obj.getString("passwordHash"),
+                    passwordSalt = obj.getString("passwordSalt"),
+                    createdAt = obj.getString("createdAt"), lastLoginAt = obj.getString("lastLoginAt"),
+                    ageBracket = obj.getString("ageBracket"), region = obj.getString("region"),
+                    isBanned = obj.getBoolean("isBanned"),
+                    banReason = if (obj.isNull("banReason")) null else obj.getString("banReason"),
+                    mutedUntil = if (obj.isNull("mutedUntil")) null else obj.getString("mutedUntil"),
+                    subscriptionTier = obj.getString("subscriptionTier"),
+                    premiumCurrency = obj.getLong("premiumCurrency")
+                )
+            )
+        }
+
+        val characters = mutableListOf<CharacterExport>()
+        val charactersArray = root.optJSONArray("characters") ?: JSONArray()
+        for (i in 0 until charactersArray.length()) {
+            val obj = charactersArray.getJSONObject(i)
+            characters.add(
+                CharacterExport(
+                    id = obj.getString("id"), accountId = obj.getString("accountId"),
+                    displayName = obj.getString("displayName"), avatarId = obj.getString("avatarId"),
+                    createdAt = obj.getString("createdAt"),
+                    displayNameLastChangedAt = obj.getString("displayNameLastChangedAt"),
+                    isMainCharacter = obj.getBoolean("isMainCharacter")
+                )
+            )
+        }
+
+        val skills = mutableListOf<SkillExport>()
+        val skillsArray = root.optJSONArray("skills") ?: JSONArray()
+        for (i in 0 until skillsArray.length()) {
+            val obj = skillsArray.getJSONObject(i)
+            skills.add(
+                SkillExport(
+                    characterId = obj.getString("characterId"),
+                    skillId = obj.getString("skillId"),
+                    xp = obj.getLong("xp")
+                )
+            )
+        }
+
+        val skillingQueues = mutableListOf<SkillingQueueExport>()
+        val queuesArray = root.optJSONArray("skillingQueues") ?: JSONArray()
+        for (i in 0 until queuesArray.length()) {
+            val obj = queuesArray.getJSONObject(i)
+            skillingQueues.add(
+                SkillingQueueExport(
+                    characterId = obj.getString("characterId"),
+                    skillId = obj.getString("skillId"),
+                    itemId = obj.getString("itemId"),
+                    secondsPerAction = obj.getLong("secondsPerAction"),
+                    startedAt = obj.getString("startedAt")
+                )
+            )
+        }
+
+        val craftingQueues = mutableListOf<CraftingQueueExport>()
+        val craftingQueuesArray = root.optJSONArray("craftingQueues") ?: JSONArray()
+        for (i in 0 until craftingQueuesArray.length()) {
+            val obj = craftingQueuesArray.getJSONObject(i)
+            craftingQueues.add(
+                CraftingQueueExport(
+                    characterId = obj.getString("characterId"),
+                    itemId = obj.getString("itemId"),
+                    secondsPerAction = obj.getLong("secondsPerAction"),
+                    targetQuantity = if (obj.isNull("targetQuantity")) null else obj.getInt("targetQuantity"),
+                    quantityCompleted = obj.getInt("quantityCompleted"),
+                    startedAt = obj.getString("startedAt")
+                )
+            )
+        }
+
+        val lastSeen = mutableListOf<LastSeenExport>()
+        val lastSeenArray = root.optJSONArray("lastSeen") ?: JSONArray()
+        for (i in 0 until lastSeenArray.length()) {
+            val obj = lastSeenArray.getJSONObject(i)
+            lastSeen.add(LastSeenExport(characterId = obj.getString("characterId"), lastSeenAt = obj.getString("lastSeenAt")))
+        }
+
+        val lastSaleCheck = mutableListOf<LastSaleCheckExport>()
+        val lastSaleCheckArray = root.optJSONArray("lastSaleCheck") ?: JSONArray()
+        for (i in 0 until lastSaleCheckArray.length()) {
+            val obj = lastSaleCheckArray.getJSONObject(i)
+            lastSaleCheck.add(LastSaleCheckExport(characterId = obj.getString("characterId"), lastSaleCheckAt = obj.getString("lastSaleCheckAt")))
+        }
+
+        val inventoryItems = mutableListOf<InventorySlotExport>()
+        val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
+        for (i in 0 until inventoryArray.length()) 
+--- match end ---
+
+
+=== REPO-WIDE: helper functions used by tickCombat (maxHpFor/equippedWeapon/skillLevel) ===
+-- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt --
+sts: base 100 + 5 per Defense level above 1.
+    // Same "reasonable placeholder, tune later" approach used for food/potion heal amounts.
+    private fun maxHpFor(characterId: String): Int {
+        val defenseLevel = LevelCurve.levelForXp(progressionService.skillBookFor(characterId).get(SkillType.DEFENSE).xp)
+        return 100 + (defenseLevel - 1) * 5
+    }
+
+    private fun equippedWeapon(characterId: String): Weapon? {
+        val itemId = _equippedItems.
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt --
+rve.levelForXp(progressionService.skillBookFor(characterId).get(SkillType.DEFENSE).xp)
+        return 100 + (defenseLevel - 1) * 5
+    }
+
+    private fun equippedWeapon(characterId: String): Weapon? {
+        val itemId = _equippedItems.value[EquipSlot.WEAPON] ?: return null
+        val def = ItemCatalog.items.find { it.id == itemId } ?: return null
+        val style = def.combatStyle ?: return null
+        return Weapon(
+            name = def.name,
+            s
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt --
+econds = 2.4,
+            baseAccuracy = 5 + def.stats.accuracyBonus,
+            baseMaxHit = 1 + def.stats.maxHitBonus
+        )
+    }
+
+    private fun skillLevel(characterId: String, skillType: SkillType): Int =
+        LevelCurve.levelForXp(progressionService.skillBookFor(characterId).get(skillType).xp)
+
+    fun setTrainingSkill(skillType: SkillType) {
+        _trainingSkill.value = skillType
+        val characterId = _currentCharacterId.value
+        _trai
+--- match end ---
