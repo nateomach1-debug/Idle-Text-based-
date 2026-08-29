@@ -1,5 +1,99 @@
-REPO-WIDE SEARCH FOR match_market_orders
+ORDER-FETCHING FUNCTION DISCOVERY
 
-!!! match_market_orders is NOT referenced in ANY .kt file in the repo !!!
+====================================================================================================
+myOrders / placeBuyOrder / placeSellOrder wrapper definitions in app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt
+====================================================================================================
+
+--- match #1 at offset 1299 ---
+client get() = SupabaseClientProvider.client
+
+    suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
+        client.postgrest.rpc("market_place_buy_order", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_price_per_unit", pricePerUnit)
+        }).decodeAs<MarketOrderRpcResult>()
+    }
+
+    suspend fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
+        client.postgrest.rpc("market_place_sell_order", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_price_per_unit", p
+
+--- match #2 at offset 1745 ---
+   }).decodeAs<MarketOrderRpcResult>()
+    }
+
+    suspend fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
+        client.postgrest.rpc("market_place_sell_order", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_price_per_unit", pricePerUnit)
+        }).decodeAs<MarketOrderRpcResult>()
+    }
+
+    suspend fun cancelOrder(orderId: String): Result<MarketCancelRpcResult> = runCatching {
+        client.postgrest.rpc("market_cancel_order", buildJsonObject {
+            put("p_order_id", orderId)
+        }).decodeAs<MarketCancelRpcResult>()
+    }
+
+    suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching 
+
+--- match #3 at offset 3857 ---
+tings").decodeList<MarketListingRow>()
+    }
+
+    suspend fun myOrders(characterId: String): Result<List<MarketOrderRow>> = runCatching {
+        client.postgrest.rpc("market_my_orders", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeList<MarketOrderRow>()
+    }
+
+    suspend fun buyFromVendor(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("market_buy_from_vendor", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_item_id", itemId)
+            put("p_quantity", quantity)
+            put("p_price_per_unit", pricePerUnit)
+        }).decodeAs<Long>()
+    }
+}
+
+
+total matches: 3
+
+====================================================================================================
+refreshMyOrders() full definition in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
+====================================================================================================
+
+--- match #1 at offset 62065 ---
+tDateTime.parse(createdAt).toInstant()
+    )
+
+    fun refreshMyOrders() {
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val orders = SupabaseMarketRepository.myOrders(characterId).getOrNull()?.map { it.toDomain() } ?: emptyList()
+            _myBuyOrders.value = orders.filter { it.side == OrderSide.BUY }
+            _mySellOrders.value = orders.filter { it.side == OrderSide.SELL }
+        }
+    }
+
+    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure { _marketActionError.value = it.message ?: it.toString() }
+            result.onSuccess { order ->
+         
+
+total matches: 1
+
 
 DONE
