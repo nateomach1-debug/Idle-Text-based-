@@ -1,233 +1,435 @@
 
-================================================================================
-GameViewModel.kt - characterSyncError occurrences
-================================================================================
-  168:     val currentSupabaseCharacterId: StateFlow<String?> = _currentSupabaseCharacterId.asStateFlow()
-  169: 
-  170:     private val _characterSyncError = MutableStateFlow<String?>(null)
-  171:     val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
-  172: 
-----------------------------------------
-  169: 
-  170:     private val _characterSyncError = MutableStateFlow<String?>(null)
-  171:     val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
-  172: 
-  173:     fun refreshGuildHome() {
-----------------------------------------
-  873:     refreshCurrency()
-  874:     _currentSupabaseCharacterId.value = supabaseCharacterId
-  875:     _characterSyncError.value = null
-  876: 
-  877:     val recoveredCharacter = recovered.characters.firstOrNull { it.accountId == recoveredAccount.id }
-----------------------------------------
-  940:             viewModelScope.launch {
-  941:                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
-  942:                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
-  943:                 result.onSuccess { _characterSyncError.value = null }
-  944:                 _currentSupabaseCharacterId.value = result.getOrNull()
-----------------------------------------
-  941:                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
-  942:                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
-  943:                 result.onSuccess { _characterSyncError.value = null }
-  944:                 _currentSupabaseCharacterId.value = result.getOrNull()
-  945:                 val supabaseCharacterId = result.getOrNull()
-----------------------------------------
-  978:             }
-  979:         } else {
-  980:             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
-  981:         }
-  982: 
-----------------------------------------
+=== CombatService full class (in app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt) ===
+       return roll.toLong().coerceAtLeast(1L)
+    }
+}
 
-================================================================================
-GameViewModel.kt - chatActionError occurrences
-================================================================================
-  309:     val globalChatOptOut: StateFlow<Boolean> = _globalChatOptOut.asStateFlow()
-  310: 
-  311:     private val _chatActionError = MutableStateFlow<String?>(null)
-  312:     val chatActionError: StateFlow<String?> = _chatActionError.asStateFlow()
-  313: 
-----------------------------------------
-  310: 
-  311:     private val _chatActionError = MutableStateFlow<String?>(null)
-  312:     val chatActionError: StateFlow<String?> = _chatActionError.asStateFlow()
-  313: 
-  314:     private suspend fun resolveChatChannelId(channel: ChatChannelUi): String? {
-----------------------------------------
-  352:             val channelId = resolveChatChannelId(channel)
-  353:             if (channelId == null) {
-  354:                 _chatActionError.value = "Could not resolve chat channel."
-  355:                 return@launch
-  356:             }
-----------------------------------------
-  356:             }
-  357:             val result = SupabaseChatRepository.sendMessage(characterId, channelId, content)
-  358:             result.onFailure { _chatActionError.value = it.message }
-  359:             refreshChatMessages()
-  360:         }
-----------------------------------------
-  375:             val result = SupabaseChatRepository.getOrCreateDmChannel(characterId, otherCharacterId)
-  376:             result.onFailure {
-  377:                 _chatActionError.value = it.message
-  378:                 return@launch
-  379:             }
-----------------------------------------
-  387:         viewModelScope.launch {
-  388:             val result = SupabaseChatRepository.reportMessage(characterId, message.id, category, reason)
-  389:             result.onFailure { _chatActionError.value = it.message }
-  390:             refreshChatMessages()
-  391:         }
-----------------------------------------
-  396:         viewModelScope.launch {
-  397:             val result = SupabaseChatRepository.selfMute(characterId, targetCharacterId)
-  398:             result.onFailure { _chatActionError.value = it.message }
-  399:             refreshChatMessages()
-  400:         }
-----------------------------------------
-  406:             val result = SupabaseChatRepository.setGlobalChatOptOut(characterId, optOut)
-  407:             result.onFailure {
-  408:                 _chatActionError.value = it.message
-  409:                 return@launch
-  410:             }
-----------------------------------------
-  427:         viewModelScope.launch {
-  428:             val result = SupabaseChatRepository.blockCharacter(characterId, targetCharacterId)
-  429:             result.onFailure { _chatActionError.value = it.message }
-  430:             refreshChatMessages()
-  431:         }
-----------------------------------------
+data class AttackResult(
+    val didHit: Boolean,
+    val damageDealt: Int,
+    val monsterHpRemaining: Int,
+    val monsterDefeated: Boolean
+)
 
-================================================================================
-GameViewModel.kt - placeBuyOrder
-================================================================================
- 1286:         }
- 1287:     }
- 1288: 
- 1289:     fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
- 1290:         val characterId = _currentCharacterId.value ?: return
- 1291:         viewModelScope.launch {
- 1292:             val result = SupabaseMarketRepository.placeBuyOrder(characterId, itemId, quantity, pricePerUnit)
- 1293:             result.onSuccess { order ->
- 1294:                 val filled = order.originalQuantity - order.remainingQuantity
- 1295:                 if (filled > 0) {
- 1296:                     inventoryService.inventoryFor(characterId).addItem(itemId, filled)
- 1297:                     refreshInventory()
- 1298:                 }
- 1299:                 refreshCurrency()
- 1300:                 refreshMarketListings()
- 1301:                 refreshMyOrders()
- 1302:             }
- 1303:         }
- 1304:     }
- 1305: 
- 1306:     fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
- 1307:         val characterId = _currentCharacterId.value ?: return
- 1308:         val realInventory = inventoryService.inventoryFor(characterId)
- 1309:         if (realInventory.quantityOf(itemId) < quantity) return
- 1310: 
- 1311:         realInventory.removeItem(itemId, quantity)
- 1312:         refreshInventory()
- 1313: 
- 1314:         viewModelScope.launch {
- 1315:             val result = SupabaseMarketRepository.placeSellOrder(characterId, itemId, quantity, pricePerUnit)
- 1316:             result.onFailure {
- 1317:                 realInventory.addItem(itemId, quantity)
- 1318:                 refreshInventory()
-----------------------------------------
+class CombatService {
+    private val recoveryDuration: Duration = Duration.ofSeconds(600)
+    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()
 
-================================================================================
-MainActivity.kt - full debug dialog body
-================================================================================
-  859:                                     androidx.compose.material3.AlertDialog(
-  860:                                         onDismissRequest = { showDebugDialog = false },
-  861:                                         title = { androidx.compose.material3.Text("Debug: Supabase Sync") },
-  862:                                         text = {
-  863:                                             androidx.compose.foundation.layout.Column {
-  864:                                                 androidx.compose.material3.Text("Auth: $debugAuthState")
-  865:                                                 debugAuthError?.let { androidx.compose.material3.Text("Auth error: $it") }
-  866:                                                 androidx.compose.material3.Text("Char id: ${debugSupabaseCharId ?: "none"}")
-  867:                                                 debugCharSyncError?.let { androidx.compose.material3.Text("Char sync error: $it") }
-  868:                                                 debugChatError?.let { androidx.compose.material3.Text("Chat error: $it") }
-  869:                                             }
-  870:                                         },
-  871:                                         confirmButton = {
-  872:                                             androidx.compose.material3.TextButton(onClick = { showDebugDialog = false }) {
-  873:                                                 androidx.compose.material3.Text("OK")
-  874:                                             }
-  875:                                         }
-  876:                                     )
-  877:                                 }
-  878: 
-  879:                                 val guildState = currentGuildHomeState
-  880:                                 if (guildState == null) {
-  881:                                     GuildCreateJoinScreen(
-  882:                                         browsableGuilds = currentBrowsableGuilds,
-  883:                                         onCreateGuild = { name -> gameViewModel.createGuild(name) },
-  884:                                         onJoinGuild = { guildId -> gameViewModel.joinGuild(guildId) }
-  885:                                     )
-  886:                                 } else {
-  887:                                     GuildHomeScreen(
-  888:                                         state = guildState,
-  889:                                         leaderboardEntries = currentGuildLeaderboard,
-  890:                                         leaderboardShowingDaily = leaderboardShowingDaily,
-  891:                                         onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
-  892:                                         onMemberTapped = { selectedGuildMember = it },
-  893:                                         onContributeToEvent = { },
-  894:                                         onCastVote = { }
-  895:                                     )
-  896: 
-  897:                                     selectedGuildMember?.let { member ->
-  898:                                         MemberActionPopup(
-  899:                                             member = member,
-  900:                                             viewerRole = guildState.viewerRole,
-  901:                                             onDismiss = { selectedGuildMember = null },
-  902:                                             onKick = {
-  903:                                                 gameViewModel.kickGuildMember(member.characterId)
-  904:                                                 selectedGuildMember = null
-  905:                                             },
-  906:                                             onPromote = {
-  907:                                                 when (member.role) {
-  908:                                                     GuildMemberRole.MEMBER -> gameViewModel.promoteGuildMemberToOfficer(member.characterId)
-  909:                                                     GuildMemberRole.OFFICER -> gameViewModel.promoteGuildMemberToLeader(member.characterId)
-  910:                                                     GuildMemberRole.LEADER -> {}
-  911:                                                 }
-  912:                                                 selectedGuildMember = null
-  913:                                             },
-  914:                                             onDemote = { selectedGuildMember = null },
-  915:                                             onInitiateVote = { selectedGuildMember = null }
-  916:                                         )
-  917:                                     }
-  918:                                 }
-  919:                             }
-  920: 
-  921:                             AppDestination.MODERATION -> {
-  922:                                 val moderation by gameViewModel.moderationState.collectAsState()
-  923:                                 LaunchedEffect(Unit) { gameViewModel.refreshModeration() }
-  924:                                 ModerationScreen(
-  925:                                     state = moderation,
-  926:                                     onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
-  927:                                     onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
-  928:                                     onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
-  929:                                     onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) }
-  930:                                 )
-  931:                             }
-  932: 
-  933:                             else -> androidx.compose.material3.Text(
-  934:                                 text = currentDestination.label + " screen coming soon",
-  935:                                 modifier = Modifier.fillMaxSize()
-  936:                             )
-  937:                         }
-  938:                         }
-  939:                         }
-  940:                     }
-  941: 
-  942:                     val chatMessagesFromVm by gameViewModel.chatMessages.collectAsState()
-  943: val selectedChatChannelFromVm by gameViewModel.selectedChatChannel.collectAsState()
-  944: val dmConversationsFromVm by gameViewModel.dmConversations.collectAsState()
-  945: val selectedDmCharacterIdFromVm by gameViewModel.selectedDmCharacterId.collectAsState()
-  946: 
-  947: var reportDialogMessage by remember { mutableStateOf<ChatMessageUi?>(null) }
-  948:                     reportDialogMessage?.let { targetMessage ->
-  949:                         ReportMessageDialog(
-  950:                             message = targetMessage,
-----------------------------------------
+    fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
+        states.getOrPut(characterId) { CharacterCombatState(currentHp = maxHp, maxHp = maxHp) }
+
+    // trainingSkillLevel must be the level of whichever SkillType the character
+    // currently has selected to train (loadout.trainingSkill) - NOT a blended
+    // "character level". Each combat skill unlocks zones independently.
+    fun enterZone(characterId: String, zoneId: String, trainingSkillLevel: Int): ServiceResult<CombatSession> {
+        val state = stateFor(characterId)
+        if (state.recovery.isRecovering()) {
+            return ServiceResult.Failure("Cannot enter combat while recovering.")
+        }
+        val zone = ZoneCatalog.zones.find { it.id == zoneId }
+            ?: return ServiceResult.Failure("Zone not found.")
+        if (zone.levelRequirement > trainingSkillLevel) {
+            return ServiceResult.Failure("Requires level " + zone.levelRequirement + " to enter " + zone.name + ".")
+        }
+
+        val session = CombatSession(zone = zone)
+        state.session = session
+        return startSearching(characterId)
+    }
+
+    fun startSearching(characterId: String, now: Instant = Instant.now()): ServiceResult<CombatSession> {
+        val state = stateFor(characterId)
+        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
+        if (state.recovery.isRecovering(now)) {
+            return ServiceResult.Failure("Cannot search while recovering.")
+        }
+
+        val searchSeconds = Random.nextInt(3, 11)
+        session.state = SessionState.SEARCHING
+        session.searchEndsAt = now.plusSeconds(searchSeconds.toLong())
+        session.currentMonster = null
+        return ServiceResult.Success(session)
+    }
+
+    fun pauseSearching(characterId: String): ServiceResult<CombatSession> {
+        val state = stateFor(characterId)
+        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
+        if (session.state != SessionState.SEARCHING) {
+            return ServiceResult.Failure("Can only pause while searching.")
+        }
+        session.state = SessionState.PAUSED
+        return ServiceResult.Success(session)
+    }
+
+    fun resolveSearchIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<Monster> {
+        val state = stateFor(characterId)
+        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
+        if (session.state != SessionState.SEARCHING) {
+            return ServiceResult.Failure("Not currently searching.")
+        }
+        val endsAt = session.searchEndsAt ?: return ServiceResult.Failure("No active search timer.")
+        if (now.isBefore(endsAt)) {
+            return ServiceResult.Failure("Search still in progress.")
+        }
+
+        val monster = session.zone.monsters.random()
+        session.currentMonster = monster
+        session.currentMonsterHealth = monster.maxHealth
+        session.state = SessionState.IN_COMBAT
+        return ServiceResult.Success(monster)
+    }
+
+    fun leaveZone(characterId: String): ServiceResult<Unit> {
+        val state = stateFor(characterId)
+        state.session = null
+        return ServiceResult.Success(Unit)
+    }
+
+    fun canChangeEquipment(characterId: String, slot: EquipmentSlot, now: Instant = Instant.now()): Boolean {
+        if (slot == EquipmentSlot.TOOL) return true
+
+        val state = stateFor(characterId)
+
+        if (state.recovery.isRecovering(now) && slot == EquipmentSlot.WEAPON) return false
+
+        val session = state.session ?: return true
+        return session.state != SessionState.IN_COMBAT
+    }
+
+    fun resolveAttack(
+        characterId: String,
+        loadout: CombatLoadout,
+        attackerAccuracy: Int,
+        attackerMaxHit: Int
+    ): ServiceResult<AttackResult> {
+        val state = stateFor(characterId)
+        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
+        if (session.state != SessionState.IN_COMBAT) {
+            return ServiceResult.Failure("Not currently in combat.")
+        }
+        val monster = session.currentMonster ?: return ServiceResult.Failure("No active target.")
+
+        val hitChancePercent = (attackerAccuracy.toDouble() / (attackerAccuracy + monster.defenseRating)) * 100.0
+        val didHit = Random.nextDouble(0.0, 100.0) < hitChancePercent
+
+        if (!didHit) {
+            return ServiceResult.Success(
+                AttackResult(didHit = false, damageDealt = 0, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = false)
+            )
+        }
+
+        val damage = Random.nextInt(0, attackerMaxHit + 1)
+        session.currentMonsterHealth = (session.currentMonsterHealth - damage).coerceAtLeast(0)
+        val defeated = session.currentMonsterHealth <= 0
+
+        if (defeated) {
+            rollLoot(state, monster)
+            session.currentMonster = null
+            startSearching(characterId)
+        }
+
+        return ServiceResult.Success(
+            AttackResult(didHit = true, damageDealt = damage, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = defeated)
+        )
+    }
+
+    private fun rollLoot(state: CharacterCombatState, monster: Monster) {
+        (monster.mainLootTable + monster.rareLootTable).forEach { entry ->
+            if (Random.nextDouble(0.0, 100.0) < entry.dropChancePercent) {
+                val qty = Random.nextInt(entry.minQty, entry.maxQty + 1)
+                state.lootPool.add(entry.copy(minQty = qty, maxQty = qty))
+            }
+        }
+        state.pendingCoins += CoinDropTable.rollCoins(monster.levelRequirement)
+    }
+
+    fun collectLoot(characterId: String): ServiceResult<List<LootEntry>> {
+        val state = stateFor(characterId)
+        val collected = state.lootPool.toList()
+        state.lootPool.clear()
+        return ServiceResult.Success(collected)
+    }
+
+    fun collectCoins(characterId: String): Long {
+        val state = stateFor(characterId)
+        val collected = state.pendingCoins
+        state.pendingCoins = 0L
+        return collected
+    }
+
+    fun applyDamageToCharacter(characterId: String, damage: Int, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp - damage).coerceAtLeast(0)
+
+        if (state.currentHp <= 0) {
+            state.recovery.recoveringUntil = now.plus(recoveryDuration)
+            state.session = null
+        }
+        return ServiceResult.Success(state)
+    }
+
+    fun healCharacter(characterId: String, amount: Int): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp + amount).coerceAtMost(state.maxHp)
+        return ServiceResult.Success(state)
+    }
+
+    fun resolveRecoveryIfReady(characterId: String, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        val until = state.recovery.recoveringUntil
+            ?: return ServiceResult.Failure("Character is not recovering.")
+        if (now.isBefore(until)) {
+            return ServiceResult.Failure("Recovery still in progress.")
+        }
+        state.currentHp = (state.maxHp * 0.5).toInt()
+        state.recovery.recoveringUntil = null
+        return ServiceResult.Success(state)
+    }
+}
+
+
+--- match end ---
+
+
+=== leaveZone() (in app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt) ===
+      session.currentMonster = monster
+        session.currentMonsterHealth = monster.maxHealth
+        session.state = SessionState.IN_COMBAT
+        return ServiceResult.Success(monster)
+    }
+
+    fun leaveZone(characterId: String): ServiceResult<Unit> {
+        val state = stateFor(characterId)
+        state.session = null
+        return ServiceResult.Success(Unit)
+    }
+
+    fun canChangeEquipment(characterId: String, slot: EquipmentSlot, now: Instant = Instant.now()): Boolean {
+        if (slot == EquipmentSlot.TOOL) return true
+
+        val state = stateFor(characterId)
+
+        if (state.recovery.isRecovering(now) && slot == EquipmentSlot.WEAPON) return false
+
+        val session = state.session ?: return true
+        return session.state != SessionState.IN_COMBAT
+    }
+
+    fun resolveAttack(
+        characterId: String,
+        loadout: CombatLoadout,
+        attackerAccuracy: Int,
+        attackerMaxHit: Int
+    ): ServiceResult<AttackResult> {
+        val state = stateFor(characterId)
+        val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
+        if (session.state != SessionState.IN_COMBAT) {
+            return ServiceResult.Failure("Not currently in combat.")
+        }
+        val monster = session.currentMonster ?: return ServiceResult.Failure("No active target.")
+
+        val hitChancePercent = (attackerAccuracy.toDouble() / (attackerA
+
+--- match end ---
+
+
+=== collectLoot() (in app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt) ===
+xQty + 1)
+                state.lootPool.add(entry.copy(minQty = qty, maxQty = qty))
+            }
+        }
+        state.pendingCoins += CoinDropTable.rollCoins(monster.levelRequirement)
+    }
+
+    fun collectLoot(characterId: String): ServiceResult<List<LootEntry>> {
+        val state = stateFor(characterId)
+        val collected = state.lootPool.toList()
+        state.lootPool.clear()
+        return ServiceResult.Success(collected)
+    }
+
+    fun collectCoins(characterId: String): Long {
+        val state = stateFor(characterId)
+        val collected = state.pendingCoins
+        state.pendingCoins = 0L
+        return collected
+    }
+
+    fun applyDamageToCharacter(characterId: String, damage: Int, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp - damage).coerceAtLeast(0)
+
+        if (state.currentHp <= 0) {
+            state.recovery.recoveringUntil = now.plus(recoveryDuration)
+            state.session = null
+        }
+        return ServiceResult.Success(state)
+    }
+
+    fun healCharacter(characterId: String, amount: Int): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp + amount).coerceAtMost(state.maxHp)
+        return ServiceResult.Success(state)
+    }
+
+    fun resolveRecoveryIfReady(characterId: String, n
+
+--- match end ---
+
+
+=== REPO-WIDE: combat_grant_coins literal string ===
+-- app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt --
+codeAs<Long>()
+    }
+
+    suspend fun grantCombatCoins(characterId: String, amount: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("combat_grant_coins", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun myRecentSales(characterId: String, since: String): Result<List<MarketSaleRow>> = runCatching {
+        client.postgrest.rpc("market_my_recent_sal
+--- match end ---
+
+
+=== REPO-WIDE: grantCoins function ===
+NO MATCHES FOUND ANYWHERE IN REPO
+
+
+=== REPO-WIDE: SupabaseCombatRepository ===
+NO MATCHES FOUND ANYWHERE IN REPO
+
+
+=== REPO-WIDE: pendingCoins all usages ===
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+overy: RecoveryStatus = RecoveryStatus(),
+    var session: CombatSession? = null,
+    val lootPool: MutableList<LootEntry> = mutableListOf(),
+    var pendingCoins: Long = 0L
+)
+
+object CoinDropTable {
+    fun rollCoins(monsterLevel: Int): Long {
+        val base = (monsterLevel * 3).coerceAtLeast(1)
+        val variance = (base * 0.4).toInt().coerceAtLeast(1)
+        val roll = base - (variance / 2) + Random.nextInt(variance + 1)
+        return roll.toLong().
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+tInt(entry.minQty, entry.maxQty + 1)
+                state.lootPool.add(entry.copy(minQty = qty, maxQty = qty))
+            }
+        }
+        state.pendingCoins += CoinDropTable.rollCoins(monster.levelRequirement)
+    }
+
+    fun collectLoot(characterId: String): ServiceResult<List<LootEntry>> {
+        val state = stateFor(characterId)
+        val collected = state.lootPool.toList()
+        state.lootPool.clear()
+        return ServiceResult.Success(collec
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+t.Success(collected)
+    }
+
+    fun collectCoins(characterId: String): Long {
+        val state = stateFor(characterId)
+        val collected = state.pendingCoins
+        state.pendingCoins = 0L
+        return collected
+    }
+
+    fun applyDamageToCharacter(characterId: String, damage: Int, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp - damage).coerce
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+
+    fun collectCoins(characterId: String): Long {
+        val state = stateFor(characterId)
+        val collected = state.pendingCoins
+        state.pendingCoins = 0L
+        return collected
+    }
+
+    fun applyDamageToCharacter(characterId: String, damage: Int, now: Instant = Instant.now()): ServiceResult<CharacterCombatState> {
+        val state = stateFor(characterId)
+        state.currentHp = (state.currentHp - damage).coerceAtLeast(0)
+
+        if (sta
+--- match end ---
+
+
+=== REPO-WIDE: CombatSessionExport (should not exist yet) ===
+NO MATCHES FOUND ANYWHERE IN REPO
+
+
+=== REPO-WIDE: CharacterExport data class definition ===
+-- app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt --
+    val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
+    val subscriptionTier: String, val premiumCurrency: Long
+)
+
+data class CharacterExport(
+    val id: String, val accountId: String, val displayName: String, val avatarId: String,
+    val createdAt: String, val displayNameLastChangedAt: String, val isMainCharacter: Boolean
+)
+
+class AccountService {
+    private val accountsById = mutableMapOf<String, Account>()
+    private val accountsBy
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt --
+subscriptionTier.name, it.premiumCurrency
+        )
+    }
+
+    fun exportAllCharacters(): List<CharacterExport> = charactersById.values.map {
+        CharacterExport(
+            it.id, it.accountId, it.displayName, it.avatarId,
+            it.createdAt.toString(), it.displayNameLastChangedAt.toString(), it.isMainCharacter
+        )
+    }
+
+    fun restoreAccount(export: AccountExport) {
+        val account = Account(
+            id = export.id, email = export.em
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt --
+     for (i in 0 until charactersArray.length()) {
+            val obj = charactersArray.getJSONObject(i)
+            characters.add(
+                CharacterExport(
+                    id = obj.getString("id"), accountId = obj.getString("accountId"),
+                    displayName = obj.getString("displayName"), avatarId = obj.getString("avatarId"),
+                    createdAt = obj.getString("createdAt"),
+                    displayNameLastChangedAt = obj.
+--- match end ---
+
+
+=== REPO-WIDE: top-level save/load data class shape ===
+-- app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt --
+tSeen, lastSaleCheck, inventoryItems, equippedSlots,
+            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
+        )
+    }
+}
+
+data class SavedGameState(
+    val accounts: List<AccountExport>,
+    val characters: List<CharacterExport>,
+    val skills: List<SkillExport>,
+    val skillingQueues: List<SkillingQueueExport>,
+    val craftingQueues: List<CraftingQueueExport>,
+    val lastSeen: List<LastSeenExport>,
+    val lastSaleCheck: List<LastSaleCheckExport>,
+    val
+--- match end ---
