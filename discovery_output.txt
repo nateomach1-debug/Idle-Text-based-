@@ -1,99 +1,309 @@
-ORDER-FETCHING FUNCTION DISCOVERY
+BACK ARROW STYLING DISCOVERY (skill pages)
+Files referencing ArrowBack: ['app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt', 'app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt', 'app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt', 'app/src/main/kotlin/com/yourname/idlerpg/ui_context2.txt', 'app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt', 'app/src/main/kotlin/com/yourname/idlerpg/ui_context.txt', 'app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt', 'app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt']
 
 ====================================================================================================
-myOrders / placeBuyOrder / placeSellOrder wrapper definitions in app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt
+ArrowBack usage in app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt in app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt
 ====================================================================================================
 
---- match #1 at offset 1299 ---
-client get() = SupabaseClientProvider.client
+--- match #1 at offset 379 ---
+*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 
-    suspend fun placeBuyOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-        client.postgrest.rpc("market_place_buy_order", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_item_id", itemId)
-            put("p_quantity", quantity)
-            put("p_price_per_unit", pricePerUnit)
-        }).decodeAs<MarketOrderRpcResult>()
-    }
+// =========================================================
+// ORDER BOOK / PL
 
-    suspend fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-        client.postgrest.rpc("market_place_sell_order", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_item_id", itemId)
-            put("p_quantity", quantity)
-            put("p_price_per_unit", p
+--- match #2 at offset 2192 ---
+teredPrice > referencePrice * 2)
 
---- match #2 at offset 1745 ---
-   }).decodeAs<MarketOrderRpcResult>()
-    }
-
-    suspend fun placeSellOrder(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<MarketOrderRpcResult> = runCatching {
-        client.postgrest.rpc("market_place_sell_order", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_item_id", itemId)
-            put("p_quantity", quantity)
-            put("p_price_per_unit", pricePerUnit)
-        }).decodeAs<MarketOrderRpcResult>()
-    }
-
-    suspend fun cancelOrder(orderId: String): Result<MarketCancelRpcResult> = runCatching {
-        client.postgrest.rpc("market_cancel_order", buildJsonObject {
-            put("p_order_id", orderId)
-        }).decodeAs<MarketCancelRpcResult>()
-    }
-
-    suspend fun sellToVendor(characterId: String, itemId: String, quantity: Int, payoutPerUnit: Long): Result<Long> = runCatching 
-
---- match #3 at offset 3857 ---
-tings").decodeList<MarketListingRow>()
-    }
-
-    suspend fun myOrders(characterId: String): Result<List<MarketOrderRow>> = runCatching {
-        client.postgrest.rpc("market_my_orders", buildJsonObject {
-            put("p_character_id", characterId)
-        }).decodeList<MarketOrderRow>()
-    }
-
-    suspend fun buyFromVendor(characterId: String, itemId: String, quantity: Int, pricePerUnit: Long): Result<Long> = runCatching {
-        client.postgrest.rpc("market_buy_from_vendor", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_item_id", itemId)
-            put("p_quantity", quantity)
-            put("p_price_per_unit", pricePerUnit)
-        }).decodeAs<Long>()
-    }
-}
-
-
-total matches: 3
-
-====================================================================================================
-refreshMyOrders() full definition in app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
-====================================================================================================
-
---- match #1 at offset 62065 ---
-tDateTime.parse(createdAt).toInstant()
-    )
-
-    fun refreshMyOrders() {
-        val characterId = _currentSupabaseCharacterId.value ?: return
-        viewModelScope.launch {
-            val orders = SupabaseMarketRepository.myOrders(characterId).getOrNull()?.map { it.toDomain() } ?: emptyList()
-            _myBuyOrders.value = orders.filter { it.side == OrderSide.BUY }
-            _mySellOrders.value = orders.filter { it.side == OrderSide.SELL }
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = detail.displayName, style = MaterialTheme.typography.headlineMedium)
         }
-    }
 
-    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
-        val characterId = _currentCharacterId.value ?: return
-        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-        viewModelScope.launch {
-            val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
-            result.onFailure { _marketActionError.value = it.message ?: it.toString() }
-            result.onSuccess { order ->
-         
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            PriceBlock("Best Bu
+
+total matches: 2
+
+====================================================================================================
+ArrowBack usage in app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt in app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt
+====================================================================================================
+
+--- match #1 at offset 432 ---
+ androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+
+// =========================================================
+// EQUIPMENT
+
+--- match #2 at offset 1813 ---
+Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = "Equipment", style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        EquipSlotUi.values().forEach { slot ->
+            EquipmentSlotRow(
+                slot = slot,
+
+total matches: 2
+
+====================================================================================================
+ArrowBack usage in app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt in app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt
+====================================================================================================
+
+--- match #1 at offset 379 ---
+*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import java.time.Duration
+import java.time.Instant
+
+// ===============================================
+
+--- match #2 at offset 2076 ---
+r { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onLeaveZone) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Leave zone")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = data.zoneName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        when (data.viewState) {
+            CombatViewState.SEARCHING -> SearchingView(data.searc
+
+total matches: 2
+
+====================================================================================================
+ArrowBack usage in app/src/main/kotlin/com/yourname/idlerpg/ui_context2.txt in app/src/main/kotlin/com/yourname/idlerpg/ui_context2.txt
+====================================================================================================
+
+--- match #1 at offset 1828 ---
+.padding(20.dp)) {
+./SkillDetailScreen.kt-53-        Row(verticalAlignment = Alignment.CenterVertically) {
+./SkillDetailScreen.kt-54-            IconButton(onClick = onBack) {
+./SkillDetailScreen.kt-55-                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+./SkillDetailScreen.kt-56-            }
+--
+./MainActivity.kt-54-    is Effect.TimerReduction -> "-" + effect.percent + "% action time"
+./MainActivity.kt-55-}
+./MainActivity.kt-56-
+./MainActivity.kt:57:private fun buildSkillDetailState(skillId: String, summary: SkillSummary): SkillDetailState {
+./MainActivity.kt-58-   
 
 total matches: 1
+
+====================================================================================================
+ArrowBack usage in app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt in app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt
+====================================================================================================
+
+--- match #1 at offset 1162 ---
+h
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.materia
+
+--- match #2 at offset 3787 ---
+lumn(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(text = "Level " + state.level, style = MaterialTheme.typography.titleMedium)
+        Sp
+
+total matches: 2
+
+====================================================================================================
+ArrowBack usage in app/src/main/kotlin/com/yourname/idlerpg/ui_context.txt in app/src/main/kotlin/com/yourname/idlerpg/ui_context.txt
+====================================================================================================
+
+--- match #1 at offset 566 ---
+*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+
+// =========================================================
+// SKILL DETAIL SCREEN
+// Simple view: level, XP bar, earned unlocks.
+//
+
+--- match #2 at offset 2192 ---
+member { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(text = "Level " + state.level, style = MaterialTheme.typography.titleMedium)
+        S
+
+total matches: 2
+
+====================================================================================================
+ArrowBack usage in app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt in app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt
+====================================================================================================
+
+--- match #1 at offset 432 ---
+ androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.yourname.idlerpg.SkillType
+
+// =========================================
+
+--- match #2 at offset 2208 ---
+Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = "Loadout", style = MaterialTheme.typography.headlineMedium)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(text = "Auto-Heal Threshold: " + state.autoHealThresholdPercent + "%", style = MaterialTheme.t
+
+total matches: 2
+
+====================================================================================================
+ArrowBack usage in app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt in app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt
+====================================================================================================
+
+--- match #1 at offset 424 ---
+*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import com.yourname.idlerpg.data.ActiveQueueInfo
+
+// =========================================================
+// SKILL DETAIL SCREEN
+
+
+--- match #2 at offset 2386 ---
+member { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = state.displayName, style = MaterialTheme.typography.headlineMedium)
+        }
+
+        activeQueue?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            CycleCountdown(queue = it)
+        }
+
+        Spacer(modif
+
+total matches: 2
 
 
 DONE
