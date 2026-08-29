@@ -1,4 +1,3 @@
-cat << 'PYEOF' > /home/claude/patch2.py
 path = "app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt"
 with open(path, encoding="utf-8") as f:
     content = f.read()
