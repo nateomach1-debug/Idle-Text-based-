@@ -156,5 +156,3 @@ with open(path, "w", encoding="utf-8") as f:
     f.write(content)
 
 print("patch_offline_combat_service.py applied cleanly.")
-PYEOF
-cat /home/claude/patch2.py
