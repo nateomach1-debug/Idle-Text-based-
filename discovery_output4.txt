@@ -1,0 +1,230 @@
+
+=== REPO-WIDE: saveGame() full body incl repository.save( call ===
+-- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt --
+At }
+                    offlineIdleService.recordSaleCheckAt(characterId, latestServerTimestamp)
+                }
+            }
+        }
+    }
+    fun saveGame() {
+        repository.save(
+            accountService.exportAllAccounts(),
+            accountService.exportAllCharacters(),
+            progressionService.exportAllSkills(),
+            offlineIdleService.exportSkillingQueues(),
+            offlineIdleService.exportCraftingQueues(),
+            offlineIdleService.exportLastSeen(),
+            offlineIdleService.exportLastSaleCheck(),
+            inventoryService.exportAllItems(),
+            inventoryService.exportAllEquipped(),
+            inventoryService.exportAllLoadoutSettings(),
+            marketService.exportAccounts(),
+            marketService.exportOrders(),
+            marketService.exportPriceHistory()
+        )
+        val supabaseCharacterId = _currentSupabaseCharacterId.value
+        val json = repository.currentSaveJson
+--- match end ---
+
+
+=== REPO-WIDE: package declarations across files (confirm same package) ===
+-- app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/OrderBookScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GuildCreateJoinScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/PatternBackground.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/CharacterSelectScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/EquipmentScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/CombatViewScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/AntiCheatServerAuthoritySystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/EconomyMarketSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SocialChatModerationSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SupabaseClient.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/Theme.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/ZoneSelectScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/MetalTierItemCatalog.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/LoginScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/EventsLiveOpsSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/MemberActionPopup.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SupabaseModerationRepository.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/RecoveryBar.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/QuestsContentSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/ReportMessageDialog.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/SupabaseCharacterRepository.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt --
+package com.yourname.idlerpg
+--- match end ---
+
+-- app/src/main/kotlin/com/yourname/idlerpg/ChatBanner.kt --
+package com.yourname.idlerpg
+--- match end ---
