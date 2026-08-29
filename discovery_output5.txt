@@ -1,8 +1,56 @@
-SQL files at repo root:
- - check_phase_b_rls.sql
- - fix_blocks_insert_policy.sql
- - fix_create_guild_channel.sql
- - fix_guild_chat_participants.sql
- - fix_missing_select_policies.sql
- - fix_missing_select_policies_phase_b.sql
- - fix_send_message_blocks_check.sql
+
+=== REPO-WIDE: full SavedGameState data class ===
+-- app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt --
+s,
+            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
+        )
+    }
+}
+
+data class SavedGameState(
+    val accounts: List<AccountExport>,
+    val characters: List<CharacterExport>,
+    val skills: List<SkillExport>,
+    val skillingQueues: List<SkillingQueueExport>,
+    val craftingQueues: List<CraftingQueueExport>,
+    val lastSeen: List<LastSeenExport>,
+    val lastSaleCheck: List<LastSaleCheckExport>,
+    val inventoryItems: List<InventorySlotExport>,
+    val equippedSlots: List<EquippedSlotExport>,
+    val loadoutSettings: List<LoadoutSettingsExport>,
+    val marketAccounts: List<PlayerEconomyAccountExport>,
+    val marketOrders: List<MarketOrderExport>,
+    val marketPriceHistory: List<PriceHistoryExport>
+)
+
+--- match end ---
+
+
+=== REPO-WIDE: return SavedGameState(...) call in load() ===
+-- app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt --
+Percent = obj.getInt("autoFleeThresholdPercent")
+                )
+            )
+        }
+
+        return SavedGameState(
+            accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, lastSaleCheck, inventoryItems, equippedSlots,
+            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory
+        )
+    }
+}
+
+data class SavedGameState(
+    val accounts: List<AccountExport>,
+    val characters: List<CharacterExport>,
+    val skills: List<SkillExport>,
+    val skillingQueues: List<SkillingQueueExport>,
+    val craftingQueues: List<CraftingQueueExport>,
+    val lastSeen: List<LastSeenExport>,
+    val lastSaleCheck: List<LastSaleCheckExport>,
+    val inventoryItems: List<InventorySlotExport>,
+    val equippedSlots: List<EquippedSlotExport>,
+    val loadoutSettings: List<LoadoutSettingsExport>,
+    val marketAccounts: List<PlayerEconomyAccountExport>,
+    val marketOrders: Li
+--- match end ---
