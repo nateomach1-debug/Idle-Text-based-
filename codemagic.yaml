@@ -26,21 +26,18 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output3.txt
-          echo "=== SupabaseClientProvider actual definition (wherever it lives) ===" > $OUT
-          grep -rn -B 5 -A 30 "object SupabaseClientProvider" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output4.txt
+          echo "=== every call site of resolveOfflineRewardsAndSync( ===" > $OUT
+          grep -rn -B 10 -A 2 "resolveOfflineRewardsAndSync(" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== GameViewModel.kt sessionStatus listener, full context ===" >> $OUT
-          sed -n '780,830p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== every place _offlineSummary.value is set ===" >> $OUT
+          grep -rn -B 5 "_offlineSummary.value =" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== MainActivity.kt flowState initial value / startup logic ===" >> $OUT
-          grep -n "var flowState\|flowState =\|hasSavedSession\|getSavedSession\|AppFlowState.InGame\|AppFlowState.CharacterSelect" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== MainActivity.kt top-level LaunchedEffect(Unit) blocks, full context ===" >> $OUT
-          grep -n -B 2 -A 40 "LaunchedEffect(Unit)" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "=== MainActivity.kt around the InGame flowState transitions (lines 560-620) ===" >> $OUT
+          sed -n '560,620p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output3.txt
-
+      - discovery_output4.txt
+      
   apply-patch:
     name: Apply Patch Script
     max_build_duration: 10
