@@ -26,16 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output9.txt
-          echo "=== price map declaration + meat_pie/cooked_beef price entries + closing brace ===" > $OUT
-          grep -n "val.*[Pp]rice.*=.*map\|mapOf(" ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt | head -5 >> $OUT
+          OUT=discovery_output10.txt
+          echo "=== ChatBanner full file ===" > $OUT
+          find . -iname "ChatBanner.kt" -exec cat {} \; >> $OUT
           echo "" >> $OUT
-          grep -n '"meat_pie" to\|"cooked_beef" to\|"pie_shell" to' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT || echo "NONE OF THESE HAVE PRICE ENTRIES" >> $OUT
-          echo "" >> $OUT
-          echo "=== last 20 lines of the price map (context around its close) ===" >> $OUT
-          grep -n "^)" ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt | head -20 >> $OUT
+          echo "=== if ChatBanner is defined elsewhere, search broadly ===" >> $OUT
+          grep -rn -B 3 -A 60 "fun ChatBanner" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output9.txt
+      - discovery_output10.txt
       
   apply-patch:
     name: Apply Patch Script
