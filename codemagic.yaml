@@ -26,11 +26,29 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output5.txt
-          echo "=== full selectCharacter() function body ===" > $OUT
-          awk '/fun selectCharacter\(characterId: String\)/,0' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt | awk 'BEGIN{d=0} {print} /^    }/{d++; if(d==1) exit}' >> $OUT
+          OUT=discovery_output6.txt
+          echo "=== SkillType enum full definition ===" > $OUT
+          grep -rn -A 30 "enum class SkillType" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== existing total-level / combat-level cosmetic stats ===" >> $OUT
+          grep -rni "totalLevel\|total level\|combatLevel\|combat level" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== SkillsScreen composable - where individual skill rows render ===" >> $OUT
+          find . -iname "SkillsScreen.kt" -exec cat {} \; >> $OUT
+          echo "" >> $OUT
+          echo "=== Farming-related files ===" >> $OUT
+          find . -iname "*Farm*" >> $OUT
+          echo "" >> $OUT
+          echo "=== farming/crop/seed mentions repo-wide ===" >> $OUT
+          grep -rn -i "crop\|seed\|farming" --include="*.kt" . | grep -v "SkillType.FARMING\b" >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== crafting/cooking recipe definitions ===" >> $OUT
+          grep -rn -B 2 -A 15 "data class.*Recipe\|object.*RecipeCatalog\|CraftingRecipe(" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== ItemCatalog full file (for existing item id patterns) ===" >> $OUT
+          find . -iname "ItemCatalog.kt" -exec cat {} \; >> $OUT
     artifacts:
-      - discovery_output5.txt
+      - discovery_output6.txt
       
   apply-patch:
     name: Apply Patch Script
