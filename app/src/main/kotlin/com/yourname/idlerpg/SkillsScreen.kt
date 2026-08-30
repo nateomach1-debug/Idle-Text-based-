@@ -95,7 +95,15 @@ fun SkillsScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Skills", style = MaterialTheme.typography.headlineMedium)
+            Column {
+                Text(text = "Skills", style = MaterialTheme.typography.headlineMedium)
+                val totalLevel = remember(allSkills) { allSkills.values.sumOf { it.level } }
+                Text(
+                    text = "Total level: " + totalLevel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             ViewModeToggle(
                 current = viewMode,
                 onChange = {

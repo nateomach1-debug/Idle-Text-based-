@@ -107,7 +107,7 @@ fun ChatBanner(
                 onMessageAction = onMessageAction
             )
         } else {
-            CollapsedMessagePreview(messages.takeLast(3))
+            CollapsedMessagePreview(messages.takeLast(3).reversed())
         }
     }
 
@@ -161,7 +161,7 @@ private fun ExpandedChatPanel(
             DmConversationList(dmConversations, onDmSelected)
         } else {
             LazyColumn(modifier = Modifier.weight(1f)) {
-                items(messages) { msg ->
+                items(messages.reversed()) { msg ->
                     ChatMessageRow(msg, onMessageAction)
                 }
             }

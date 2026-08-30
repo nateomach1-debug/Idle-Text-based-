@@ -601,6 +601,34 @@ object GeneratedItemCatalog {
         isStackable = true
     ),
     ItemDefinition(
+        id = "lemon_sapling",
+        name = "Lemon Tree Sapling",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "lemon",
+        name = "Lemon",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "pumpkin_seed",
+        name = "Pumpkin Seed",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "pumpkin",
+        name = "Pumpkin",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
         id = "tarromin_seed",
         name = "Tarromin Seed",
         category = ItemCategory.MATERIAL,
@@ -1285,6 +1313,33 @@ object GeneratedItemCatalog {
     ItemDefinition(
         id = "meat_pie",
         name = "Meat Pie",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 14
+    ),
+    ItemDefinition(
+        id = "apple_pie",
+        name = "Apple Pie",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 14
+    ),
+    ItemDefinition(
+        id = "lemon_pie",
+        name = "Lemon Pie",
+        category = ItemCategory.CONSUMABLE,
+        isTradeable = true,
+        isStackable = true,
+        consumableType = ConsumableType.FOOD,
+        healAmount = 14
+    ),
+    ItemDefinition(
+        id = "pumpkin_pie",
+        name = "Pumpkin Pie",
         category = ItemCategory.CONSUMABLE,
         isTradeable = true,
         isStackable = true,
@@ -2740,6 +2795,8 @@ object GeneratedItemCatalog {
     "sweetcorn" to 6L,
     "guam_seed" to 5L,
     "guam_leaf" to 8L,
+    "pumpkin_seed" to 6L,
+    "pumpkin" to 9L,
     "strawberry_seed" to 6L,
     "strawberry" to 9L,
     "marrentill_seed" to 8L,
@@ -2748,6 +2805,8 @@ object GeneratedItemCatalog {
     "watermelon" to 15L,
     "apple_sapling" to 12L,
     "apple" to 6L,
+    "lemon_sapling" to 24L,
+    "lemon" to 9L,
     "tarromin_seed" to 14L,
     "tarromin" to 22L,
     "banana_sapling" to 16L,
@@ -2832,6 +2891,9 @@ object GeneratedItemCatalog {
     "bread" to 10L,
     "cooked_tuna" to 26L,
     "meat_pie" to 30L,
+    "apple_pie" to 24L,
+    "lemon_pie" to 27L,
+    "pumpkin_pie" to 32L,
     "cooked_mackerel" to 18L,
     "cooked_swordfish" to 42L,
     "cake" to 35L,

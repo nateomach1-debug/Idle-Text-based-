@@ -1146,6 +1146,27 @@ object RecipeCatalog {
             levelRequired = 34
         ),
         Recipe(
+            outputItemId = "apple_pie",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("pie_shell", 1), RecipeIngredient("apple", 1)),
+            skillRequired = "COOKING",
+            levelRequired = 36
+        ),
+        Recipe(
+            outputItemId = "lemon_pie",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("pie_shell", 1), RecipeIngredient("lemon", 1)),
+            skillRequired = "COOKING",
+            levelRequired = 41
+        ),
+        Recipe(
+            outputItemId = "pumpkin_pie",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("pie_shell", 1), RecipeIngredient("pumpkin", 1)),
+            skillRequired = "COOKING",
+            levelRequired = 48
+        ),
+        Recipe(
             outputItemId = "cake",
             outputQuantity = 1,
             ingredients = listOf(RecipeIngredient("cake_mix", 1), RecipeIngredient("vial_of_water", 1)),
