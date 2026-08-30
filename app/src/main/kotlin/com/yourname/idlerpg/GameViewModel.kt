@@ -1078,6 +1078,13 @@ fun logout() {
                 // visible every time instead of already being warm.
                 refreshGuildHome()
                 loadInitialChatState()
+                // Prefetch guild/chat data now (a live signed-in session is
+                // guaranteed at this point) instead of waiting for the user to
+                // visit the Guild tab, where these previously only started
+                // fetching on first navigation - making the network round trip
+                // visible every time instead of already being warm.
+                refreshGuildHome()
+                loadInitialChatState()
             }
         } else {
             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
@@ -1276,6 +1283,10 @@ fun logout() {
                 // Ran out of seeds mid-batch - stop the queue instead of spinning uselessly.
                 offlineIdleService.stopQueue(characterId)
                 skillActionProgressSeconds = 0
+                _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
+                    itemName = formatItemName(queue.itemId),
+                    reason = "Out of " + formatItemName(requiredSeedId) + "."
+                )
             }
             refreshSkills()
             refreshInventory()
@@ -1293,7 +1304,16 @@ fun logout() {
 
     private val craftingService = CraftingService()
 
-    private data class CraftBatchResult(val successfulCrafts: Int, val itemsProduced: Int, val xpGranted: Long)
+    data class ActionStoppedNotice(val itemName: String, val reason: String)
+
+    private val _actionStoppedNotifications = MutableStateFlow<List<ActionStoppedNotice>>(emptyList())
+    val actionStoppedNotifications: StateFlow<List<ActionStoppedNotice>> = _actionStoppedNotifications.asStateFlow()
+
+    fun dismissActionStoppedNotification() {
+        _actionStoppedNotifications.value = _actionStoppedNotifications.value.drop(1)
+    }
+
+    private data class CraftBatchResult(val successfulCrafts: Int, val itemsProduced: Int, val xpGranted: Long, val stoppedReason: String? = null)
 
     private fun craftItems(characterId: String, itemId: String, attempts: Int): CraftBatchResult {
         val recipe = RecipeCatalog.forOutput(itemId) ?: return CraftBatchResult(0, 0, 0)
@@ -1307,6 +1327,7 @@ fun logout() {
         var successes = 0
         var totalProduced = 0
         var xpGranted = 0L
+        var stoppedReason: String? = null
         for (i in 0 until attempts) {
             val result = craftingService.craftOnce(inventory, itemId, playerLevel)
             if (result is ServiceResult.Success) {
@@ -1316,13 +1337,14 @@ fun logout() {
                     totalProduced += result.value.quantityProduced
                 }
             } else {
+                stoppedReason = (result as? ServiceResult.Failure)?.message ?: "Missing materials or requirements."
                 break
             }
         }
         if (xpGranted > 0) {
             progressionService.grantXp(characterId, skillType, xpGranted)
         }
-        return CraftBatchResult(successes, totalProduced, xpGranted)
+        return CraftBatchResult(successes, totalProduced, xpGranted, stoppedReason)
     }
 
     fun startCraftingAction(itemId: String, targetQuantity: Int? = null) {
@@ -1372,6 +1394,14 @@ fun logout() {
         if (queue.isTargetReached()) {
             offlineIdleService.stopQueue(characterId)
             refreshActiveQueue()
+        } else if (batch.stoppedReason != null) {
+            offlineIdleService.stopQueue(characterId)
+            craftActionProgressSeconds = 0
+            refreshActiveQueue()
+            _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
+                itemName = formatItemName(queue.itemId),
+                reason = batch.stoppedReason
+            )
         }
     }
 

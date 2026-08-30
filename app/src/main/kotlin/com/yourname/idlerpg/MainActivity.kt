@@ -440,6 +440,24 @@ fun AppRoot(gameViewModel: GameViewModel) {
         )
     }
 
+    val actionStoppedNotifications by gameViewModel.actionStoppedNotifications.collectAsState()
+    actionStoppedNotifications.firstOrNull()?.let { notice ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { gameViewModel.dismissActionStoppedNotification() },
+            title = { androidx.compose.material3.Text("Action Stopped") },
+            text = {
+                androidx.compose.material3.Text(
+                    "Ran out of materials for " + notice.itemName + ".\n" + notice.reason
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { gameViewModel.dismissActionStoppedNotification() }) {
+                    androidx.compose.material3.Text("OK")
+                }
+            }
+        )
+    }
+
     var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
     var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
