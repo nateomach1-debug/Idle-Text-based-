@@ -26,17 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output20.txt
-          echo "=== tickCrafting or equivalent crafting queue tick function ===" > $OUT
-          grep -n -B 3 -A 40 "fun tickCrafting\|fun tickCraftingQueue" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output21.txt
+          echo "=== craftItems() full body ===" > $OUT
+          grep -n -B 3 -A 30 "fun craftItems" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== CraftingService.craftOnce full body ===" >> $OUT
-          grep -n -B 3 -A 30 "fun craftOnce" ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== CraftingBatchResult / batch result data class definition ===" >> $OUT
+          grep -rn -B 2 -A 10 "class.*Batch.*Result\|data class.*Batch" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== existing 'notice'/level-up/one-shot popup StateFlow patterns ===" >> $OUT
-          grep -rn -i "levelUpNotification\|_levelUp\|_notice\|showNotice\|OneShotEvent\|_toast" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== offline summary AlertDialog rendering in MainActivity.kt ===" >> $OUT
+          grep -n -B 5 -A 30 "_offlineSummary\|offlineSummary" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output20.txt
+      - discovery_output21.txt
       
   apply-patch:
     name: Apply Patch Script
