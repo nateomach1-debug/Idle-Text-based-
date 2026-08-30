@@ -13,13 +13,31 @@ class SessionManager(context: Context) {
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
             .build()
 
-        prefs = EncryptedSharedPreferences.create(
-            context,
-            "idlerpg_session",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+        prefs = try {
+            EncryptedSharedPreferences.create(
+                context,
+                "idlerpg_session",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            // A backup/restore mechanism (Android Auto Backup, Samsung Smart
+            // Switch, etc.) can restore this file from a previous install after
+            // the Keystore key that encrypted it was deleted at uninstall,
+            // making it permanently undecryptable and crashing the app on every
+            // launch before it can render. Wipe the corrupted file and start
+            // fresh instead of crashing - the account is still recoverable via
+            // cloud login regardless of local session state.
+            context.deleteSharedPreferences("idlerpg_session")
+            EncryptedSharedPreferences.create(
+                context,
+                "idlerpg_session",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
     }
 
     fun saveSession(accountId: String) {
