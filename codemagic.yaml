@@ -26,20 +26,16 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output8.txt
-          echo "=== full FARMING section of ActionCatalog.kt ===" > $OUT
-          grep -n "SkillType.FARMING" ./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt >> $OUT
+          OUT=discovery_output9.txt
+          echo "=== price map declaration + meat_pie/cooked_beef price entries + closing brace ===" > $OUT
+          grep -n "val.*[Pp]rice.*=.*map\|mapOf(" ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt | head -5 >> $OUT
           echo "" >> $OUT
-          echo "=== full COOKING section of ActionCatalog.kt ===" >> $OUT
-          grep -n "SkillType.COOKING" ./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt >> $OUT
+          grep -n '"meat_pie" to\|"cooked_beef" to\|"pie_shell" to' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT || echo "NONE OF THESE HAVE PRICE ENTRIES" >> $OUT
           echo "" >> $OUT
-          echo "=== apple / apple_sapling / meat_pie / pie_shell full ItemDefinition blocks ===" >> $OUT
-          grep -n -B 2 -A 10 'id = "apple"\|id = "apple_sapling"\|id = "meat_pie"\|id = "pie_shell"' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== the price/cost map containing apple and apple_sapling (context around it) ===" >> $OUT
-          sed -n '2700,2790p' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT
+          echo "=== last 20 lines of the price map (context around its close) ===" >> $OUT
+          grep -n "^)" ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt | head -20 >> $OUT
     artifacts:
-      - discovery_output8.txt
+      - discovery_output9.txt
       
   apply-patch:
     name: Apply Patch Script
