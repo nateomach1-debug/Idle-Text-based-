@@ -1071,6 +1071,13 @@ fun logout() {
                 // an offline-progress popup built from the wrong (pre-recovery)
                 // character before this corrected one silently replaced it.
                 resolveOfflineRewardsAndSync(recoveredToRemoteId ?: characterId)
+                // Prefetch guild/chat data now (a live signed-in session is
+                // guaranteed at this point) instead of waiting for the user to
+                // visit the Guild tab, where these previously only started
+                // fetching on first navigation - making the network round trip
+                // visible every time instead of already being warm.
+                refreshGuildHome()
+                loadInitialChatState()
             }
         } else {
             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
