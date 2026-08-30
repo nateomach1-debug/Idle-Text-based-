@@ -26,29 +26,24 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output6.txt
-          echo "=== SkillType enum full definition ===" > $OUT
-          grep -rn -A 30 "enum class SkillType" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output7.txt
+          echo "=== object ItemCatalog (wherever it actually lives) ===" > $OUT
+          grep -rn -A 15 "object ItemCatalog" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== existing total-level / combat-level cosmetic stats ===" >> $OUT
-          grep -rni "totalLevel\|total level\|combatLevel\|combat level" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== SkillActionOption data class + full FARMING entries ===" >> $OUT
+          grep -rn -B 3 -A 8 "data class SkillActionOption" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          grep -rn -B 2 -A 2 "SkillActionOption(\"FARMING\"" --include="*.kt" . >> $OUT || echo "NO FARMING ACTIONS FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== SkillsScreen composable - where individual skill rows render ===" >> $OUT
+          echo "=== all existing COOKING recipes (template for pies) ===" >> $OUT
+          grep -rn -B 2 -A 8 "skillRequired = \"COOKING\"" --include="*.kt" . >> $OUT || echo "NO COOKING RECIPES FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== apple/lemon/pumpkin/pie mentions repo-wide ===" >> $OUT
+          grep -rni "apple\|lemon\|pumpkin\|\bpie\b" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== SkillsScreen.kt full file ===" >> $OUT
           find . -iname "SkillsScreen.kt" -exec cat {} \; >> $OUT
-          echo "" >> $OUT
-          echo "=== Farming-related files ===" >> $OUT
-          find . -iname "*Farm*" >> $OUT
-          echo "" >> $OUT
-          echo "=== farming/crop/seed mentions repo-wide ===" >> $OUT
-          grep -rn -i "crop\|seed\|farming" --include="*.kt" . | grep -v "SkillType.FARMING\b" >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== crafting/cooking recipe definitions ===" >> $OUT
-          grep -rn -B 2 -A 15 "data class.*Recipe\|object.*RecipeCatalog\|CraftingRecipe(" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== ItemCatalog full file (for existing item id patterns) ===" >> $OUT
-          find . -iname "ItemCatalog.kt" -exec cat {} \; >> $OUT
     artifacts:
-      - discovery_output6.txt
+      - discovery_output7.txt
       
   apply-patch:
     name: Apply Patch Script
