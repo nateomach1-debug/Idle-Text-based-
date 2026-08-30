@@ -26,24 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output7.txt
-          echo "=== object ItemCatalog (wherever it actually lives) ===" > $OUT
-          grep -rn -A 15 "object ItemCatalog" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output8.txt
+          echo "=== full FARMING section of ActionCatalog.kt ===" > $OUT
+          grep -n "SkillType.FARMING" ./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt >> $OUT
           echo "" >> $OUT
-          echo "=== SkillActionOption data class + full FARMING entries ===" >> $OUT
-          grep -rn -B 3 -A 8 "data class SkillActionOption" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
-          grep -rn -B 2 -A 2 "SkillActionOption(\"FARMING\"" --include="*.kt" . >> $OUT || echo "NO FARMING ACTIONS FOUND" >> $OUT
+          echo "=== full COOKING section of ActionCatalog.kt ===" >> $OUT
+          grep -n "SkillType.COOKING" ./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt >> $OUT
           echo "" >> $OUT
-          echo "=== all existing COOKING recipes (template for pies) ===" >> $OUT
-          grep -rn -B 2 -A 8 "skillRequired = \"COOKING\"" --include="*.kt" . >> $OUT || echo "NO COOKING RECIPES FOUND" >> $OUT
+          echo "=== apple / apple_sapling / meat_pie / pie_shell full ItemDefinition blocks ===" >> $OUT
+          grep -n -B 2 -A 10 'id = "apple"\|id = "apple_sapling"\|id = "meat_pie"\|id = "pie_shell"' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT
           echo "" >> $OUT
-          echo "=== apple/lemon/pumpkin/pie mentions repo-wide ===" >> $OUT
-          grep -rni "apple\|lemon\|pumpkin\|\bpie\b" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== SkillsScreen.kt full file ===" >> $OUT
-          find . -iname "SkillsScreen.kt" -exec cat {} \; >> $OUT
+          echo "=== the price/cost map containing apple and apple_sapling (context around it) ===" >> $OUT
+          sed -n '2700,2790p' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT
     artifacts:
-      - discovery_output7.txt
+      - discovery_output8.txt
       
   apply-patch:
     name: Apply Patch Script
