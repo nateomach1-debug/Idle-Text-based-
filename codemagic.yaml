@@ -52,6 +52,6 @@ workflows:
         script: |
           git config user.email "codemagic@example.com"
           git config user.name "Codemagic Bot"
-          git add app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt
-          git commit -m "Fix character sync race condition on cold start"
+          git add -A
+          git commit -m "Apply patch scripts" || echo "Nothing to commit"
           git push https://x-access-token:$GH_PAT@github.com/nateomach1-debug/Idle-Text-based-.git main
