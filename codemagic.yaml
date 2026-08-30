@@ -26,11 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output23.txt
-          echo "=== ServiceResult sealed class/interface definition ===" > $OUT
-          grep -rn -B 2 -A 10 "sealed class ServiceResult\|sealed interface ServiceResult" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output24.txt
+          echo "=== SkillType enum full definition ===" > $OUT
+          grep -n -A 30 "enum class SkillType" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== rollLoot() full body ===" >> $OUT
+          grep -n -B 3 -A 40 "private fun rollLoot" ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== Monster data class (confirm level field name) ===" >> $OUT
+          grep -n -A 10 "data class Monster(" ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== existing 'bone' item(s) in the catalog ===" >> $OUT
+          grep -n -B 2 -A 8 'id = "bone"' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== any existing PRAYER / bury / bone references repo-wide ===" >> $OUT
+          grep -rni "PRAYER\|bury\|\"bone" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output23.txt
+      - discovery_output24.txt
       
   apply-patch:
     name: Apply Patch Script
