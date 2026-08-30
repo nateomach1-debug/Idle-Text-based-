@@ -51,6 +51,7 @@ workflows:
           python3 patch_require_seed_for_farming.py
           python3 patch_rename_farming_actions.py
           python3 patch_farming_missing_seed_ui.py
+          python3 patch_fix_session_crash_on_restore.py
       - name: Commit and push
         script: |
           git config user.email "codemagic@example.com"
