@@ -44,8 +44,10 @@ workflows:
       groups:
         - supabase_secrets
     scripts:
-      - name: Run patch script
-        script: python3 patch_fix_character_sync_race.py
+      - name: Run patch scripts
+        script: |
+          python3 patch_add_total_skill_level.py
+          python3 patch_add_pies_and_fruits.py
       - name: Commit and push
         script: |
           git config user.email "codemagic@example.com"
