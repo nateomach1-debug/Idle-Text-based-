@@ -47,6 +47,7 @@ workflows:
           python3 patch_add_total_skill_level.py
           python3 patch_add_pies_and_fruits.py
           python3 patch_collapsed_chat_newest_first.py
+          python3 patch_expanded_chat_newest_first.py
       - name: Commit and push
         script: |
           git config user.email "codemagic@example.com"
