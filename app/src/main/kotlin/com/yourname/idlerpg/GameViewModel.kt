@@ -1085,6 +1085,13 @@ fun logout() {
                 // visible every time instead of already being warm.
                 refreshGuildHome()
                 loadInitialChatState()
+                // Prefetch guild/chat data now (a live signed-in session is
+                // guaranteed at this point) instead of waiting for the user to
+                // visit the Guild tab, where these previously only started
+                // fetching on first navigation - making the network round trip
+                // visible every time instead of already being warm.
+                refreshGuildHome()
+                loadInitialChatState()
             }
         } else {
             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
@@ -1337,7 +1344,7 @@ fun logout() {
                     totalProduced += result.value.quantityProduced
                 }
             } else {
-                stoppedReason = (result as? ServiceResult.Failure)?.message ?: "Missing materials or requirements."
+                stoppedReason = (result as? ServiceResult.Failure)?.reason ?: "Missing materials or requirements."
                 break
             }
         }
