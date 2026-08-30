@@ -26,14 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output10.txt
-          echo "=== ChatBanner full file ===" > $OUT
-          find . -iname "ChatBanner.kt" -exec cat {} \; >> $OUT
+          OUT=discovery_output11.txt
+          echo "=== _chatMessages / chatMessages StateFlow declaration and every place it's set ===" > $OUT
+          grep -n "_chatMessages\|chatMessages" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== if ChatBanner is defined elsewhere, search broadly ===" >> $OUT
-          grep -rn -B 3 -A 60 "fun ChatBanner" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== loadInitialChatState() and selectChatChannel() full bodies ===" >> $OUT
+          grep -n -A 40 "fun loadInitialChatState\|fun selectChatChannel" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== chat message fetch/order in the Supabase chat repository ===" >> $OUT
+          grep -n -B 3 -A 15 "order(\|\.sortedBy\|\.sortedByDescending" ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseChatRepository.kt >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output10.txt
+      - discovery_output11.txt
       
   apply-patch:
     name: Apply Patch Script
