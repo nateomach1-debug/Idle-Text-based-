@@ -26,14 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output18.txt
-          echo "=== AndroidManifest.xml backup settings ===" > $OUT
-          find . -name "AndroidManifest.xml" -exec cat {} \; >> $OUT
+          OUT=discovery_output19.txt
+          echo "=== every call site of loadInitialChatState ===" > $OUT
+          grep -rn -B 10 -A 3 "loadInitialChatState(" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== EncryptedSharedPreferences / security-crypto usage ===" >> $OUT
-          grep -rn -B 5 -A 20 "EncryptedSharedPreferences\|MasterKey" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== whatever loads Guild data - search broadly ===" >> $OUT
+          grep -rn -i "fun loadGuild\|fun refreshGuild\|fun fetchGuild" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== GuildScreen.kt LaunchedEffect blocks ===" >> $OUT
+          grep -n -B 2 -A 15 "LaunchedEffect" ./app/src/main/kotlin/com/yourname/idlerpg/GuildScreen.kt >> $OUT || echo "NO MATCHES / FILE NOT FOUND"  >> $OUT
     artifacts:
-      - discovery_output18.txt
+      - discovery_output19.txt
       
   apply-patch:
     name: Apply Patch Script
