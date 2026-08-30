@@ -26,17 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output19.txt
-          echo "=== every call site of loadInitialChatState ===" > $OUT
-          grep -rn -B 10 -A 3 "loadInitialChatState(" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output20.txt
+          echo "=== tickCrafting or equivalent crafting queue tick function ===" > $OUT
+          grep -n -B 3 -A 40 "fun tickCrafting\|fun tickCraftingQueue" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== whatever loads Guild data - search broadly ===" >> $OUT
-          grep -rn -i "fun loadGuild\|fun refreshGuild\|fun fetchGuild" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== CraftingService.craftOnce full body ===" >> $OUT
+          grep -n -B 3 -A 30 "fun craftOnce" ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== GuildScreen.kt LaunchedEffect blocks ===" >> $OUT
-          grep -n -B 2 -A 15 "LaunchedEffect" ./app/src/main/kotlin/com/yourname/idlerpg/GuildScreen.kt >> $OUT || echo "NO MATCHES / FILE NOT FOUND"  >> $OUT
+          echo "=== existing 'notice'/level-up/one-shot popup StateFlow patterns ===" >> $OUT
+          grep -rn -i "levelUpNotification\|_levelUp\|_notice\|showNotice\|OneShotEvent\|_toast" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output19.txt
+      - discovery_output20.txt
       
   apply-patch:
     name: Apply Patch Script
