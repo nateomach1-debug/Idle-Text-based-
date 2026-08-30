@@ -155,7 +155,15 @@ private fun buildSkillDetailState(
     } else {
         ActionCatalog.allFor(skillType)
             .filter { it.levelRequired <= summary.level }
-            .map { SkillActionSummary(it.itemId, it.displayName, it.levelRequired) }
+            .map { action ->
+                val requiredSeedId = if (skillId == "FARMING") FarmingSeedRequirements[action.itemId] else null
+                val missing = if (requiredSeedId != null) {
+                    missingIngredientsFor(listOf(RecipeIngredient(requiredSeedId, 1)), inventoryQuantities)
+                } else {
+                    emptyList()
+                }
+                SkillActionSummary(action.itemId, action.displayName, action.levelRequired, missing)
+            }
     }
 
     return SkillDetailState(

@@ -332,3 +332,39 @@ object MiningBonusGemTable {
         }
     }
 }
+
+
+// Crop-harvest FARMING actions each require consuming one of the corresponding
+// seed/sapling item per action performed. Pure seed-gathering actions (the
+// values on the right, e.g. "guam_seed") are unaffected - they remain free.
+// Deliberately excludes willow_sapling/magic_sapling/elder_sapling/
+// world_tree_sapling (no separate crop step) and flax (no seed at all).
+val FarmingSeedRequirements: Map<String, String> = mapOf(
+    "potato" to "potato_seed",
+    "onion" to "onion_seed",
+    "cabbage" to "cabbage_seed",
+    "tomato" to "tomato_seed",
+    "sweetcorn" to "sweetcorn_seed",
+    "guam_leaf" to "guam_seed",
+    "strawberry" to "strawberry_seed",
+    "marrentill" to "marrentill_seed",
+    "watermelon" to "watermelon_seed",
+    "apple" to "apple_sapling",
+    "tarromin" to "tarromin_seed",
+    "banana" to "banana_sapling",
+    "harralander" to "harralander_seed",
+    "orange" to "orange_sapling",
+    "ranarr_weed" to "ranarr_seed",
+    "grapes" to "grape_seed",
+    "toadflax" to "toadflax_seed",
+    "papaya" to "papaya_sapling",
+    "irit_leaf" to "irit_seed",
+    "coconut" to "palm_sapling",
+    "avantoe" to "avantoe_seed",
+    "kwuarm" to "kwuarm_seed",
+    "snapdragon" to "snapdragon_seed",
+    "torstol" to "torstol_seed",
+    "celestial_herb" to "celestial_herb_seed",
+    "lemon" to "lemon_sapling",
+    "pumpkin" to "pumpkin_seed"
+)
