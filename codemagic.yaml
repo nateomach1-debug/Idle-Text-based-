@@ -26,17 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output17.txt
-          echo "=== SkillDetailScreen full file ===" > $OUT
-          find . -iname "SkillDetailScreen.kt" -exec cat {} \; >> $OUT
+          OUT=discovery_output18.txt
+          echo "=== AndroidManifest.xml backup settings ===" > $OUT
+          find . -name "AndroidManifest.xml" -exec cat {} \; >> $OUT
           echo "" >> $OUT
-          echo "=== buildSkillDetailState() full body ===" >> $OUT
-          grep -n -A 60 "private fun buildSkillDetailState" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== MissingIngredientsDialog full definition ===" >> $OUT
-          grep -rn -B 2 -A 30 "fun MissingIngredientsDialog" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== EncryptedSharedPreferences / security-crypto usage ===" >> $OUT
+          grep -rn -B 5 -A 20 "EncryptedSharedPreferences\|MasterKey" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output17.txt
+      - discovery_output18.txt
       
   apply-patch:
     name: Apply Patch Script
