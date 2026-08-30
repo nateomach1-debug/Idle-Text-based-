@@ -26,11 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output12.txt
-          echo "=== CollapsedMessagePreview full body ===" > $OUT
-          grep -n -A 30 "fun CollapsedMessagePreview" ./app/src/main/kotlin/com/yourname/idlerpg/ChatBanner.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output13.txt
+          echo "=== any realtime/incremental updates to _chatMessages outside refreshChatMessages() ===" > $OUT
+          grep -rn "_chatMessages\." --include="*.kt" . >> $OUT
+          echo "" >> $OUT
+          echo "=== realtime channel subscriptions repo-wide ===" >> $OUT
+          grep -rn -i "realtime\|postgresChangeFlow\|\.channel(" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output12.txt
+      - discovery_output13.txt
       
   apply-patch:
     name: Apply Patch Script
