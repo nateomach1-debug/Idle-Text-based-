@@ -51,6 +51,8 @@ workflows:
           python3 patch_add_pies_and_fruits.py
           python3 patch_collapsed_chat_newest_first.py
           python3 patch_expanded_chat_newest_first.py
+          python3 patch_require_seed_for_farming.py
+          python3 patch_rename_farming_actions.py
       - name: Commit and push
         script: |
           git config user.email "codemagic@example.com"
