@@ -1019,6 +1019,7 @@ fun logout() {
                 }
                 if (authState != SupabaseAuthState.SIGNED_IN) {
                     _characterSyncError.value = "Not signed in to multiplayer services yet - character sync will retry on next action."
+                    resolveOfflineRewardsAndSync(characterId)
                     return@launch
                 }
                 val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
@@ -1026,6 +1027,7 @@ fun logout() {
                 result.onSuccess { _characterSyncError.value = null }
                 _currentSupabaseCharacterId.value = result.getOrNull()
                 val supabaseCharacterId = result.getOrNull()
+                var recoveredToRemoteId: String? = null
                 if (supabaseCharacterId != null) {
                     val remoteLocalId = SupabaseCharacterRepository.getCharacterLocalId(supabaseCharacterId).getOrNull()
                     if (remoteLocalId != null && remoteLocalId != characterId) {
@@ -1057,17 +1059,23 @@ fun logout() {
                                 if (recoveredCharacter != null) {
                                     _currentAccountId.value = recoveredCharacter.accountId
                                 }
-                                resolveOfflineRewardsAndSync(remoteLocalId)
+                                recoveredToRemoteId = remoteLocalId
                             }
                         }
                     }
                 }
+                // Only one of these ever fires per selection: whichever character id
+                // turned out to be correct once the async cloud-recovery check above
+                // finished. Previously an immediate, unconditional call fired outside
+                // this coroutine entirely, racing this check - it would briefly show
+                // an offline-progress popup built from the wrong (pre-recovery)
+                // character before this corrected one silently replaced it.
+                resolveOfflineRewardsAndSync(recoveredToRemoteId ?: characterId)
             }
         } else {
             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
+            resolveOfflineRewardsAndSync(characterId)
         }
-
-        resolveOfflineRewardsAndSync(characterId)
     }
 
     // Grants offline-progress rewards (skilling/crafting), records last-seen, and
