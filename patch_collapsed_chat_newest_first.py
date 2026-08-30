@@ -1,4 +1,3 @@
-# patch_collapsed_chat_newest_first.py
 path = "app/src/main/kotlin/com/yourname/idlerpg/ChatBanner.kt"
 with open(path, encoding="utf-8") as f:
     content = f.read()
