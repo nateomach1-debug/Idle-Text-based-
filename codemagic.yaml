@@ -53,6 +53,7 @@ workflows:
           python3 patch_farming_missing_seed_ui.py
           python3 patch_fix_session_crash_on_restore.py
           python3 patch_prefetch_guild_and_chat.py
+          python3 patch_stop_and_notify_on_exhausted_materials.py
       - name: Commit and push
         script: |
           git config user.email "codemagic@example.com"
