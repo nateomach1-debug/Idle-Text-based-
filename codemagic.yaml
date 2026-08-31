@@ -26,20 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output40.txt
-          echo "=== CombatLoadout(...) construction site ===" > $OUT
-          grep -n -B 10 -A 2 "CombatLoadout(" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output41.txt
+          echo "=== LoadoutState full definition ===" > $OUT
+          grep -n -B 2 -A 12 "data class LoadoutState" --include="*.kt" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== monster counterattack block, exact text ===" >> $OUT
-          grep -n -B 3 -A 20 "counterattack\|counter-attack\|monster attacks\|40.0" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== LoadoutScreen full signature + LoadoutScreenState data class ===" >> $OUT
-          grep -n -B 2 -A 30 "fun LoadoutScreen\|data class LoadoutScreenState" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== LoadoutScreen(...) call site in MainActivity.kt ===" >> $OUT
-          grep -n -B 5 -A 20 "LoadoutScreen(" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== LoadoutSettingsSnapshot full definition + wherever it's constructed/exposed ===" >> $OUT
+          grep -n -B 3 -A 15 "LoadoutSettingsSnapshot" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output40.txt
+      - discovery_output41.txt
       
   apply-patch:
     name: Apply Patch Script
