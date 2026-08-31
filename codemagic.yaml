@@ -56,6 +56,7 @@ workflows:
           python3 patch_stop_and_notify_on_exhausted_materials.py
           python3 patch_fix_service_result_field_name.py
           python3 patch_add_bones_and_prayer.py
+          python3 patch_bury_queue_and_prayer.py
       - name: Commit and push
         script: |
           git config user.email "codemagic@example.com"
