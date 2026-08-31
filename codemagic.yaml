@@ -26,14 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output33.txt
-          echo "=== allSkills / skill level access in MainActivity.kt's same scope ===" > $OUT
-          grep -n "allSkills\|collectAsState" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt | grep -i "skill" >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output34.txt
+          echo "=== ActiveQueue sealed class full definition ===" > $OUT
+          grep -n -B 2 -A 40 "sealed class ActiveQueue" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== SkillSummary data class (confirm field names) ===" >> $OUT
-          grep -rn -A 8 "data class SkillSummary" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== main game tick loop (where tickSkilling/tickCrafting/tickCombat/tickConsumables are called) ===" >> $OUT
+          grep -n -B 3 -A 15 "tickSkilling()\|tickCrafting()" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== startCraftingAction / startCraftingQueue definitions ===" >> $OUT
+          grep -n -B 3 -A 25 "fun startCraftingAction\|fun startCraftingQueue" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== quantity-picker dialog UI (used for crafting target quantity or market sell quantity) ===" >> $OUT
+          grep -rln "QuantityPicker\|quantityDialog\|TargetQuantity" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output33.txt
+      - discovery_output34.txt
       
   apply-patch:
     name: Apply Patch Script
