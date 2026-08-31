@@ -368,3 +368,15 @@ val FarmingSeedRequirements: Map<String, String> = mapOf(
     "lemon" to "lemon_sapling",
     "pumpkin" to "pumpkin_seed"
 )
+
+data class BoneBuryInfo(val levelRequired: Int, val xpAmount: Long)
+
+// Bury Bones (an instant Prayer-training action, not a queued skill action -
+// Prayer is deliberately excluded from the normal training-skill picker).
+// Level requirements increase strictly with the tier's source monster level.
+val PrayerBoneRequirements: Map<String, BoneBuryInfo> = mapOf(
+    "bone" to BoneBuryInfo(1, 5),
+    "gem_bones" to BoneBuryInfo(15, 15),
+    "big_bones" to BoneBuryInfo(25, 25),
+    "dragon_bones" to BoneBuryInfo(50, 72)
+)

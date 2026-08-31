@@ -59,7 +59,8 @@ data class InventoryItemSummary(
     val isEquippable: Boolean,
     val isConsumable: Boolean,
     val npcValuePerUnit: Long,
-    val statsDescription: String? = null // e.g. "ATK +5, ACC +10" -- only for equippable items
+    val statsDescription: String? = null, // e.g. "ATK +5, ACC +10" -- only for equippable items
+    val isBuryable: Boolean = false
 )
 
 @Composable
@@ -70,7 +71,9 @@ fun InventoryScreen(
     onUseItem: (String) -> Unit,
     onSellOnMarket: (String) -> Unit,
     onEquipItem: (String) -> Unit,
+    onBuryItem: (String) -> Unit,
     canEquip: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canEquip, lockReasonIfNot)
+    canBury: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canBury, lockReasonIfNot)
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -138,9 +141,11 @@ fun InventoryScreen(
         ItemActionSheet(
             item = item,
             canEquip = canEquip(item),
+            canBury = canBury(item),
             onUse = { onUseItem(item.itemId); selectedItem = null },
             onSell = { onSellOnMarket(item.itemId); selectedItem = null },
             onEquip = { onEquipItem(item.itemId); selectedItem = null },
+            onBury = { onBuryItem(item.itemId); selectedItem = null },
             onDismiss = { selectedItem = null }
         )
     }
@@ -227,9 +232,11 @@ private fun ItemGridTile(item: InventoryItemSummary, onClick: () -> Unit) {
 private fun ItemActionSheet(
     item: InventoryItemSummary,
     canEquip: Pair<Boolean, String?>,
+    canBury: Pair<Boolean, String?>,
     onUse: () -> Unit,
     onSell: () -> Unit,
     onEquip: () -> Unit,
+    onBury: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -279,6 +286,31 @@ private fun ItemActionSheet(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(text = lockReason, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                if (item.isBuryable) {
+                    val (canBuryNow, buryLockReason) = canBury
+                    Button(
+                        onClick = onBury,
+                        enabled = canBuryNow,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = "Bury")
+                    }
+                    if (!canBuryNow && buryLockReason != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Lock,
+                                contentDescription = "Locked",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = buryLockReason, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))

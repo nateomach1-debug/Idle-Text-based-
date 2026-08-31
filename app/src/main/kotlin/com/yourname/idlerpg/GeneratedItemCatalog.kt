@@ -2689,6 +2689,27 @@ object GeneratedItemCatalog {
         isStackable = true
     ),
     ItemDefinition(
+        id = "gem_bones",
+        name = "Gem Bones",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "big_bones",
+        name = "Big Bones",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
+        id = "dragon_bones",
+        name = "Dragon Bones",
+        category = ItemCategory.MATERIAL,
+        isTradeable = true,
+        isStackable = true
+    ),
+    ItemDefinition(
         id = "goblin_ear",
         name = "Goblin Ear",
         category = ItemCategory.MATERIAL,
@@ -3051,6 +3072,9 @@ object GeneratedItemCatalog {
     "dragon_hoard_loot" to 1800L,
     "monarchs_purse" to 3000L,
     "bone" to 2L,
+    "gem_bones" to 25L,
+    "big_bones" to 15L,
+    "dragon_bones" to 100L,
     "goblin_ear" to 1L,
     "rusty_dagger" to 12L,
     "ectoplasm" to 8L,

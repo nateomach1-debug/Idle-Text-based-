@@ -742,6 +742,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun buryBone(itemId: String) {
+        val characterId = _currentCharacterId.value ?: return
+        val boneInfo = PrayerBoneRequirements[itemId] ?: return
+        val prayerLevel = skillLevel(characterId, SkillType.PRAYER)
+        if (prayerLevel < boneInfo.levelRequired) return
+        val inventory = inventoryService.inventoryFor(characterId)
+        val removed = inventory.removeItem(itemId, 1)
+        if (removed is ServiceResult.Success) {
+            progressionService.grantXp(characterId, SkillType.PRAYER, boneInfo.xpAmount)
+            refreshInventory()
+            refreshSkills()
+        }
+    }
+
     private fun tickConsumables() {
         val characterId = _currentCharacterId.value ?: return
         val inventory = inventoryService.inventoryFor(characterId)
@@ -1071,6 +1085,13 @@ fun logout() {
                 // an offline-progress popup built from the wrong (pre-recovery)
                 // character before this corrected one silently replaced it.
                 resolveOfflineRewardsAndSync(recoveredToRemoteId ?: characterId)
+                // Prefetch guild/chat data now (a live signed-in session is
+                // guaranteed at this point) instead of waiting for the user to
+                // visit the Guild tab, where these previously only started
+                // fetching on first navigation - making the network round trip
+                // visible every time instead of already being warm.
+                refreshGuildHome()
+                loadInitialChatState()
                 // Prefetch guild/chat data now (a live signed-in session is
                 // guaranteed at this point) instead of waiting for the user to
                 // visit the Guild tab, where these previously only started

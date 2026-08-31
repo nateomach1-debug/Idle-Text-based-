@@ -278,7 +278,8 @@ private fun buildInventoryItemSummaries(
                 isEquippable = definition.equipSlot != null,
                 isConsumable = definition.category == ItemCategory.CONSUMABLE,
                 npcValuePerUnit = vendorPayoutFor(entry.itemId),
-                statsDescription = statsText
+                statsDescription = statsText,
+                isBuryable = PrayerBoneRequirements.containsKey(entry.itemId)
             )
         } else {
             // Not yet defined in ItemCatalog (e.g. some gathered materials) -- graceful fallback.
@@ -538,6 +539,16 @@ fun AppRoot(gameViewModel: GameViewModel) {
         return if (locked) false to "Locked during combat" else true to null
     }
 
+    fun canBury(item: InventoryItemSummary): Pair<Boolean, String?> {
+        val boneInfo = PrayerBoneRequirements[item.itemId] ?: return false to null
+        val prayerLevel = allSkills["PRAYER"]?.level ?: 1
+        return if (prayerLevel < boneInfo.levelRequired) {
+            false to ("Requires Prayer level " + boneInfo.levelRequired)
+        } else {
+            true to null
+        }
+    }
+
     val lockedEquipSlots = remember(combatViewData) {
         if (combatViewData?.viewState == CombatViewState.IN_COMBAT) {
             setOf(
@@ -779,7 +790,9 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                         currentDestination = AppDestination.MARKET
                                     },
                                     onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
-                                    canEquip = ::canEquip
+                                    onBuryItem = { itemId -> gameViewModel.buryBone(itemId) },
+                                    canEquip = ::canEquip,
+                                    canBury = ::canBury
                                 )
                                 InventoryScreenState.Equipment -> EquipmentScreen(
                                     state = EquipmentScreenState(equipped, lockedEquipSlots),

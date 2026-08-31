@@ -74,7 +74,6 @@ object ZoneCatalog {
                     maxHealth = 25,
                     defenseRating = 5,
                     mainLootTable = listOf(
-                        LootEntry("bone", 1, 1, 60.0),
                         LootEntry("goblin_ear", 1, 2, 40.0)
                     ),
                     rareLootTable = listOf(
@@ -415,6 +414,14 @@ class CombatService {
                 state.lootPool.add(entry.copy(minQty = qty, maxQty = qty))
             }
         }
+        // Every monster guarantees exactly 1 bone per kill, tiered by monster level.
+        val boneType = when {
+            monster.levelRequirement >= 60 -> "dragon_bones"
+            monster.levelRequirement >= 20 -> "big_bones"
+            monster.levelRequirement >= 15 -> "gem_bones"
+            else -> "bone"
+        }
+        state.lootPool.add(LootEntry(boneType, 1, 1, 100.0))
         state.pendingCoins += CoinDropTable.rollCoins(monster.levelRequirement)
     }
 
