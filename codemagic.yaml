@@ -26,11 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output32.txt
-          echo "=== every occurrence of 'canEquip' in MainActivity.kt, with context ===" > $OUT
-          grep -n -B 3 -A 20 "canEquip" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output33.txt
+          echo "=== allSkills / skill level access in MainActivity.kt's same scope ===" > $OUT
+          grep -n "allSkills\|collectAsState" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt | grep -i "skill" >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== SkillSummary data class (confirm field names) ===" >> $OUT
+          grep -rn -A 8 "data class SkillSummary" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output32.txt
+      - discovery_output33.txt
       
   apply-patch:
     name: Apply Patch Script
