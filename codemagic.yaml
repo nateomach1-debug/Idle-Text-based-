@@ -26,14 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output26.txt
-          echo "=== onUseItem wiring in MainActivity.kt ===" > $OUT
-          grep -n -B 3 -A 3 "onUseItem" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== whatever GameViewModel function actually handles item use (search broadly) ===" >> $OUT
-          grep -n -B 2 -A 30 "fun.*[Ii]tem.*[Uu]se\|fun applyConsumable\|fun consume" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output27.txt
+          echo "=== useInventoryItem full body ===" > $OUT
+          grep -n -B 2 -A 40 "fun useInventoryItem" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output26.txt
+      - discovery_output27.txt
       
   apply-patch:
     name: Apply Patch Script
