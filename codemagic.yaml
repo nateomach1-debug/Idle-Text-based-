@@ -26,20 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output25.txt
-          echo "=== full monster roster across all zones (id, level) ===" > $OUT
-          grep -n 'Monster(' -A 3 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt | grep 'id =\|levelRequirement' >> $OUT
+          OUT=discovery_output26.txt
+          echo "=== onUseItem wiring in MainActivity.kt ===" > $OUT
+          grep -n -B 3 -A 3 "onUseItem" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== how eating food / instant item consumption currently works ===" >> $OUT
-          grep -rn -B 3 -A 25 "fun eatFood\|fun consumeItem\|fun useItem\|fun drinkPotion" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== ConsumableType enum ===" >> $OUT
-          grep -rn -A 10 "enum class ConsumableType" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== InventoryScreen item-tap action menu (eat/equip/drop etc.) ===" >> $OUT
-          find . -iname "InventoryScreen.kt" -exec cat {} \; >> $OUT
+          echo "=== whatever GameViewModel function actually handles item use (search broadly) ===" >> $OUT
+          grep -n -B 2 -A 30 "fun.*[Ii]tem.*[Uu]se\|fun applyConsumable\|fun consume" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output25.txt
+      - discovery_output26.txt
       
   apply-patch:
     name: Apply Patch Script
