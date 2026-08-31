@@ -26,14 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output35.txt
-          echo "=== Market sell quantity input UI ===" > $OUT
-          grep -n -B 5 -A 30 "prefilledSellQuantity\|sellQuantity" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output37.txt
+          echo "=== tickCombat() full body ===" > $OUT
+          grep -n -B 2 -A 80 "private fun tickCombat" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== active queue progress display UI (how Crafting shows X/Y progress) ===" >> $OUT
-          grep -rn -B 5 -A 15 "quantityCompleted\|targetQuantity" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== any use of SkillType.DEFENSE repo-wide ===" >> $OUT
+          grep -rn "SkillType.DEFENSE" --include="*.kt" . >> $OUT || echo "NO MATCHES ANYWHERE - DEFENSE currently unused" >> $OUT
     artifacts:
-      - discovery_output35.txt
+      - discovery_output37.txt
       
   apply-patch:
     name: Apply Patch Script
