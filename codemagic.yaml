@@ -26,14 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output39.txt
-          echo "=== resolveAttack() full body ===" > $OUT
-          grep -n -B 3 -A 40 "fun resolveAttack" ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output40.txt
+          echo "=== CombatLoadout(...) construction site ===" > $OUT
+          grep -n -B 10 -A 2 "CombatLoadout(" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== CombatLoadout data class definition ===" >> $OUT
-          grep -rn -A 10 "data class CombatLoadout" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== monster counterattack block, exact text ===" >> $OUT
+          grep -n -B 3 -A 20 "counterattack\|counter-attack\|monster attacks\|40.0" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== LoadoutScreen full signature + LoadoutScreenState data class ===" >> $OUT
+          grep -n -B 2 -A 30 "fun LoadoutScreen\|data class LoadoutScreenState" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== LoadoutScreen(...) call site in MainActivity.kt ===" >> $OUT
+          grep -n -B 5 -A 20 "LoadoutScreen(" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output39.txt
+      - discovery_output40.txt
       
   apply-patch:
     name: Apply Patch Script
