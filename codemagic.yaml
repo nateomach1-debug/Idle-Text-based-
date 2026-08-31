@@ -26,20 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output36.txt
-          echo "=== LoadoutSettings / selectedFoodId / selectedPotionId storage ===" > $OUT
-          grep -rn -B 3 -A 10 "selectedFoodId\|selectedPotionId" ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output35.txt
+          echo "=== Market sell quantity input UI ===" > $OUT
+          grep -n -B 5 -A 30 "prefilledSellQuantity\|sellQuantity" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== LoadoutSettingsExport data class + export/import ===" >> $OUT
-          grep -rn -B 2 -A 12 "class LoadoutSettingsExport\|fun exportAllLoadoutSettings\|fun restoreLoadoutSettings" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== LoadoutScreen.kt full file ===" >> $OUT
-          find . -iname "LoadoutScreen.kt" -exec cat {} \; >> $OUT
-          echo "" >> $OUT
-          echo "=== selectFood / selectPotion functions in GameViewModel.kt ===" >> $OUT
-          grep -n -B 2 -A 10 "fun selectFood\|fun selectPotion" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== active queue progress display UI (how Crafting shows X/Y progress) ===" >> $OUT
+          grep -rn -B 5 -A 15 "quantityCompleted\|targetQuantity" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output36.txt
+      - discovery_output35.txt
       
   apply-patch:
     name: Apply Patch Script
