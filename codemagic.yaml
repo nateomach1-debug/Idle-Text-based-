@@ -26,20 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output34.txt
-          echo "=== ActiveQueue sealed class full definition ===" > $OUT
-          grep -n -B 2 -A 40 "sealed class ActiveQueue" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output36.txt
+          echo "=== LoadoutSettings / selectedFoodId / selectedPotionId storage ===" > $OUT
+          grep -rn -B 3 -A 10 "selectedFoodId\|selectedPotionId" ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== main game tick loop (where tickSkilling/tickCrafting/tickCombat/tickConsumables are called) ===" >> $OUT
-          grep -n -B 3 -A 15 "tickSkilling()\|tickCrafting()" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== LoadoutSettingsExport data class + export/import ===" >> $OUT
+          grep -rn -B 2 -A 12 "class LoadoutSettingsExport\|fun exportAllLoadoutSettings\|fun restoreLoadoutSettings" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== startCraftingAction / startCraftingQueue definitions ===" >> $OUT
-          grep -n -B 3 -A 25 "fun startCraftingAction\|fun startCraftingQueue" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== LoadoutScreen.kt full file ===" >> $OUT
+          find . -iname "LoadoutScreen.kt" -exec cat {} \; >> $OUT
           echo "" >> $OUT
-          echo "=== quantity-picker dialog UI (used for crafting target quantity or market sell quantity) ===" >> $OUT
-          grep -rln "QuantityPicker\|quantityDialog\|TargetQuantity" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== selectFood / selectPotion functions in GameViewModel.kt ===" >> $OUT
+          grep -n -B 2 -A 10 "fun selectFood\|fun selectPotion" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output34.txt
+      - discovery_output36.txt
       
   apply-patch:
     name: Apply Patch Script
