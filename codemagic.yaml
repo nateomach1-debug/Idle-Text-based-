@@ -26,17 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output45.txt
-          echo "=== package declaration in LoadoutScreen.kt ===" > $OUT
-          head -5 ./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt >> $OUT
+          OUT=discovery_output46.txt
+          echo "=== exact lines 30-50 of OfflineIdleMechanicsSystem.kt (BuryQueue area) ===" > $OUT
+          sed -n '30,50p' ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
           echo "" >> $OUT
-          echo "=== package declaration in ActionCatalog.kt ===" >> $OUT
-          head -5 ./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== existing import lines in LoadoutScreen.kt, for style reference ===" >> $OUT
-          grep -n "^import" ./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt >> $OUT
+          echo "=== full resolveOfflineProgress() when-block, exact text ===" >> $OUT
+          grep -n -B 5 -A 60 "fun resolveOfflineProgress" ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
     artifacts:
-      - discovery_output45.txt
+      - discovery_output46.txt
       
   apply-patch:
     name: Apply Patch Script
