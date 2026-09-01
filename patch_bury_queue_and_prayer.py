@@ -724,3 +724,315 @@ with open(path, "w", encoding="utf-8") as f:
 
 print("Part E (GameViewModel.kt) applied cleanly.")
 
+# PART F: InventoryScreen.kt - replace the single "Bury" button with a quantity
+# stepper (1..item.quantity) and "Bury N" button, matching the requested per-bone timer feature.
+path = "app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt"
+with open(path, encoding="utf-8") as f:
+    content = f.read()
+
+anchor_screen_sig = '''    onBuryItem: (String) -> Unit,'''
+count = content.count(anchor_screen_sig)
+assert count == 1, f"Expected 1 match, found {count}."
+content = content.replace(anchor_screen_sig, '    onBuryItem: (String, Int) -> Unit,', 1)
+
+anchor_sheet_call_bury = '''            onBury = { onBuryItem(item.itemId); selectedItem = null },'''
+count = content.count(anchor_sheet_call_bury)
+assert count == 1, f"Expected 1 match, found {count}."
+content = content.replace(
+    anchor_sheet_call_bury,
+    '            onBury = { qty -> onBuryItem(item.itemId, qty); selectedItem = null },',
+    1
+)
+
+anchor_sheet_sig_bury = '''    onBury: () -> Unit,'''
+count = content.count(anchor_sheet_sig_bury)
+assert count == 1, f"Expected 1 match, found {count}."
+content = content.replace(anchor_sheet_sig_bury, '    onBury: (Int) -> Unit,', 1)
+
+anchor_bury_block = '''                if (item.isBuryable) {
+                    val (canBuryNow, buryLockReason) = canBury
+                    Button(
+                        onClick = onBury,
+                        enabled = canBuryNow,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = "Bury")
+                    }
+                    if (!canBuryNow && buryLockReason != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Lock,
+                                contentDescription = "Locked",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = buryLockReason, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }'''
+count = content.count(anchor_bury_block)
+assert count == 1, f"Expected 1 match, found {count}."
+replacement_bury_block = '''                if (item.isBuryable) {
+                    val (canBuryNow, buryLockReason) = canBury
+                    var buryQuantity by remember(item.itemId) { mutableStateOf(1) }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        IconButton(
+                            onClick = { if (buryQuantity > 1) buryQuantity -= 1 },
+                            enabled = canBuryNow
+                        ) {
+                            Text(text = "-", style = MaterialTheme.typography.titleLarge)
+                        }
+                        Text(
+                            text = buryQuantity.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        IconButton(
+                            onClick = { if (buryQuantity < item.quantity) buryQuantity += 1 },
+                            enabled = canBuryNow
+                        ) {
+                            Text(text = "+", style = MaterialTheme.typography.titleLarge)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Button(
+                        onClick = { onBury(buryQuantity) },
+                        enabled = canBuryNow,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = "Bury " + buryQuantity)
+                    }
+                    if (!canBuryNow && buryLockReason != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Lock,
+                                contentDescription = "Locked",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = buryLockReason, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }'''
+content = content.replace(anchor_bury_block, replacement_bury_block, 1)
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("Part F (InventoryScreen.kt) applied cleanly.")
+
+# PART G: LoadoutScreen.kt - Prayer picker section, mirroring the Training
+# chip-row style, with locked/grayed-out prayers above the player's current level.
+path = "app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt"
+with open(path, encoding="utf-8") as f:
+    content = f.read()
+
+anchor_sig = '''fun LoadoutScreen(
+    state: LoadoutState,
+    onBack: () -> Unit,
+    onFoodSelected: (String) -> Unit,
+    onPotionSelected: (String) -> Unit,
+    onAutoHealChanged: (Int) -> Unit,
+    onAutoFleeChanged: (Int) -> Unit,
+    trainingSkill: SkillType? = null,
+    allowedTrainingSkills: List<SkillType> = emptyList(),
+    onTrainingSkillSelected: (SkillType) -> Unit = {},
+    modifier: Modifier = Modifier
+) {'''
+count = content.count(anchor_sig)
+assert count == 1, f"Expected 1 match, found {count}."
+replacement_sig = '''fun LoadoutScreen(
+    state: LoadoutState,
+    onBack: () -> Unit,
+    onFoodSelected: (String) -> Unit,
+    onPotionSelected: (String) -> Unit,
+    onAutoHealChanged: (Int) -> Unit,
+    onAutoFleeChanged: (Int) -> Unit,
+    trainingSkill: SkillType? = null,
+    allowedTrainingSkills: List<SkillType> = emptyList(),
+    onTrainingSkillSelected: (SkillType) -> Unit = {},
+    selectedPrayerId: String? = null,
+    prayerOptions: List<PrayerDefinition> = emptyList(),
+    prayerLevel: Int = 1,
+    onPrayerSelected: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+) {'''
+content = content.replace(anchor_sig, replacement_sig, 1)
+
+anchor_potion_end = '''        if (state.availablePotions.isEmpty()) {
+            Text(text = "No potions in inventory.", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            state.availablePotions.forEach { potion ->
+                ConsumableRow(
+                    option = potion,
+                    isSelected = potion.itemId == state.selectedPotionId,
+                    onClick = { onPotionSelected(potion.itemId) }
+                )
+            }
+        }
+    }
+}'''
+count = content.count(anchor_potion_end)
+assert count == 1, f"Expected 1 match, found {count}."
+replacement_potion_end = '''        if (state.availablePotions.isEmpty()) {
+            Text(text = "No potions in inventory.", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            state.availablePotions.forEach { potion ->
+                ConsumableRow(
+                    option = potion,
+                    isSelected = potion.itemId == state.selectedPotionId,
+                    onClick = { onPotionSelected(potion.itemId) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(text = "Prayer", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        Column {
+            prayerOptions.forEach { prayer ->
+                val selected = prayer.id == selectedPrayerId
+                val locked = prayerLevel < prayer.levelRequired
+                val background = if (selected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                }
+                val textColor = if (locked) {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(background)
+                        .clickable(enabled = !locked) { onPrayerSelected(prayer.id) }
+                        .padding(12.dp)
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = prayer.displayName, style = MaterialTheme.typography.bodyMedium, color = textColor)
+                        Text(text = prayer.description, style = MaterialTheme.typography.labelSmall, color = textColor)
+                    }
+                    if (locked) {
+                        Text(text = "Lv " + prayer.levelRequired, style = MaterialTheme.typography.labelSmall, color = textColor)
+                    }
+                }
+            }
+        }
+    }
+}'''
+content = content.replace(anchor_potion_end, replacement_potion_end, 1)
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("Part G (LoadoutScreen.kt) applied cleanly.")
+
+# PART H: MainActivity.kt - wire Prayer params into both LoadoutScreen call
+# sites, and fix onBuryItem's wiring to the new quantity-taking startBuryAction().
+path = "app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt"
+with open(path, encoding="utf-8") as f:
+    content = f.read()
+
+anchor_combat_loadout = '''                                CombatScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                    ),
+                                    trainingSkill = trainingSkill,
+                                    allowedTrainingSkills = gameViewModel.allowedTrainingSkills,
+                                    onTrainingSkillSelected = { gameViewModel.setTrainingSkill(it) },
+                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+                                )'''
+count = content.count(anchor_combat_loadout)
+assert count == 1, f"Expected 1 match, found {count}."
+replacement_combat_loadout = '''                                CombatScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                    ),
+                                    trainingSkill = trainingSkill,
+                                    allowedTrainingSkills = gameViewModel.allowedTrainingSkills,
+                                    onTrainingSkillSelected = { gameViewModel.setTrainingSkill(it) },
+                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) },
+                                    selectedPrayerId = loadoutSettings.selectedPrayerId,
+                                    prayerOptions = gameViewModel.prayerOptions,
+                                    prayerLevel = allSkills["PRAYER"]?.level ?: 1,
+                                    onPrayerSelected = { gameViewModel.selectPrayer(it) }
+                                )'''
+content = content.replace(anchor_combat_loadout, replacement_combat_loadout, 1)
+
+anchor_inventory_loadout = '''                                InventoryScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                    ),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+                                )'''
+count = content.count(anchor_inventory_loadout)
+assert count == 1, f"Expected 1 match, found {count}."
+replacement_inventory_loadout = '''                                InventoryScreenState.Loadout -> LoadoutScreen(
+                                    state = LoadoutState(
+                                        availableFoodOptions, loadoutSettings.selectedFoodId,
+                                        availablePotionOptions, loadoutSettings.selectedPotionId,
+                                        loadoutSettings.potionTimerRemainingSeconds,
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                    ),
+                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
+                                    onFoodSelected = { gameViewModel.selectFood(it) },
+                                    onPotionSelected = { gameViewModel.selectPotion(it) },
+                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) },
+                                    selectedPrayerId = loadoutSettings.selectedPrayerId,
+                                    prayerOptions = gameViewModel.prayerOptions,
+                                    prayerLevel = allSkills["PRAYER"]?.level ?: 1,
+                                    onPrayerSelected = { gameViewModel.selectPrayer(it) }
+                                )'''
+content = content.replace(anchor_inventory_loadout, replacement_inventory_loadout, 1)
+
+anchor_onburyitem = '''                                    onBuryItem = { itemId -> gameViewModel.buryBone(itemId) },'''
+count = content.count(anchor_onburyitem)
+assert count == 1, f"Expected 1 match, found {count}."
+content = content.replace(
+    anchor_onburyitem,
+    '                                    onBuryItem = { itemId, qty -> gameViewModel.startBuryAction(itemId, qty) },',
+    1
+)
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("Part H (MainActivity.kt) applied cleanly.")
