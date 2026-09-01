@@ -221,7 +221,8 @@ data class CombatLoadout(
     val equippedWeapon: Weapon?,
     val equippedSpell: Spell?,
     val autoHealThresholdPercent: Int,
-    val autoFleeThresholdPercent: Int
+    val autoFleeThresholdPercent: Int,
+    val selectedPrayerId: String? = null
 )
 
 enum class SessionState { SEARCHING, PAUSED, IN_COMBAT }
@@ -383,7 +384,12 @@ class CombatService {
         }
         val monster = session.currentMonster ?: return ServiceResult.Failure("No active target.")
 
-        val hitChancePercent = (attackerAccuracy.toDouble() / (attackerAccuracy + monster.defenseRating)) * 100.0
+        // Prayer bonuses applied here (rather than at the caller) since this is the
+        // one place both live and any future callers already thread the loadout through.
+        val effectiveAccuracy = if (loadout.selectedPrayerId == "clarity_of_thought") (attackerAccuracy * 1.1).toInt() else attackerAccuracy
+        val effectiveMaxHit = if (loadout.selectedPrayerId == "burst_of_strength") (attackerMaxHit * 1.1).toInt() else attackerMaxHit
+
+        val hitChancePercent = (effectiveAccuracy.toDouble() / (effectiveAccuracy + monster.defenseRating)) * 100.0
         val didHit = Random.nextDouble(0.0, 100.0) < hitChancePercent
 
         if (!didHit) {
@@ -392,12 +398,13 @@ class CombatService {
             )
         }
 
-        val damage = Random.nextInt(0, attackerMaxHit + 1)
+        val damage = Random.nextInt(0, effectiveMaxHit + 1)
         session.currentMonsterHealth = (session.currentMonsterHealth - damage).coerceAtLeast(0)
         val defeated = session.currentMonsterHealth <= 0
 
         if (defeated) {
-            rollLoot(state, monster)
+            val dropRateMultiplier = if (loadout.selectedPrayerId == "fortunes_favor") 1.15 else 1.0
+            rollLoot(state, monster, dropRateMultiplier)
             session.currentMonster = null
             startSearching(characterId)
         }
@@ -407,14 +414,16 @@ class CombatService {
         )
     }
 
-    private fun rollLoot(state: CharacterCombatState, monster: Monster) {
+    private fun rollLoot(state: CharacterCombatState, monster: Monster, dropRateMultiplier: Double = 1.0) {
         (monster.mainLootTable + monster.rareLootTable).forEach { entry ->
-            if (Random.nextDouble(0.0, 100.0) < entry.dropChancePercent) {
+            val effectiveChance = (entry.dropChancePercent * dropRateMultiplier).coerceAtMost(100.0)
+            if (Random.nextDouble(0.0, 100.0) < effectiveChance) {
                 val qty = Random.nextInt(entry.minQty, entry.maxQty + 1)
                 state.lootPool.add(entry.copy(minQty = qty, maxQty = qty))
             }
         }
         // Every monster guarantees exactly 1 bone per kill, tiered by monster level.
+        // Guaranteed - not affected by drop-rate prayers.
         val boneType = when {
             monster.levelRequirement >= 60 -> "dragon_bones"
             monster.levelRequirement >= 20 -> "big_bones"
@@ -519,7 +528,8 @@ class CombatService {
         zoneId: String,
         elapsedSeconds: Long,
         attackerAccuracy: Int,
-        attackerMaxHit: Int
+        attackerMaxHit: Int,
+        dropRateMultiplier: Double = 1.0
     ): ServiceResult<OfflineCombatOutcome> {
         val state = stateFor(characterId)
         val zone = ZoneCatalog.zones.find { it.id == zoneId }
@@ -556,7 +566,7 @@ class CombatService {
 
         repeat(estimatedKills) {
             val monster = zone.monsters.random()
-            rollLoot(state, monster)
+            rollLoot(state, monster, dropRateMultiplier)
         }
 
         return ServiceResult.Success(OfflineCombatOutcome(estimatedKills = estimatedKills, xpEarned = xpEarned))

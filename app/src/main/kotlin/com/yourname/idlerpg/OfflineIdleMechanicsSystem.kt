@@ -7,7 +7,7 @@ import java.time.Instant
 // QUEUE TYPES
 // =========================================================
 
-enum class QueueType { SKILLING, CRAFTING, OFFLINE_COMBAT }
+enum class QueueType { SKILLING, CRAFTING, OFFLINE_COMBAT, BURYING }
 
 sealed class ActiveQueue {
     abstract val characterId: String
@@ -39,9 +39,21 @@ sealed class ActiveQueue {
     data class OfflineCombatQueue(
         override val characterId: String,
         val zoneId: String,
-        override val startedAt: Instant = Instant.now()
+        val startedAt: Instant = Instant.now()
     ) : ActiveQueue() {
         override val type = QueueType.OFFLINE_COMBAT
+    }
+
+    data class BuryQueue(
+        override val characterId: String,
+        val itemId: String,
+        val targetQuantity: Int,
+        var quantityCompleted: Int = 0,
+        val secondsPerAction: Int,
+        val startedAt: Instant = Instant.now()
+    ) : ActiveQueue() {
+        override val type = QueueType.BURYING
+        fun isTargetReached(): Boolean = quantityCompleted >= targetQuantity
     }
 }
 
@@ -317,6 +329,18 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
 
     fun exportLastSaleCheck(): List<LastSaleCheckExport> =
         lastSaleCheckAt.map { (characterId, instant) -> LastSaleCheckExport(characterId, instant.toString()) }
+
+    fun startBuryQueue(characterId: String, itemId: String, targetQuantity: Int, secondsPerAction: Int): ServiceResult<ActiveQueue> {
+        if (activeQueues.containsKey(characterId)) {
+            return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
+        }
+        if (targetQuantity <= 0) {
+            return ServiceResult.Failure("Target quantity must be positive.")
+        }
+        val queue = ActiveQueue.BuryQueue(characterId, itemId, targetQuantity, secondsPerAction = secondsPerAction)
+        activeQueues[characterId] = queue
+        return ServiceResult.Success(queue)
+    }
 
     fun exportOfflineCombatQueues(): List<OfflineCombatQueueExport> =
         activeQueues.values.filterIsInstance<ActiveQueue.OfflineCombatQueue>().map {

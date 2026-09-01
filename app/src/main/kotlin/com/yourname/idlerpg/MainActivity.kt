@@ -773,7 +773,11 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     onFoodSelected = { gameViewModel.selectFood(it) },
                                     onPotionSelected = { gameViewModel.selectPotion(it) },
                                     onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
-                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) },
+                                    selectedPrayerId = loadoutSettings.selectedPrayerId,
+                                    prayerOptions = gameViewModel.prayerOptions,
+                                    prayerLevel = allSkills["PRAYER"]?.level ?: 1,
+                                    onPrayerSelected = { gameViewModel.selectPrayer(it) }
                                 )
                             }
 
@@ -790,7 +794,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                         currentDestination = AppDestination.MARKET
                                     },
                                     onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
-                                    onBuryItem = { itemId -> gameViewModel.buryBone(itemId) },
+                                    onBuryItem = { itemId, qty -> gameViewModel.startBuryAction(itemId, qty) },
                                     canEquip = ::canEquip,
                                     canBury = ::canBury
                                 )
@@ -810,7 +814,11 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     onFoodSelected = { gameViewModel.selectFood(it) },
                                     onPotionSelected = { gameViewModel.selectPotion(it) },
                                     onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
-                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) }
+                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) },
+                                    selectedPrayerId = loadoutSettings.selectedPrayerId,
+                                    prayerOptions = gameViewModel.prayerOptions,
+                                    prayerLevel = allSkills["PRAYER"]?.level ?: 1,
+                                    onPrayerSelected = { gameViewModel.selectPrayer(it) }
                                 )
                             }
 

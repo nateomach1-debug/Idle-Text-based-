@@ -1951,7 +1951,8 @@ class Inventory(
     var selectedPotionId: String? = null,
     var potionTimerRemainingSeconds: Int = 0,
     var autoHealThresholdPercent: Int = 30,
-    var autoFleeThresholdPercent: Int = 10
+    var autoFleeThresholdPercent: Int = 10,
+    var selectedPrayerId: String? = null
 ) {
     fun usedSlots(): Int = entries.size
 
@@ -2066,6 +2067,14 @@ class Inventory(
         return ServiceResult.Success(Unit)
     }
 
+    fun selectPrayer(prayerId: String?): ServiceResult<Unit> {
+        if (prayerId != null && PrayerCatalog.none { it.id == prayerId }) {
+            return ServiceResult.Failure("Unknown prayer.")
+        }
+        selectedPrayerId = prayerId
+        return ServiceResult.Success(Unit)
+    }
+
     fun consumeSelectedFood(): ItemDefinition? {
         val foodId = selectedFoodId ?: return null
         val definition = ItemCatalog.find(foodId) ?: return null
@@ -2128,7 +2137,8 @@ data class LoadoutSettingsExport(
     val selectedPotionId: String?,
     val potionTimerRemainingSeconds: Int,
     val autoHealThresholdPercent: Int,
-    val autoFleeThresholdPercent: Int
+    val autoFleeThresholdPercent: Int,
+    val selectedPrayerId: String? = null
 )
 
 class InventoryService {
@@ -2156,7 +2166,7 @@ class InventoryService {
     fun exportAllLoadoutSettings(): List<LoadoutSettingsExport> = inventories.map { (characterId, inv) ->
         LoadoutSettingsExport(
             characterId, inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
-            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
+            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId
         )
     }
 
@@ -2167,5 +2177,6 @@ class InventoryService {
         inv.potionTimerRemainingSeconds = export.potionTimerRemainingSeconds
         inv.autoHealThresholdPercent = export.autoHealThresholdPercent
         inv.autoFleeThresholdPercent = export.autoFleeThresholdPercent
+        inv.selectedPrayerId = export.selectedPrayerId
     }
 }

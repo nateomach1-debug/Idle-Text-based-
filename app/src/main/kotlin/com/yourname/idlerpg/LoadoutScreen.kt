@@ -48,6 +48,10 @@ fun LoadoutScreen(
     trainingSkill: SkillType? = null,
     allowedTrainingSkills: List<SkillType> = emptyList(),
     onTrainingSkillSelected: (SkillType) -> Unit = {},
+    selectedPrayerId: String? = null,
+    prayerOptions: List<PrayerDefinition> = emptyList(),
+    prayerLevel: Int = 1,
+    onPrayerSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
@@ -137,6 +141,45 @@ fun LoadoutScreen(
                     isSelected = potion.itemId == state.selectedPotionId,
                     onClick = { onPotionSelected(potion.itemId) }
                 )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(text = "Prayer", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        Column {
+            prayerOptions.forEach { prayer ->
+                val selected = prayer.id == selectedPrayerId
+                val locked = prayerLevel < prayer.levelRequired
+                val background = if (selected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                }
+                val textColor = if (locked) {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(background)
+                        .clickable(enabled = !locked) { onPrayerSelected(prayer.id) }
+                        .padding(12.dp)
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = prayer.displayName, style = MaterialTheme.typography.bodyMedium, color = textColor)
+                        Text(text = prayer.description, style = MaterialTheme.typography.labelSmall, color = textColor)
+                    }
+                    if (locked) {
+                        Text(text = "Lv " + prayer.levelRequired, style = MaterialTheme.typography.labelSmall, color = textColor)
+                    }
+                }
             }
         }
     }

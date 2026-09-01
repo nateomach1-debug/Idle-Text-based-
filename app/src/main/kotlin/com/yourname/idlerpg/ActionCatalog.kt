@@ -369,6 +369,17 @@ val FarmingSeedRequirements: Map<String, String> = mapOf(
     "pumpkin" to "pumpkin_seed"
 )
 
+data class PrayerDefinition(val id: String, val displayName: String, val levelRequired: Int, val description: String)
+
+// Single-select toggle, no drain resource - selecting one deselects any other.
+val PrayerCatalog: List<PrayerDefinition> = listOf(
+    PrayerDefinition("clarity_of_thought", "Clarity of Thought", 1, "+10% combat accuracy"),
+    PrayerDefinition("burst_of_strength", "Burst of Strength", 10, "+10% combat max hit"),
+    PrayerDefinition("efficient_hands", "Efficient Hands", 15, "-15% time per skilling action"),
+    PrayerDefinition("rock_skin", "Rock Skin", 20, "-20% damage taken from monsters"),
+    PrayerDefinition("fortunes_favor", "Fortune's Favor", 30, "+15% to all loot drop chances")
+)
+
 data class BoneBuryInfo(val levelRequired: Int, val xpAmount: Long)
 
 // Bury Bones (an instant Prayer-training action, not a queued skill action -

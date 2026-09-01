@@ -631,6 +631,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val loadout = CombatLoadout(
             style = weapon?.style ?: CombatStyle.MELEE,
             trainingSkill = trainingSkill,
+            selectedPrayerId = inventoryService.inventoryFor(characterId).selectedPrayerId,
             equippedWeapon = weapon,
             equippedSpell = null,
             autoHealThresholdPercent = inventoryService.inventoryFor(characterId).autoHealThresholdPercent,
@@ -677,7 +678,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             // as the maxHp formula above - safe to retune once real monster balance is worked out.
             val monster = session.currentMonster
             if (monster != null && Random.nextDouble(0.0, 100.0) < 40.0) {
-                val dmg = Random.nextInt(1, (monster.defenseRating / 3).coerceAtLeast(1) + 1)
+                val rawDmg = Random.nextInt(1, (monster.defenseRating / 3).coerceAtLeast(1) + 1)
+                val dmg = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "rock_skin") {
+                    (rawDmg * 0.8).toInt().coerceAtLeast(1)
+                } else {
+                    rawDmg
+                }
                 combatService.applyDamageToCharacter(characterId, dmg)
                 log.add(CombatLogEntry(monster.name + " hits you for " + dmg + "."))
             }
@@ -700,11 +706,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val selectedPotionId: String?,
         val potionTimerRemainingSeconds: Int,
         val autoHealThresholdPercent: Int,
-        val autoFleeThresholdPercent: Int
+        val autoFleeThresholdPercent: Int,
+        val selectedPrayerId: String? = null
     )
 
-    private val _loadoutSettings = MutableStateFlow(LoadoutSettingsSnapshot(null, null, 0, 30, 10))
+    private val _loadoutSettings = MutableStateFlow(LoadoutSettingsSnapshot(null, null, 0, 30, 10, null))
     val loadoutSettings: StateFlow<LoadoutSettingsSnapshot> = _loadoutSettings.asStateFlow()
+
+    val prayerOptions: List<PrayerDefinition> get() = PrayerCatalog
 
     fun setAutoHealThreshold(percent: Int) {
         val characterId = _currentCharacterId.value ?: return
@@ -730,6 +739,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         refreshInventory()
     }
 
+    fun selectPrayer(prayerId: String?) {
+        val characterId = _currentCharacterId.value ?: return
+        if (prayerId != null) {
+            val prayer = PrayerCatalog.find { it.id == prayerId } ?: return
+            if (skillLevel(characterId, SkillType.PRAYER) < prayer.levelRequired) return
+        }
+        inventoryService.inventoryFor(characterId).selectPrayer(prayerId)
+        refreshInventory()
+    }
+
     fun useInventoryItem(itemId: String) {
         val characterId = _currentCharacterId.value ?: return
         val definition = ItemCatalog.find(itemId) ?: return
@@ -742,17 +761,80 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun buryBone(itemId: String) {
+    private var buryActionProgressSeconds: Long = 0
+
+    fun startBuryAction(itemId: String, quantity: Int) {
         val characterId = _currentCharacterId.value ?: return
         val boneInfo = PrayerBoneRequirements[itemId] ?: return
         val prayerLevel = skillLevel(characterId, SkillType.PRAYER)
         if (prayerLevel < boneInfo.levelRequired) return
         val inventory = inventoryService.inventoryFor(characterId)
-        val removed = inventory.removeItem(itemId, 1)
-        if (removed is ServiceResult.Success) {
-            progressionService.grantXp(characterId, SkillType.PRAYER, boneInfo.xpAmount)
+        val available = inventory.quantityOf(itemId)
+        if (available <= 0 || quantity <= 0) return
+        val cappedQuantity = minOf(quantity, available)
+        val baseSeconds = 2L
+        val effectiveSeconds = if (inventory.selectedPrayerId == "efficient_hands") {
+            (baseSeconds * 0.85).toLong().coerceAtLeast(1L)
+        } else {
+            baseSeconds
+        }
+        // Starting a bury queue stops any active combat session - only one
+        // activity can run at a time.
+        leaveCombatZone()
+        offlineIdleService.stopQueue(characterId)
+        offlineIdleService.startBuryQueue(characterId, itemId, cappedQuantity, effectiveSeconds)
+        offlineIdleService.recordLastSeen(characterId)
+        buryActionProgressSeconds = 0
+        refreshActiveQueue()
+    }
+
+    fun stopBuryAction() {
+        val characterId = _currentCharacterId.value ?: return
+        offlineIdleService.stopQueue(characterId)
+        buryActionProgressSeconds = 0
+        refreshActiveQueue()
+    }
+
+    private fun tickBurying() {
+        val characterId = _currentCharacterId.value ?: return
+        val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.BuryQueue ?: return
+
+        buryActionProgressSeconds += 1
+        if (buryActionProgressSeconds < queue.secondsPerAction) return
+
+        val attempts = (buryActionProgressSeconds / queue.secondsPerAction).toInt()
+        buryActionProgressSeconds %= queue.secondsPerAction
+
+        val remainingToTarget = queue.targetQuantity - queue.quantityCompleted
+        val cappedAttempts = minOf(attempts, remainingToTarget)
+        if (cappedAttempts <= 0) return
+
+        val boneInfo = PrayerBoneRequirements[queue.itemId] ?: return
+        val inventory = inventoryService.inventoryFor(characterId)
+        val available = inventory.quantityOf(queue.itemId)
+        val effectiveAttempts = minOf(cappedAttempts, available)
+
+        if (effectiveAttempts > 0) {
+            inventory.removeItem(queue.itemId, effectiveAttempts)
+            progressionService.grantXp(characterId, SkillType.PRAYER, boneInfo.xpAmount * effectiveAttempts)
+            queue.quantityCompleted += effectiveAttempts
             refreshInventory()
             refreshSkills()
+        }
+
+        if (queue.isTargetReached()) {
+            offlineIdleService.stopQueue(characterId)
+            buryActionProgressSeconds = 0
+            refreshActiveQueue()
+        } else if (effectiveAttempts < cappedAttempts) {
+            // Ran out of bones mid-batch - stop instead of spinning uselessly.
+            offlineIdleService.stopQueue(characterId)
+            buryActionProgressSeconds = 0
+            refreshActiveQueue()
+            _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
+                itemName = formatItemName(queue.itemId),
+                reason = "Ran out of " + formatItemName(queue.itemId) + "."
+            )
         }
     }
 
@@ -806,6 +888,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 delay(1000L)
                 tickSkilling()
             tickCrafting()
+            tickBurying()
             tickConsumables()
             tickCombat()
             }
@@ -1199,7 +1282,11 @@ fun logout() {
                             maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
                         }
                     }
-                    val outcome = combatService.resolveOfflineCombat(characterId, combatQueue.zoneId, elapsedSeconds, accuracy, maxHit)
+                    val selectedPrayerId = inventoryService.inventoryFor(characterId).selectedPrayerId
+                    val prayerAccuracy = if (selectedPrayerId == "clarity_of_thought") (accuracy * 1.1).toInt() else accuracy
+                    val prayerMaxHit = if (selectedPrayerId == "burst_of_strength") (maxHit * 1.1).toInt() else maxHit
+                    val prayerDropRateMultiplier = if (selectedPrayerId == "fortunes_favor") 1.15 else 1.0
+                    val outcome = combatService.resolveOfflineCombat(characterId, combatQueue.zoneId, elapsedSeconds, prayerAccuracy, prayerMaxHit, prayerDropRateMultiplier)
                     if (outcome is ServiceResult.Success && outcome.value.estimatedKills > 0) {
                         if (outcome.value.xpEarned > 0) {
                             progressionService.grantXp(characterId, trainingSkill, outcome.value.xpEarned)
@@ -1263,7 +1350,12 @@ fun logout() {
         // activity can run at a time.
         leaveCombatZone()
         offlineIdleService.stopQueue(characterId)
-        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, action.secondsPerAction)
+        val effectiveSecondsPerAction = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "efficient_hands") {
+            (action.secondsPerAction * 0.85).toLong().coerceAtLeast(1L)
+        } else {
+            action.secondsPerAction
+        }
+        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, effectiveSecondsPerAction)
         offlineIdleService.recordLastSeen(characterId)
         checkForRecentSales(characterId)
         skillActionProgressSeconds = 0
@@ -1382,10 +1474,16 @@ fun logout() {
         // activity can run at a time.
         leaveCombatZone()
         offlineIdleService.stopQueue(characterId)
+        val baseCraftSeconds = CraftingTierCurve.secondsFor(recipe.levelRequired)
+        val effectiveCraftSeconds = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "efficient_hands") {
+            (baseCraftSeconds * 0.85).toLong().coerceAtLeast(1L)
+        } else {
+            baseCraftSeconds
+        }
         offlineIdleService.startCraftingQueue(
             characterId,
             itemId,
-            CraftingTierCurve.secondsFor(recipe.levelRequired),
+            effectiveCraftSeconds,
             targetQuantity
         )
         offlineIdleService.recordLastSeen(characterId)
@@ -1459,7 +1557,7 @@ fun logout() {
         _equippedItems.value = inv.allEquipped()
         _loadoutSettings.value = LoadoutSettingsSnapshot(
             inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
-            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent
+            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId
         )
     }
 

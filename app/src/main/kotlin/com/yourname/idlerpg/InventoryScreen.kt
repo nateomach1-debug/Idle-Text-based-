@@ -71,7 +71,7 @@ fun InventoryScreen(
     onUseItem: (String) -> Unit,
     onSellOnMarket: (String) -> Unit,
     onEquipItem: (String) -> Unit,
-    onBuryItem: (String) -> Unit,
+    onBuryItem: (String, Int) -> Unit,
     canEquip: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canEquip, lockReasonIfNot)
     canBury: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canBury, lockReasonIfNot)
     modifier: Modifier = Modifier
@@ -145,7 +145,7 @@ fun InventoryScreen(
             onUse = { onUseItem(item.itemId); selectedItem = null },
             onSell = { onSellOnMarket(item.itemId); selectedItem = null },
             onEquip = { onEquipItem(item.itemId); selectedItem = null },
-            onBury = { onBuryItem(item.itemId); selectedItem = null },
+            onBury = { qty -> onBuryItem(item.itemId, qty); selectedItem = null },
             onDismiss = { selectedItem = null }
         )
     }
@@ -236,7 +236,7 @@ private fun ItemActionSheet(
     onUse: () -> Unit,
     onSell: () -> Unit,
     onEquip: () -> Unit,
-    onBury: () -> Unit,
+    onBury: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -293,12 +293,37 @@ private fun ItemActionSheet(
 
                 if (item.isBuryable) {
                     val (canBuryNow, buryLockReason) = canBury
+                    var buryQuantity by remember(item.itemId) { mutableStateOf(1) }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        IconButton(
+                            onClick = { if (buryQuantity > 1) buryQuantity -= 1 },
+                            enabled = canBuryNow
+                        ) {
+                            Text(text = "-", style = MaterialTheme.typography.titleLarge)
+                        }
+                        Text(
+                            text = buryQuantity.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        IconButton(
+                            onClick = { if (buryQuantity < item.quantity) buryQuantity += 1 },
+                            enabled = canBuryNow
+                        ) {
+                            Text(text = "+", style = MaterialTheme.typography.titleLarge)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
                     Button(
-                        onClick = onBury,
+                        onClick = { onBury(buryQuantity) },
                         enabled = canBuryNow,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(text = "Bury")
+                        Text(text = "Bury " + buryQuantity)
                     }
                     if (!canBuryNow && buryLockReason != null) {
                         Spacer(modifier = Modifier.height(4.dp))
