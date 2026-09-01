@@ -26,14 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output41.txt
-          echo "=== LoadoutState full definition ===" > $OUT
-          grep -n -B 2 -A 12 "data class LoadoutState" --include="*.kt" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output42.txt
+          echo "=== LoadoutScreen full composable signature ===" > $OUT
+          grep -n -B 2 -A 15 "fun LoadoutScreen" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== LoadoutSettingsSnapshot full definition + wherever it's constructed/exposed ===" >> $OUT
-          grep -n -B 3 -A 15 "LoadoutSettingsSnapshot" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== both LoadoutScreen(...) call sites in MainActivity.kt ===" >> $OUT
+          grep -n -B 3 -A 15 "LoadoutScreen(" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== onBuryItem wiring in MainActivity.kt (from the earlier bones patch) ===" >> $OUT
+          grep -n -B 2 -A 2 "onBuryItem" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output41.txt
+      - discovery_output42.txt
       
   apply-patch:
     name: Apply Patch Script
