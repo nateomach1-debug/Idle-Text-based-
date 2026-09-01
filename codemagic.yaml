@@ -26,11 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output43.txt
-          echo "=== exact current OfflineCombatQueue block + sealed class closing ===" > $OUT
-          grep -n -B 2 -A 8 "data class OfflineCombatQueue" ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt | cat -A | head -30 >> $OUT
+          OUT=discovery_output44.txt
+          echo "=== OfflineCombatQueue anywhere in the repo ===" > $OUT
+          grep -rn -B 3 -A 8 "OfflineCombatQueue" --include="*.kt" . >> $OUT || echo "NO MATCHES ANYWHERE" >> $OUT
+          echo "" >> $OUT
+          echo "=== confirm OfflineIdleMechanicsSystem.kt file exists and is non-empty ===" >> $OUT
+          wc -l ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
     artifacts:
-      - discovery_output43.txt
+      - discovery_output44.txt
       
   apply-patch:
     name: Apply Patch Script
