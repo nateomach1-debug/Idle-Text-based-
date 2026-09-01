@@ -49,8 +49,8 @@ sealed class ActiveQueue {
         val itemId: String,
         val targetQuantity: Int,
         var quantityCompleted: Int = 0,
-        val secondsPerAction: Int,
-        val startedAt: Instant = Instant.now()
+        val secondsPerAction: Long,
+        override val startedAt: Instant = Instant.now()
     ) : ActiveQueue() {
         override val type = QueueType.BURYING
         fun isTargetReached(): Boolean = quantityCompleted >= targetQuantity
@@ -330,7 +330,7 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
     fun exportLastSaleCheck(): List<LastSaleCheckExport> =
         lastSaleCheckAt.map { (characterId, instant) -> LastSaleCheckExport(characterId, instant.toString()) }
 
-    fun startBuryQueue(characterId: String, itemId: String, targetQuantity: Int, secondsPerAction: Int): ServiceResult<ActiveQueue> {
+    fun startBuryQueue(characterId: String, itemId: String, targetQuantity: Int, secondsPerAction: Long): ServiceResult<ActiveQueue> {
         if (activeQueues.containsKey(characterId)) {
             return ServiceResult.Failure("Character already has an active queue. Stop it before starting a new one.")
         }
