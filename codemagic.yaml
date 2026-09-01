@@ -26,14 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output44.txt
-          echo "=== OfflineCombatQueue anywhere in the repo ===" > $OUT
-          grep -rn -B 3 -A 8 "OfflineCombatQueue" --include="*.kt" . >> $OUT || echo "NO MATCHES ANYWHERE" >> $OUT
+          OUT=discovery_output45.txt
+          echo "=== package declaration in LoadoutScreen.kt ===" > $OUT
+          head -5 ./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt >> $OUT
           echo "" >> $OUT
-          echo "=== confirm OfflineIdleMechanicsSystem.kt file exists and is non-empty ===" >> $OUT
-          wc -l ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
+          echo "=== package declaration in ActionCatalog.kt ===" >> $OUT
+          head -5 ./app/src/main/kotlin/com/yourname/idlerpg/ActionCatalog.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== existing import lines in LoadoutScreen.kt, for style reference ===" >> $OUT
+          grep -n "^import" ./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt >> $OUT
     artifacts:
-      - discovery_output44.txt
+      - discovery_output45.txt
       
   apply-patch:
     name: Apply Patch Script
