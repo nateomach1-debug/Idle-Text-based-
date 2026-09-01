@@ -26,17 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output42.txt
-          echo "=== LoadoutScreen full composable signature ===" > $OUT
-          grep -n -B 2 -A 15 "fun LoadoutScreen" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== both LoadoutScreen(...) call sites in MainActivity.kt ===" >> $OUT
-          grep -n -B 3 -A 15 "LoadoutScreen(" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== onBuryItem wiring in MainActivity.kt (from the earlier bones patch) ===" >> $OUT
-          grep -n -B 2 -A 2 "onBuryItem" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output43.txt
+          echo "=== exact current OfflineCombatQueue block + sealed class closing ===" > $OUT
+          grep -n -B 2 -A 8 "data class OfflineCombatQueue" ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt | cat -A | head -30 >> $OUT
     artifacts:
-      - discovery_output42.txt
+      - discovery_output43.txt
       
   apply-patch:
     name: Apply Patch Script
