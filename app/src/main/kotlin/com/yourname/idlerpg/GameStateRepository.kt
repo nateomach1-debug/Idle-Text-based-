@@ -34,7 +34,8 @@ class GameStateRepository(private val context: Context) {
         marketOrders: List<MarketOrderExport>,
         marketPriceHistory: List<PriceHistoryExport>,
         combatSessions: List<CombatSessionExport> = emptyList(),
-        offlineCombatQueues: List<OfflineCombatQueueExport> = emptyList()
+        offlineCombatQueues: List<OfflineCombatQueueExport> = emptyList(),
+        buryQueues: List<BuryQueueExport> = emptyList()
     ) {
         val root = JSONObject()
 
@@ -226,6 +227,19 @@ class GameStateRepository(private val context: Context) {
         }
         root.put("offlineCombatQueues", offlineCombatQueuesArray)
 
+        val buryQueuesArray = JSONArray()
+        buryQueues.forEach { q ->
+            val obj = JSONObject()
+            obj.put("characterId", q.characterId)
+            obj.put("itemId", q.itemId)
+            obj.put("targetQuantity", q.targetQuantity)
+            obj.put("quantityCompleted", q.quantityCompleted)
+            obj.put("secondsPerAction", q.secondsPerAction)
+            obj.put("startedAt", q.startedAt)
+            buryQueuesArray.put(obj)
+        }
+        root.put("buryQueues", buryQueuesArray)
+
         saveFile.writeText(root.toString())
     }
 
@@ -359,6 +373,22 @@ class GameStateRepository(private val context: Context) {
             )
         }
 
+        val buryQueues = mutableListOf<BuryQueueExport>()
+        val buryQueuesArray = root.optJSONArray("buryQueues") ?: JSONArray()
+        for (i in 0 until buryQueuesArray.length()) {
+            val obj = buryQueuesArray.getJSONObject(i)
+            buryQueues.add(
+                BuryQueueExport(
+                    characterId = obj.getString("characterId"),
+                    itemId = obj.getString("itemId"),
+                    targetQuantity = obj.getInt("targetQuantity"),
+                    quantityCompleted = obj.getInt("quantityCompleted"),
+                    secondsPerAction = obj.getLong("secondsPerAction"),
+                    startedAt = obj.getString("startedAt")
+                )
+            )
+        }
+
         val inventoryItems = mutableListOf<InventorySlotExport>()
         val inventoryArray = root.optJSONArray("inventoryItems") ?: JSONArray()
         for (i in 0 until inventoryArray.length()) {
@@ -454,7 +484,7 @@ class GameStateRepository(private val context: Context) {
 
         return SavedGameState(
             accounts, characters, skills, skillingQueues, craftingQueues, lastSeen, lastSaleCheck, inventoryItems, equippedSlots,
-            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory, combatSessions, offlineCombatQueues
+            loadoutSettings, marketAccounts, marketOrders, marketPriceHistory, combatSessions, offlineCombatQueues, buryQueues
         )
     }
 }
@@ -474,5 +504,6 @@ data class SavedGameState(
     val marketOrders: List<MarketOrderExport>,
     val marketPriceHistory: List<PriceHistoryExport>,
     val combatSessions: List<CombatSessionExport> = emptyList(),
-    val offlineCombatQueues: List<OfflineCombatQueueExport> = emptyList()
+    val offlineCombatQueues: List<OfflineCombatQueueExport> = emptyList(),
+    val buryQueues: List<BuryQueueExport> = emptyList()
 )

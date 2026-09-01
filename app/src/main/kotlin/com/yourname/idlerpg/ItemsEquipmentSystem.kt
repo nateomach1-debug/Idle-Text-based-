@@ -1952,7 +1952,8 @@ class Inventory(
     var potionTimerRemainingSeconds: Int = 0,
     var autoHealThresholdPercent: Int = 30,
     var autoFleeThresholdPercent: Int = 10,
-    var selectedPrayerId: String? = null
+    var selectedPrayerId: String? = null,
+    var trainingSkillId: String? = null
 ) {
     fun usedSlots(): Int = entries.size
 
@@ -2138,7 +2139,8 @@ data class LoadoutSettingsExport(
     val potionTimerRemainingSeconds: Int,
     val autoHealThresholdPercent: Int,
     val autoFleeThresholdPercent: Int,
-    val selectedPrayerId: String? = null
+    val selectedPrayerId: String? = null,
+    val trainingSkillId: String? = null
 )
 
 class InventoryService {
@@ -2166,7 +2168,7 @@ class InventoryService {
     fun exportAllLoadoutSettings(): List<LoadoutSettingsExport> = inventories.map { (characterId, inv) ->
         LoadoutSettingsExport(
             characterId, inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
-            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId
+            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId, inv.trainingSkillId
         )
     }
 
@@ -2178,5 +2180,6 @@ class InventoryService {
         inv.autoHealThresholdPercent = export.autoHealThresholdPercent
         inv.autoFleeThresholdPercent = export.autoFleeThresholdPercent
         inv.selectedPrayerId = export.selectedPrayerId
+        inv.trainingSkillId = export.trainingSkillId
     }
 }

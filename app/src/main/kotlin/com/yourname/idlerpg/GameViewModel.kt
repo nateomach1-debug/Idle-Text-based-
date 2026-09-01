@@ -955,6 +955,7 @@ init {
         saved.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
         saved.combatSessions.forEach { combatService.restoreSession(it) }
         saved.offlineCombatQueues.forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
+        saved.buryQueues.forEach { offlineIdleService.restoreBuryQueue(it) }
     }
 suspend fun login(email: String, password: String): ServiceResult<Account> {
     val result = accountService.login(email, password)
@@ -1005,6 +1006,7 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
     recovered.combatSessions.forEach { combatService.restoreSession(it) }
     recovered.offlineCombatQueues.forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
+    recovered.buryQueues.forEach { offlineIdleService.restoreBuryQueue(it) }
 
     val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
         ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
@@ -1085,6 +1087,9 @@ fun logout() {
         }
     }
     fun saveGame() {
+        _currentCharacterId.value?.let { characterId ->
+            inventoryService.inventoryFor(characterId).trainingSkillId = _trainingSkill.value.name
+        }
         repository.save(
             accountService.exportAllAccounts(),
             accountService.exportAllCharacters(),
@@ -1100,7 +1105,8 @@ fun logout() {
             marketService.exportOrders(),
             marketService.exportPriceHistory(),
             combatService.exportSessions(),
-            offlineIdleService.exportOfflineCombatQueues()
+            offlineIdleService.exportOfflineCombatQueues(),
+            offlineIdleService.exportBuryQueues()
         )
         val supabaseCharacterId = _currentSupabaseCharacterId.value
         val json = repository.currentSaveJson()
@@ -1157,6 +1163,7 @@ fun logout() {
                                 recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
                                 recovered.combatSessions.forEach { combatService.restoreSession(it) }
                                 recovered.offlineCombatQueues.forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
+                                recovered.buryQueues.forEach { offlineIdleService.restoreBuryQueue(it) }
                                 _currentCharacterId.value = remoteLocalId
                                 val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
                                 if (recoveredCharacter != null) {
@@ -1167,13 +1174,24 @@ fun logout() {
                         }
                     }
                 }
+                val finalCharacterId = recoveredToRemoteId ?: characterId
+                // Restore the persisted training skill for THIS character before
+                // resolving offline rewards below - previously trainingSkill stayed
+                // at its hardcoded ATTACK default every cold start (never restored
+                // anywhere), so offline combat XP always landed on Attack regardless
+                // of what the player had actually selected before closing the app.
+                val restoredTrainingSkillId = inventoryService.inventoryFor(finalCharacterId).trainingSkillId
+                val restoredTrainingSkill = restoredTrainingSkillId?.let {
+                    runCatching { SkillType.valueOf(it) }.getOrNull()
+                } ?: SkillType.ATTACK
+                setTrainingSkill(restoredTrainingSkill)
                 // Only one of these ever fires per selection: whichever character id
                 // turned out to be correct once the async cloud-recovery check above
                 // finished. Previously an immediate, unconditional call fired outside
                 // this coroutine entirely, racing this check - it would briefly show
                 // an offline-progress popup built from the wrong (pre-recovery)
                 // character before this corrected one silently replaced it.
-                resolveOfflineRewardsAndSync(recoveredToRemoteId ?: characterId)
+                resolveOfflineRewardsAndSync(finalCharacterId)
                 // Prefetch guild/chat data now (a live signed-in session is
                 // guaranteed at this point) instead of waiting for the user to
                 // visit the Guild tab, where these previously only started

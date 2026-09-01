@@ -166,6 +166,8 @@ data class LastSaleCheckExport(val characterId: String, val lastSaleCheckAt: Str
 
 data class OfflineCombatQueueExport(val characterId: String, val zoneId: String, val startedAt: String)
 
+data class BuryQueueExport(val characterId: String, val itemId: String, val targetQuantity: Int, val quantityCompleted: Int, val secondsPerAction: Long, val startedAt: String)
+
 // =========================================================
 // OFFLINE/IDLE SERVICE
 // =========================================================
@@ -358,6 +360,11 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
             OfflineCombatQueueExport(it.characterId, it.zoneId, it.startedAt.toString())
         }
 
+    fun exportBuryQueues(): List<BuryQueueExport> =
+        activeQueues.values.filterIsInstance<ActiveQueue.BuryQueue>().map {
+            BuryQueueExport(it.characterId, it.itemId, it.targetQuantity, it.quantityCompleted, it.secondsPerAction, it.startedAt.toString())
+        }
+
     fun restoreSkillingQueue(export: SkillingQueueExport) {
         activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
             characterId = export.characterId,
@@ -392,6 +399,17 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
         activeQueues[export.characterId] = ActiveQueue.OfflineCombatQueue(
             characterId = export.characterId,
             zoneId = export.zoneId,
+            startedAt = Instant.parse(export.startedAt)
+        )
+    }
+
+    fun restoreBuryQueue(export: BuryQueueExport) {
+        activeQueues[export.characterId] = ActiveQueue.BuryQueue(
+            characterId = export.characterId,
+            itemId = export.itemId,
+            targetQuantity = export.targetQuantity,
+            quantityCompleted = export.quantityCompleted,
+            secondsPerAction = export.secondsPerAction,
             startedAt = Instant.parse(export.startedAt)
         )
     }
