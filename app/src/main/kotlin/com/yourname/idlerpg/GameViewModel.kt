@@ -1234,6 +1234,20 @@ fun logout() {
     // the "real" one in that scenario, so re-resolving against the recovered
     // character's actual data is the correct behavior, not just a race-condition
     // workaround.
+    // Handles the case where the app cold-starts directly into AppFlowState.InGame
+    // (a character id was already cached locally) - selectCharacter() is never
+    // called on this path, so nothing would otherwise trigger offline-progress
+    // resolution or restore the persisted training skill for this session.
+    fun resumeCurrentCharacterIfNeeded() {
+        val characterId = _currentCharacterId.value ?: return
+        val restoredTrainingSkillId = inventoryService.inventoryFor(characterId).trainingSkillId
+        val restoredTrainingSkill = restoredTrainingSkillId?.let {
+            runCatching { SkillType.valueOf(it) }.getOrNull()
+        } ?: SkillType.ATTACK
+        setTrainingSkill(restoredTrainingSkill)
+        resolveOfflineRewardsAndSync(characterId)
+    }
+
     private fun resolveOfflineRewardsAndSync(characterId: String) {
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
         if (queue != null) {

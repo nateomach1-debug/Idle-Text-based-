@@ -396,6 +396,8 @@ fun AppRoot(gameViewModel: GameViewModel) {
                 val chars = gameViewModel.accountService.charactersFor(autoAccount.id)
                 flowState = if (chars.isEmpty()) AppFlowState.CharacterCreate else AppFlowState.CharacterSelect
             }
+        } else if (flowState == AppFlowState.InGame) {
+            gameViewModel.resumeCurrentCharacterIfNeeded()
         }
     }
 
