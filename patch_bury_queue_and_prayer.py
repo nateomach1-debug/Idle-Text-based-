@@ -11,7 +11,7 @@ content = content.replace(anchor_queuetype, "enum class QueueType { SKILLING, CR
 anchor_activequeue_combat = '''    data class OfflineCombatQueue(
         override val characterId: String,
         val zoneId: String,
-        val startedAt: Instant = Instant.now()
+        override val startedAt: Instant = Instant.now()
     ) : ActiveQueue() {
         override val type = QueueType.OFFLINE_COMBAT
     }
