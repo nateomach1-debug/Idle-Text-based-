@@ -26,30 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output50.txt
-          echo "=== setTrainingSkill() full body ===" > $OUT
-          grep -n -B 3 -A 15 "fun setTrainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          OUT=discovery_output51.txt
+          echo "=== every call site of saveGame() ===" > $OUT
+          grep -rn -B 5 "saveGame()" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== GameStateRepository.kt current save() signature ===" >> $OUT
-          grep -n -A 20 "fun save(" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
+          echo "=== onTrainingSkillSelected wiring confirms setTrainingSkill is called ===" >> $OUT
+          grep -n "onTrainingSkillSelected" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
-          echo "=== GameStateRepository.kt current save() body tail (before writeText) ===" >> $OUT
-          grep -n -B 5 "saveFile.writeText" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
+          echo "=== confirm trainingSkillId actually appears in Inventory class now ===" >> $OUT
+          grep -n "trainingSkillId" ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NOT FOUND - PATCH MAY NOT HAVE APPLIED" >> $OUT
           echo "" >> $OUT
-          echo "=== GameStateRepository.kt current load() body around inventoryItems parsing ===" >> $OUT
-          grep -n -B 20 "val inventoryItems = mutableListOf" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== GameStateRepository.kt current return SavedGameState + SavedGameState class ===" >> $OUT
-          grep -n -B 3 -A 5 "return SavedGameState(" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
-          grep -n -B 1 -A 18 "data class SavedGameState" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== GameViewModel.kt saveGame() current full body ===" >> $OUT
-          grep -n -B 2 -A 20 "fun saveGame" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== all three loadoutSettings.forEach restore lines with surrounding context ===" >> $OUT
-          grep -n -B 3 -A 1 "loadoutSettings.forEach" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== confirm setTrainingSkill call was added to selectCharacter() ===" >> $OUT
+          grep -n "restoredTrainingSkill\|finalCharacterId" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND - PATCH MAY NOT HAVE APPLIED" >> $OUT
     artifacts:
-      - discovery_output50.txt
+      - discovery_output51.txt
       
   apply-patch:
     name: Apply Patch Script
