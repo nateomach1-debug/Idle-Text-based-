@@ -26,14 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output46.txt
-          echo "=== exact lines 30-50 of OfflineIdleMechanicsSystem.kt (BuryQueue area) ===" > $OUT
-          sed -n '30,50p' ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
+          OUT=discovery_output47.txt
+          echo "=== resolveOfflineRewardsAndSync() Crafting branch, exact text ===" > $OUT
+          grep -n -B 3 -A 20 "val craftingQueue = offlineIdleService.activeQueueFor" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== full resolveOfflineProgress() when-block, exact text ===" >> $OUT
-          grep -n -B 5 -A 60 "fun resolveOfflineProgress" ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
+          echo "=== materialCheck definition/interface (for reference only) ===" >> $OUT
+          grep -rn -B 2 -A 10 "materialCheck\|MaterialCheck" --include="*.kt" . | head -60 >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output46.txt
+      - discovery_output47.txt
       
   apply-patch:
     name: Apply Patch Script
