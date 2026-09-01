@@ -26,18 +26,30 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output49.txt
-          echo "=== _trainingSkill declaration and default value ===" > $OUT
-          grep -n "_trainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          OUT=discovery_output50.txt
+          echo "=== setTrainingSkill() full body ===" > $OUT
+          grep -n -B 3 -A 15 "fun setTrainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== confirm no BuryQueueExport/exportBuryQueues/restoreBuryQueue exist anywhere ===" >> $OUT
-          grep -rn "BuryQueueExport\|exportBuryQueues\|restoreBuryQueue" --include="*.kt" . >> $OUT || echo "CONFIRMED: NONE EXIST" >> $OUT
+          echo "=== GameStateRepository.kt current save() signature ===" >> $OUT
+          grep -n -A 20 "fun save(" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
           echo "" >> $OUT
-          echo "=== how skillingQueues export/import threads characterId+itemId+secondsPerAction (template) ===" >> $OUT
-          grep -n -B 2 -A 8 "data class SkillingQueueExport" ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
-          grep -n -B 2 -A 8 "fun exportSkillingQueues\|fun restoreSkillingQueue" ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
+          echo "=== GameStateRepository.kt current save() body tail (before writeText) ===" >> $OUT
+          grep -n -B 5 "saveFile.writeText" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== GameStateRepository.kt current load() body around inventoryItems parsing ===" >> $OUT
+          grep -n -B 20 "val inventoryItems = mutableListOf" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== GameStateRepository.kt current return SavedGameState + SavedGameState class ===" >> $OUT
+          grep -n -B 3 -A 5 "return SavedGameState(" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
+          grep -n -B 1 -A 18 "data class SavedGameState" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== GameViewModel.kt saveGame() current full body ===" >> $OUT
+          grep -n -B 2 -A 20 "fun saveGame" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== all three loadoutSettings.forEach restore lines with surrounding context ===" >> $OUT
+          grep -n -B 3 -A 1 "loadoutSettings.forEach" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
     artifacts:
-      - discovery_output49.txt
+      - discovery_output50.txt
       
   apply-patch:
     name: Apply Patch Script
