@@ -26,14 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output52.txt
-          echo "=== every LaunchedEffect near app startup / cold-start selectCharacter trigger ===" > $OUT
-          grep -n -B 5 -A 15 "gameViewModel.loadGame()" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== every call site of selectCharacter( ===" >> $OUT
-          grep -n -B 8 "gameViewModel.selectCharacter(" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output53.txt
+          echo "=== every occurrence of 'selectCharacter' repo-wide ===" > $OUT
+          grep -rn -B 5 "selectCharacter" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output52.txt
+      - discovery_output53.txt
       
   apply-patch:
     name: Apply Patch Script
