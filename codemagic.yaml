@@ -26,15 +26,18 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output48.txt
-          echo "=== InventoryScreen.kt import list ===" > $OUT
-          grep -n "^import" ./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt >> $OUT
+          OUT=discovery_output49.txt
+          echo "=== _trainingSkill declaration and default value ===" > $OUT
+          grep -n "_trainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== ActionStoppedNotice + dialog rendering, exact current text ===" >> $OUT
-          grep -n -B 2 -A 8 "data class ActionStoppedNotice" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          grep -n -B 5 -A 20 "actionStoppedNotifications by gameViewModel" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "=== confirm no BuryQueueExport/exportBuryQueues/restoreBuryQueue exist anywhere ===" >> $OUT
+          grep -rn "BuryQueueExport\|exportBuryQueues\|restoreBuryQueue" --include="*.kt" . >> $OUT || echo "CONFIRMED: NONE EXIST" >> $OUT
+          echo "" >> $OUT
+          echo "=== how skillingQueues export/import threads characterId+itemId+secondsPerAction (template) ===" >> $OUT
+          grep -n -B 2 -A 8 "data class SkillingQueueExport" ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
+          grep -n -B 2 -A 8 "fun exportSkillingQueues\|fun restoreSkillingQueue" ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
     artifacts:
-      - discovery_output48.txt
+      - discovery_output49.txt
       
   apply-patch:
     name: Apply Patch Script
