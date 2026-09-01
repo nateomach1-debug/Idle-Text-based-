@@ -1086,3 +1086,19 @@ with open(path, "w", encoding="utf-8") as f:
     f.write(content)
 
 print("Part I (OfflineIdleMechanicsSystem.kt Long/Int fix) applied cleanly.")
+
+# PART J: Add the missing PrayerDefinition import to LoadoutScreen.kt
+# (it lives in the com.yourname.idlerpg.ui.screens subpackage, not the base package).
+path = "app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt"
+with open(path, encoding="utf-8") as f:
+    content = f.read()
+
+anchor = "import com.yourname.idlerpg.SkillType"
+count = content.count(anchor)
+assert count == 1, f"Expected 1 match, found {count}."
+content = content.replace(anchor, anchor + "\nimport com.yourname.idlerpg.PrayerDefinition", 1)
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("Part J (LoadoutScreen.kt import fix) applied cleanly.")
