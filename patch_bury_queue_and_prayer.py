@@ -1036,3 +1036,53 @@ with open(path, "w", encoding="utf-8") as f:
     f.write(content)
 
 print("Part H (MainActivity.kt) applied cleanly.")
+
+# PART I: Fix Long/Int mismatch - BuryQueue.secondsPerAction and startBuryQueue()
+# should be Long, matching SkillingQueue/CraftingQueue's existing convention.
+path = "app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt"
+with open(path, encoding="utf-8") as f:
+    content = f.read()
+
+anchor_buryqueue_class = '''    data class BuryQueue(
+        override val characterId: String,
+        val itemId: String,
+        val targetQuantity: Int,
+        var quantityCompleted: Int = 0,
+        val secondsPerAction: Int,
+        val startedAt: Instant = Instant.now()
+    ) : ActiveQueue() {
+        override val type = QueueType.BURYING
+        fun isTargetReached(): Boolean = quantityCompleted >= targetQuantity
+    }
+}'''
+count = content.count(anchor_buryqueue_class)
+assert count == 1, f"Expected 1 match, found {count}."
+replacement_buryqueue_class = '''    data class BuryQueue(
+        override val characterId: String,
+        val itemId: String,
+        val targetQuantity: Int,
+        var quantityCompleted: Int = 0,
+        val secondsPerAction: Long,
+        override val startedAt: Instant = Instant.now()
+    ) : ActiveQueue() {
+        override val type = QueueType.BURYING
+        fun isTargetReached(): Boolean = quantityCompleted >= targetQuantity
+    }
+}'''
+count2 = content.count(replacement_buryqueue_class)
+if count2 == 0:
+    content = content.replace(anchor_buryqueue_class, replacement_buryqueue_class, 1)
+
+anchor_startburyqueue = '''    fun startBuryQueue(characterId: String, itemId: String, targetQuantity: Int, secondsPerAction: Int): ServiceResult<ActiveQueue> {'''
+count3 = content.count(anchor_startburyqueue)
+if count3 == 1:
+    content = content.replace(
+        anchor_startburyqueue,
+        '    fun startBuryQueue(characterId: String, itemId: String, targetQuantity: Int, secondsPerAction: Long): ServiceResult<ActiveQueue> {',
+        1
+    )
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print("Part I (OfflineIdleMechanicsSystem.kt Long/Int fix) applied cleanly.")
