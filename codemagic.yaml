@@ -47,18 +47,6 @@ workflows:
     scripts:
       - name: Run patch scripts
         script: |
-          python3 patch_add_total_skill_level.py
-          python3 patch_add_pies_and_fruits.py
-          python3 patch_collapsed_chat_newest_first.py
-          python3 patch_expanded_chat_newest_first.py
-          python3 patch_require_seed_for_farming.py
-          python3 patch_rename_farming_actions.py
-          python3 patch_farming_missing_seed_ui.py
-          python3 patch_fix_session_crash_on_restore.py
-          python3 patch_prefetch_guild_and_chat.py
-          python3 patch_stop_and_notify_on_exhausted_materials.py
-          python3 patch_fix_service_result_field_name.py
-          python3 patch_add_bones_and_prayer.py
           python3 patch_bury_queue_and_prayer.py
       - name: Commit and push
         script: |
