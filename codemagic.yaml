@@ -26,14 +26,15 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output47.txt
-          echo "=== resolveOfflineRewardsAndSync() Crafting branch, exact text ===" > $OUT
-          grep -n -B 3 -A 20 "val craftingQueue = offlineIdleService.activeQueueFor" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
+          OUT=discovery_output48.txt
+          echo "=== InventoryScreen.kt import list ===" > $OUT
+          grep -n "^import" ./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt >> $OUT
           echo "" >> $OUT
-          echo "=== materialCheck definition/interface (for reference only) ===" >> $OUT
-          grep -rn -B 2 -A 10 "materialCheck\|MaterialCheck" --include="*.kt" . | head -60 >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== ActionStoppedNotice + dialog rendering, exact current text ===" >> $OUT
+          grep -n -B 2 -A 8 "data class ActionStoppedNotice" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          grep -n -B 5 -A 20 "actionStoppedNotifications by gameViewModel" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output47.txt
+      - discovery_output48.txt
       
   apply-patch:
     name: Apply Patch Script
