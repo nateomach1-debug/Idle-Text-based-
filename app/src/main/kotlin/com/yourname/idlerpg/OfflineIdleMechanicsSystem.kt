@@ -39,7 +39,7 @@ sealed class ActiveQueue {
     data class OfflineCombatQueue(
         override val characterId: String,
         val zoneId: String,
-        val startedAt: Instant = Instant.now()
+        override val startedAt: Instant = Instant.now()
     ) : ActiveQueue() {
         override val type = QueueType.OFFLINE_COMBAT
     }
@@ -275,6 +275,13 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
                 if (queue.isTargetReached()) queueExhausted = true
             }
             is ActiveQueue.OfflineCombatQueue -> {
+                actionsCompleted = 0
+            }
+            is ActiveQueue.BuryQueue -> {
+                // Burying is resolved through its own dedicated live-tick logic
+                // (tickBurying() in GameViewModel), not through this generic
+                // elapsed-time catch-up path - no offline progress for it here,
+                // same treatment as OfflineCombatQueue above.
                 actionsCompleted = 0
             }
         }
