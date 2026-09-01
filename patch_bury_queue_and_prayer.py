@@ -1,61 +1,48 @@
-# PART I: Fix Long/Int mismatch...
+# PART K: Fix OfflineCombatQueue's startedAt override (a typo I introduced in my own
+# earlier fix - the replacement text had the same bug as the anchor, just never caught),
+# and add the missing BuryQueue branch to resolveOfflineProgress()'s exhaustive when.
 path = "app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt"
 with open(path, encoding="utf-8") as f:
     content = f.read()
 
-anchor_buryqueue_class = '''    data class BuryQueue(
+anchor_offlinecombat = '''    data class OfflineCombatQueue(
         override val characterId: String,
-        val itemId: String,
-        val targetQuantity: Int,
-        var quantityCompleted: Int = 0,
-        val secondsPerAction: Int,
+        val zoneId: String,
         val startedAt: Instant = Instant.now()
     ) : ActiveQueue() {
-        override val type = QueueType.BURYING
-        fun isTargetReached(): Boolean = quantityCompleted >= targetQuantity
-    }
-}'''
-count = content.count(anchor_buryqueue_class)
+        override val type = QueueType.OFFLINE_COMBAT
+    }'''
+count = content.count(anchor_offlinecombat)
 assert count == 1, f"Expected 1 match, found {count}."
-replacement_buryqueue_class = '''    data class BuryQueue(
+replacement_offlinecombat = '''    data class OfflineCombatQueue(
         override val characterId: String,
-        val itemId: String,
-        val targetQuantity: Int,
-        var quantityCompleted: Int = 0,
-        val secondsPerAction: Long,
+        val zoneId: String,
         override val startedAt: Instant = Instant.now()
     ) : ActiveQueue() {
-        override val type = QueueType.BURYING
-        fun isTargetReached(): Boolean = quantityCompleted >= targetQuantity
-    }
-}'''
-content = content.replace(anchor_buryqueue_class, replacement_buryqueue_class, 1)
+        override val type = QueueType.OFFLINE_COMBAT
+    }'''
+content = content.replace(anchor_offlinecombat, replacement_offlinecombat, 1)
 
-anchor_startburyqueue = '''    fun startBuryQueue(characterId: String, itemId: String, targetQuantity: Int, secondsPerAction: Int): ServiceResult<ActiveQueue> {'''
-count3 = content.count(anchor_startburyqueue)
-assert count3 == 1, f"Expected 1 match, found {count3}."
-content = content.replace(
-    anchor_startburyqueue,
-    '    fun startBuryQueue(characterId: String, itemId: String, targetQuantity: Int, secondsPerAction: Long): ServiceResult<ActiveQueue> {',
-    1
-)
-
-with open(path, "w", encoding="utf-8") as f:
-    f.write(content)
-
-print("Part I (OfflineIdleMechanicsSystem.kt Long/Int fix) applied cleanly.")
-
-# PART J: Add the missing PrayerDefinition import to LoadoutScreen.kt
-path = "app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt"
-with open(path, encoding="utf-8") as f:
-    content = f.read()
-
-anchor = "import com.yourname.idlerpg.SkillType"
-count = content.count(anchor)
-assert count == 1, f"Expected 1 match, found {count}."
-content = content.replace(anchor, anchor + "\nimport com.yourname.idlerpg.PrayerDefinition", 1)
+anchor_when = '''            is ActiveQueue.OfflineCombatQueue -> {
+                actionsCompleted = 0
+            }
+        }'''
+count2 = content.count(anchor_when)
+assert count2 == 1, f"Expected 1 match, found {count2}."
+replacement_when = '''            is ActiveQueue.OfflineCombatQueue -> {
+                actionsCompleted = 0
+            }
+            is ActiveQueue.BuryQueue -> {
+                // Burying is resolved through its own dedicated live-tick logic
+                // (tickBurying() in GameViewModel), not through this generic
+                // elapsed-time catch-up path - no offline progress for it here,
+                // same treatment as OfflineCombatQueue above.
+                actionsCompleted = 0
+            }
+        }'''
+content = content.replace(anchor_when, replacement_when, 1)
 
 with open(path, "w", encoding="utf-8") as f:
     f.write(content)
 
-print("Part J (LoadoutScreen.kt import fix) applied cleanly.")
+print("Part K (OfflineIdleMechanicsSystem.kt) applied cleanly.")
