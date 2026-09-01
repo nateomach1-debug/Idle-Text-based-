@@ -1252,6 +1252,31 @@ fun logout() {
             }
         }
 
+        val buryQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.BuryQueue
+        if (buryQueue != null) {
+            val buryResult = offlineIdleService.resolveOfflineProgress(characterId)
+            if (buryResult is ServiceResult.Success && buryResult.value.actionsCompleted > 0) {
+                val boneInfo = PrayerBoneRequirements[buryQueue.itemId]
+                if (boneInfo != null) {
+                    val inventory = inventoryService.inventoryFor(characterId)
+                    val available = inventory.quantityOf(buryQueue.itemId)
+                    val effectiveActions = minOf(buryResult.value.actionsCompleted, available)
+                    if (effectiveActions > 0) {
+                        inventory.removeItem(buryQueue.itemId, effectiveActions)
+                        val xpGranted = boneInfo.xpAmount * effectiveActions
+                        progressionService.grantXp(characterId, SkillType.PRAYER, xpGranted)
+                        _offlineSummary.value = OfflineSummary(
+                            awaySeconds = buryResult.value.claimedElapsed.seconds,
+                            skillActionName = "Bury " + formatItemName(buryQueue.itemId),
+                            itemName = formatItemName(buryQueue.itemId),
+                            quantity = effectiveActions,
+                            xpEarned = xpGranted
+                        )
+                    }
+                }
+            }
+        }
+
         val combatQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.OfflineCombatQueue
         if (combatQueue != null) {
             val combatResult = offlineIdleService.resolveOfflineProgress(characterId)

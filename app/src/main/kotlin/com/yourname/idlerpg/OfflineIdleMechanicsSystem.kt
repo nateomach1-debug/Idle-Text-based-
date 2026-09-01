@@ -277,12 +277,16 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
             is ActiveQueue.OfflineCombatQueue -> {
                 actionsCompleted = 0
             }
-            is ActiveQueue.BuryQueue -> {
-                // Burying is resolved through its own dedicated live-tick logic
-                // (tickBurying() in GameViewModel), not through this generic
-                // elapsed-time catch-up path - no offline progress for it here,
-                // same treatment as OfflineCombatQueue above.
+            is ActiveQueue.OfflineCombatQueue -> {
                 actionsCompleted = 0
+            }
+            is ActiveQueue.BuryQueue -> {
+                var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+                val remaining = queue.targetQuantity - queue.quantityCompleted
+                possibleActions = possibleActions.coerceAtMost(remaining)
+                queue.quantityCompleted += possibleActions
+                actionsCompleted = possibleActions
+                if (queue.isTargetReached()) queueExhausted = true
             }
         }
 
