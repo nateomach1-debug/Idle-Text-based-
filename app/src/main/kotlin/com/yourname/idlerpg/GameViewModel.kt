@@ -826,6 +826,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             offlineIdleService.stopQueue(characterId)
             buryActionProgressSeconds = 0
             refreshActiveQueue()
+            _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
+                itemName = formatItemName(queue.itemId),
+                reason = "Buried " + queue.quantityCompleted + "x " + formatItemName(queue.itemId) +
+                    " (+" + (queue.quantityCompleted * boneInfo.xpAmount) + " Prayer XP).",
+                isCompletion = true
+            )
         } else if (effectiveAttempts < cappedAttempts) {
             // Ran out of bones mid-batch - stop instead of spinning uselessly.
             offlineIdleService.stopQueue(characterId)
@@ -1449,7 +1455,7 @@ fun logout() {
 
     private val craftingService = CraftingService()
 
-    data class ActionStoppedNotice(val itemName: String, val reason: String)
+    data class ActionStoppedNotice(val itemName: String, val reason: String, val isCompletion: Boolean = false)
 
     private val _actionStoppedNotifications = MutableStateFlow<List<ActionStoppedNotice>>(emptyList())
     val actionStoppedNotifications: StateFlow<List<ActionStoppedNotice>> = _actionStoppedNotifications.asStateFlow()

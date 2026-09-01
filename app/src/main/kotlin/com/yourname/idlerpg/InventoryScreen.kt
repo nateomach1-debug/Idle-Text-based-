@@ -296,7 +296,7 @@ private fun ItemActionSheet(
                     var buryQuantity by remember(item.itemId) { mutableStateOf(1) }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         IconButton(
@@ -305,16 +305,30 @@ private fun ItemActionSheet(
                         ) {
                             Text(text = "-", style = MaterialTheme.typography.titleLarge)
                         }
-                        Text(
-                            text = buryQuantity.toString(),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(horizontal = 8.dp)
+                        OutlinedTextField(
+                            value = buryQuantity.toString(),
+                            onValueChange = { newValue ->
+                                val digitsOnly = newValue.filter { it.isDigit() }
+                                buryQuantity = when {
+                                    digitsOnly.isEmpty() -> 1
+                                    else -> (digitsOnly.toIntOrNull() ?: 1).coerceIn(1, item.quantity)
+                                }
+                            },
+                            singleLine = true,
+                            enabled = canBuryNow,
+                            modifier = Modifier.width(90.dp)
                         )
                         IconButton(
                             onClick = { if (buryQuantity < item.quantity) buryQuantity += 1 },
                             enabled = canBuryNow
                         ) {
                             Text(text = "+", style = MaterialTheme.typography.titleLarge)
+                        }
+                        TextButton(
+                            onClick = { buryQuantity = item.quantity },
+                            enabled = canBuryNow
+                        ) {
+                            Text(text = "Max")
                         }
                     }
                     Spacer(modifier = Modifier.height(4.dp))

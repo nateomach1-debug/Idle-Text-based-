@@ -445,10 +445,14 @@ fun AppRoot(gameViewModel: GameViewModel) {
     actionStoppedNotifications.firstOrNull()?.let { notice ->
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { gameViewModel.dismissActionStoppedNotification() },
-            title = { androidx.compose.material3.Text("Action Stopped") },
+            title = { androidx.compose.material3.Text(if (notice.isCompletion) "Done!" else "Action Stopped") },
             text = {
                 androidx.compose.material3.Text(
-                    "Ran out of materials for " + notice.itemName + ".\n" + notice.reason
+                    if (notice.isCompletion) {
+                        notice.reason
+                    } else {
+                        "Ran out of materials for " + notice.itemName + ".\n" + notice.reason
+                    }
                 )
             },
             confirmButton = {
