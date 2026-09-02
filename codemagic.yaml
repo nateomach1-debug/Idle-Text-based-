@@ -26,14 +26,29 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output60.txt
-          echo "=== every 'val trainingSkill' or 'trainingSkill by' declaration in MainActivity.kt ===" > $OUT
-          grep -n "trainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output61.txt
+          echo "=== full selectCharacter() body, GameViewModel.kt lines 1115-1260 ===" > $OUT
+          sed -n '1115,1260p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== confirm public trainingSkill StateFlow exposure in GameViewModel.kt ===" >> $OUT
-          grep -n "val trainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO PUBLIC EXPOSURE FOUND" >> $OUT
+          echo "=== is restoreTrainingSkillFor called a second time anywhere after the remoteLocalId swap? ===" >> $OUT
+          grep -n "restoreTrainingSkillFor" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== get_or_create_character RPC definition (SQL) ===" >> $OUT
+          grep -rn -A 40 "get_or_create_character" --include=*.sql . >> $OUT
+          echo "" >> $OUT
+          echo "=== get_character_local_id RPC definition (SQL) ===" >> $OUT
+          grep -rn -A 40 "get_character_local_id" --include=*.sql . >> $OUT
+          echo "" >> $OUT
+          echo "=== how/where currentCharacterId and currentSupabaseCharacterId get persisted/restored across cold start ===" >> $OUT
+          grep -rn "_currentCharacterId\|_currentSupabaseCharacterId" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== tryAutoLogin definition ===" >> $OUT
+          grep -n "fun tryAutoLogin" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== sessionManager: what character/account id gets saved and restored on disk ===" >> $OUT
+          grep -rn "class SessionManager" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
     artifacts:
-      - discovery_output60.txt
+      - discovery_output61.txt
       
   apply-patch:
     name: Apply Patch Script
