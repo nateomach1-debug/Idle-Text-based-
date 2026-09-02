@@ -1120,6 +1120,21 @@ fun logout() {
     fun selectCharacter(characterId: String) {
         _currentCharacterId.value = characterId
 
+        // Restore the persisted training skill immediately - this is purely
+        // local (no Supabase dependency), so it must run regardless of whether
+        // the auth check below succeeds, fails, or times out. Previously this
+        // only happened after auth succeeded, so a slow/failed auth handshake
+        // (common right after a cold app start) silently skipped it every time
+        // via the early-return path, leaving trainingSkill stuck at ATTACK.
+        fun restoreTrainingSkillFor(id: String) {
+            val restoredTrainingSkillId = inventoryService.inventoryFor(id).trainingSkillId
+            val restoredTrainingSkill = restoredTrainingSkillId?.let {
+                runCatching { SkillType.valueOf(it) }.getOrNull()
+            } ?: SkillType.ATTACK
+            setTrainingSkill(restoredTrainingSkill)
+        }
+        restoreTrainingSkillFor(characterId)
+
         val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
         if (selectedCharacter != null) {
             viewModelScope.launch {
@@ -1175,16 +1190,11 @@ fun logout() {
                     }
                 }
                 val finalCharacterId = recoveredToRemoteId ?: characterId
-                // Restore the persisted training skill for THIS character before
-                // resolving offline rewards below - previously trainingSkill stayed
-                // at its hardcoded ATTACK default every cold start (never restored
-                // anywhere), so offline combat XP always landed on Attack regardless
-                // of what the player had actually selected before closing the app.
-                val restoredTrainingSkillId = inventoryService.inventoryFor(finalCharacterId).trainingSkillId
-                val restoredTrainingSkill = restoredTrainingSkillId?.let {
-                    runCatching { SkillType.valueOf(it) }.getOrNull()
-                } ?: SkillType.ATTACK
-                setTrainingSkill(restoredTrainingSkill)
+                // Only relevant for the rare cloud-recovery case where the character
+                // id changed mid-flow - re-apply against the correct (recovered) id.
+                if (finalCharacterId != characterId) {
+                    restoreTrainingSkillFor(finalCharacterId)
+                }
                 // Only one of these ever fires per selection: whichever character id
                 // turned out to be correct once the async cloud-recovery check above
                 // finished. Previously an immediate, unconditional call fired outside
