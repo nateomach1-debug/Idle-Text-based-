@@ -26,17 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output55.txt
-          echo "=== every assignment to _trainingSkill.value, repo-wide ===" > $OUT
-          grep -rn "_trainingSkill.value =" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== setTrainingSkill() full current body ===" >> $OUT
-          grep -n -B 2 -A 15 "fun setTrainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== full current selectCharacter() body, unabridged ===" >> $OUT
-          awk '/fun selectCharacter\(characterId: String\)/,0' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt | awk 'BEGIN{d=0} {print} /^    }/{d++; if(d==1) exit}' >> $OUT
+          OUT=discovery_output56.txt
+          echo "=== full tickCombat() body, unabridged ===" > $OUT
+          awk '/private fun tickCombat\(\)/,0' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt | awk 'BEGIN{d=0} {print} /^    }/{d++; if(d==1) exit}' >> $OUT
     artifacts:
-      - discovery_output55.txt
+      - discovery_output56.txt
       
   apply-patch:
     name: Apply Patch Script
