@@ -26,11 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output59.txt
-          echo "=== allowedTrainingSkills definition ===" > $OUT
-          grep -n -B 3 -A 15 "allowedTrainingSkills" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          OUT=discovery_output60.txt
+          echo "=== every 'val trainingSkill' or 'trainingSkill by' declaration in MainActivity.kt ===" > $OUT
+          grep -n "trainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== confirm public trainingSkill StateFlow exposure in GameViewModel.kt ===" >> $OUT
+          grep -n "val trainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO PUBLIC EXPOSURE FOUND" >> $OUT
     artifacts:
-      - discovery_output59.txt
+      - discovery_output60.txt
       
   apply-patch:
     name: Apply Patch Script
