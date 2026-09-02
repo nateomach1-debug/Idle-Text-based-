@@ -26,17 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output57.txt
-          echo "=== exact onPause() implementation ===" > $OUT
-          grep -n -B 3 -A 10 "onPause" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== any other saveGame() call site not yet seen (periodic/timer-based) ===" >> $OUT
-          grep -rn -B 8 "saveGame()" --include="*.kt" . >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== exact current inventoryFor() implementation - does it always return the SAME instance per characterId ===" >> $OUT
-          grep -n -B 2 -A 10 "fun inventoryFor" ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT
+          OUT=discovery_output58.txt
+          echo "=== full current saveGame() body, unabridged ===" > $OUT
+          awk '/fun saveGame\(\)/,0' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt | awk 'BEGIN{d=0} {print} /^    }/{d++; if(d==1) exit}' >> $OUT
     artifacts:
-      - discovery_output57.txt
+      - discovery_output58.txt
       
   apply-patch:
     name: Apply Patch Script
