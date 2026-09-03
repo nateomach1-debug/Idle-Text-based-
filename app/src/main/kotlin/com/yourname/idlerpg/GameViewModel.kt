@@ -593,16 +593,23 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             refreshCombatHp()
         }
 
-        val session = state.session ?: return
+        var session = state.session ?: return
 
         if (session.state == SessionState.SEARCHING) {
             val result = combatService.resolveSearchIfReady(characterId)
             if (result is ServiceResult.Success) {
                 combatLogFor.getOrPut(characterId) { mutableListOf() }
                     .add(CombatLogEntry(result.value.name + " appears!"))
+                // Fall through into the attack logic below using this same tick's
+                // elapsedSeconds budget, instead of returning - otherwise every single
+                // fight pays an extra full tick-interval of pure dead time before the
+                // first attack lands, which gets far more expensive once tick intervals
+                // are inflated by background scheduling throttling.
+                session = combatService.stateFor(characterId, maxHpFor(characterId)).session ?: return
+            } else {
+                refreshCombatView()
+                return
             }
-            refreshCombatView()
-            return
         }
 
         if (session.state != SessionState.IN_COMBAT) return
