@@ -26,26 +26,26 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output62.txt
-          echo "=== where is resumeCurrentCharacterIfNeeded() called from? ===" > $OUT
-          grep -rn "resumeCurrentCharacterIfNeeded" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
+          OUT=discovery_output63.txt
+          echo "=== MainActivity lines 355-392: full flowState computation + where currentCharacterId local var comes from ===" > $OUT
+          sed -n '355,392p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
-          echo "=== MainActivity startup flow: LaunchedEffect, loadGame, AppFlowState determination ===" >> $OUT
-          grep -n "LaunchedEffect\|loadGame\|AppFlowState\|resumeCurrentCharacterIfNeeded" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "=== GameViewModel init block - does it set _currentCharacterId synchronously before loadGame() runs? ===" >> $OUT
+          grep -n "^class GameViewModel\|init {" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== how/where AppFlowState.InGame gets decided and where characterId comes from on cold start ===" >> $OUT
-          grep -rn "AppFlowState" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
+          echo "=== where does the persisted 'last active character id' get read from disk, if anywhere ===" >> $OUT
+          grep -rn "getSavedCharacterId\|lastActiveCharacter\|KEY_CHARACTER_ID\|saveCharacterSession\|currentCharacterId" ./app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt >> $OUT
           echo "" >> $OUT
-          echo "=== fun loadGame() full body ===" >> $OUT
-          grep -n "fun loadGame" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== full SessionManager.kt (in case currentCharacterId persistence lives here under a different name) ===" >> $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt >> $OUT
           echo "" >> $OUT
-          echo "=== where _currentCharacterId gets set at startup, outside selectCharacter/logout ===" >> $OUT
-          grep -n "_currentCharacterId.value = " ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== default initial value of _trainingSkill StateFlow ===" >> $OUT
+          grep -n "_trainingSkill = \|_trainingSkill(" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== inventoryFor() definition - confirm getOrPut behavior and default Inventory() shape ===" >> $OUT
-          grep -n "fun inventoryFor" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT
+          echo "=== any LaunchedEffect in the Loadout/combat screen composable that could call setTrainingSkill on first composition ===" >> $OUT
+          grep -rn "setTrainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
     artifacts:
-      - discovery_output62.txt
+      - discovery_output63.txt
       
   apply-patch:
     name: Apply Patch Script
