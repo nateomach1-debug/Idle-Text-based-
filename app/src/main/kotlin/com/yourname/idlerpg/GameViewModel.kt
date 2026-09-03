@@ -579,7 +579,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    private fun tickCombat() {
+    private var combatActionProgressSeconds: Double = 0.0
+
+    private fun tickCombat(elapsedSeconds: Long) {
         val characterId = _currentCharacterId.value ?: return
         val state = combatService.stateFor(characterId, maxHpFor(characterId))
 
@@ -609,95 +611,118 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val trainingSkill = _trainingSkill.value
         val accuracy: Int
         val maxHit: Int
+        val attackSpeedSeconds: Double
         when (weapon?.style) {
             CombatStyle.MAGIC -> {
                 val magicLevel = skillLevel(characterId, SkillType.MAGIC)
                 accuracy = magicLevel * 2 + weapon.baseAccuracy
                 maxHit = (magicLevel / 3) + weapon.baseMaxHit
+                attackSpeedSeconds = weapon.attackSpeedSeconds
             }
             CombatStyle.RANGED -> {
                 val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
                 accuracy = archeryLevel * 2 + weapon.baseAccuracy
                 maxHit = (archeryLevel / 3) + weapon.baseMaxHit
+                attackSpeedSeconds = weapon.attackSpeedSeconds
             }
             else -> {
                 val attackLevel = skillLevel(characterId, SkillType.ATTACK)
                 val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
                 accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
                 maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
+                attackSpeedSeconds = weapon?.attackSpeedSeconds ?: 2.4
             }
         }
 
-        val loadout = CombatLoadout(
-            style = weapon?.style ?: CombatStyle.MELEE,
-            trainingSkill = trainingSkill,
-            selectedPrayerId = inventoryService.inventoryFor(characterId).selectedPrayerId,
-            equippedWeapon = weapon,
-            equippedSpell = null,
-            autoHealThresholdPercent = inventoryService.inventoryFor(characterId).autoHealThresholdPercent,
-            autoFleeThresholdPercent = inventoryService.inventoryFor(characterId).autoFleeThresholdPercent
-        )
+        combatActionProgressSeconds += elapsedSeconds
+        if (combatActionProgressSeconds < attackSpeedSeconds) {
+            refreshCombatView()
+            return
+        }
 
-        val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit)
         val log = combatLogFor.getOrPut(characterId) { mutableListOf() }
 
-        if (result is ServiceResult.Success) {
-            val attack = result.value
-            val monsterDefense = session.currentMonster?.defenseRating ?: 1
-            lastHitChancePercent = (accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0
-            lastDamageDealt = attack.damageDealt
+        while (combatActionProgressSeconds >= attackSpeedSeconds) {
+            combatActionProgressSeconds -= attackSpeedSeconds
 
-            if (attack.didHit) {
-                log.add(CombatLogEntry("You hit for " + attack.damageDealt + "."))
-                val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong())
-                if (xpGrant is ServiceResult.Success) refreshSkills()
-            } else {
-                log.add(CombatLogEntry("You missed."))
-            }
+            val loadout = CombatLoadout(
+                style = weapon?.style ?: CombatStyle.MELEE,
+                trainingSkill = trainingSkill,
+                selectedPrayerId = inventoryService.inventoryFor(characterId).selectedPrayerId,
+                equippedWeapon = weapon,
+                equippedSpell = null,
+                autoHealThresholdPercent = inventoryService.inventoryFor(characterId).autoHealThresholdPercent,
+                autoFleeThresholdPercent = inventoryService.inventoryFor(characterId).autoFleeThresholdPercent
+            )
 
-            if (attack.monsterDefeated) {
-                val defeatedName = session.currentMonster?.name ?: "the enemy"
-                log.add(CombatLogEntry("Defeated " + defeatedName + "!"))
-                val loot = combatService.collectLoot(characterId)
-                if (loot is ServiceResult.Success && loot.value.isNotEmpty()) {
-                    loot.value.forEach { entry ->
-                        inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty)
-                        sessionDropsFor.getOrPut(characterId) { mutableMapOf() }.merge(entry.itemId, entry.minQty, Int::plus)
-                    }
-                    refreshInventory()
-                }
-                val coinsEarned = combatService.collectCoins(characterId)
-                if (coinsEarned > 0) {
-                    log.add(CombatLogEntry("Found " + coinsEarned + " coins."))
-                    grantCombatCoins(characterId, coinsEarned)
-                }
-            }
+            val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit)
 
-            // Monsters don't have a dedicated offensive stat yet, so their counter-attack uses a flat
-            // hit chance with damage scaled off defenseRating as a stand-in. Placeholder, same spirit
-            // as the maxHp formula above - safe to retune once real monster balance is worked out.
-            val monster = session.currentMonster
-            if (monster != null && Random.nextDouble(0.0, 100.0) < 40.0) {
-                val rawDmg = Random.nextInt(1, (monster.defenseRating / 3).coerceAtLeast(1) + 1)
-                val dmg = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "rock_skin") {
-                    (rawDmg * 0.8).toInt().coerceAtLeast(1)
+            if (result is ServiceResult.Success) {
+                val attack = result.value
+                val monsterDefense = session.currentMonster?.defenseRating ?: 1
+                lastHitChancePercent = (accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0
+                lastDamageDealt = attack.damageDealt
+
+                if (attack.didHit) {
+                    log.add(CombatLogEntry("You hit for " + attack.damageDealt + "."))
+                    val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong())
+                    if (xpGrant is ServiceResult.Success) refreshSkills()
                 } else {
-                    rawDmg
+                    log.add(CombatLogEntry("You missed."))
                 }
-                combatService.applyDamageToCharacter(characterId, dmg)
-                log.add(CombatLogEntry(monster.name + " hits you for " + dmg + "."))
+
+                if (attack.monsterDefeated) {
+                    val defeatedName = session.currentMonster?.name ?: "the enemy"
+                    log.add(CombatLogEntry("Defeated " + defeatedName + "!"))
+                    val loot = combatService.collectLoot(characterId)
+                    if (loot is ServiceResult.Success && loot.value.isNotEmpty()) {
+                        loot.value.forEach { entry ->
+                            inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty)
+                            sessionDropsFor.getOrPut(characterId) { mutableMapOf() }.merge(entry.itemId, entry.minQty, Int::plus)
+                        }
+                        refreshInventory()
+                    }
+                    val coinsEarned = combatService.collectCoins(characterId)
+                    if (coinsEarned > 0) {
+                        log.add(CombatLogEntry("Found " + coinsEarned + " coins."))
+                        grantCombatCoins(characterId, coinsEarned)
+                    }
+                }
+
+                // Monsters don't have a dedicated offensive stat yet, so their counter-attack uses a flat
+                // hit chance with damage scaled off defenseRating as a stand-in. Placeholder, same spirit
+                // as the maxHp formula above - safe to retune once real monster balance is worked out.
+                val monster = session.currentMonster
+                if (monster != null && Random.nextDouble(0.0, 100.0) < 40.0) {
+                    val rawDmg = Random.nextInt(1, (monster.defenseRating / 3).coerceAtLeast(1) + 1)
+                    val dmg = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "rock_skin") {
+                        (rawDmg * 0.8).toInt().coerceAtLeast(1)
+                    } else {
+                        rawDmg
+                    }
+                    combatService.applyDamageToCharacter(characterId, dmg)
+                    log.add(CombatLogEntry(monster.name + " hits you for " + dmg + "."))
+                }
+
+                val freshState = combatService.stateFor(characterId, maxHpFor(characterId))
+                if (freshState.currentHp <= 0) {
+                    log.add(CombatLogEntry("You were defeated and are recovering."))
+                    combatActionProgressSeconds = 0.0
+                    break
+                } else if (freshState.maxHp > 0 &&
+                    (freshState.currentHp * 100 / freshState.maxHp) <= inventoryService.inventoryFor(characterId).autoFleeThresholdPercent
+                ) {
+                    combatService.leaveZone(characterId)
+                    log.add(CombatLogEntry("Fled to safety."))
+                    combatActionProgressSeconds = 0.0
+                    break
+                }
             }
 
-            val freshState = combatService.stateFor(characterId, maxHpFor(characterId))
-            if (freshState.currentHp <= 0) {
-                log.add(CombatLogEntry("You were defeated and are recovering."))
-            } else if (freshState.maxHp > 0 &&
-                (freshState.currentHp * 100 / freshState.maxHp) <= inventoryService.inventoryFor(characterId).autoFleeThresholdPercent
-            ) {
-                combatService.leaveZone(characterId)
-                log.add(CombatLogEntry("Fled to safety."))
-            }
+            val postAttackSession = combatService.stateFor(characterId, maxHpFor(characterId)).session
+            if (postAttackSession == null || postAttackSession.state != SessionState.IN_COMBAT) break
         }
+
         refreshCombatView()
     }
 
@@ -795,11 +820,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         refreshActiveQueue()
     }
 
-    private fun tickBurying() {
+    private fun tickBurying(elapsedSeconds: Long) {
         val characterId = _currentCharacterId.value ?: return
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.BuryQueue ?: return
 
-        buryActionProgressSeconds += 1
+        buryActionProgressSeconds += elapsedSeconds
         if (buryActionProgressSeconds < queue.secondsPerAction) return
 
         val attempts = (buryActionProgressSeconds / queue.secondsPerAction).toInt()
@@ -844,7 +869,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun tickConsumables() {
+    private fun tickConsumables(elapsedSeconds: Long) {
         val characterId = _currentCharacterId.value ?: return
         val inventory = inventoryService.inventoryFor(characterId)
         val combatState = combatService.stateFor(characterId)
@@ -860,7 +885,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         if (inventory.selectedPotionId != null) {
             if (inventory.potionTimerRemainingSeconds > 0) {
-                inventory.potionTimerRemainingSeconds -= 1
+                inventory.potionTimerRemainingSeconds = (inventory.potionTimerRemainingSeconds - elapsedSeconds.toInt()).coerceAtLeast(0)
             }
             if (inventory.potionTimerRemainingSeconds <= 0) {
                 inventory.consumeSelectedPotion()?.let { potion ->
@@ -890,13 +915,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
+            var lastTickMillis = System.currentTimeMillis()
             while (true) {
                 delay(1000L)
-                tickSkilling()
-            tickCrafting()
-            tickBurying()
-            tickConsumables()
-            tickCombat()
+                val now = System.currentTimeMillis()
+                val elapsedSeconds = ((now - lastTickMillis) / 1000L).coerceAtLeast(1L)
+                lastTickMillis += elapsedSeconds * 1000L
+                tickSkilling(elapsedSeconds)
+                tickCrafting(elapsedSeconds)
+                tickBurying(elapsedSeconds)
+                tickConsumables(elapsedSeconds)
+                tickCombat(elapsedSeconds)
             }
         }
     }
@@ -1442,11 +1471,11 @@ fun logout() {
         refreshActiveQueue()
     }
 
-    private fun tickSkilling() {
+    private fun tickSkilling(elapsedSeconds: Long) {
         val characterId = _currentCharacterId.value ?: return
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
 
-        skillActionProgressSeconds += 1
+        skillActionProgressSeconds += elapsedSeconds
         if (skillActionProgressSeconds < queue.secondsPerAction) return
 
         val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
@@ -1571,11 +1600,11 @@ fun logout() {
         refreshActiveQueue()
     }
 
-    private fun tickCrafting() {
+    private fun tickCrafting(elapsedSeconds: Long) {
         val characterId = _currentCharacterId.value ?: return
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue ?: return
 
-        craftActionProgressSeconds += 1
+        craftActionProgressSeconds += elapsedSeconds
         if (craftActionProgressSeconds < queue.secondsPerAction) return
 
         val attempts = (craftActionProgressSeconds / queue.secondsPerAction).toInt()
