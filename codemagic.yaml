@@ -26,18 +26,29 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output64.txt
-          echo "=== GameStateRepository.kt: loadoutSettings WRITE block in save() ===" > $OUT
-          grep -n "loadoutSettings" -B 3 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
+          OUT=discovery_output65.txt
+          echo "=== the main tick loop (init block with delay(1000L)) ===" > $OUT
+          grep -n "delay(1000L)" -B 5 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== GameStateRepository.kt: loadoutSettings READ block in load() ===" >> $OUT
-          grep -n "LoadoutSettingsExport(" -B 10 -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
+          echo "=== tickSkilling() full body ===" >> $OUT
+          grep -n "fun tickSkilling" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== full LoadoutSettingsExport data class + restoreLoadoutSettings() ===" >> $OUT
-          grep -n "class LoadoutSettingsExport" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT
-          grep -n "fun restoreLoadoutSettings" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT
+          echo "=== tickCombat() full body ===" >> $OUT
+          grep -n "fun tickCombat" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== tickCrafting() full body ===" >> $OUT
+          grep -n "fun tickCrafting" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== search for any use of System.currentTimeMillis/Instant.now for elapsed-time-based progress (vs fixed per-tick) ===" >> $OUT
+          grep -n "currentTimeMillis\|Instant.now()" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== offline catch-up estimator entry point(s) for comparison ===" >> $OUT
+          grep -n "fun resolveOfflineRewardsAndSync\|fun.*[Oo]ffline.*[Ee]stimat" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== manifest: any foreground service / wake lock / battery optimization handling ===" >> $OUT
+          grep -n "Service\|WAKE_LOCK\|foregroundServiceType" ./app/src/main/AndroidManifest.xml >> $OUT
     artifacts:
-      - discovery_output64.txt
+      - discovery_output65.txt
       
   apply-patch:
     name: Apply Patch Script
