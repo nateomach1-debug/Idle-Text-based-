@@ -26,26 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output77.txt
-          echo "=== GuildRow definition ===" > $OUT
-          grep -rn "data class GuildRow" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output78.txt
+          echo "=== any 'characters' table columns beyond id/display_name being selected/updated anywhere (currency, coins, gold, balance) ===" > $OUT
+          grep -rn "from(\"characters\")" -B 2 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== GuildMemberRow definition ===" >> $OUT
-          grep -rn "data class GuildMemberRow" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== is player currency ('coins') synced to Supabase ANYWHERE, or purely local? ===" >> $OUT
+          grep -rln "currencyBalance\|playerCoins\|characterCoins\|coin_balance\|character_coins" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== GuildEventRow definition ===" >> $OUT
-          grep -rn "data class GuildEventRow" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== where does the client currently store/manage in-game coins locally (GameViewModel.kt) ===" >> $OUT
+          grep -n "var coins\|_coins\|playerCoins\|fun grantCombatCoins" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== GuildVoteRow / VoteBallotRow / CharacterNameRow definitions ===" >> $OUT
-          grep -rn "data class GuildVoteRow\|data class VoteBallotRow\|data class CharacterNameRow" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== full GuildClanSystem.kt lines 195-381 (previously truncated, in case Row DTOs live here) ===" >> $OUT
-          sed -n '195,381p' ./app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== any existing item catalog table reference server-side (search for 'items' table usage) ===" >> $OUT
-          grep -rn "from(\"items\")\|item_catalog" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND - item catalog likely client-only" >> $OUT
+          echo "=== does anything currently sync ANY player-owned economic data (coins/items) to Supabase at all, e.g. for cross-device or guild purposes? ===" >> $OUT
+          grep -rn "uploadCharacterSave\|character_saves" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output77.txt
+      - discovery_output78.txt
       
   apply-patch:
     name: Apply Patch Script
