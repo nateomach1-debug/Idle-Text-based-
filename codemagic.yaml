@@ -26,26 +26,18 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output63.txt
-          echo "=== MainActivity lines 355-392: full flowState computation + where currentCharacterId local var comes from ===" > $OUT
-          sed -n '355,392p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output64.txt
+          echo "=== GameStateRepository.kt: loadoutSettings WRITE block in save() ===" > $OUT
+          grep -n "loadoutSettings" -B 3 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
           echo "" >> $OUT
-          echo "=== GameViewModel init block - does it set _currentCharacterId synchronously before loadGame() runs? ===" >> $OUT
-          grep -n "^class GameViewModel\|init {" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== GameStateRepository.kt: loadoutSettings READ block in load() ===" >> $OUT
+          grep -n "LoadoutSettingsExport(" -B 10 -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT
           echo "" >> $OUT
-          echo "=== where does the persisted 'last active character id' get read from disk, if anywhere ===" >> $OUT
-          grep -rn "getSavedCharacterId\|lastActiveCharacter\|KEY_CHARACTER_ID\|saveCharacterSession\|currentCharacterId" ./app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== full SessionManager.kt (in case currentCharacterId persistence lives here under a different name) ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== default initial value of _trainingSkill StateFlow ===" >> $OUT
-          grep -n "_trainingSkill = \|_trainingSkill(" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== any LaunchedEffect in the Loadout/combat screen composable that could call setTrainingSkill on first composition ===" >> $OUT
-          grep -rn "setTrainingSkill" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
+          echo "=== full LoadoutSettingsExport data class + restoreLoadoutSettings() ===" >> $OUT
+          grep -n "class LoadoutSettingsExport" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT
+          grep -n "fun restoreLoadoutSettings" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT
     artifacts:
-      - discovery_output63.txt
+      - discovery_output64.txt
       
   apply-patch:
     name: Apply Patch Script
