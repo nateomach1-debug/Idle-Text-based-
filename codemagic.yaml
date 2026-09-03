@@ -26,20 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output68.txt
-          echo "=== fun resolveAttack() in CombatSystem.kt ===" > $OUT
-          grep -n "fun resolveAttack" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NOT FOUND HERE" >> $OUT
+          OUT=discovery_output69.txt
+          echo "=== resolveSearchIfReady() ===" > $OUT
+          grep -n "fun resolveSearchIfReady" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== search all files for fun resolveAttack, in case it lives elsewhere ===" >> $OUT
-          grep -rn "fun resolveAttack" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND ANYWHERE" >> $OUT
+          echo "=== startSearching() ===" >> $OUT
+          grep -n "fun startSearching" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== combatService class - what file/class is 'combatService' actually an instance of ===" >> $OUT
-          grep -n "val combatService" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
+          echo "=== SessionState / CombatSession class - what fields track search timing ===" >> $OUT
+          grep -n "class CombatSession\|searchReadyAt\|searchStartedAt\|SEARCHING" ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== attackSpeedSeconds usage anywhere in combat resolution logic ===" >> $OUT
-          grep -rn "attackSpeedSeconds" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== sessionDropsFor declaration and every place it's read/written (for the 'drops this session' mismatch question) ===" >> $OUT
+          grep -rn "sessionDropsFor" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output68.txt
+      - discovery_output69.txt
       
   apply-patch:
     name: Apply Patch Script
