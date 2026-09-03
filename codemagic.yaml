@@ -26,20 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output70.txt
-          echo "=== find Skills screen composable file(s) ===" > $OUT
-          grep -rln "SkillsScreen\|fun.*Skill.*Screen" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output71.txt
+          echo "=== full SkillsScreen.kt ===" > $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT
           echo "" >> $OUT
-          echo "=== find where skill level progress bars are rendered (LinearProgressIndicator near skill) ===" >> $OUT
-          grep -rln "LinearProgressIndicator" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== ProgressionService / xp-per-level formula and skill data model ===" >> $OUT
-          grep -rn "fun grantXp\|fun xpForLevel\|fun levelFor\|class SkillProgress\|currentXp\|xpIntoLevel\|xpForNextLevel" ./app/src/main/kotlin/com/yourname/idlerpg/ProgressionService.kt >> $OUT || echo "NOT FOUND - check filename" >> $OUT
-          echo "" >> $OUT
-          echo "=== find files referencing ProgressionService, in case filename differs ===" >> $OUT
-          grep -rln "class ProgressionService\|ProgressionService(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== SkillProgressionSystem.kt: xp/level formula and skill state fields ===" >> $OUT
+          grep -n "fun grantXp\|fun xpForLevel\|fun levelFor\|class Skill\|currentXp\|totalXp\|xpIntoLevel\|xpForNextLevel\|fun.*[Pp]rogress" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt >> $OUT
     artifacts:
-      - discovery_output70.txt
+      - discovery_output71.txt
       
   apply-patch:
     name: Apply Patch Script
