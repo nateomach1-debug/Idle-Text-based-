@@ -26,14 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output74.txt
-          echo "=== GuildClanSystem.kt full content ===" > $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/GuildClanSystem.kt >> $OUT
+          OUT=discovery_output75.txt
+          echo "=== is GuildService (from GuildClanSystem.kt) instantiated/used ANYWHERE outside its own file? ===" > $OUT
+          grep -rn "GuildService(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NO MATCHES - likely dead code" >> $OUT
           echo "" >> $OUT
-          echo "=== SupabaseGuildRepository.kt full content ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT
+          echo "=== is the Guild/GuildMember/GuildTierState class used anywhere outside GuildClanSystem.kt? ===" >> $OUT
+          grep -rln "Guild(\|GuildMember(\|GuildTierState(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "" >> $OUT
+          echo "=== find guild_core_phase1.sql or any guild-related SQL migration files ===" >> $OUT
+          find . -iname "*guild*" -name "*.sql" >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== full list of ALL sql files in repo (to see migration naming/location convention) ===" >> $OUT
+          find . -name "*.sql" >> $OUT
+          echo "" >> $OUT
+          echo "=== GuildHomeScreen.kt - what does it actually call/render from? ===" >> $OUT
+          grep -n "fetchGuildHome\|GuildViewModel\|guildService\|SupabaseGuildRepository" ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output74.txt
+      - discovery_output75.txt
       
   apply-patch:
     name: Apply Patch Script
