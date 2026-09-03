@@ -26,20 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output67.txt
-          echo "=== tickCombat() FULL body, generous line range ===" > $OUT
-          sed -n '582,760p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
+          OUT=discovery_output68.txt
+          echo "=== fun resolveAttack() in CombatSystem.kt ===" > $OUT
+          grep -n "fun resolveAttack" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NOT FOUND HERE" >> $OUT
           echo "" >> $OUT
-          echo "=== any attack-speed / cooldown / weapon speed fields ===" >> $OUT
-          grep -rn "attackSpeed\|AttackSpeed\|cooldown\|Cooldown" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== search all files for fun resolveAttack, in case it lives elsewhere ===" >> $OUT
+          grep -rn "fun resolveAttack" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND ANYWHERE" >> $OUT
           echo "" >> $OUT
-          echo "=== resolveAttack() definition in CombatService ===" >> $OUT
-          grep -rn "fun resolveAttack" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/CombatService.kt >> $OUT || echo "FILE/FUNC NOT FOUND - check filename" >> $OUT
+          echo "=== combatService class - what file/class is 'combatService' actually an instance of ===" >> $OUT
+          grep -n "val combatService" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
           echo "" >> $OUT
-          echo "=== locate the actual OfflineIdleService file (previous grep found nothing - confirm correct filename) ===" >> $OUT
-          find . -iname "*offline*" -name "*.kt" >> $OUT || true
+          echo "=== attackSpeedSeconds usage anywhere in combat resolution logic ===" >> $OUT
+          grep -rn "attackSpeedSeconds" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NO MATCHES" >> $OUT
     artifacts:
-      - discovery_output67.txt
+      - discovery_output68.txt
       
   apply-patch:
     name: Apply Patch Script
