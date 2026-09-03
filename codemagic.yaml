@@ -26,23 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output66.txt
-          echo "=== tickBurying() full body ===" > $OUT
-          grep -n "fun tickBurying" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
+          OUT=discovery_output67.txt
+          echo "=== tickCombat() FULL body, generous line range ===" > $OUT
+          sed -n '582,760p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
           echo "" >> $OUT
-          echo "=== tickConsumables() full body ===" >> $OUT
-          grep -n "fun tickConsumables" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
+          echo "=== any attack-speed / cooldown / weapon speed fields ===" >> $OUT
+          grep -rn "attackSpeed\|AttackSpeed\|cooldown\|Cooldown" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NO MATCHES" >> $OUT
           echo "" >> $OUT
-          echo "=== all progress-second accumulator fields (skillActionProgressSeconds etc) declarations ===" >> $OUT
-          grep -n "ProgressSeconds\s*:\?\s*=\|ProgressSeconds =\|var.*ProgressSeconds" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
+          echo "=== resolveAttack() definition in CombatService ===" >> $OUT
+          grep -rn "fun resolveAttack" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/CombatService.kt >> $OUT || echo "FILE/FUNC NOT FOUND - check filename" >> $OUT
           echo "" >> $OUT
-          echo "=== combatService tick-driven timing (attack speed / cooldown) - is it also flat-per-tick? ===" >> $OUT
-          sed -n '608,660p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
-          echo "" >> $OUT
-          echo "=== offlineIdleService.resolveOfflineProgress() - confirm it truly uses real elapsed time, for reference ===" >> $OUT
-          grep -n "fun resolveOfflineProgress" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleService.kt >> $OUT || true
+          echo "=== locate the actual OfflineIdleService file (previous grep found nothing - confirm correct filename) ===" >> $OUT
+          find . -iname "*offline*" -name "*.kt" >> $OUT || true
     artifacts:
-      - discovery_output66.txt
+      - discovery_output67.txt
       
   apply-patch:
     name: Apply Patch Script
