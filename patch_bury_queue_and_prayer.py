@@ -1,4 +1,4 @@
-PATH = "app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt"
+PATH = "app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt"
 
 with open(PATH, "r", encoding="utf-8") as f:
     content = f.read()
@@ -10,41 +10,99 @@ def apply(old, new, label):
         raise SystemExit(f"FAILED [{label}]: expected 1 match, found {count}")
     content = content.replace(old, new, 1)
 
+# 1. List row: add numeric XP text under the progress bar
 apply(
-"""        val session = state.session ?: return
-
-        if (session.state == SessionState.SEARCHING) {
-            val result = combatService.resolveSearchIfReady(characterId)
-            if (result is ServiceResult.Success) {
-                combatLogFor.getOrPut(characterId) { mutableListOf() }
-                    .add(CombatLogEntry(result.value.name + " appears!"))
+"""        Column(modifier = Modifier.weight(1f)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Text(text = skill.displayName, style = MaterialTheme.typography.titleMedium)
+                Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
             }
-            refreshCombatView()
-            return
-        }
-
-        if (session.state != SessionState.IN_COMBAT) return""",
-"""        var session = state.session ?: return
-
-        if (session.state == SessionState.SEARCHING) {
-            val result = combatService.resolveSearchIfReady(characterId)
-            if (result is ServiceResult.Success) {
-                combatLogFor.getOrPut(characterId) { mutableListOf() }
-                    .add(CombatLogEntry(result.value.name + " appears!"))
-                // Fall through into the attack logic below using this same tick's
-                // elapsedSeconds budget, instead of returning - otherwise every single
-                // fight pays an extra full tick-interval of pure dead time before the
-                // first attack lands, which gets far more expensive once tick intervals
-                // are inflated by background scheduling throttling.
-                session = combatService.stateFor(characterId, maxHpFor(characterId)).session ?: return
-            } else {
-                refreshCombatView()
-                return
+            Spacer(modifier = Modifier.height(6.dp))
+            ThinProgressBar(progressFraction)
+        }""",
+"""        Column(modifier = Modifier.weight(1f)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Text(text = skill.displayName, style = MaterialTheme.typography.titleMedium)
+                Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
             }
-        }
+            Spacer(modifier = Modifier.height(6.dp))
+            ThinProgressBar(progressFraction)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = formatXpProgress(skill),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = androidx.compose.ui.text.style.TextAlign.End
+            )
+        }""",
+    "SkillListRow numeric XP"
+)
 
-        if (session.state != SessionState.IN_COMBAT) return""",
-    "tickCombat search-to-attack fallthrough"
+# 2. Grid tile: add a progress bar + numeric XP (it currently has neither)
+apply(
+"""@Composable
+private fun SkillGridTile(skill: SkillSummary, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(12.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = skill.displayName, style = MaterialTheme.typography.labelSmall)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
+    }
+}""",
+"""@Composable
+private fun SkillGridTile(skill: SkillSummary, onClick: () -> Unit) {
+    val progressFraction = skillProgressFraction(skill)
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(12.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = skill.displayName, style = MaterialTheme.typography.labelSmall)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(4.dp))
+        ThinProgressBar(progressFraction)
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = formatXpProgress(skill),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}""",
+    "SkillGridTile progress bar + numeric XP"
+)
+
+# 3. Helper to format "1,234 / 3,456 XP"
+apply(
+"""private fun skillProgressFraction(skill: SkillSummary): Float {
+    val total = skill.currentXp + skill.xpToNextLevel
+    if (total <= 0) return 0f
+    return (skill.currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+}""",
+"""private fun skillProgressFraction(skill: SkillSummary): Float {
+    val total = skill.currentXp + skill.xpToNextLevel
+    if (total <= 0) return 0f
+    return (skill.currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+}
+
+private fun formatXpProgress(skill: SkillSummary): String {
+    val total = skill.currentXp + skill.xpToNextLevel
+    return "%,d / %,d XP".format(skill.currentXp, total)
+}""",
+    "formatXpProgress helper"
 )
 
 with open(PATH, "w", encoding="utf-8") as f:
