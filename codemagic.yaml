@@ -26,29 +26,26 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output61.txt
-          echo "=== full selectCharacter() body, GameViewModel.kt lines 1115-1260 ===" > $OUT
-          sed -n '1115,1260p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          OUT=discovery_output62.txt
+          echo "=== where is resumeCurrentCharacterIfNeeded() called from? ===" > $OUT
+          grep -rn "resumeCurrentCharacterIfNeeded" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
           echo "" >> $OUT
-          echo "=== is restoreTrainingSkillFor called a second time anywhere after the remoteLocalId swap? ===" >> $OUT
-          grep -n "restoreTrainingSkillFor" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== MainActivity startup flow: LaunchedEffect, loadGame, AppFlowState determination ===" >> $OUT
+          grep -n "LaunchedEffect\|loadGame\|AppFlowState\|resumeCurrentCharacterIfNeeded" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
-          echo "=== get_or_create_character RPC definition (SQL) ===" >> $OUT
-          grep -rn -A 40 "get_or_create_character" --include=*.sql . >> $OUT
+          echo "=== how/where AppFlowState.InGame gets decided and where characterId comes from on cold start ===" >> $OUT
+          grep -rn "AppFlowState" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
           echo "" >> $OUT
-          echo "=== get_character_local_id RPC definition (SQL) ===" >> $OUT
-          grep -rn -A 40 "get_character_local_id" --include=*.sql . >> $OUT
+          echo "=== fun loadGame() full body ===" >> $OUT
+          grep -n "fun loadGame" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== how/where currentCharacterId and currentSupabaseCharacterId get persisted/restored across cold start ===" >> $OUT
-          grep -rn "_currentCharacterId\|_currentSupabaseCharacterId" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== where _currentCharacterId gets set at startup, outside selectCharacter/logout ===" >> $OUT
+          grep -n "_currentCharacterId.value = " ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== tryAutoLogin definition ===" >> $OUT
-          grep -n "fun tryAutoLogin" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== sessionManager: what character/account id gets saved and restored on disk ===" >> $OUT
-          grep -rn "class SessionManager" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
+          echo "=== inventoryFor() definition - confirm getOrPut behavior and default Inventory() shape ===" >> $OUT
+          grep -n "fun inventoryFor" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT
     artifacts:
-      - discovery_output61.txt
+      - discovery_output62.txt
       
   apply-patch:
     name: Apply Patch Script
