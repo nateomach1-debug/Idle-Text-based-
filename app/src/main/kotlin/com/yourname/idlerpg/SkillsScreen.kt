@@ -208,12 +208,21 @@ private fun SkillListRow(skill: SkillSummary, onClick: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(6.dp))
             ThinProgressBar(progressFraction)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = formatXpProgress(skill),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = androidx.compose.ui.text.style.TextAlign.End
+            )
         }
     }
 }
 
 @Composable
 private fun SkillGridTile(skill: SkillSummary, onClick: () -> Unit) {
+    val progressFraction = skillProgressFraction(skill)
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
@@ -226,6 +235,14 @@ private fun SkillGridTile(skill: SkillSummary, onClick: () -> Unit) {
         Text(text = skill.displayName, style = MaterialTheme.typography.labelSmall)
         Spacer(modifier = Modifier.height(4.dp))
         Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(4.dp))
+        ThinProgressBar(progressFraction)
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = formatXpProgress(skill),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -252,4 +269,9 @@ private fun skillProgressFraction(skill: SkillSummary): Float {
     val total = skill.currentXp + skill.xpToNextLevel
     if (total <= 0) return 0f
     return (skill.currentXp.toFloat() / total.toFloat()).coerceIn(0f, 1f)
+}
+
+private fun formatXpProgress(skill: SkillSummary): String {
+    val total = skill.currentXp + skill.xpToNextLevel
+    return "%,d / %,d XP".format(skill.currentXp, total)
 }
