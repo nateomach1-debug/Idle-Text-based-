@@ -375,7 +375,8 @@ class CombatService {
         characterId: String,
         loadout: CombatLoadout,
         attackerAccuracy: Int,
-        attackerMaxHit: Int
+        attackerMaxHit: Int,
+        attackerMinHit: Int = 0
     ): ServiceResult<AttackResult> {
         val state = stateFor(characterId)
         val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
@@ -388,8 +389,14 @@ class CombatService {
         // one place both live and any future callers already thread the loadout through.
         val effectiveAccuracy = if (loadout.selectedPrayerId == "clarity_of_thought") (attackerAccuracy * 1.1).toInt() else attackerAccuracy
         val effectiveMaxHit = if (loadout.selectedPrayerId == "burst_of_strength") (attackerMaxHit * 1.1).toInt() else attackerMaxHit
+        val effectiveMinHit = if (loadout.selectedPrayerId == "burst_of_strength") (attackerMinHit * 1.1).toInt() else attackerMinHit
 
-        val hitChancePercent = (effectiveAccuracy.toDouble() / (effectiveAccuracy + monster.defenseRating)) * 100.0
+        // Explicit cap even though the accuracy-vs-defense ratio is already
+        // mathematically bounded below 100% for any positive defenseRating -
+        // this makes the "never exceeds 100% per mob" guarantee an explicit
+        // invariant rather than an incidental property of the formula.
+        val hitChancePercent = ((effectiveAccuracy.toDouble() / (effectiveAccuracy + monster.defenseRating)) * 100.0)
+            .coerceIn(0.0, 100.0)
         val didHit = Random.nextDouble(0.0, 100.0) < hitChancePercent
 
         if (!didHit) {
@@ -398,7 +405,10 @@ class CombatService {
             )
         }
 
-        val damage = Random.nextInt(0, effectiveMaxHit + 1)
+        // Guard against minHit exceeding maxHit (e.g. from prayer rounding at low
+        // levels) - Random.nextInt(from, until) throws if from > until.
+        val safeMinHit = effectiveMinHit.coerceIn(0, effectiveMaxHit)
+        val damage = Random.nextInt(safeMinHit, effectiveMaxHit + 1)
         session.currentMonsterHealth = (session.currentMonsterHealth - damage).coerceAtLeast(0)
         val defeated = session.currentMonsterHealth <= 0
 

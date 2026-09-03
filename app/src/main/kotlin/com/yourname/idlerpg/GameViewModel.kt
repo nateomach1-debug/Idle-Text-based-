@@ -618,18 +618,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val trainingSkill = _trainingSkill.value
         val accuracy: Int
         val maxHit: Int
+        val minHit: Int
         val attackSpeedSeconds: Double
+        // minHit scales slowly (roughly +1 per 10 levels of the relevant stat) so
+        // low-level combat is unaffected, while high-level characters get a
+        // meaningfully more consistent damage floor instead of every hit still
+        // being able to roll as low as 0. Tunable - CombatSystem.resolveAttack()
+        // clamps minHit to never exceed maxHit regardless of the value passed here.
         when (weapon?.style) {
             CombatStyle.MAGIC -> {
                 val magicLevel = skillLevel(characterId, SkillType.MAGIC)
                 accuracy = magicLevel * 2 + weapon.baseAccuracy
                 maxHit = (magicLevel / 3) + weapon.baseMaxHit
+                minHit = magicLevel / 10
                 attackSpeedSeconds = weapon.attackSpeedSeconds
             }
             CombatStyle.RANGED -> {
                 val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
                 accuracy = archeryLevel * 2 + weapon.baseAccuracy
                 maxHit = (archeryLevel / 3) + weapon.baseMaxHit
+                minHit = archeryLevel / 10
                 attackSpeedSeconds = weapon.attackSpeedSeconds
             }
             else -> {
@@ -637,6 +645,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
                 accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
                 maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
+                minHit = strengthLevel / 10
                 attackSpeedSeconds = weapon?.attackSpeedSeconds ?: 2.4
             }
         }
@@ -662,12 +671,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 autoFleeThresholdPercent = inventoryService.inventoryFor(characterId).autoFleeThresholdPercent
             )
 
-            val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit)
+            val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit, minHit)
 
             if (result is ServiceResult.Success) {
                 val attack = result.value
                 val monsterDefense = session.currentMonster?.defenseRating ?: 1
-                lastHitChancePercent = (accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0
+                lastHitChancePercent = ((accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0).coerceIn(0.0, 100.0)
                 lastDamageDealt = attack.damageDealt
 
                 if (attack.didHit) {
@@ -702,11 +711,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val monster = session.currentMonster
                 if (monster != null && Random.nextDouble(0.0, 100.0) < 40.0) {
                     val rawDmg = Random.nextInt(1, (monster.defenseRating / 3).coerceAtLeast(1) + 1)
-                    val dmg = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "rock_skin") {
+                    val prayerAdjustedDmg = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "rock_skin") {
                         (rawDmg * 0.8).toInt().coerceAtLeast(1)
                     } else {
                         rawDmg
                     }
+                    // Defense passively reduces incoming damage regardless of which skill is
+                    // currently selected to train, matching the classic "defense stat" model
+                    // rather than only mattering while actively training it. Capped at 50%
+                    // reduction so high Defense meaningfully helps survivability without making
+                    // combat damage-immune; at least 1 damage always gets through.
+                    val defenseLevel = skillLevel(characterId, SkillType.DEFENSE)
+                    val defenseReductionPercent = (defenseLevel * 0.5).coerceAtMost(50.0)
+                    val dmg = (prayerAdjustedDmg * (1.0 - defenseReductionPercent / 100.0)).toInt().coerceAtLeast(1)
                     combatService.applyDamageToCharacter(characterId, dmg)
                     log.add(CombatLogEntry(monster.name + " hits you for " + dmg + "."))
                 }
