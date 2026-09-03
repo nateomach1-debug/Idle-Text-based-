@@ -26,29 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output65.txt
-          echo "=== the main tick loop (init block with delay(1000L)) ===" > $OUT
-          grep -n "delay(1000L)" -B 5 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
+          OUT=discovery_output66.txt
+          echo "=== tickBurying() full body ===" > $OUT
+          grep -n "fun tickBurying" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
           echo "" >> $OUT
-          echo "=== tickSkilling() full body ===" >> $OUT
-          grep -n "fun tickSkilling" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
+          echo "=== tickConsumables() full body ===" >> $OUT
+          grep -n "fun tickConsumables" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
           echo "" >> $OUT
-          echo "=== tickCombat() full body ===" >> $OUT
-          grep -n "fun tickCombat" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
+          echo "=== all progress-second accumulator fields (skillActionProgressSeconds etc) declarations ===" >> $OUT
+          grep -n "ProgressSeconds\s*:\?\s*=\|ProgressSeconds =\|var.*ProgressSeconds" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
           echo "" >> $OUT
-          echo "=== tickCrafting() full body ===" >> $OUT
-          grep -n "fun tickCrafting" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
+          echo "=== combatService tick-driven timing (attack speed / cooldown) - is it also flat-per-tick? ===" >> $OUT
+          sed -n '608,660p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
           echo "" >> $OUT
-          echo "=== search for any use of System.currentTimeMillis/Instant.now for elapsed-time-based progress (vs fixed per-tick) ===" >> $OUT
-          grep -n "currentTimeMillis\|Instant.now()" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NO MATCHES" >> $OUT
-          echo "" >> $OUT
-          echo "=== offline catch-up estimator entry point(s) for comparison ===" >> $OUT
-          grep -n "fun resolveOfflineRewardsAndSync\|fun.*[Oo]ffline.*[Ee]stimat" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
-          echo "" >> $OUT
-          echo "=== manifest: any foreground service / wake lock / battery optimization handling ===" >> $OUT
-          grep -n "Service\|WAKE_LOCK\|foregroundServiceType" ./app/src/main/AndroidManifest.xml >> $OUT || echo "NO MATCHES" >> $OUT
+          echo "=== offlineIdleService.resolveOfflineProgress() - confirm it truly uses real elapsed time, for reference ===" >> $OUT
+          grep -n "fun resolveOfflineProgress" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleService.kt >> $OUT || true
     artifacts:
-      - discovery_output65.txt
+      - discovery_output66.txt
       
   apply-patch:
     name: Apply Patch Script
