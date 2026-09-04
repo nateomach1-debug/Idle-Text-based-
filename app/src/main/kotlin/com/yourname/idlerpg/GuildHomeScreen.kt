@@ -57,6 +57,7 @@ data class GuildHomeState(
     val activeVote: GuildVoteSummary?,
     val tier: Int,
     val guildLevel: Int,
+    val guildXp: Long,
     val activeBonusPercent: Double,
     val members: List<GuildMemberSummary>,
     val quests: List<GuildQuestSummary>,

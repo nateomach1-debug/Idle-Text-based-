@@ -222,6 +222,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         Rarity.LEGENDARY -> 1600L
     }
 
+    private fun eventGuildXpRewardPerMilestoneFor(rarity: Rarity): Long = when (rarity) {
+        Rarity.COMMON -> 25L
+        Rarity.UNCOMMON -> 50L
+        Rarity.RARE -> 100L
+        Rarity.EPIC -> 200L
+        Rarity.LEGENDARY -> 400L
+    }
+
+    // Must match the SQL curve in contribute_to_guild_event() - level L needs
+    // 1000*L XP to advance to L+1. Exposed here so the UI can show a progress
+    // bar without a network round trip.
+    fun guildXpRequiredForLevel(level: Int): Long = 1000L * level
+
     // Caps event items to a level appropriate for the guild's current level,
     // so a level-1 guild never gets asked to contribute a level-90 item. This
     // cap should rise as the planned guild-leveling feature ships - for now,
@@ -254,6 +267,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         val requiredQuantity = eventPerMemberQuantityFor(item.rarity) * memberCount
         val rewardPerMilestone = eventGuildCoinRewardPerMilestoneFor(item.rarity)
+        val xpRewardPerMilestone = eventGuildXpRewardPerMilestoneFor(item.rarity)
         val displayName = item.name + " Drive"
 
         viewModelScope.launch {
@@ -264,7 +278,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 itemId = item.id,
                 skillName = item.skillRequired ?: "",
                 requiredQuantity = requiredQuantity,
-                guildCoinRewardPerMilestone = rewardPerMilestone
+                guildCoinRewardPerMilestone = rewardPerMilestone,
+                guildXpRewardPerMilestone = xpRewardPerMilestone
             )
             result.onFailure {
                 _guildActionError.value = it.message ?: it.toString()

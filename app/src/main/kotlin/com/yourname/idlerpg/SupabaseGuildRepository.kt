@@ -31,7 +31,8 @@ private data class GuildRow(
     val name: String,
     val tier: Int,
     @SerialName("last_failed_vote_at") val lastFailedVoteAt: String? = null,
-    @SerialName("guild_level") val guildLevel: Int = 1
+    @SerialName("guild_level") val guildLevel: Int = 1,
+    @SerialName("guild_xp") val guildXp: Long = 0
 )
 
 @Serializable
@@ -171,6 +172,7 @@ object SupabaseGuildRepository {
                 activeVote = activeVote,
                 tier = guild.tier,
                 guildLevel = guild.guildLevel,
+                guildXp = guild.guildXp,
                 activeBonusPercent = 0.0,  // Phase 2 adds active bonus tracking
                 members = members,
                 quests = emptyList(),  // no backend concept for this yet - not fabricating fake data
@@ -285,7 +287,8 @@ suspend fun blockCharacter(blockerCharacterId: String, blockedCharacterId: Strin
         itemId: String,
         skillName: String,
         requiredQuantity: Int,
-        guildCoinRewardPerMilestone: Long
+        guildCoinRewardPerMilestone: Long,
+        guildXpRewardPerMilestone: Long
     ): Result<String> = runCatching {
         client.postgrest.rpc("start_guild_event", buildJsonObject {
             put("p_guild_id", guildId)
@@ -295,6 +298,7 @@ suspend fun blockCharacter(blockerCharacterId: String, blockedCharacterId: Strin
             put("p_skill_name", skillName)
             put("p_required_quantity", requiredQuantity)
             put("p_guild_coin_reward_per_milestone", guildCoinRewardPerMilestone)
+            put("p_guild_xp_reward_per_milestone", guildXpRewardPerMilestone)
         }).decodeAs<String>()
     }
 
