@@ -26,11 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output86.txt
-          echo "=== fetchGuildHome() lines 167-185, the GuildHomeState construction ===" > $OUT
-          sed -n '167,185p' ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT
+          OUT=discovery_output87.txt
+          echo "=== full GuildHomeScreen.kt ===" > $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT
     artifacts:
-      - discovery_output86.txt
+      - discovery_output87.txt
       
   apply-patch:
     name: Apply Patch Script
