@@ -31,9 +31,13 @@ data class GuildMemberSummary(
 )
 
 data class GuildEventSummary(
+    val id: String,
     val name: String,
+    val itemId: String,
+    val skillName: String,
     val progressCurrent: Int,
-    val progressTarget: Int
+    val progressTarget: Int,
+    val milestonesPaid: Int
 )
 
 data class GuildVoteSummary(

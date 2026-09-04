@@ -193,8 +193,123 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _guildLeaderboard.value = emptyList()
                 _browsableGuilds.value = SupabaseGuildRepository.listGuilds()
             } else {
+                SupabaseGuildRepository.closeExpiredGuildEventIfNeeded(membership.first)
                 _guildHomeState.value = SupabaseGuildRepository.fetchGuildHome(characterId)
                 _guildLeaderboard.value = SupabaseGuildRepository.fetchLeaderboard(characterId)
+                claimGuildEventPayouts()
+            }
+        }
+    }
+
+    // Per-member base quantity by rarity - rarer items require far fewer units
+    // to reach the same milestone. Guild-coin reward per milestone is keyed
+    // off rarity directly (not off requiredQuantity) so rarer-item events
+    // don't perversely pay LESS just because fewer units are needed. Both
+    // tables are first-pass numbers, flagged as tunable during balancing.
+    private fun eventPerMemberQuantityFor(rarity: Rarity): Int = when (rarity) {
+        Rarity.COMMON -> 40
+        Rarity.UNCOMMON -> 25
+        Rarity.RARE -> 15
+        Rarity.EPIC -> 8
+        Rarity.LEGENDARY -> 3
+    }
+
+    private fun eventGuildCoinRewardPerMilestoneFor(rarity: Rarity): Long = when (rarity) {
+        Rarity.COMMON -> 100L
+        Rarity.UNCOMMON -> 200L
+        Rarity.RARE -> 400L
+        Rarity.EPIC -> 800L
+        Rarity.LEGENDARY -> 1600L
+    }
+
+    // Picks a random skill, then a random item tagged to that skill. Retries
+    // with a different skill (up to a small cap) if the chosen skill happens
+    // to have zero eligible items in the catalog, rather than ever throwing.
+    private fun pickRandomGuildEventResource(): ItemDefinition? {
+        val skills = SkillType.entries.toList()
+        repeat(20) {
+            val skill = skills.random()
+            val candidates = ItemCatalog.items.filter { it.skillRequired == skill.name }
+            if (candidates.isNotEmpty()) return candidates.random()
+        }
+        return null
+    }
+
+    fun startGuildEvent() {
+        val guildId = _guildId.value ?: return
+        val actingCharacterId = _currentSupabaseCharacterId.value ?: return
+        val memberCount = (_guildHomeState.value?.members?.size ?: 1).coerceAtLeast(1)
+        val item = pickRandomGuildEventResource() ?: run {
+            _guildActionError.value = "No eligible items found for an event right now."
+            return
+        }
+        val requiredQuantity = eventPerMemberQuantityFor(item.rarity) * memberCount
+        val rewardPerMilestone = eventGuildCoinRewardPerMilestoneFor(item.rarity)
+        val displayName = item.name + " Drive"
+
+        viewModelScope.launch {
+            val result = SupabaseGuildRepository.startGuildEvent(
+                guildId = guildId,
+                actingCharacterId = actingCharacterId,
+                displayName = displayName,
+                itemId = item.id,
+                skillName = item.skillRequired ?: "",
+                requiredQuantity = requiredQuantity,
+                guildCoinRewardPerMilestone = rewardPerMilestone
+            )
+            result.onFailure {
+                _guildActionError.value = it.message ?: it.toString()
+            }
+            result.onSuccess {
+                _guildActionError.value = null
+                refreshGuildHome()
+            }
+        }
+    }
+
+    fun contributeToGuildEvent(quantity: Int) {
+        val localCharacterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val event = _guildHomeState.value?.activeEvent ?: run {
+            _guildActionError.value = "No active guild event."
+            return
+        }
+        if (quantity <= 0) return
+
+        val removal = inventoryService.inventoryFor(localCharacterId).removeItem(event.itemId, quantity)
+        if (removal is ServiceResult.Failure) {
+            _guildActionError.value = removal.message
+            return
+        }
+        refreshInventory()
+
+        viewModelScope.launch {
+            val result = SupabaseGuildRepository.contributeToGuildEvent(event.id, supabaseCharacterId, quantity)
+            result.onFailure {
+                // Note: the item was already removed from local inventory above and is
+                // not refunded on network failure here, consistent with how other
+                // best-effort cloud-sync actions in this codebase behave elsewhere.
+                _guildActionError.value = it.message ?: it.toString()
+            }
+            result.onSuccess {
+                _guildActionError.value = null
+                refreshGuildHome()
+            }
+        }
+    }
+
+    // Claims any personal guild-event-milestone payouts queued for this
+    // character (including ones triggered by other members' contributions)
+    // and credits them via the existing self-grant currency path.
+    private fun claimGuildEventPayouts() {
+        val localCharacterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseGuildRepository.claimGuildEventPayouts(supabaseCharacterId)
+            result.onSuccess { total ->
+                if (total > 0) {
+                    grantCombatCoins(localCharacterId, total)
+                }
             }
         }
     }

@@ -45,7 +45,12 @@ private data class GuildEventRow(
     @SerialName("event_type") val eventType: String,
     @SerialName("bonus_tier") val bonusTier: Int,
     @SerialName("starts_at") val startsAt: String,
-    @SerialName("ends_at") val endsAt: String
+    @SerialName("ends_at") val endsAt: String,
+    @SerialName("item_id") val itemId: String? = null,
+    @SerialName("skill_name") val skillName: String? = null,
+    @SerialName("required_quantity") val requiredQuantity: Int? = null,
+    @SerialName("contributed_quantity") val contributedQuantity: Int = 0,
+    @SerialName("milestones_paid") val milestonesPaid: Int = 0
 )
 
 @Serializable
@@ -125,9 +130,17 @@ object SupabaseGuildRepository {
                 .decodeList<GuildEventRow>()
                 .filter { Instant.parse(it.endsAt).isAfter(Instant.now()) }
                 .maxByOrNull { it.startsAt }
-                ?.let { GuildEventSummary(name = it.eventType, progressCurrent = 0, progressTarget = 0) }
-            // Note: live progress (items contributed vs scaled target) isn't tracked in
-            // guild_events yet - Phase 2 adds that. Shows the event name/existence for now.
+                ?.let {
+                    GuildEventSummary(
+                        id = it.id,
+                        name = it.eventType,
+                        itemId = it.itemId ?: "",
+                        skillName = it.skillName ?: "",
+                        progressCurrent = it.contributedQuantity,
+                        progressTarget = it.requiredQuantity ?: 0,
+                        milestonesPaid = it.milestonesPaid
+                    )
+                }
 
             val openVoteRow = client.postgrest.from("guild_leader_votes")
                 .select { filter { eq("guild_id", guildId); eq("status", "OPEN") } }
@@ -262,4 +275,69 @@ suspend fun blockCharacter(blockerCharacterId: String, blockedCharacterId: Strin
             put("p_character_id", characterId)
         })
     }
+
+    suspend fun startGuildEvent(
+        guildId: String,
+        actingCharacterId: String,
+        displayName: String,
+        itemId: String,
+        skillName: String,
+        requiredQuantity: Int,
+        guildCoinRewardPerMilestone: Long
+    ): Result<String> = runCatching {
+        client.postgrest.rpc("start_guild_event", buildJsonObject {
+            put("p_guild_id", guildId)
+            put("p_acting_character_id", actingCharacterId)
+            put("p_display_name", displayName)
+            put("p_item_id", itemId)
+            put("p_skill_name", skillName)
+            put("p_required_quantity", requiredQuantity)
+            put("p_guild_coin_reward_per_milestone", guildCoinRewardPerMilestone)
+        }).decodeAs<String>()
+    }
+
+    suspend fun contributeToGuildEvent(eventId: String, characterId: String, quantity: Int): Result<ContributeGuildEventResult> = runCatching {
+        client.postgrest.rpc("contribute_to_guild_event", buildJsonObject {
+            put("p_event_id", eventId)
+            put("p_character_id", characterId)
+            put("p_quantity", quantity)
+        }).decodeAs<ContributeGuildEventResult>()
+    }
+
+    suspend fun closeExpiredGuildEventIfNeeded(guildId: String): Result<Unit> = runCatching {
+        client.postgrest.rpc("close_expired_guild_event_if_needed", buildJsonObject {
+            put("p_guild_id", guildId)
+        })
+    }
+
+    // Sums and clears this character's queued personal payouts from any guild
+    // event milestones - including ones triggered by OTHER members' contributions,
+    // since only the triggering client's session receives the milestone JSON
+    // directly. The client credits the returned total to itself via the existing
+    // combat_grant_coins path, never attempting to credit another character.
+    suspend fun claimGuildEventPayouts(characterId: String): Result<Long> = runCatching {
+        client.postgrest.rpc("claim_guild_event_payouts", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeAs<Long>()
+    }
 }
+
+@Serializable
+data class GuildEventMilestonePayout(
+    @SerialName("character_id") val characterId: String,
+    val amount: Long
+)
+
+@Serializable
+data class GuildEventMilestoneResult(
+    val percent: Int,
+    @SerialName("guild_coins_awarded") val guildCoinsAwarded: Long,
+    val payouts: List<GuildEventMilestonePayout>
+)
+
+@Serializable
+data class ContributeGuildEventResult(
+    @SerialName("contributed_quantity") val contributedQuantity: Int,
+    @SerialName("required_quantity") val requiredQuantity: Int,
+    @SerialName("milestones_just_paid") val milestonesJustPaid: List<GuildEventMilestoneResult>
+)
