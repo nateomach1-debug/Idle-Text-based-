@@ -14,29 +14,21 @@ sgr = apply(sgr,
     val id: String,
     val name: String,
     val tier: Int,
-    @SerialName("last_failed_vote_at") val lastFailedVoteAt: String? = null
+    @SerialName("last_failed_vote_at") val lastFailedVoteAt: String? = null,
+    @SerialName("guild_level") val guildLevel: Int = 1
 )""",
 """private data class GuildRow(
     val id: String,
     val name: String,
     val tier: Int,
     @SerialName("last_failed_vote_at") val lastFailedVoteAt: String? = null,
-    @SerialName("guild_level") val guildLevel: Int = 1
+    @SerialName("guild_level") val guildLevel: Int = 1,
+    @SerialName("guild_xp") val guildXp: Long = 0
 )""",
-    "GuildRow: add guildLevel"
+    "GuildRow: add guildXp"
 )
 
 sgr = apply(sgr,
-"""            return GuildHomeState(
-                guildName = guild.name,
-                activeEvent = activeEvent,
-                activeVote = activeVote,
-                tier = guild.tier,
-                activeBonusPercent = 0.0,  // Phase 2 adds active bonus tracking
-                members = members,
-                quests = emptyList(),  // no backend concept for this yet - not fabricating fake data
-                viewerRole = viewerRole
-            )""",
 """            return GuildHomeState(
                 guildName = guild.name,
                 activeEvent = activeEvent,
@@ -48,7 +40,63 @@ sgr = apply(sgr,
                 quests = emptyList(),  // no backend concept for this yet - not fabricating fake data
                 viewerRole = viewerRole
             )""",
-    "fetchGuildHome: pass guildLevel through"
+"""            return GuildHomeState(
+                guildName = guild.name,
+                activeEvent = activeEvent,
+                activeVote = activeVote,
+                tier = guild.tier,
+                guildLevel = guild.guildLevel,
+                guildXp = guild.guildXp,
+                activeBonusPercent = 0.0,  // Phase 2 adds active bonus tracking
+                members = members,
+                quests = emptyList(),  // no backend concept for this yet - not fabricating fake data
+                viewerRole = viewerRole
+            )""",
+    "fetchGuildHome: pass guildXp through"
+)
+
+sgr = apply(sgr,
+"""    suspend fun startGuildEvent(
+        guildId: String,
+        actingCharacterId: String,
+        displayName: String,
+        itemId: String,
+        skillName: String,
+        requiredQuantity: Int,
+        guildCoinRewardPerMilestone: Long
+    ): Result<String> = runCatching {
+        client.postgrest.rpc("start_guild_event", buildJsonObject {
+            put("p_guild_id", guildId)
+            put("p_acting_character_id", actingCharacterId)
+            put("p_display_name", displayName)
+            put("p_item_id", itemId)
+            put("p_skill_name", skillName)
+            put("p_required_quantity", requiredQuantity)
+            put("p_guild_coin_reward_per_milestone", guildCoinRewardPerMilestone)
+        }).decodeAs<String>()
+    }""",
+"""    suspend fun startGuildEvent(
+        guildId: String,
+        actingCharacterId: String,
+        displayName: String,
+        itemId: String,
+        skillName: String,
+        requiredQuantity: Int,
+        guildCoinRewardPerMilestone: Long,
+        guildXpRewardPerMilestone: Long
+    ): Result<String> = runCatching {
+        client.postgrest.rpc("start_guild_event", buildJsonObject {
+            put("p_guild_id", guildId)
+            put("p_acting_character_id", actingCharacterId)
+            put("p_display_name", displayName)
+            put("p_item_id", itemId)
+            put("p_skill_name", skillName)
+            put("p_required_quantity", requiredQuantity)
+            put("p_guild_coin_reward_per_milestone", guildCoinRewardPerMilestone)
+            put("p_guild_xp_reward_per_milestone", guildXpRewardPerMilestone)
+        }).decodeAs<String>()
+    }""",
+    "startGuildEvent: add guildXpRewardPerMilestone param"
 )
 
 with open(SGR_PATH, "w", encoding="utf-8") as f:
@@ -65,6 +113,7 @@ ghs = apply(ghs,
     val activeEvent: GuildEventSummary?,
     val activeVote: GuildVoteSummary?,
     val tier: Int,
+    val guildLevel: Int,
     val activeBonusPercent: Double,
     val members: List<GuildMemberSummary>,
     val quests: List<GuildQuestSummary>,
@@ -76,12 +125,13 @@ ghs = apply(ghs,
     val activeVote: GuildVoteSummary?,
     val tier: Int,
     val guildLevel: Int,
+    val guildXp: Long,
     val activeBonusPercent: Double,
     val members: List<GuildMemberSummary>,
     val quests: List<GuildQuestSummary>,
     val viewerRole: GuildMemberRole
 )""",
-    "GuildHomeState: add guildLevel"
+    "GuildHomeState: add guildXp"
 )
 
 with open(GHS_PATH, "w", encoding="utf-8") as f:
@@ -93,54 +143,68 @@ with open(GVM_PATH, "r", encoding="utf-8") as f:
     gvm = f.read()
 
 gvm = apply(gvm,
-"""    // Picks a random skill, then a random item tagged to that skill. Retries
-    // with a different skill (up to a small cap) if the chosen skill happens
-    // to have zero eligible items in the catalog, rather than ever throwing.
-    private fun pickRandomGuildEventResource(): ItemDefinition? {
-        val skills = SkillType.entries.toList()
-        repeat(20) {
-            val skill = skills.random()
-            val candidates = ItemCatalog.items.filter { it.skillRequired == skill.name }
-            if (candidates.isNotEmpty()) return candidates.random()
-        }
-        return null
+"""    private fun eventGuildCoinRewardPerMilestoneFor(rarity: Rarity): Long = when (rarity) {
+        Rarity.COMMON -> 100L
+        Rarity.UNCOMMON -> 200L
+        Rarity.RARE -> 400L
+        Rarity.EPIC -> 800L
+        Rarity.LEGENDARY -> 1600L
     }""",
-"""    // Caps event items to a level appropriate for the guild's current level,
-    // so a level-1 guild never gets asked to contribute a level-90 item. This
-    // cap should rise as the planned guild-leveling feature ships - for now,
-    // with all guilds still at guild_level 1, it effectively caps events to
-    // low-level items across the board. Tunable curve, first pass.
-    private fun maxEventItemLevelFor(guildLevel: Int): Int = (guildLevel * 10).coerceAtLeast(10)
+"""    private fun eventGuildCoinRewardPerMilestoneFor(rarity: Rarity): Long = when (rarity) {
+        Rarity.COMMON -> 100L
+        Rarity.UNCOMMON -> 200L
+        Rarity.RARE -> 400L
+        Rarity.EPIC -> 800L
+        Rarity.LEGENDARY -> 1600L
+    }
 
-    // Picks a random skill, then a random item tagged to that skill at or
-    // below maxItemLevel. Retries with a different skill (up to a small cap)
-    // if the chosen skill happens to have zero eligible items at that level,
-    // rather than ever throwing.
-    private fun pickRandomGuildEventResource(maxItemLevel: Int): ItemDefinition? {
-        val skills = SkillType.entries.toList()
-        repeat(20) {
-            val skill = skills.random()
-            val candidates = ItemCatalog.items.filter { it.skillRequired == skill.name && it.levelRequired <= maxItemLevel }
-            if (candidates.isNotEmpty()) return candidates.random()
-        }
-        return null
-    }""",
-    "pickRandomGuildEventResource: add level cap"
+    private fun eventGuildXpRewardPerMilestoneFor(rarity: Rarity): Long = when (rarity) {
+        Rarity.COMMON -> 25L
+        Rarity.UNCOMMON -> 50L
+        Rarity.RARE -> 100L
+        Rarity.EPIC -> 200L
+        Rarity.LEGENDARY -> 400L
+    }
+
+    // Must match the SQL curve in contribute_to_guild_event() - level L needs
+    // 1000*L XP to advance to L+1. Exposed here so the UI can show a progress
+    // bar without a network round trip.
+    fun guildXpRequiredForLevel(level: Int): Long = 1000L * level""",
+    "add eventGuildXpRewardPerMilestoneFor + guildXpRequiredForLevel"
 )
 
 gvm = apply(gvm,
-"""        val memberCount = (_guildHomeState.value?.members?.size ?: 1).coerceAtLeast(1)
-        val item = pickRandomGuildEventResource() ?: run {
-            _guildActionError.value = "No eligible items found for an event right now."
-            return
-        }""",
-"""        val memberCount = (_guildHomeState.value?.members?.size ?: 1).coerceAtLeast(1)
-        val guildLevel = _guildHomeState.value?.guildLevel ?: 1
-        val item = pickRandomGuildEventResource(maxEventItemLevelFor(guildLevel)) ?: run {
-            _guildActionError.value = "No eligible items found for an event right now."
-            return
-        }""",
-    "startGuildEvent: pass guild-level-based item cap"
+"""        val requiredQuantity = eventPerMemberQuantityFor(item.rarity) * memberCount
+        val rewardPerMilestone = eventGuildCoinRewardPerMilestoneFor(item.rarity)
+        val displayName = item.name + " Drive"
+
+        viewModelScope.launch {
+            val result = SupabaseGuildRepository.startGuildEvent(
+                guildId = guildId,
+                actingCharacterId = actingCharacterId,
+                displayName = displayName,
+                itemId = item.id,
+                skillName = item.skillRequired ?: "",
+                requiredQuantity = requiredQuantity,
+                guildCoinRewardPerMilestone = rewardPerMilestone
+            )""",
+"""        val requiredQuantity = eventPerMemberQuantityFor(item.rarity) * memberCount
+        val rewardPerMilestone = eventGuildCoinRewardPerMilestoneFor(item.rarity)
+        val xpRewardPerMilestone = eventGuildXpRewardPerMilestoneFor(item.rarity)
+        val displayName = item.name + " Drive"
+
+        viewModelScope.launch {
+            val result = SupabaseGuildRepository.startGuildEvent(
+                guildId = guildId,
+                actingCharacterId = actingCharacterId,
+                displayName = displayName,
+                itemId = item.id,
+                skillName = item.skillRequired ?: "",
+                requiredQuantity = requiredQuantity,
+                guildCoinRewardPerMilestone = rewardPerMilestone,
+                guildXpRewardPerMilestone = xpRewardPerMilestone
+            )""",
+    "startGuildEvent: pass xpRewardPerMilestone"
 )
 
 with open(GVM_PATH, "w", encoding="utf-8") as f:
