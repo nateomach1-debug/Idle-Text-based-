@@ -26,11 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output84.txt
-          echo "=== exact GuildEventSummary data class definition ===" > $OUT
-          grep -n "data class GuildEventSummary" -A 6 ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output85.txt
+          echo "=== exact GuildHomeState data class definition ===" > $OUT
+          grep -n "data class GuildHomeState" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== exact GuildRow definition ===" >> $OUT
+          grep -n "data class GuildRow" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== fetchGuildHome() - the part that constructs the final GuildHomeState return value ===" >> $OUT
+          grep -n "return GuildHomeState" -B 15 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output84.txt
+      - discovery_output85.txt
       
   apply-patch:
     name: Apply Patch Script
