@@ -10,137 +10,45 @@ with open(SGR_PATH, "r", encoding="utf-8") as f:
     sgr = f.read()
 
 sgr = apply(sgr,
-"""private data class GuildEventRow(
+"""private data class GuildRow(
     val id: String,
-    @SerialName("event_type") val eventType: String,
-    @SerialName("bonus_tier") val bonusTier: Int,
-    @SerialName("starts_at") val startsAt: String,
-    @SerialName("ends_at") val endsAt: String
+    val name: String,
+    val tier: Int,
+    @SerialName("last_failed_vote_at") val lastFailedVoteAt: String? = null
 )""",
-"""private data class GuildEventRow(
+"""private data class GuildRow(
     val id: String,
-    @SerialName("event_type") val eventType: String,
-    @SerialName("bonus_tier") val bonusTier: Int,
-    @SerialName("starts_at") val startsAt: String,
-    @SerialName("ends_at") val endsAt: String,
-    @SerialName("item_id") val itemId: String? = null,
-    @SerialName("skill_name") val skillName: String? = null,
-    @SerialName("required_quantity") val requiredQuantity: Int? = null,
-    @SerialName("contributed_quantity") val contributedQuantity: Int = 0,
-    @SerialName("milestones_paid") val milestonesPaid: Int = 0
+    val name: String,
+    val tier: Int,
+    @SerialName("last_failed_vote_at") val lastFailedVoteAt: String? = null,
+    @SerialName("guild_level") val guildLevel: Int = 1
 )""",
-    "GuildEventRow: add event-progress columns"
+    "GuildRow: add guildLevel"
 )
 
 sgr = apply(sgr,
-"""            val activeEvent = client.postgrest.from("guild_events")
-                .select { filter { eq("guild_id", guildId) } }
-                .decodeList<GuildEventRow>()
-                .filter { Instant.parse(it.endsAt).isAfter(Instant.now()) }
-                .maxByOrNull { it.startsAt }
-                ?.let { GuildEventSummary(name = it.eventType, progressCurrent = 0, progressTarget = 0) }
-            // Note: live progress (items contributed vs scaled target) isn't tracked in
-            // guild_events yet - Phase 2 adds that. Shows the event name/existence for now.""",
-"""            val activeEvent = client.postgrest.from("guild_events")
-                .select { filter { eq("guild_id", guildId) } }
-                .decodeList<GuildEventRow>()
-                .filter { Instant.parse(it.endsAt).isAfter(Instant.now()) }
-                .maxByOrNull { it.startsAt }
-                ?.let {
-                    GuildEventSummary(
-                        id = it.id,
-                        name = it.eventType,
-                        itemId = it.itemId ?: "",
-                        skillName = it.skillName ?: "",
-                        progressCurrent = it.contributedQuantity,
-                        progressTarget = it.requiredQuantity ?: 0,
-                        milestonesPaid = it.milestonesPaid
-                    )
-                }""",
-    "fetchGuildHome: populate real event progress"
-)
-
-sgr = apply(sgr,
-"""    suspend fun joinGuild(guildId: String, characterId: String): Result<Unit> = runCatching {
-        client.postgrest.rpc("join_guild", buildJsonObject {
-            put("p_guild_id", guildId)
-            put("p_character_id", characterId)
-        })
-    }
-}""",
-"""    suspend fun joinGuild(guildId: String, characterId: String): Result<Unit> = runCatching {
-        client.postgrest.rpc("join_guild", buildJsonObject {
-            put("p_guild_id", guildId)
-            put("p_character_id", characterId)
-        })
-    }
-
-    suspend fun startGuildEvent(
-        guildId: String,
-        actingCharacterId: String,
-        displayName: String,
-        itemId: String,
-        skillName: String,
-        requiredQuantity: Int,
-        guildCoinRewardPerMilestone: Long
-    ): Result<String> = runCatching {
-        client.postgrest.rpc("start_guild_event", buildJsonObject {
-            put("p_guild_id", guildId)
-            put("p_acting_character_id", actingCharacterId)
-            put("p_display_name", displayName)
-            put("p_item_id", itemId)
-            put("p_skill_name", skillName)
-            put("p_required_quantity", requiredQuantity)
-            put("p_guild_coin_reward_per_milestone", guildCoinRewardPerMilestone)
-        }).decodeAs<String>()
-    }
-
-    suspend fun contributeToGuildEvent(eventId: String, characterId: String, quantity: Int): Result<ContributeGuildEventResult> = runCatching {
-        client.postgrest.rpc("contribute_to_guild_event", buildJsonObject {
-            put("p_event_id", eventId)
-            put("p_character_id", characterId)
-            put("p_quantity", quantity)
-        }).decodeAs<ContributeGuildEventResult>()
-    }
-
-    suspend fun closeExpiredGuildEventIfNeeded(guildId: String): Result<Unit> = runCatching {
-        client.postgrest.rpc("close_expired_guild_event_if_needed", buildJsonObject {
-            put("p_guild_id", guildId)
-        })
-    }
-
-    // Sums and clears this character's queued personal payouts from any guild
-    // event milestones - including ones triggered by OTHER members' contributions,
-    // since only the triggering client's session receives the milestone JSON
-    // directly. The client credits the returned total to itself via the existing
-    // combat_grant_coins path, never attempting to credit another character.
-    suspend fun claimGuildEventPayouts(characterId: String): Result<Long> = runCatching {
-        client.postgrest.rpc("claim_guild_event_payouts", buildJsonObject {
-            put("p_character_id", characterId)
-        }).decodeAs<Long>()
-    }
-}
-
-@Serializable
-data class GuildEventMilestonePayout(
-    @SerialName("character_id") val characterId: String,
-    val amount: Long
-)
-
-@Serializable
-data class GuildEventMilestoneResult(
-    val percent: Int,
-    @SerialName("guild_coins_awarded") val guildCoinsAwarded: Long,
-    val payouts: List<GuildEventMilestonePayout>
-)
-
-@Serializable
-data class ContributeGuildEventResult(
-    @SerialName("contributed_quantity") val contributedQuantity: Int,
-    @SerialName("required_quantity") val requiredQuantity: Int,
-    @SerialName("milestones_just_paid") val milestonesJustPaid: List<GuildEventMilestoneResult>
-)""",
-    "SupabaseGuildRepository: new event RPC wrapper functions"
+"""            return GuildHomeState(
+                guildName = guild.name,
+                activeEvent = activeEvent,
+                activeVote = activeVote,
+                tier = guild.tier,
+                activeBonusPercent = 0.0,  // Phase 2 adds active bonus tracking
+                members = members,
+                quests = emptyList(),  // no backend concept for this yet - not fabricating fake data
+                viewerRole = viewerRole
+            )""",
+"""            return GuildHomeState(
+                guildName = guild.name,
+                activeEvent = activeEvent,
+                activeVote = activeVote,
+                tier = guild.tier,
+                guildLevel = guild.guildLevel,
+                activeBonusPercent = 0.0,  // Phase 2 adds active bonus tracking
+                members = members,
+                quests = emptyList(),  // no backend concept for this yet - not fabricating fake data
+                viewerRole = viewerRole
+            )""",
+    "fetchGuildHome: pass guildLevel through"
 )
 
 with open(SGR_PATH, "w", encoding="utf-8") as f:
@@ -152,21 +60,28 @@ with open(GHS_PATH, "r", encoding="utf-8") as f:
     ghs = f.read()
 
 ghs = apply(ghs,
-"""data class GuildEventSummary(
-    val name: String,
-    val progressCurrent: Int,
-    val progressTarget: Int
+"""data class GuildHomeState(
+    val guildName: String,
+    val activeEvent: GuildEventSummary?,
+    val activeVote: GuildVoteSummary?,
+    val tier: Int,
+    val activeBonusPercent: Double,
+    val members: List<GuildMemberSummary>,
+    val quests: List<GuildQuestSummary>,
+    val viewerRole: GuildMemberRole
 )""",
-"""data class GuildEventSummary(
-    val id: String,
-    val name: String,
-    val itemId: String,
-    val skillName: String,
-    val progressCurrent: Int,
-    val progressTarget: Int,
-    val milestonesPaid: Int
+"""data class GuildHomeState(
+    val guildName: String,
+    val activeEvent: GuildEventSummary?,
+    val activeVote: GuildVoteSummary?,
+    val tier: Int,
+    val guildLevel: Int,
+    val activeBonusPercent: Double,
+    val members: List<GuildMemberSummary>,
+    val quests: List<GuildQuestSummary>,
+    val viewerRole: GuildMemberRole
 )""",
-    "GuildEventSummary: add id/itemId/skillName/milestonesPaid"
+    "GuildHomeState: add guildLevel"
 )
 
 with open(GHS_PATH, "w", encoding="utf-8") as f:
@@ -178,61 +93,7 @@ with open(GVM_PATH, "r", encoding="utf-8") as f:
     gvm = f.read()
 
 gvm = apply(gvm,
-"""    fun refreshGuildHome() {
-        val characterId = _currentSupabaseCharacterId.value ?: return
-        viewModelScope.launch {
-            val membership = SupabaseGuildRepository.findMembership(characterId)
-            _guildId.value = membership?.first
-            if (membership == null) {
-                _guildHomeState.value = null
-                _guildLeaderboard.value = emptyList()
-                _browsableGuilds.value = SupabaseGuildRepository.listGuilds()
-            } else {
-                _guildHomeState.value = SupabaseGuildRepository.fetchGuildHome(characterId)
-                _guildLeaderboard.value = SupabaseGuildRepository.fetchLeaderboard(characterId)
-            }
-        }
-    }""",
-"""    fun refreshGuildHome() {
-        val characterId = _currentSupabaseCharacterId.value ?: return
-        viewModelScope.launch {
-            val membership = SupabaseGuildRepository.findMembership(characterId)
-            _guildId.value = membership?.first
-            if (membership == null) {
-                _guildHomeState.value = null
-                _guildLeaderboard.value = emptyList()
-                _browsableGuilds.value = SupabaseGuildRepository.listGuilds()
-            } else {
-                SupabaseGuildRepository.closeExpiredGuildEventIfNeeded(membership.first)
-                _guildHomeState.value = SupabaseGuildRepository.fetchGuildHome(characterId)
-                _guildLeaderboard.value = SupabaseGuildRepository.fetchLeaderboard(characterId)
-                claimGuildEventPayouts()
-            }
-        }
-    }
-
-    // Per-member base quantity by rarity - rarer items require far fewer units
-    // to reach the same milestone. Guild-coin reward per milestone is keyed
-    // off rarity directly (not off requiredQuantity) so rarer-item events
-    // don't perversely pay LESS just because fewer units are needed. Both
-    // tables are first-pass numbers, flagged as tunable during balancing.
-    private fun eventPerMemberQuantityFor(rarity: Rarity): Int = when (rarity) {
-        Rarity.COMMON -> 40
-        Rarity.UNCOMMON -> 25
-        Rarity.RARE -> 15
-        Rarity.EPIC -> 8
-        Rarity.LEGENDARY -> 3
-    }
-
-    private fun eventGuildCoinRewardPerMilestoneFor(rarity: Rarity): Long = when (rarity) {
-        Rarity.COMMON -> 100L
-        Rarity.UNCOMMON -> 200L
-        Rarity.RARE -> 400L
-        Rarity.EPIC -> 800L
-        Rarity.LEGENDARY -> 1600L
-    }
-
-    // Picks a random skill, then a random item tagged to that skill. Retries
+"""    // Picks a random skill, then a random item tagged to that skill. Retries
     // with a different skill (up to a small cap) if the chosen skill happens
     // to have zero eligible items in the catalog, rather than ever throwing.
     private fun pickRandomGuildEventResource(): ItemDefinition? {
@@ -243,90 +104,46 @@ gvm = apply(gvm,
             if (candidates.isNotEmpty()) return candidates.random()
         }
         return null
-    }
+    }""",
+"""    // Caps event items to a level appropriate for the guild's current level,
+    // so a level-1 guild never gets asked to contribute a level-90 item. This
+    // cap should rise as the planned guild-leveling feature ships - for now,
+    // with all guilds still at guild_level 1, it effectively caps events to
+    // low-level items across the board. Tunable curve, first pass.
+    private fun maxEventItemLevelFor(guildLevel: Int): Int = (guildLevel * 10).coerceAtLeast(10)
 
-    fun startGuildEvent() {
-        val guildId = _guildId.value ?: return
-        val actingCharacterId = _currentSupabaseCharacterId.value ?: return
-        val memberCount = (_guildHomeState.value?.members?.size ?: 1).coerceAtLeast(1)
+    // Picks a random skill, then a random item tagged to that skill at or
+    // below maxItemLevel. Retries with a different skill (up to a small cap)
+    // if the chosen skill happens to have zero eligible items at that level,
+    // rather than ever throwing.
+    private fun pickRandomGuildEventResource(maxItemLevel: Int): ItemDefinition? {
+        val skills = SkillType.entries.toList()
+        repeat(20) {
+            val skill = skills.random()
+            val candidates = ItemCatalog.items.filter { it.skillRequired == skill.name && it.levelRequired <= maxItemLevel }
+            if (candidates.isNotEmpty()) return candidates.random()
+        }
+        return null
+    }""",
+    "pickRandomGuildEventResource: add level cap"
+)
+
+gvm = apply(gvm,
+"""        val memberCount = (_guildHomeState.value?.members?.size ?: 1).coerceAtLeast(1)
         val item = pickRandomGuildEventResource() ?: run {
             _guildActionError.value = "No eligible items found for an event right now."
             return
-        }
-        val requiredQuantity = eventPerMemberQuantityFor(item.rarity) * memberCount
-        val rewardPerMilestone = eventGuildCoinRewardPerMilestoneFor(item.rarity)
-        val displayName = item.name + " Drive"
-
-        viewModelScope.launch {
-            val result = SupabaseGuildRepository.startGuildEvent(
-                guildId = guildId,
-                actingCharacterId = actingCharacterId,
-                displayName = displayName,
-                itemId = item.id,
-                skillName = item.skillRequired ?: "",
-                requiredQuantity = requiredQuantity,
-                guildCoinRewardPerMilestone = rewardPerMilestone
-            )
-            result.onFailure {
-                _guildActionError.value = it.message ?: it.toString()
-            }
-            result.onSuccess {
-                _guildActionError.value = null
-                refreshGuildHome()
-            }
-        }
-    }
-
-    fun contributeToGuildEvent(quantity: Int) {
-        val localCharacterId = _currentCharacterId.value ?: return
-        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-        val event = _guildHomeState.value?.activeEvent ?: run {
-            _guildActionError.value = "No active guild event."
+        }""",
+"""        val memberCount = (_guildHomeState.value?.members?.size ?: 1).coerceAtLeast(1)
+        val guildLevel = _guildHomeState.value?.guildLevel ?: 1
+        val item = pickRandomGuildEventResource(maxEventItemLevelFor(guildLevel)) ?: run {
+            _guildActionError.value = "No eligible items found for an event right now."
             return
-        }
-        if (quantity <= 0) return
-
-        val removal = inventoryService.inventoryFor(localCharacterId).removeItem(event.itemId, quantity)
-        if (removal is ServiceResult.Failure) {
-            _guildActionError.value = removal.message
-            return
-        }
-        refreshInventory()
-
-        viewModelScope.launch {
-            val result = SupabaseGuildRepository.contributeToGuildEvent(event.id, supabaseCharacterId, quantity)
-            result.onFailure {
-                // Note: the item was already removed from local inventory above and is
-                // not refunded on network failure here, consistent with how other
-                // best-effort cloud-sync actions in this codebase behave elsewhere.
-                _guildActionError.value = it.message ?: it.toString()
-            }
-            result.onSuccess {
-                _guildActionError.value = null
-                refreshGuildHome()
-            }
-        }
-    }
-
-    // Claims any personal guild-event-milestone payouts queued for this
-    // character (including ones triggered by other members' contributions)
-    // and credits them via the existing self-grant currency path.
-    private fun claimGuildEventPayouts() {
-        val localCharacterId = _currentCharacterId.value ?: return
-        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-        viewModelScope.launch {
-            val result = SupabaseGuildRepository.claimGuildEventPayouts(supabaseCharacterId)
-            result.onSuccess { total ->
-                if (total > 0) {
-                    grantCombatCoins(localCharacterId, total)
-                }
-            }
-        }
-    }""",
-    "GameViewModel: guild event start/contribute/claim wiring"
+        }""",
+    "startGuildEvent: pass guild-level-based item cap"
 )
 
 with open(GVM_PATH, "w", encoding="utf-8") as f:
     f.write(gvm)
 
-print("All edits applied successfully across all three files.")
+print("All edits applied successfully.")
