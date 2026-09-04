@@ -4,69 +4,173 @@ def apply(content, old, new, label):
         raise SystemExit(f"FAILED [{label}]: expected 1 match, found {count}")
     return content.replace(old, new, 1)
 
-# ---------- CombatSystem.kt ----------
-CS_PATH = "app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt"
-with open(CS_PATH, "r", encoding="utf-8") as f:
-    cs = f.read()
+# ---------- SupabaseGuildRepository.kt ----------
+SGR_PATH = "app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt"
+with open(SGR_PATH, "r", encoding="utf-8") as f:
+    sgr = f.read()
 
-cs = apply(cs,
-"""    fun resolveAttack(
-        characterId: String,
-        loadout: CombatLoadout,
-        attackerAccuracy: Int,
-        attackerMaxHit: Int
-    ): ServiceResult<AttackResult> {""",
-"""    fun resolveAttack(
-        characterId: String,
-        loadout: CombatLoadout,
-        attackerAccuracy: Int,
-        attackerMaxHit: Int,
-        attackerMinHit: Int = 0
-    ): ServiceResult<AttackResult> {""",
-    "resolveAttack signature: add attackerMinHit"
+sgr = apply(sgr,
+"""private data class GuildEventRow(
+    val id: String,
+    @SerialName("event_type") val eventType: String,
+    @SerialName("bonus_tier") val bonusTier: Int,
+    @SerialName("starts_at") val startsAt: String,
+    @SerialName("ends_at") val endsAt: String
+)""",
+"""private data class GuildEventRow(
+    val id: String,
+    @SerialName("event_type") val eventType: String,
+    @SerialName("bonus_tier") val bonusTier: Int,
+    @SerialName("starts_at") val startsAt: String,
+    @SerialName("ends_at") val endsAt: String,
+    @SerialName("item_id") val itemId: String? = null,
+    @SerialName("skill_name") val skillName: String? = null,
+    @SerialName("required_quantity") val requiredQuantity: Int? = null,
+    @SerialName("contributed_quantity") val contributedQuantity: Int = 0,
+    @SerialName("milestones_paid") val milestonesPaid: Int = 0
+)""",
+    "GuildEventRow: add event-progress columns"
 )
 
-cs = apply(cs,
-"""        val effectiveAccuracy = if (loadout.selectedPrayerId == "clarity_of_thought") (attackerAccuracy * 1.1).toInt() else attackerAccuracy
-        val effectiveMaxHit = if (loadout.selectedPrayerId == "burst_of_strength") (attackerMaxHit * 1.1).toInt() else attackerMaxHit
-
-        val hitChancePercent = (effectiveAccuracy.toDouble() / (effectiveAccuracy + monster.defenseRating)) * 100.0
-        val didHit = Random.nextDouble(0.0, 100.0) < hitChancePercent
-
-        if (!didHit) {
-            return ServiceResult.Success(
-                AttackResult(didHit = false, damageDealt = 0, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = false)
-            )
-        }
-
-        val damage = Random.nextInt(0, effectiveMaxHit + 1)""",
-"""        val effectiveAccuracy = if (loadout.selectedPrayerId == "clarity_of_thought") (attackerAccuracy * 1.1).toInt() else attackerAccuracy
-        val effectiveMaxHit = if (loadout.selectedPrayerId == "burst_of_strength") (attackerMaxHit * 1.1).toInt() else attackerMaxHit
-        val effectiveMinHit = if (loadout.selectedPrayerId == "burst_of_strength") (attackerMinHit * 1.1).toInt() else attackerMinHit
-
-        // Explicit cap even though the accuracy-vs-defense ratio is already
-        // mathematically bounded below 100% for any positive defenseRating -
-        // this makes the "never exceeds 100% per mob" guarantee an explicit
-        // invariant rather than an incidental property of the formula.
-        val hitChancePercent = ((effectiveAccuracy.toDouble() / (effectiveAccuracy + monster.defenseRating)) * 100.0)
-            .coerceIn(0.0, 100.0)
-        val didHit = Random.nextDouble(0.0, 100.0) < hitChancePercent
-
-        if (!didHit) {
-            return ServiceResult.Success(
-                AttackResult(didHit = false, damageDealt = 0, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = false)
-            )
-        }
-
-        // Guard against minHit exceeding maxHit (e.g. from prayer rounding at low
-        // levels) - Random.nextInt(from, until) throws if from > until.
-        val safeMinHit = effectiveMinHit.coerceIn(0, effectiveMaxHit)
-        val damage = Random.nextInt(safeMinHit, effectiveMaxHit + 1)""",
-    "resolveAttack: min-hit roll + explicit hit-chance cap"
+sgr = apply(sgr,
+"""            val activeEvent = client.postgrest.from("guild_events")
+                .select { filter { eq("guild_id", guildId) } }
+                .decodeList<GuildEventRow>()
+                .filter { Instant.parse(it.endsAt).isAfter(Instant.now()) }
+                .maxByOrNull { it.startsAt }
+                ?.let { GuildEventSummary(name = it.eventType, progressCurrent = 0, progressTarget = 0) }
+            // Note: live progress (items contributed vs scaled target) isn't tracked in
+            // guild_events yet - Phase 2 adds that. Shows the event name/existence for now.""",
+"""            val activeEvent = client.postgrest.from("guild_events")
+                .select { filter { eq("guild_id", guildId) } }
+                .decodeList<GuildEventRow>()
+                .filter { Instant.parse(it.endsAt).isAfter(Instant.now()) }
+                .maxByOrNull { it.startsAt }
+                ?.let {
+                    GuildEventSummary(
+                        id = it.id,
+                        name = it.eventType,
+                        itemId = it.itemId ?: "",
+                        skillName = it.skillName ?: "",
+                        progressCurrent = it.contributedQuantity,
+                        progressTarget = it.requiredQuantity ?: 0,
+                        milestonesPaid = it.milestonesPaid
+                    )
+                }""",
+    "fetchGuildHome: populate real event progress"
 )
 
-with open(CS_PATH, "w", encoding="utf-8") as f:
-    f.write(cs)
+sgr = apply(sgr,
+"""    suspend fun joinGuild(guildId: String, characterId: String): Result<Unit> = runCatching {
+        client.postgrest.rpc("join_guild", buildJsonObject {
+            put("p_guild_id", guildId)
+            put("p_character_id", characterId)
+        })
+    }
+}""",
+"""    suspend fun joinGuild(guildId: String, characterId: String): Result<Unit> = runCatching {
+        client.postgrest.rpc("join_guild", buildJsonObject {
+            put("p_guild_id", guildId)
+            put("p_character_id", characterId)
+        })
+    }
+
+    suspend fun startGuildEvent(
+        guildId: String,
+        actingCharacterId: String,
+        displayName: String,
+        itemId: String,
+        skillName: String,
+        requiredQuantity: Int,
+        guildCoinRewardPerMilestone: Long
+    ): Result<String> = runCatching {
+        client.postgrest.rpc("start_guild_event", buildJsonObject {
+            put("p_guild_id", guildId)
+            put("p_acting_character_id", actingCharacterId)
+            put("p_display_name", displayName)
+            put("p_item_id", itemId)
+            put("p_skill_name", skillName)
+            put("p_required_quantity", requiredQuantity)
+            put("p_guild_coin_reward_per_milestone", guildCoinRewardPerMilestone)
+        }).decodeAs<String>()
+    }
+
+    suspend fun contributeToGuildEvent(eventId: String, characterId: String, quantity: Int): Result<ContributeGuildEventResult> = runCatching {
+        client.postgrest.rpc("contribute_to_guild_event", buildJsonObject {
+            put("p_event_id", eventId)
+            put("p_character_id", characterId)
+            put("p_quantity", quantity)
+        }).decodeAs<ContributeGuildEventResult>()
+    }
+
+    suspend fun closeExpiredGuildEventIfNeeded(guildId: String): Result<Unit> = runCatching {
+        client.postgrest.rpc("close_expired_guild_event_if_needed", buildJsonObject {
+            put("p_guild_id", guildId)
+        })
+    }
+
+    // Sums and clears this character's queued personal payouts from any guild
+    // event milestones - including ones triggered by OTHER members' contributions,
+    // since only the triggering client's session receives the milestone JSON
+    // directly. The client credits the returned total to itself via the existing
+    // combat_grant_coins path, never attempting to credit another character.
+    suspend fun claimGuildEventPayouts(characterId: String): Result<Long> = runCatching {
+        client.postgrest.rpc("claim_guild_event_payouts", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeAs<Long>()
+    }
+}
+
+@Serializable
+data class GuildEventMilestonePayout(
+    @SerialName("character_id") val characterId: String,
+    val amount: Long
+)
+
+@Serializable
+data class GuildEventMilestoneResult(
+    val percent: Int,
+    @SerialName("guild_coins_awarded") val guildCoinsAwarded: Long,
+    val payouts: List<GuildEventMilestonePayout>
+)
+
+@Serializable
+data class ContributeGuildEventResult(
+    @SerialName("contributed_quantity") val contributedQuantity: Int,
+    @SerialName("required_quantity") val requiredQuantity: Int,
+    @SerialName("milestones_just_paid") val milestonesJustPaid: List<GuildEventMilestoneResult>
+)""",
+    "SupabaseGuildRepository: new event RPC wrapper functions"
+)
+
+with open(SGR_PATH, "w", encoding="utf-8") as f:
+    f.write(sgr)
+
+# ---------- GuildHomeScreen.kt ----------
+GHS_PATH = "app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt"
+with open(GHS_PATH, "r", encoding="utf-8") as f:
+    ghs = f.read()
+
+ghs = apply(ghs,
+"""data class GuildEventSummary(
+    val name: String,
+    val progressCurrent: Int,
+    val progressTarget: Int
+)""",
+"""data class GuildEventSummary(
+    val id: String,
+    val name: String,
+    val itemId: String,
+    val skillName: String,
+    val progressCurrent: Int,
+    val progressTarget: Int,
+    val milestonesPaid: Int
+)""",
+    "GuildEventSummary: add id/itemId/skillName/milestonesPaid"
+)
+
+with open(GHS_PATH, "w", encoding="utf-8") as f:
+    f.write(ghs)
 
 # ---------- GameViewModel.kt ----------
 GVM_PATH = "app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt"
@@ -74,119 +178,155 @@ with open(GVM_PATH, "r", encoding="utf-8") as f:
     gvm = f.read()
 
 gvm = apply(gvm,
-"""        val weapon = equippedWeapon(characterId)
-        val trainingSkill = _trainingSkill.value
-        val accuracy: Int
-        val maxHit: Int
-        val attackSpeedSeconds: Double
-        when (weapon?.style) {
-            CombatStyle.MAGIC -> {
-                val magicLevel = skillLevel(characterId, SkillType.MAGIC)
-                accuracy = magicLevel * 2 + weapon.baseAccuracy
-                maxHit = (magicLevel / 3) + weapon.baseMaxHit
-                attackSpeedSeconds = weapon.attackSpeedSeconds
+"""    fun refreshGuildHome() {
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val membership = SupabaseGuildRepository.findMembership(characterId)
+            _guildId.value = membership?.first
+            if (membership == null) {
+                _guildHomeState.value = null
+                _guildLeaderboard.value = emptyList()
+                _browsableGuilds.value = SupabaseGuildRepository.listGuilds()
+            } else {
+                _guildHomeState.value = SupabaseGuildRepository.fetchGuildHome(characterId)
+                _guildLeaderboard.value = SupabaseGuildRepository.fetchLeaderboard(characterId)
             }
-            CombatStyle.RANGED -> {
-                val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
-                accuracy = archeryLevel * 2 + weapon.baseAccuracy
-                maxHit = (archeryLevel / 3) + weapon.baseMaxHit
-                attackSpeedSeconds = weapon.attackSpeedSeconds
+        }
+    }""",
+"""    fun refreshGuildHome() {
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val membership = SupabaseGuildRepository.findMembership(characterId)
+            _guildId.value = membership?.first
+            if (membership == null) {
+                _guildHomeState.value = null
+                _guildLeaderboard.value = emptyList()
+                _browsableGuilds.value = SupabaseGuildRepository.listGuilds()
+            } else {
+                SupabaseGuildRepository.closeExpiredGuildEventIfNeeded(membership.first)
+                _guildHomeState.value = SupabaseGuildRepository.fetchGuildHome(characterId)
+                _guildLeaderboard.value = SupabaseGuildRepository.fetchLeaderboard(characterId)
+                claimGuildEventPayouts()
             }
-            else -> {
-                val attackLevel = skillLevel(characterId, SkillType.ATTACK)
-                val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
-                accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
-                maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
-                attackSpeedSeconds = weapon?.attackSpeedSeconds ?: 2.4
-            }
-        }""",
-"""        val weapon = equippedWeapon(characterId)
-        val trainingSkill = _trainingSkill.value
-        val accuracy: Int
-        val maxHit: Int
-        val minHit: Int
-        val attackSpeedSeconds: Double
-        // minHit scales slowly (roughly +1 per 10 levels of the relevant stat) so
-        // low-level combat is unaffected, while high-level characters get a
-        // meaningfully more consistent damage floor instead of every hit still
-        // being able to roll as low as 0. Tunable - CombatSystem.resolveAttack()
-        // clamps minHit to never exceed maxHit regardless of the value passed here.
-        when (weapon?.style) {
-            CombatStyle.MAGIC -> {
-                val magicLevel = skillLevel(characterId, SkillType.MAGIC)
-                accuracy = magicLevel * 2 + weapon.baseAccuracy
-                maxHit = (magicLevel / 3) + weapon.baseMaxHit
-                minHit = magicLevel / 10
-                attackSpeedSeconds = weapon.attackSpeedSeconds
-            }
-            CombatStyle.RANGED -> {
-                val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
-                accuracy = archeryLevel * 2 + weapon.baseAccuracy
-                maxHit = (archeryLevel / 3) + weapon.baseMaxHit
-                minHit = archeryLevel / 10
-                attackSpeedSeconds = weapon.attackSpeedSeconds
-            }
-            else -> {
-                val attackLevel = skillLevel(characterId, SkillType.ATTACK)
-                val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
-                accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
-                maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
-                minHit = strengthLevel / 10
-                attackSpeedSeconds = weapon?.attackSpeedSeconds ?: 2.4
-            }
-        }""",
-    "tickCombat: compute minHit per style"
-)
+        }
+    }
 
-gvm = apply(gvm,
-"""            val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit)""",
-"""            val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit, minHit)""",
-    "tickCombat: pass minHit to resolveAttack"
-)
+    // Per-member base quantity by rarity - rarer items require far fewer units
+    // to reach the same milestone. Guild-coin reward per milestone is keyed
+    // off rarity directly (not off requiredQuantity) so rarer-item events
+    // don't perversely pay LESS just because fewer units are needed. Both
+    // tables are first-pass numbers, flagged as tunable during balancing.
+    private fun eventPerMemberQuantityFor(rarity: Rarity): Int = when (rarity) {
+        Rarity.COMMON -> 40
+        Rarity.UNCOMMON -> 25
+        Rarity.RARE -> 15
+        Rarity.EPIC -> 8
+        Rarity.LEGENDARY -> 3
+    }
 
-gvm = apply(gvm,
-"""                val monsterDefense = session.currentMonster?.defenseRating ?: 1
-                lastHitChancePercent = (accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0""",
-"""                val monsterDefense = session.currentMonster?.defenseRating ?: 1
-                lastHitChancePercent = ((accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0).coerceIn(0.0, 100.0)""",
-    "tickCombat: clamp displayed hit chance to match resolveAttack's cap"
-)
+    private fun eventGuildCoinRewardPerMilestoneFor(rarity: Rarity): Long = when (rarity) {
+        Rarity.COMMON -> 100L
+        Rarity.UNCOMMON -> 200L
+        Rarity.RARE -> 400L
+        Rarity.EPIC -> 800L
+        Rarity.LEGENDARY -> 1600L
+    }
 
-gvm = apply(gvm,
-"""                val monster = session.currentMonster
-                if (monster != null && Random.nextDouble(0.0, 100.0) < 40.0) {
-                    val rawDmg = Random.nextInt(1, (monster.defenseRating / 3).coerceAtLeast(1) + 1)
-                    val dmg = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "rock_skin") {
-                        (rawDmg * 0.8).toInt().coerceAtLeast(1)
-                    } else {
-                        rawDmg
-                    }
-                    combatService.applyDamageToCharacter(characterId, dmg)
-                    log.add(CombatLogEntry(monster.name + " hits you for " + dmg + "."))
-                }""",
-"""                val monster = session.currentMonster
-                if (monster != null && Random.nextDouble(0.0, 100.0) < 40.0) {
-                    val rawDmg = Random.nextInt(1, (monster.defenseRating / 3).coerceAtLeast(1) + 1)
-                    val prayerAdjustedDmg = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "rock_skin") {
-                        (rawDmg * 0.8).toInt().coerceAtLeast(1)
-                    } else {
-                        rawDmg
-                    }
-                    // Defense passively reduces incoming damage regardless of which skill is
-                    // currently selected to train, matching the classic "defense stat" model
-                    // rather than only mattering while actively training it. Capped at 50%
-                    // reduction so high Defense meaningfully helps survivability without making
-                    // combat damage-immune; at least 1 damage always gets through.
-                    val defenseLevel = skillLevel(characterId, SkillType.DEFENSE)
-                    val defenseReductionPercent = (defenseLevel * 0.5).coerceAtMost(50.0)
-                    val dmg = (prayerAdjustedDmg * (1.0 - defenseReductionPercent / 100.0)).toInt().coerceAtLeast(1)
-                    combatService.applyDamageToCharacter(characterId, dmg)
-                    log.add(CombatLogEntry(monster.name + " hits you for " + dmg + "."))
-                }""",
-    "tickCombat: Defense-based incoming damage reduction"
+    // Picks a random skill, then a random item tagged to that skill. Retries
+    // with a different skill (up to a small cap) if the chosen skill happens
+    // to have zero eligible items in the catalog, rather than ever throwing.
+    private fun pickRandomGuildEventResource(): ItemDefinition? {
+        val skills = SkillType.entries.toList()
+        repeat(20) {
+            val skill = skills.random()
+            val candidates = ItemCatalog.items.filter { it.skillRequired == skill.name }
+            if (candidates.isNotEmpty()) return candidates.random()
+        }
+        return null
+    }
+
+    fun startGuildEvent() {
+        val guildId = _guildId.value ?: return
+        val actingCharacterId = _currentSupabaseCharacterId.value ?: return
+        val memberCount = (_guildHomeState.value?.members?.size ?: 1).coerceAtLeast(1)
+        val item = pickRandomGuildEventResource() ?: run {
+            _guildActionError.value = "No eligible items found for an event right now."
+            return
+        }
+        val requiredQuantity = eventPerMemberQuantityFor(item.rarity) * memberCount
+        val rewardPerMilestone = eventGuildCoinRewardPerMilestoneFor(item.rarity)
+        val displayName = item.name + " Drive"
+
+        viewModelScope.launch {
+            val result = SupabaseGuildRepository.startGuildEvent(
+                guildId = guildId,
+                actingCharacterId = actingCharacterId,
+                displayName = displayName,
+                itemId = item.id,
+                skillName = item.skillRequired ?: "",
+                requiredQuantity = requiredQuantity,
+                guildCoinRewardPerMilestone = rewardPerMilestone
+            )
+            result.onFailure {
+                _guildActionError.value = it.message ?: it.toString()
+            }
+            result.onSuccess {
+                _guildActionError.value = null
+                refreshGuildHome()
+            }
+        }
+    }
+
+    fun contributeToGuildEvent(quantity: Int) {
+        val localCharacterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val event = _guildHomeState.value?.activeEvent ?: run {
+            _guildActionError.value = "No active guild event."
+            return
+        }
+        if (quantity <= 0) return
+
+        val removal = inventoryService.inventoryFor(localCharacterId).removeItem(event.itemId, quantity)
+        if (removal is ServiceResult.Failure) {
+            _guildActionError.value = removal.message
+            return
+        }
+        refreshInventory()
+
+        viewModelScope.launch {
+            val result = SupabaseGuildRepository.contributeToGuildEvent(event.id, supabaseCharacterId, quantity)
+            result.onFailure {
+                // Note: the item was already removed from local inventory above and is
+                // not refunded on network failure here, consistent with how other
+                // best-effort cloud-sync actions in this codebase behave elsewhere.
+                _guildActionError.value = it.message ?: it.toString()
+            }
+            result.onSuccess {
+                _guildActionError.value = null
+                refreshGuildHome()
+            }
+        }
+    }
+
+    // Claims any personal guild-event-milestone payouts queued for this
+    // character (including ones triggered by other members' contributions)
+    // and credits them via the existing self-grant currency path.
+    private fun claimGuildEventPayouts() {
+        val localCharacterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseGuildRepository.claimGuildEventPayouts(supabaseCharacterId)
+            result.onSuccess { total ->
+                if (total > 0) {
+                    grantCombatCoins(localCharacterId, total)
+                }
+            }
+        }
+    }""",
+    "GameViewModel: guild event start/contribute/claim wiring"
 )
 
 with open(GVM_PATH, "w", encoding="utf-8") as f:
     f.write(gvm)
 
-print("All edits applied successfully to both files.")
+print("All edits applied successfully across all three files.")
