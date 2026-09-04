@@ -26,20 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output80.txt
-          echo "=== enum class Rarity ===" > $OUT
-          grep -n "enum class Rarity" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output81.txt
+          echo "=== full SupabaseGuildRepository.kt ===" > $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT
           echo "" >> $OUT
-          echo "=== sample of ItemDefinition catalog entries with skillRequired set - to see exact string format ===" >> $OUT
-          grep -rn "skillRequired = " ./app/src/main/kotlin/com/yourname/idlerpg/ | head -40 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== guild-related functions and state in GameViewModel.kt, generous context ===" >> $OUT
+          grep -n "guild\|Guild" -B 2 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== find the item catalog object itself (name/location) ===" >> $OUT
-          grep -rln "object ItemCatalog\|val allItems" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== is there a guild member cap constant used by the LIVE (non-dead) guild code or UI? ===" >> $OUT
-          grep -rn "MAX_MEMBERS\|maxMembers\|member.*cap\|20" ./app/src/main/kotlin/com/yourname/idlerpg/GuildCreateJoinScreen.kt ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== GuildEventSummary and related DTOs in GuildHomeScreen.kt ===" >> $OUT
+          grep -n "data class GuildEventSummary\|data class GuildHomeState\|data class GuildMemberSummary" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT
     artifacts:
-      - discovery_output80.txt
+      - discovery_output81.txt
       
   apply-patch:
     name: Apply Patch Script
