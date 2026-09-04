@@ -26,26 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output83.txt
-          echo "=== grantCombatCoins wrapper in GameViewModel.kt ===" > $OUT
-          grep -n "fun grantCombatCoins" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== grantCombatCoins definition in SupabaseMarketRepository.kt, full signature ===" >> $OUT
-          grep -n "fun grantCombatCoins" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== _currentCharacterId and _currentSupabaseCharacterId field declarations ===" >> $OUT
-          grep -n "_currentCharacterId\s*=\s*Mutable\|_currentSupabaseCharacterId\s*=\s*Mutable" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== GuildEventRow current definition ===" >> $OUT
-          grep -n "data class GuildEventRow" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== fetchGuildHome() full body ===" >> $OUT
-          grep -n "fun fetchGuildHome" -A 35 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== imports at top of SupabaseGuildRepository.kt (for buildJsonObject/decodeAs/Serializable availability) ===" >> $OUT
-          sed -n '1,25p' ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT
+          OUT=discovery_output84.txt
+          echo "=== exact GuildEventSummary data class definition ===" > $OUT
+          grep -n "data class GuildEventSummary" -A 6 ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output83.txt
+      - discovery_output84.txt
       
   apply-patch:
     name: Apply Patch Script
