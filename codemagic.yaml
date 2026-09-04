@@ -26,17 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output81.txt
-          echo "=== full SupabaseGuildRepository.kt ===" > $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT
+          OUT=discovery_output82.txt
+          echo "=== SupabaseGuildRepository.kt lines 178-330 (createGuild/joinGuild/kickMember/promote functions) ===" > $OUT
+          sed -n '178,330p' ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT
           echo "" >> $OUT
-          echo "=== guild-related functions and state in GameViewModel.kt, generous context ===" >> $OUT
-          grep -n "guild\|Guild" -B 2 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== GameViewModel.kt guild state field declarations (_guildId, _guildHomeState, _browsableGuilds, _guildActionError, _guildLeaderboard) ===" >> $OUT
+          grep -n "_guildId\s*=\|_guildHomeState\s*=\|_browsableGuilds\s*=\|_guildActionError\s*=\|_guildLeaderboard\s*=\|val guildId\|val guildHomeState\|val browsableGuilds\|val guildActionError\|val guildLeaderboard" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== GuildEventSummary and related DTOs in GuildHomeScreen.kt ===" >> $OUT
-          grep -n "data class GuildEventSummary\|data class GuildHomeState\|data class GuildMemberSummary" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT
+          echo "=== refreshGuildHome() full body ===" >> $OUT
+          grep -n "fun refreshGuildHome" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== ItemDefinition class full definition, for reference on fields available (rarity etc) ===" >> $OUT
+          grep -n "data class ItemDefinition" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== inventoryService.inventoryFor and how items are removed from inventory (for consuming contributed items) ===" >> $OUT
+          grep -n "fun removeItem\|fun consumeItem\|fun addItem" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT
     artifacts:
-      - discovery_output81.txt
+      - discovery_output82.txt
       
   apply-patch:
     name: Apply Patch Script
