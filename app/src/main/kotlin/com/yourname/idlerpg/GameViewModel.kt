@@ -222,14 +222,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         Rarity.LEGENDARY -> 1600L
     }
 
-    // Picks a random skill, then a random item tagged to that skill. Retries
-    // with a different skill (up to a small cap) if the chosen skill happens
-    // to have zero eligible items in the catalog, rather than ever throwing.
-    private fun pickRandomGuildEventResource(): ItemDefinition? {
+    // Caps event items to a level appropriate for the guild's current level,
+    // so a level-1 guild never gets asked to contribute a level-90 item. This
+    // cap should rise as the planned guild-leveling feature ships - for now,
+    // with all guilds still at guild_level 1, it effectively caps events to
+    // low-level items across the board. Tunable curve, first pass.
+    private fun maxEventItemLevelFor(guildLevel: Int): Int = (guildLevel * 10).coerceAtLeast(10)
+
+    // Picks a random skill, then a random item tagged to that skill at or
+    // below maxItemLevel. Retries with a different skill (up to a small cap)
+    // if the chosen skill happens to have zero eligible items at that level,
+    // rather than ever throwing.
+    private fun pickRandomGuildEventResource(maxItemLevel: Int): ItemDefinition? {
         val skills = SkillType.entries.toList()
         repeat(20) {
             val skill = skills.random()
-            val candidates = ItemCatalog.items.filter { it.skillRequired == skill.name }
+            val candidates = ItemCatalog.items.filter { it.skillRequired == skill.name && it.levelRequired <= maxItemLevel }
             if (candidates.isNotEmpty()) return candidates.random()
         }
         return null
@@ -239,7 +247,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val guildId = _guildId.value ?: return
         val actingCharacterId = _currentSupabaseCharacterId.value ?: return
         val memberCount = (_guildHomeState.value?.members?.size ?: 1).coerceAtLeast(1)
-        val item = pickRandomGuildEventResource() ?: run {
+        val guildLevel = _guildHomeState.value?.guildLevel ?: 1
+        val item = pickRandomGuildEventResource(maxEventItemLevelFor(guildLevel)) ?: run {
             _guildActionError.value = "No eligible items found for an event right now."
             return
         }
