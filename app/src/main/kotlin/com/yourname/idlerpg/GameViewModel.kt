@@ -186,17 +186,25 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshGuildHome() {
         val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
-            val membership = SupabaseGuildRepository.findMembership(characterId)
-            _guildId.value = membership?.first
-            if (membership == null) {
-                _guildHomeState.value = null
-                _guildLeaderboard.value = emptyList()
-                _browsableGuilds.value = SupabaseGuildRepository.listGuilds()
-            } else {
-                SupabaseGuildRepository.closeExpiredGuildEventIfNeeded(membership.first)
-                _guildHomeState.value = SupabaseGuildRepository.fetchGuildHome(characterId)
-                _guildLeaderboard.value = SupabaseGuildRepository.fetchLeaderboard(characterId)
-                claimGuildEventPayouts()
+            try {
+                val membership = SupabaseGuildRepository.findMembership(characterId)
+                _guildId.value = membership?.first
+                if (membership == null) {
+                    _guildHomeState.value = null
+                    _guildLeaderboard.value = emptyList()
+                    _browsableGuilds.value = SupabaseGuildRepository.listGuilds()
+                } else {
+                    SupabaseGuildRepository.closeExpiredGuildEventIfNeeded(membership.first)
+                    _guildHomeState.value = SupabaseGuildRepository.fetchGuildHome(characterId)
+                    _guildLeaderboard.value = SupabaseGuildRepository.fetchLeaderboard(characterId)
+                    claimGuildEventPayouts()
+                }
+            } catch (e: Exception) {
+                // Temporary diagnostic: fetchGuildHome() previously had no error
+                // surfacing at all, so any exception (e.g. a date-parsing or
+                // decode failure) silently left stale state in place with no
+                // visible sign anything went wrong.
+                _guildActionError.value = "refreshGuildHome failed: " + (e.message ?: e.toString())
             }
         }
     }
