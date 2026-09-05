@@ -26,14 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output94.txt
-          echo "=== MainActivity.kt lines 935-970, the debug dialog trigger/condition ===" > $OUT
-          sed -n '935,970p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== is characterSyncError displayed anywhere? ===" >> $OUT
-          grep -n "characterSyncError" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT DISPLAYED ANYWHERE" >> $OUT
+          OUT=discovery_output95.txt
+          echo "=== full fetchGuildHome() current body ===" > $OUT
+          grep -n "suspend fun fetchGuildHome" -A 45 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output94.txt
+      - discovery_output95.txt
       
   apply-patch:
     name: Apply Patch Script
