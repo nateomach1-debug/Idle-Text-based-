@@ -1,6 +1,5 @@
 package com.yourname.idlerpg.ui.screens
 
-import com.yourname.idlerpg.SupabaseGuildRepository
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -88,14 +87,7 @@ fun GuildHomeScreen(
         AlertDialog(
             onDismissRequest = onDismissError,
             title = { Text(text = "Guild Action Failed") },
-            text = {
-                Column {
-                    Text(text = error)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // TEMPORARY diagnostic - remove once the missing-event issue is found.
-                    Text(text = "Event debug: " + SupabaseGuildRepository.lastEventDebug, style = MaterialTheme.typography.labelSmall)
-                }
-            },
+            text = { Text(text = error) },
             confirmButton = {
                 TextButton(onClick = onDismissError) { Text(text = "OK") }
             }
