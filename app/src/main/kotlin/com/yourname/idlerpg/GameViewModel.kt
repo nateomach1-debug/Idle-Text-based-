@@ -311,7 +311,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         val removal = inventoryService.inventoryFor(localCharacterId).removeItem(event.itemId, quantity)
         if (removal is ServiceResult.Failure) {
-            _guildActionError.value = removal.message
+            _guildActionError.value = removal.reason
             return
         }
         refreshInventory()

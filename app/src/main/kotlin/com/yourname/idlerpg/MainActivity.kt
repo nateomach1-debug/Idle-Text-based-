@@ -316,9 +316,19 @@ private fun demoGuildMembers(): List<GuildMemberSummary> = listOf(
 
 private fun demoGuildState(): GuildHomeState = GuildHomeState(
     guildName = "Iron Wolves",
-    activeEvent = GuildEventSummary("Beast Hunt", progressCurrent = 78, progressTarget = 120),
+    activeEvent = GuildEventSummary(
+        id = "demo-event",
+        name = "Beast Hunt",
+        itemId = "wolf_pelt",
+        skillName = "THIEVING",
+        progressCurrent = 78,
+        progressTarget = 120,
+        milestonesPaid = 2
+    ),
     activeVote = null,
     tier = 2,
+    guildLevel = 3,
+    guildXp = 1200L,
     activeBonusPercent = 5.0,
     members = demoGuildMembers(),
     quests = listOf(
