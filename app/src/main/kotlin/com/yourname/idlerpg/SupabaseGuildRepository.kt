@@ -90,7 +90,7 @@ object SupabaseGuildRepository {
     private val client get() = SupabaseClientProvider.client
 
     // TEMPORARY diagnostic field - remove once the missing-event issue is found.
-    var lastEventDebug: String = 
+    var lastEventDebug: String = ""
 
     // Finds which guild (if any) a character belongs to, and their role in it.
     suspend fun findMembership(characterId: String): Pair<String, GuildMemberRole>? {
