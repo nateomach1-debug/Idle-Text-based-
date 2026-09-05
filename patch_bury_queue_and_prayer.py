@@ -4,23 +4,42 @@ def apply(content, old, new, label):
         raise SystemExit(f"FAILED [{label}]: expected 1 match, found {count}")
     return content.replace(old, new, 1)
 
-SGR_PATH = "app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt"
-with open(SGR_PATH, "r", encoding="utf-8") as f:
-    sgr = f.read()
+GHS_PATH = "app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt"
+with open(GHS_PATH, "r", encoding="utf-8") as f:
+    ghs = f.read()
 
-sgr = apply(sgr,
-"""    // TEMPORARY diagnostic field - remove once the missing-event issue is found.
-    var lastEventDebug: String = 
-
-    // Finds which guild (if any) a character belongs to, and their role in it.""",
-"""    // TEMPORARY diagnostic field - remove once the missing-event issue is found.
-    var lastEventDebug: String = ""
-
-    // Finds which guild (if any) a character belongs to, and their role in it.""",
-    "fix: restore missing empty-string initializer for lastEventDebug"
+ghs = apply(ghs,
+"""    actionError?.let { error ->
+        AlertDialog(
+            onDismissRequest = onDismissError,
+            title = { Text(text = "Guild Action Failed") },
+            text = { Text(text = error) },
+            confirmButton = {
+                TextButton(onClick = onDismissError) { Text(text = "OK") }
+            }
+        )
+    }""",
+"""    actionError?.let { error ->
+        AlertDialog(
+            onDismissRequest = onDismissError,
+            title = { Text(text = "Guild Action Failed") },
+            text = {
+                Column {
+                    Text(text = error)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // TEMPORARY diagnostic - remove once the missing-event issue is found.
+                    Text(text = "Event debug: " + SupabaseGuildRepository.lastEventDebug, style = MaterialTheme.typography.labelSmall)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onDismissError) { Text(text = "OK") }
+            }
+        )
+    }""",
+    "GuildHomeScreen: surface lastEventDebug in the dialog that actually shows"
 )
 
-with open(SGR_PATH, "w", encoding="utf-8") as f:
-    f.write(sgr)
+with open(GHS_PATH, "w", encoding="utf-8") as f:
+    f.write(ghs)
 
-print("Fixed.")
+print("Applied successfully.")
