@@ -26,17 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output89.txt
-          echo "=== MainActivity.kt lines 930-1000, wider context around GuildHomeScreen call ===" > $OUT
-          sed -n '930,1000p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output90.txt
+          echo "=== ServiceResult sealed class definition ===" > $OUT
+          grep -n "sealed class ServiceResult\|class Failure\|class Success" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== is guildActionError already collected as state anywhere in MainActivity.kt? ===" >> $OUT
-          grep -n "guildActionError" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== MainActivity.kt lines 300-330, the other GuildEventSummary/GuildHomeState construction ===" >> $OUT
+          sed -n '300,330p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
-          echo "=== how is _currentCharacterId's inventory accessed from MainActivity.kt elsewhere, for pattern reference ===" >> $OUT
-          grep -n "inventoryService.inventoryFor\|gameViewModel.inventoryFor" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== GameViewModel.kt line 314 context ===" >> $OUT
+          sed -n '305,320p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
     artifacts:
-      - discovery_output89.txt
+      - discovery_output90.txt
       
   apply-patch:
     name: Apply Patch Script
