@@ -26,11 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output97.txt
-          echo "=== SupabaseGuildRepository.kt lines 1-30, top of file where the bad patch landed ===" > $OUT
-          sed -n '1,30p' ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT
+          OUT=discovery_output98.txt
+          echo "=== SupabaseGuildRepository.kt lines 75-100, the damaged area ===" > $OUT
+          sed -n '75,100p' ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseGuildRepository.kt >> $OUT
     artifacts:
-      - discovery_output97.txt
+      - discovery_output98.txt
       
   apply-patch:
     name: Apply Patch Script
