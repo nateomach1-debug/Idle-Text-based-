@@ -965,7 +965,6 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                                 debugCharSyncError?.let { androidx.compose.material3.Text("Char sync error: $it") }
                                                 debugChatError?.let { androidx.compose.material3.Text("Chat error: $it") }
                                                 debugMarketError?.let { androidx.compose.material3.Text("Market error: $it") }
-                                                androidx.compose.material3.Text("Event debug: " + SupabaseGuildRepository.lastEventDebug)
                                             }
                                         },
                                         confirmButton = {
