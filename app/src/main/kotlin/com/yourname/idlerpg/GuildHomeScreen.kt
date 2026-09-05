@@ -69,13 +69,42 @@ fun GuildHomeScreen(
     state: GuildHomeState,
     leaderboardEntries: List<GuildLeaderboardEntry>,
     leaderboardShowingDaily: Boolean,
+    contributableQuantity: Int,
+    xpRequiredForNextLevel: Long,
+    actionError: String?,
     onToggleLeaderboardPeriod: () -> Unit,
     onMemberTapped: (GuildMemberSummary) -> Unit,
-    onContributeToEvent: () -> Unit,
+    onContributeToEvent: (Int) -> Unit,
+    onStartEvent: () -> Unit,
     onCastVote: (Boolean) -> Unit, // true = remove, false = keep
+    onDismissError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    var showContributeDialog by remember { mutableStateOf(false) }
+
+    actionError?.let { error ->
+        AlertDialog(
+            onDismissRequest = onDismissError,
+            title = { Text(text = "Guild Action Failed") },
+            text = { Text(text = error) },
+            confirmButton = {
+                TextButton(onClick = onDismissError) { Text(text = "OK") }
+            }
+        )
+    }
+
+    if (showContributeDialog && state.activeEvent != null) {
+        ContributeDialog(
+            event = state.activeEvent,
+            availableQuantity = contributableQuantity,
+            onDismiss = { showContributeDialog = false },
+            onConfirm = { qty ->
+                onContributeToEvent(qty)
+                showContributeDialog = false
+            }
+        )
+    }
 
     Column(
         modifier = modifier
@@ -92,12 +121,21 @@ fun GuildHomeScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        GuildLevelCard(state.guildLevel, state.guildXp, xpRequiredForNextLevel)
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         state.activeVote?.let { vote ->
             VoteCard(vote, onCastVote)
             Spacer(modifier = Modifier.height(12.dp))
         } ?: state.activeEvent?.let { event ->
-            EventCard(event, onContributeToEvent)
+            EventCard(event, onContribute = { showContributeDialog = true })
             Spacer(modifier = Modifier.height(12.dp))
+        } ?: run {
+            if (state.viewerRole == GuildMemberRole.OFFICER || state.viewerRole == GuildMemberRole.LEADER) {
+                StartEventCard(onStartEvent)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -113,6 +151,101 @@ fun GuildHomeScreen(
 
         LeaderboardSection(leaderboardEntries, leaderboardShowingDaily, onToggleLeaderboardPeriod)
     }
+}
+
+@Composable
+private fun GuildLevelCard(level: Int, xp: Long, xpRequiredForNextLevel: Long) {
+    val fraction = if (xpRequiredForNextLevel > 0) (xp.toFloat() / xpRequiredForNextLevel.toFloat()).coerceIn(0f, 1f) else 0f
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp)
+    ) {
+        Text(text = "Guild Level " + level, style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(6.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = "%,d / %,d XP".format(xp, xpRequiredForNextLevel), style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Composable
+private fun StartEventCard(onStartEvent: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp)
+    ) {
+        Text(text = "No active guild event", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = onStartEvent, modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Start Guild Event")
+        }
+    }
+}
+
+@Composable
+private fun ContributeDialog(
+    event: GuildEventSummary,
+    availableQuantity: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit
+) {
+    val remaining = (event.progressTarget - event.progressCurrent).coerceAtLeast(0)
+    val maxContributable = availableQuantity.coerceAtMost(remaining)
+    var quantityText by remember { mutableStateOf(maxContributable.coerceAtLeast(1).toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Contribute to " + event.name) },
+        text = {
+            Column {
+                Text(text = "You have " + availableQuantity + " available. " + remaining + " still needed.", style = MaterialTheme.typography.labelSmall)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = quantityText,
+                        onValueChange = { input -> if (input.all { it.isDigit() }) quantityText = input },
+                        modifier = Modifier.weight(1f),
+                        label = { Text(text = "Quantity") }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(onClick = { quantityText = maxContributable.coerceAtLeast(0).toString() }) {
+                        Text(text = "Max")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val qty = quantityText.toIntOrNull()?.coerceIn(0, maxContributable) ?: 0
+                if (qty > 0) onConfirm(qty)
+            }) {
+                Text(text = "Contribute")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(text = "Cancel") }
+        }
+    )
 }
 
 @Composable

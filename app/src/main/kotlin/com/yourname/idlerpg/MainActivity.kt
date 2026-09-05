@@ -973,14 +973,21 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                         onJoinGuild = { guildId -> gameViewModel.joinGuild(guildId) }
                                     )
                                 } else {
+                                    val guildActionErrorState by gameViewModel.guildActionError.collectAsState()
+                                    val contributableQuantity = guildState.activeEvent?.let { gameViewModel.currentInventoryQuantityOf(it.itemId) } ?: 0
                                     GuildHomeScreen(
                                         state = guildState,
                                         leaderboardEntries = currentGuildLeaderboard,
                                         leaderboardShowingDaily = leaderboardShowingDaily,
+                                        contributableQuantity = contributableQuantity,
+                                        xpRequiredForNextLevel = gameViewModel.guildXpRequiredForLevel(guildState.guildLevel),
+                                        actionError = guildActionErrorState,
                                         onToggleLeaderboardPeriod = { leaderboardShowingDaily = !leaderboardShowingDaily },
                                         onMemberTapped = { selectedGuildMember = it },
-                                        onContributeToEvent = { },
-                                        onCastVote = { }
+                                        onContributeToEvent = { qty -> gameViewModel.contributeToGuildEvent(qty) },
+                                        onStartEvent = { gameViewModel.startGuildEvent() },
+                                        onCastVote = { },
+                                        onDismissError = { gameViewModel.clearGuildActionError() }
                                     )
 
                                     selectedGuildMember?.let { member ->

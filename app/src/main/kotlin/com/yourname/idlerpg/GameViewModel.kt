@@ -235,6 +235,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     // bar without a network round trip.
     fun guildXpRequiredForLevel(level: Int): Long = 1000L * level
 
+    fun currentInventoryQuantityOf(itemId: String): Int {
+        val characterId = _currentCharacterId.value ?: return 0
+        return inventoryService.inventoryFor(characterId).quantityOf(itemId)
+    }
+
+    fun clearGuildActionError() {
+        _guildActionError.value = null
+    }
+
     // Caps event items to a level appropriate for the guild's current level,
     // so a level-1 guild never gets asked to contribute a level-90 item. This
     // cap should rise as the planned guild-leveling feature ships - for now,
