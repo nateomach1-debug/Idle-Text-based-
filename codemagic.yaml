@@ -26,17 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output91.txt
-          echo "=== search for migrate/link/upgrade local-to-cloud account flow ===" > $OUT
-          grep -rln "migrateLocal\|linkAccount\|upgradeAccount\|migrateToCloud\|convertLocal\|localToCloud" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output92.txt
+          echo "=== syncSupabaseAuth full body ===" > $OUT
+          grep -n "fun syncSupabaseAuth" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== search for signUp/signup flow that might attach an existing local character ===" >> $OUT
-          grep -n "fun signUp\|fun signup\|fun createAccount" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== get_or_create_character call site(s) in Kotlin ===" >> $OUT
-          grep -rn "get_or_create_character" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== SupabaseCharacterRepository.kt full content ===" >> $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseCharacterRepository.kt >> $OUT
     artifacts:
-      - discovery_output91.txt
+      - discovery_output92.txt
       
   apply-patch:
     name: Apply Patch Script
