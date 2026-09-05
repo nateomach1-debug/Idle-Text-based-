@@ -89,6 +89,9 @@ object SupabaseGuildRepository {
 
     private val client get() = SupabaseClientProvider.client
 
+    // TEMPORARY diagnostic field - remove once the missing-event issue is found.
+    var lastEventDebug: String = 
+
     // Finds which guild (if any) a character belongs to, and their role in it.
     suspend fun findMembership(characterId: String): Pair<String, GuildMemberRole>? {
         return try {
@@ -127,9 +130,16 @@ object SupabaseGuildRepository {
                 )
             }
 
-            val activeEvent = client.postgrest.from("guild_events")
+            val rawEventRows = client.postgrest.from("guild_events")
                 .select { filter { eq("guild_id", guildId) } }
                 .decodeList<GuildEventRow>()
+            // TEMPORARY diagnostic - remove once the missing-event issue is found.
+            // Reuses the existing debug dialog rather than adding new UI.
+            lastEventDebug = "guildId=" + guildId +
+                " rowCount=" + rawEventRows.size +
+                " endsAtValues=" + rawEventRows.map { it.endsAt } +
+                " deviceNow=" + Instant.now().toString()
+            val activeEvent = rawEventRows
                 .filter { Instant.parse(it.endsAt).isAfter(Instant.now()) }
                 .maxByOrNull { it.startsAt }
                 ?.let {
