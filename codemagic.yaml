@@ -26,14 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output92.txt
-          echo "=== syncSupabaseAuth full body ===" > $OUT
-          grep -n "fun syncSupabaseAuth" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output93.txt
+          echo "=== getOrCreateCharacter( call sites (Kotlin wrapper, not RPC string) ===" > $OUT
+          grep -n "getOrCreateCharacter(" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== SupabaseCharacterRepository.kt full content ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseCharacterRepository.kt >> $OUT
+          echo "=== full selectCharacter() body, current state (may differ from earlier session view after this session's edits) ===" >> $OUT
+          grep -n "fun selectCharacter" -A 90 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== is _supabaseAuthError or _supabaseAuthState displayed ANYWHERE in the UI? ===" >> $OUT
+          grep -rn "supabaseAuthError\|supabaseAuthState" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT DISPLAYED ANYWHERE" >> $OUT
     artifacts:
-      - discovery_output92.txt
+      - discovery_output93.txt
       
   apply-patch:
     name: Apply Patch Script
