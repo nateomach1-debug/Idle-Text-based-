@@ -26,20 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output88.txt
-          echo "=== reusable quantity stepper composable, if any ===" > $OUT
-          grep -rln "QuantityStepper\|fun.*QuantityPicker\|Max\" \|onClick.*[Mm]ax" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output89.txt
+          echo "=== MainActivity.kt lines 930-1000, wider context around GuildHomeScreen call ===" > $OUT
+          sed -n '930,1000p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
-          echo "=== GuildHomeScreen( call site in MainActivity.kt ===" >> $OUT
-          grep -n "GuildHomeScreen(" -B 5 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== is guildActionError already collected as state anywhere in MainActivity.kt? ===" >> $OUT
+          grep -n "guildActionError" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== how to query quantity of an item in inventory ===" >> $OUT
-          grep -n "fun quantityOf\|fun quantityFor\|entries\[itemId\]" ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== an existing bury-queue quantity stepper UI, for style reference ===" >> $OUT
-          grep -rln "buryActionProgressSeconds\|BuryQueue\|bury" ./app/src/main/kotlin/com/yourname/idlerpg/*Screen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== how is _currentCharacterId's inventory accessed from MainActivity.kt elsewhere, for pattern reference ===" >> $OUT
+          grep -n "inventoryService.inventoryFor\|gameViewModel.inventoryFor" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output88.txt
+      - discovery_output89.txt
       
   apply-patch:
     name: Apply Patch Script
