@@ -26,14 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output100.txt
-          echo "=== grantXp definition ===" > $OUT
-          grep -n "fun grantXp" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output101.txt
+          echo "=== TierBonusCard composable ===" > $OUT
+          grep -n "fun TierBonusCard" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== all call sites of grantXp( ===" >> $OUT
-          grep -rn "grantXp(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== does anything currently produce an XP-boost Effect from potions/prayers/unlocks? ===" >> $OUT
+          grep -rn "XpBoost\|xp_boost\|totalXpBoostPercent" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Effect class definition ===" >> $OUT
+          grep -n "class Effect\|sealed class Effect\|data class Effect" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output100.txt
+      - discovery_output101.txt
       
   apply-patch:
     name: Apply Patch Script
