@@ -26,14 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output104.txt
-          echo "=== allItems() definition ===" >> $OUT
-          grep -n "fun allItems" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output105.txt
+          echo "=== where InventoryItemSummary gets constructed ===" > $OUT
+          grep -rn "InventoryItemSummary(" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== full InventoryScreen.kt ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt >> $OUT
+          echo "=== inventoryItems WRITE loop in GameStateRepository.save() ===" >> $OUT
+          grep -n "inventoryItems" -B 2 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output104.txt
+      - discovery_output105.txt
       
   apply-patch:
     name: Apply Patch Script
