@@ -329,6 +329,7 @@ private fun demoGuildState(): GuildHomeState = GuildHomeState(
     tier = 2,
     guildLevel = 3,
     guildXp = 1200L,
+    guildCoins = 500L,
     activeBonusPercent = 5.0,
     members = demoGuildMembers(),
     quests = listOf(
