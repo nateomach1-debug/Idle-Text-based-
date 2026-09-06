@@ -58,6 +58,7 @@ data class GuildHomeState(
     val tier: Int,
     val guildLevel: Int,
     val guildXp: Long,
+    val guildCoins: Long,
     val activeBonusPercent: Double,
     val members: List<GuildMemberSummary>,
     val quests: List<GuildQuestSummary>,
@@ -121,7 +122,7 @@ fun GuildHomeScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        GuildLevelCard(state.guildLevel, state.guildXp, xpRequiredForNextLevel)
+        GuildLevelCard(state.guildLevel, state.guildXp, xpRequiredForNextLevel, state.guildCoins)
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -154,7 +155,7 @@ fun GuildHomeScreen(
 }
 
 @Composable
-private fun GuildLevelCard(level: Int, xp: Long, xpRequiredForNextLevel: Long) {
+private fun GuildLevelCard(level: Int, xp: Long, xpRequiredForNextLevel: Long, guildCoins: Long) {
     val fraction = if (xpRequiredForNextLevel > 0) (xp.toFloat() / xpRequiredForNextLevel.toFloat()).coerceIn(0f, 1f) else 0f
     Column(
         modifier = Modifier
@@ -163,7 +164,10 @@ private fun GuildLevelCard(level: Int, xp: Long, xpRequiredForNextLevel: Long) {
             .background(MaterialTheme.colorScheme.surface)
             .padding(14.dp)
     ) {
-        Text(text = "Guild Level " + level, style = MaterialTheme.typography.titleMedium)
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Guild Level " + level, style = MaterialTheme.typography.titleMedium)
+            Text(text = "%,d Guild Coins".format(guildCoins), style = MaterialTheme.typography.titleMedium)
+        }
         Spacer(modifier = Modifier.height(6.dp))
         Box(
             modifier = Modifier

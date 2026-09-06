@@ -214,12 +214,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     // off rarity directly (not off requiredQuantity) so rarer-item events
     // don't perversely pay LESS just because fewer units are needed. Both
     // tables are first-pass numbers, flagged as tunable during balancing.
+    // x10 from the original first-pass numbers, per explicit user request.
     private fun eventPerMemberQuantityFor(rarity: Rarity): Int = when (rarity) {
-        Rarity.COMMON -> 40
-        Rarity.UNCOMMON -> 25
-        Rarity.RARE -> 15
-        Rarity.EPIC -> 8
-        Rarity.LEGENDARY -> 3
+        Rarity.COMMON -> 400
+        Rarity.UNCOMMON -> 250
+        Rarity.RARE -> 150
+        Rarity.EPIC -> 80
+        Rarity.LEGENDARY -> 30
     }
 
     private fun eventGuildCoinRewardPerMilestoneFor(rarity: Rarity): Long = when (rarity) {
@@ -230,12 +231,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         Rarity.LEGENDARY -> 1600L
     }
 
+    // x5 from the original first-pass numbers, per explicit user request.
     private fun eventGuildXpRewardPerMilestoneFor(rarity: Rarity): Long = when (rarity) {
-        Rarity.COMMON -> 25L
-        Rarity.UNCOMMON -> 50L
-        Rarity.RARE -> 100L
-        Rarity.EPIC -> 200L
-        Rarity.LEGENDARY -> 400L
+        Rarity.COMMON -> 125L
+        Rarity.UNCOMMON -> 250L
+        Rarity.RARE -> 500L
+        Rarity.EPIC -> 1000L
+        Rarity.LEGENDARY -> 2000L
     }
 
     // Must match the SQL curve in contribute_to_guild_event() - level L needs

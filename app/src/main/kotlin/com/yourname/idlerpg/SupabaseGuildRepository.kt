@@ -32,7 +32,8 @@ private data class GuildRow(
     val tier: Int,
     @SerialName("last_failed_vote_at") val lastFailedVoteAt: String? = null,
     @SerialName("guild_level") val guildLevel: Int = 1,
-    @SerialName("guild_xp") val guildXp: Long = 0
+    @SerialName("guild_xp") val guildXp: Long = 0,
+    @SerialName("guild_coins") val guildCoins: Long = 0
 )
 
 @Serializable
@@ -173,6 +174,7 @@ object SupabaseGuildRepository {
                 tier = guild.tier,
                 guildLevel = guild.guildLevel,
                 guildXp = guild.guildXp,
+                guildCoins = guild.guildCoins,
                 activeBonusPercent = 0.0,  // Phase 2 adds active bonus tracking
                 members = members,
                 quests = emptyList(),  // no backend concept for this yet - not fabricating fake data
