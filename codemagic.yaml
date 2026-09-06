@@ -26,17 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output101.txt
-          echo "=== TierBonusCard composable ===" > $OUT
-          grep -n "fun TierBonusCard" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GuildHomeScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output102.txt
+          echo "=== full SkillType enum ===" > $OUT
+          grep -n "enum class SkillType" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== does anything currently produce an XP-boost Effect from potions/prayers/unlocks? ===" >> $OUT
-          grep -rn "XpBoost\|xp_boost\|totalXpBoostPercent" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== does a combat level formula already exist anywhere? ===" >> $OUT
+          grep -rn "combatLevel\|combat_level\|CombatLevel" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Effect class definition ===" >> $OUT
-          grep -n "class Effect\|sealed class Effect\|data class Effect" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== uploadCharacterSave / where character data currently syncs to server ===" >> $OUT
+          grep -n "fun uploadCharacterSave\|fun currentSaveJson" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== where/how often is uploadCharacterSave actually called from GameViewModel.kt ===" >> $OUT
+          grep -n "uploadCharacterSave(" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== SkillBook / skillBookFor - how skill levels are stored locally, for reference ===" >> $OUT
+          grep -n "class SkillBook\|fun skillBookFor" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output101.txt
+      - discovery_output102.txt
       
   apply-patch:
     name: Apply Patch Script
