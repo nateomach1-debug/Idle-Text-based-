@@ -26,23 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output102.txt
-          echo "=== full SkillType enum ===" > $OUT
-          grep -n "enum class SkillType" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output103.txt
+          echo "=== find InventoryScreen.kt or wherever inventory items are listed ===" > $OUT
+          grep -rln "fun InventoryScreen\|InventorySlot\|inventoryEntries" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== does a combat level formula already exist anywhere? ===" >> $OUT
-          grep -rn "combatLevel\|combat_level\|CombatLevel" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Inventory class definition - how items are stored (Map? List? insertion order?) ===" >> $OUT
+          grep -n "class Inventory" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== uploadCharacterSave / where character data currently syncs to server ===" >> $OUT
-          grep -n "fun uploadCharacterSave\|fun currentSaveJson" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== where/how often is uploadCharacterSave actually called from GameViewModel.kt ===" >> $OUT
-          grep -n "uploadCharacterSave(" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== SkillBook / skillBookFor - how skill levels are stored locally, for reference ===" >> $OUT
-          grep -n "class SkillBook\|fun skillBookFor" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== ItemDefinition fields, for sorting-by-name reference ===" >> $OUT
+          grep -n "data class ItemDefinition" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output102.txt
+      - discovery_output103.txt
       
   apply-patch:
     name: Apply Patch Script
