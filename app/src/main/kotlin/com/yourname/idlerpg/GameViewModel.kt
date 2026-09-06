@@ -245,6 +245,25 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     // bar without a network round trip.
     fun guildXpRequiredForLevel(level: Int): Long = 1000L * level
 
+    // Guild-exclusive perk: +0.5% XP per guild level, capped at +15% (reached
+    // around guild level 30). Noticeable by the mid game, never mandatory.
+    // Reuses the existing Effect.XpBoost mechanism (grantXp()'s extraEffects
+    // param) rather than a separate bolt-on multiplier - nothing else in the
+    // game currently produces an XpBoost effect, so this is genuinely
+    // guild-exclusive. One effect per SkillGroup so it applies uniformly
+    // across combat/gathering/production without double-counting (a skill
+    // belongs to exactly one group).
+    fun guildXpBonusPercent(): Double {
+        val level = _guildHomeState.value?.guildLevel ?: return 0.0
+        return (level * 0.5).coerceAtMost(15.0)
+    }
+
+    private fun guildXpBonusEffects(): List<Effect> {
+        val percent = guildXpBonusPercent()
+        if (percent <= 0.0) return emptyList()
+        return SkillGroup.entries.map { group -> Effect.XpBoost(EffectScope.Group(group), percent) }
+    }
+
     fun currentInventoryQuantityOf(itemId: String): Int {
         val characterId = _currentCharacterId.value ?: return 0
         return inventoryService.inventoryFor(characterId).quantityOf(itemId)
@@ -839,7 +858,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
                 if (attack.didHit) {
                     log.add(CombatLogEntry("You hit for " + attack.damageDealt + "."))
-                    val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong())
+                    val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong(), guildXpBonusEffects())
                     if (xpGrant is ServiceResult.Success) refreshSkills()
                 } else {
                     log.add(CombatLogEntry("You missed."))
@@ -1023,7 +1042,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
         if (effectiveAttempts > 0) {
             inventory.removeItem(queue.itemId, effectiveAttempts)
-            progressionService.grantXp(characterId, SkillType.PRAYER, boneInfo.xpAmount * effectiveAttempts)
+            progressionService.grantXp(characterId, SkillType.PRAYER, boneInfo.xpAmount * effectiveAttempts, guildXpBonusEffects())
             queue.quantityCompleted += effectiveAttempts
             refreshInventory()
             refreshSkills()
@@ -1478,7 +1497,7 @@ fun logout() {
                 val action = ActionCatalog.find(skillType, queue.itemId)
                 if (action != null) {
                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
-                    progressionService.grantXp(characterId, skillType, xpEarned)
+                    progressionService.grantXp(characterId, skillType, xpEarned, guildXpBonusEffects())
                     inventoryService.inventoryFor(characterId).addItem(queue.itemId, result.value.actionsCompleted)
                     if (skillType == SkillType.MINING) {
                         MiningBonusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), result.value.actionsCompleted)
@@ -1523,7 +1542,7 @@ fun logout() {
                     if (effectiveActions > 0) {
                         inventory.removeItem(buryQueue.itemId, effectiveActions)
                         val xpGranted = boneInfo.xpAmount * effectiveActions
-                        progressionService.grantXp(characterId, SkillType.PRAYER, xpGranted)
+                        progressionService.grantXp(characterId, SkillType.PRAYER, xpGranted, guildXpBonusEffects())
                         _offlineSummary.value = OfflineSummary(
                             awaySeconds = buryResult.value.claimedElapsed.seconds,
                             skillActionName = "Bury " + formatItemName(buryQueue.itemId),
@@ -1573,7 +1592,7 @@ fun logout() {
                     val outcome = combatService.resolveOfflineCombat(characterId, combatQueue.zoneId, elapsedSeconds, prayerAccuracy, prayerMaxHit, prayerDropRateMultiplier)
                     if (outcome is ServiceResult.Success && outcome.value.estimatedKills > 0) {
                         if (outcome.value.xpEarned > 0) {
-                            progressionService.grantXp(characterId, trainingSkill, outcome.value.xpEarned)
+                            progressionService.grantXp(characterId, trainingSkill, outcome.value.xpEarned, guildXpBonusEffects())
                         }
                         val loot = combatService.collectLoot(characterId)
                         if (loot is ServiceResult.Success) {
@@ -1677,7 +1696,7 @@ fun logout() {
                 if (requiredSeedId != null) {
                     inventory.removeItem(requiredSeedId, effectiveActions.toInt())
                 }
-                progressionService.grantXp(characterId, skillType, action.xpPerAction * effectiveActions)
+                progressionService.grantXp(characterId, skillType, action.xpPerAction * effectiveActions, guildXpBonusEffects())
                 inventory.addItem(queue.itemId, effectiveActions.toInt())
                 if (skillType == SkillType.MINING) {
                     MiningBonusGemTable.rollAndGrant(inventory, effectiveActions.toInt())
@@ -1746,7 +1765,7 @@ fun logout() {
             }
         }
         if (xpGranted > 0) {
-            progressionService.grantXp(characterId, skillType, xpGranted)
+            progressionService.grantXp(characterId, skillType, xpGranted, guildXpBonusEffects())
         }
         return CraftBatchResult(successes, totalProduced, xpGranted, stoppedReason)
     }

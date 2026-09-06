@@ -175,7 +175,7 @@ object SupabaseGuildRepository {
                 guildLevel = guild.guildLevel,
                 guildXp = guild.guildXp,
                 guildCoins = guild.guildCoins,
-                activeBonusPercent = 0.0,  // Phase 2 adds active bonus tracking
+                activeBonusPercent = (guild.guildLevel * 0.5).coerceAtMost(15.0),
                 members = members,
                 quests = emptyList(),  // no backend concept for this yet - not fabricating fake data
                 viewerRole = viewerRole

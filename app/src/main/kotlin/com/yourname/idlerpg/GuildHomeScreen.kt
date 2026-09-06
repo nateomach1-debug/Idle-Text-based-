@@ -140,7 +140,7 @@ fun GuildHomeScreen(
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            TierBonusCard(state.tier, state.activeBonusPercent, modifier = Modifier.weight(1f))
+            TierBonusCard(state.activeBonusPercent, modifier = Modifier.weight(1f))
             MemberListCard(state.members, onMemberTapped, modifier = Modifier.weight(1f))
         }
 
@@ -310,17 +310,17 @@ private fun VoteCard(vote: GuildVoteSummary, onCastVote: (Boolean) -> Unit) {
 }
 
 @Composable
-private fun TierBonusCard(tier: Int, bonusPercent: Double, modifier: Modifier = Modifier) {
+private fun TierBonusCard(bonusPercent: Double, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
             .padding(14.dp)
     ) {
-        Text(text = "Tier " + tier, style = MaterialTheme.typography.titleMedium)
+        Text(text = "Guild Bonus", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = if (bonusPercent > 0) "+" + bonusPercent + "% active bonus" else "No active bonus",
+            text = if (bonusPercent > 0) "+%.1f%% XP from all sources".format(bonusPercent) else "No active bonus",
             style = MaterialTheme.typography.labelSmall
         )
     }
