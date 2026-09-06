@@ -26,17 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output103.txt
-          echo "=== find InventoryScreen.kt or wherever inventory items are listed ===" > $OUT
-          grep -rln "fun InventoryScreen\|InventorySlot\|inventoryEntries" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output104.txt
+          echo "=== allItems() definition ===" >> $OUT
+          grep -n "fun allItems" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Inventory class definition - how items are stored (Map? List? insertion order?) ===" >> $OUT
-          grep -n "class Inventory" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== ItemDefinition fields, for sorting-by-name reference ===" >> $OUT
-          grep -n "data class ItemDefinition" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== full InventoryScreen.kt ===" >> $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt >> $OUT
     artifacts:
-      - discovery_output103.txt
+      - discovery_output104.txt
       
   apply-patch:
     name: Apply Patch Script
