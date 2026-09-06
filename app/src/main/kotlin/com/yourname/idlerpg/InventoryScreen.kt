@@ -60,8 +60,37 @@ data class InventoryItemSummary(
     val isConsumable: Boolean,
     val npcValuePerUnit: Long,
     val statsDescription: String? = null, // e.g. "ATK +5, ACC +10" -- only for equippable items
-    val isBuryable: Boolean = false
+    val isBuryable: Boolean = false,
+    val lastAcquiredAtMillis: Long = 0L
 )
+
+enum class InventorySortMode(val label: String) {
+    RECENT_DESC("Most Recent"),
+    RECENT_ASC("Oldest First"),
+    ALPHA_ASC("A to Z"),
+    ALPHA_DESC("Z to A")
+}
+
+private const val KEY_INVENTORY_SORT_MODE = "inventory_sort_mode"
+
+private fun loadSavedInventorySortMode(context: Context): InventorySortMode {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val saved = prefs.getString(KEY_INVENTORY_SORT_MODE, InventorySortMode.RECENT_DESC.name)
+    return runCatching { InventorySortMode.valueOf(saved ?: InventorySortMode.RECENT_DESC.name) }
+        .getOrDefault(InventorySortMode.RECENT_DESC)
+}
+
+private fun saveInventorySortMode(context: Context, mode: InventorySortMode) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_INVENTORY_SORT_MODE, mode.name).apply()
+}
+
+private fun sortedInventoryItems(items: List<InventoryItemSummary>, mode: InventorySortMode): List<InventoryItemSummary> = when (mode) {
+    InventorySortMode.RECENT_DESC -> items.sortedByDescending { it.lastAcquiredAtMillis }
+    InventorySortMode.RECENT_ASC -> items.sortedBy { it.lastAcquiredAtMillis }
+    InventorySortMode.ALPHA_ASC -> items.sortedBy { it.displayName.lowercase() }
+    InventorySortMode.ALPHA_DESC -> items.sortedByDescending { it.displayName.lowercase() }
+}
 
 @Composable
 fun InventoryScreen(
@@ -78,11 +107,13 @@ fun InventoryScreen(
 ) {
     val context = LocalContext.current
     var viewMode by remember { mutableStateOf(loadSavedInventoryViewMode(context)) }
+    var sortMode by remember { mutableStateOf(loadSavedInventorySortMode(context)) }
+    var sortMenuExpanded by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
 
-    val grouped = remember(items) {
+    val grouped = remember(items, sortMode) {
         InventoryCategory.values().mapNotNull { category ->
-            val categoryItems = items.filter { it.category == category }
+            val categoryItems = sortedInventoryItems(items.filter { it.category == category }, sortMode)
             if (categoryItems.isEmpty()) null else category to categoryItems
         }
     }
@@ -113,6 +144,26 @@ fun InventoryScreen(
                         imageVector = Icons.Filled.GridView,
                         contentDescription = "Grid view",
                         tint = if (viewMode == InventoryViewMode.GRID) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Box {
+            TextButton(onClick = { sortMenuExpanded = true }) {
+                Text(text = "Sort: " + sortMode.label)
+            }
+            DropdownMenu(expanded = sortMenuExpanded, onDismissRequest = { sortMenuExpanded = false }) {
+                InventorySortMode.values().forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(text = option.label) },
+                        onClick = {
+                            sortMode = option
+                            saveInventorySortMode(context, option)
+                            sortMenuExpanded = false
+                        }
                     )
                 }
             }

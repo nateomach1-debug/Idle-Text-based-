@@ -133,6 +133,7 @@ class GameStateRepository(private val context: Context) {
             obj.put("characterId", entry.characterId)
             obj.put("itemId", entry.itemId)
             obj.put("quantity", entry.quantity)
+            obj.put("lastAcquiredAtMillis", entry.lastAcquiredAtMillis)
             inventoryArray.put(obj)
         }
         root.put("inventoryItems", inventoryArray)
@@ -399,7 +400,11 @@ class GameStateRepository(private val context: Context) {
                 InventorySlotExport(
                     characterId = obj.getString("characterId"),
                     itemId = obj.getString("itemId"),
-                    quantity = obj.getInt("quantity")
+                    quantity = obj.getInt("quantity"),
+                    // optLong with a fallback default so saves written before this
+                    // field existed don't crash on load - they just get "now" as a
+                    // one-time backfill, which is a harmless, reasonable default.
+                    lastAcquiredAtMillis = obj.optLong("lastAcquiredAtMillis", System.currentTimeMillis())
                 )
             )
         }

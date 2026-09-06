@@ -279,7 +279,8 @@ private fun buildInventoryItemSummaries(
                 isConsumable = definition.category == ItemCategory.CONSUMABLE,
                 npcValuePerUnit = vendorPayoutFor(entry.itemId),
                 statsDescription = statsText,
-                isBuryable = PrayerBoneRequirements.containsKey(entry.itemId)
+                isBuryable = PrayerBoneRequirements.containsKey(entry.itemId),
+                lastAcquiredAtMillis = entry.lastAcquiredAtMillis
             )
         } else {
             // Not yet defined in ItemCatalog (e.g. some gathered materials) -- graceful fallback.
@@ -290,7 +291,8 @@ private fun buildInventoryItemSummaries(
                 quantity = entry.quantity,
                 isEquippable = false,
                 isConsumable = false,
-                npcValuePerUnit = vendorPayoutFor(entry.itemId)
+                npcValuePerUnit = vendorPayoutFor(entry.itemId),
+                lastAcquiredAtMillis = entry.lastAcquiredAtMillis
             )
         }
     }

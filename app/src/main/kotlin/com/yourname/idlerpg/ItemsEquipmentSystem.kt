@@ -1941,7 +1941,7 @@ object CraftingTierCurve {
 // (ServiceResult now comes from SharedTypes.kt.)
 // =========================================================
 
-data class InventorySlotEntry(val itemId: String, val quantity: Int)
+data class InventorySlotEntry(val itemId: String, val quantity: Int, val lastAcquiredAtMillis: Long = System.currentTimeMillis())
 
 class Inventory(
     var maxSlots: Int = 100,
@@ -1963,7 +1963,10 @@ class Inventory(
 
         val existing = entries[itemId]
         if (existing != null) {
-            entries[itemId] = existing.copy(quantity = existing.quantity + quantity)
+            // Restocking an existing stack counts as "acquired now" too, so
+            // "most recent" sorting reflects the last time you got more of
+            // something, not just when you first ever picked it up.
+            entries[itemId] = existing.copy(quantity = existing.quantity + quantity, lastAcquiredAtMillis = System.currentTimeMillis())
             return ServiceResult.Success(Unit)
         }
 
@@ -2039,8 +2042,8 @@ class Inventory(
 
     fun allItems(): List<InventorySlotEntry> = entries.values.toList()
 
-    fun restoreItem(itemId: String, quantity: Int) {
-        entries[itemId] = InventorySlotEntry(itemId, quantity)
+    fun restoreItem(itemId: String, quantity: Int, lastAcquiredAtMillis: Long = System.currentTimeMillis()) {
+        entries[itemId] = InventorySlotEntry(itemId, quantity, lastAcquiredAtMillis)
     }
 
     fun restoreEquipped(slot: EquipSlot, itemId: String) {
@@ -2130,7 +2133,7 @@ class CraftingService {
 // INVENTORY SERVICE
 // =========================================================
 
-data class InventorySlotExport(val characterId: String, val itemId: String, val quantity: Int)
+data class InventorySlotExport(val characterId: String, val itemId: String, val quantity: Int, val lastAcquiredAtMillis: Long = System.currentTimeMillis())
 data class EquippedSlotExport(val characterId: String, val slot: String, val itemId: String)
 data class LoadoutSettingsExport(
     val characterId: String,
@@ -2150,7 +2153,7 @@ class InventoryService {
         inventories.getOrPut(characterId) { Inventory() }
 
     fun exportAllItems(): List<InventorySlotExport> = inventories.flatMap { (characterId, inv) ->
-        inv.allItems().map { InventorySlotExport(characterId, it.itemId, it.quantity) }
+        inv.allItems().map { InventorySlotExport(characterId, it.itemId, it.quantity, it.lastAcquiredAtMillis) }
     }
 
     fun exportAllEquipped(): List<EquippedSlotExport> = inventories.flatMap { (characterId, inv) ->
@@ -2158,7 +2161,7 @@ class InventoryService {
     }
 
     fun restoreItem(export: InventorySlotExport) {
-        inventoryFor(export.characterId).restoreItem(export.itemId, export.quantity)
+        inventoryFor(export.characterId).restoreItem(export.itemId, export.quantity, export.lastAcquiredAtMillis)
     }
 
     fun restoreEquipped(export: EquippedSlotExport) {
