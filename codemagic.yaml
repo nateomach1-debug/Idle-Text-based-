@@ -26,11 +26,26 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output112.txt
-          echo "=== Full NavigationDestinations.kt ===" > $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output113.txt
+          echo "=== SkillType enum definition ===" > $OUT
+          grep -n "enum class SkillType" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Full SupabaseLeaderboardRepository.kt ===" >> $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseLeaderboardRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== GameViewModel.kt: repository property declarations ===" >> $OUT
+          grep -n "Repository(\|Repository =\|private val.*Repository" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== GameViewModel.kt: guildLeaderboard StateFlow declaration + refresh pattern (reference for new leaderboard StateFlows) ===" >> $OUT
+          grep -n "guildLeaderboard\|_guildLeaderboard" -B 2 -A 2 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== GameViewModel.kt: current character id/name accessors ===" >> $OUT
+          grep -n "currentCharacterId\b\|val characterName\|character?.name\|currentCharacter\b" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== SharedTypes.kt (GuildLeaderboardEntry etc, check for existing name collisions) ===" >> $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output112.txt
+      - discovery_output113.txt
       
   apply-patch:
     name: Apply Patch Script
