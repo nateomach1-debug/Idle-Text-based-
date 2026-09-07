@@ -26,23 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output109.txt
-          echo "=== Sealed class / enum screen or tab definitions ===" > $OUT
-          grep -rn "sealed class.*Screen\|sealed interface.*Screen\|enum class.*Screen\|enum class.*Tab" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output110.txt
+          echo "=== Full AppDestination.kt ===" > $OUT
+          find ./app/src/main/kotlin/com/yourname/idlerpg/ui/navigation -type f -name "*.kt" -exec echo "--- {} ---" \; -exec cat {} \; >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== AppFlowState or currentScreen/selectedTab state holders ===" >> $OUT
-          grep -rn "AppFlowState\|currentScreen\|selectedTab\|_currentScreen\|_selectedTab" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== SideRail call site in MainActivity.kt (with context) ===" >> $OUT
+          grep -n "SideRail(" -B 5 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== NavigationRail / IconRail / BottomNavigation composable usage ===" >> $OUT
-          grep -rln "NavigationRail\|IconRail\|BottomNavigation" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Top of the currentDestination when-dispatch block ===" >> $OUT
+          grep -n "when (currentDestination)\|currentDestination ==" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== MainActivity.kt full dump (most likely home of top-level screen switching) ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "MainActivity.kt NOT FOUND at expected path" >> $OUT
-          echo "" >> $OUT
-          echo "=== Guild tab wiring, since we know Guild already has an icon-rail entry (reference pattern) ===" >> $OUT
-          grep -n "Guild" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== AppDestination usages across the codebase ===" >> $OUT
+          grep -rn "AppDestination\." ./app/src/main/kotlin/com/yourname/idlerpg/*.kt ./app/src/main/kotlin/com/yourname/idlerpg/ui/navigation/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output109.txt
+      - discovery_output110.txt
       
   apply-patch:
     name: Apply Patch Script
