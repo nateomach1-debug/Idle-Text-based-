@@ -1345,6 +1345,15 @@ fun logout() {
                 SupabaseCharacterRepository.uploadCharacterSave(supabaseCharacterId, json)
             }
         }
+        val localCharacterIdForSkills = _currentCharacterId.value
+        if (supabaseCharacterId != null && localCharacterIdForSkills != null) {
+            viewModelScope.launch {
+                SupabaseCharacterRepository.reportSkillLevels(
+                    supabaseCharacterId,
+                    progressionService.skillBookFor(localCharacterIdForSkills).all()
+                )
+            }
+        }
     }
 
     fun selectCharacter(characterId: String) {

@@ -50,4 +50,21 @@ object SupabaseCharacterRepository {
         }).decodeAs<JsonElement?>()
         result?.toString()
     }
+
+    // Reports a full skill snapshot for the leaderboards feature. Piggybacks
+    // on the same call site as uploadCharacterSave - no separate sync cadence.
+    suspend fun reportSkillLevels(characterId: String, skills: List<Skill>): Result<Unit> = runCatching {
+        val payload = kotlinx.serialization.json.JsonArray(skills.map { skill ->
+            buildJsonObject {
+                put("skill_type", skill.type.name)
+                put("level", LevelCurve.levelForXp(skill.xp))
+                put("xp", skill.xp)
+            }
+        })
+        client.postgrest.rpc("report_skill_levels", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_levels", payload)
+        })
+        Unit
+    }
 }
