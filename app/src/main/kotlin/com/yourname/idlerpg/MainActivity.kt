@@ -1039,6 +1039,19 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 )
                             }
 
+                            AppDestination.LEADERBOARDS -> {
+                                val leaderboardRows by gameViewModel.leaderboardRows.collectAsState()
+                                val leaderboardLoading by gameViewModel.leaderboardLoading.collectAsState()
+                                val selectedLeaderboardCategory by gameViewModel.selectedLeaderboardCategory.collectAsState()
+                                LaunchedEffect(Unit) { gameViewModel.fetchLeaderboard(selectedLeaderboardCategory) }
+                                LeaderboardsScreen(
+                                    selectedCategory = selectedLeaderboardCategory,
+                                    rows = leaderboardRows,
+                                    isLoading = leaderboardLoading,
+                                    onCategorySelected = { gameViewModel.fetchLeaderboard(it) }
+                                )
+                            }
+
                             else -> androidx.compose.material3.Text(
                                 text = currentDestination.label + " screen coming soon",
                                 modifier = Modifier.fillMaxSize()

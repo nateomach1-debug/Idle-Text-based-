@@ -34,6 +34,7 @@ private fun iconFor(destination: AppDestination): ImageVector = when (destinatio
     AppDestination.INVENTORY -> Icons.Filled.Inventory2
     AppDestination.MARKET -> Icons.Filled.Storefront
     AppDestination.GUILD -> Icons.Filled.Flag
+    AppDestination.LEADERBOARDS -> Icons.Filled.Leaderboard
     AppDestination.MODERATION -> Icons.Filled.AdminPanelSettings
 }
 

@@ -1,5 +1,9 @@
 package com.yourname.idlerpg.data
 
+import com.yourname.idlerpg.LeaderboardCategory
+import com.yourname.idlerpg.LeaderboardRow
+import com.yourname.idlerpg.SupabaseLeaderboardRepository
+
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.first
@@ -167,6 +171,46 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _guildLeaderboard = MutableStateFlow<List<GuildLeaderboardEntry>>(emptyList())
     val guildLeaderboard: StateFlow<List<GuildLeaderboardEntry>> = _guildLeaderboard.asStateFlow()
+
+    private val _leaderboardRows = MutableStateFlow<List<LeaderboardRow>>(emptyList())
+    val leaderboardRows: StateFlow<List<LeaderboardRow>> = _leaderboardRows.asStateFlow()
+
+    private val _leaderboardLoading = MutableStateFlow(false)
+    val leaderboardLoading: StateFlow<Boolean> = _leaderboardLoading.asStateFlow()
+
+    private val _selectedLeaderboardCategory = MutableStateFlow(LeaderboardCategory.TOTAL_LEVEL)
+    val selectedLeaderboardCategory: StateFlow<LeaderboardCategory> = _selectedLeaderboardCategory.asStateFlow()
+
+    fun fetchLeaderboard(category: LeaderboardCategory) {
+        _selectedLeaderboardCategory.value = category
+        viewModelScope.launch {
+            _leaderboardLoading.value = true
+            val rows: List<LeaderboardRow> = when (category) {
+                LeaderboardCategory.TOTAL_LEVEL -> SupabaseLeaderboardRepository.fetchTotalLevelLeaderboard()
+                    .getOrDefault(emptyList())
+                    .mapIndexed { index, entry ->
+                        LeaderboardRow(rank = index + 1, name = entry.displayName, valueLabel = "Lv " + entry.totalLevel)
+                    }
+                LeaderboardCategory.COMBAT_LEVEL -> SupabaseLeaderboardRepository.fetchCombatLevelLeaderboard()
+                    .getOrDefault(emptyList())
+                    .mapIndexed { index, entry ->
+                        LeaderboardRow(rank = index + 1, name = entry.displayName, valueLabel = "Lv " + entry.combatLevel)
+                    }
+                LeaderboardCategory.GUILDS -> SupabaseLeaderboardRepository.fetchGuildLeaderboard()
+                    .getOrDefault(emptyList())
+                    .mapIndexed { index, entry ->
+                        LeaderboardRow(rank = index + 1, name = entry.guildName, valueLabel = "Lv " + entry.guildLevel + " \u00b7 " + entry.guildCoins + " coins")
+                    }
+                else -> SupabaseLeaderboardRepository.fetchSkillLeaderboard(category.name)
+                    .getOrDefault(emptyList())
+                    .mapIndexed { index, entry ->
+                        LeaderboardRow(rank = index + 1, name = entry.displayName, valueLabel = "Lv " + entry.level)
+                    }
+            }
+            _leaderboardRows.value = rows
+            _leaderboardLoading.value = false
+        }
+    }
 
     private val _browsableGuilds = MutableStateFlow<List<GuildBrowseEntry>>(emptyList())
     val browsableGuilds: StateFlow<List<GuildBrowseEntry>> = _browsableGuilds.asStateFlow()
