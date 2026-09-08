@@ -26,20 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output121.txt
-          echo "=== SkillsScreen.kt: level-50 / mastery perk display ===" > $OUT
-          grep -n "AccessUnlock\|allActiveEffects\|UnlockTable" ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output122.txt
+          echo "=== All UI usages of AccessUnlock / allActiveEffects across the codebase ===" > $OUT
+          grep -rln "AccessUnlock\|allActiveEffects" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Context around the perk display (wider view) ===" >> $OUT
-          grep -n "fun SkillsScreen\|fun SkillDetailCard\|fun SkillRow" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Full context of each match ===" >> $OUT
+          grep -rn "AccessUnlock\|allActiveEffects" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== SkillSummary data class (what the screen already receives per skill) ===" >> $OUT
-          grep -n "data class SkillSummary" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== Where SkillSummary is constructed in GameViewModel.kt ===" >> $OUT
-          grep -n "SkillSummary(" -B 3 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== equippedItemIn / EquipSlot.CAPE usages in UI files (to see equip-state read pattern) ===" >> $OUT
+          grep -rn "equippedItemIn\|EquipSlot.CAPE" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output121.txt
+      - discovery_output122.txt
       
   apply-patch:
     name: Apply Patch Script
