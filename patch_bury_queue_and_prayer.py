@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Corrective patch #4: GameViewModel.kt build failure.
+Corrective patch #4 (re-run): GameViewModel.kt build failure.
 
-VendorBuyCatalog / VendorBuyableItem live in MarketScreen.kt, which
-declares package com.yourname.idlerpg.ui.screens (same flat-file/
-different-package convention as every other *Screen.kt file) - not the
+VendorBuyCatalog / VendorBuyableItem live in MarketScreen.kt, confirmed
+via discovery to be package com.yourname.idlerpg.ui.screens - not the
 flat com.yourname.idlerpg package. Fix the import paths.
 """
 import os
