@@ -41,7 +41,7 @@ workflows:
     scripts:
       - name: Run patch scripts
         script: |
-          python3 patch_mining_bg_image.py
+          python3 patch_all_skill_backgrounds.py
       - name: Commit and push
         script: |
           git config user.email "codemagic@example.com"
