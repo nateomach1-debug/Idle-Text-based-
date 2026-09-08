@@ -5,8 +5,8 @@ import com.yourname.idlerpg.LeaderboardRow
 import com.yourname.idlerpg.SupabaseLeaderboardRepository
 import com.yourname.idlerpg.UnlockTable
 import com.yourname.idlerpg.EffectStacker
-import com.yourname.idlerpg.VendorBuyCatalog
-import com.yourname.idlerpg.VendorBuyableItem
+import com.yourname.idlerpg.ui.screens.VendorBuyCatalog
+import com.yourname.idlerpg.ui.screens.VendorBuyableItem
 
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.withTimeoutOrNull
