@@ -123,6 +123,126 @@ private fun DrawScope.drawOreGlints(color: Color) {
     }
 }
 
+@Composable
+fun Modifier.woodcuttingThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_woodcutting_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.fishingThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_fishing_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.farmingThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_farming_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.thievingThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_thieving_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.smithingThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_smithing_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.cookingThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_cooking_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.craftingThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_crafting_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.fletchingThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_fletching_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.alchemyThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_alchemy_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.magicThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_magic_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.attackThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_attack_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.strengthThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_strength_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.defenseThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_defense_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.prayerThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_prayer_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
+@Composable
+fun Modifier.archeryThemedBackground(): Modifier {
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_archery_pattern)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
+}
+
 // Real generated image asset (res/drawable/bg_mining_pickaxes.webp) - a
 // tessellated angled-pickaxe wallpaper pattern, TRUE-TILED via
 // ImageShader/TileMode.Repeated so icon size stays fixed regardless of
@@ -142,6 +262,21 @@ fun Modifier.miningThemedBackground(): Modifier {
 @Composable
 fun Modifier.skillPatternBackground(skillId: String): Modifier = when (skillId) {
     "MINING" -> this.miningThemedBackground()
+    "WOODCUTTING" -> this.woodcuttingThemedBackground()
+    "FISHING" -> this.fishingThemedBackground()
+    "FARMING" -> this.farmingThemedBackground()
+    "THIEVING" -> this.thievingThemedBackground()
+    "SMITHING" -> this.smithingThemedBackground()
+    "COOKING" -> this.cookingThemedBackground()
+    "CRAFTING" -> this.craftingThemedBackground()
+    "FLETCHING" -> this.fletchingThemedBackground()
+    "ALCHEMY" -> this.alchemyThemedBackground()
+    "MAGIC" -> this.magicThemedBackground()
+    "ATTACK" -> this.attackThemedBackground()
+    "STRENGTH" -> this.strengthThemedBackground()
+    "DEFENSE" -> this.defenseThemedBackground()
+    "PRAYER" -> this.prayerThemedBackground()
+    "ARCHERY" -> this.archeryThemedBackground()
     else -> this.proceduralThemeBackground(baseColor = skillThemeColor(skillId) ?: MutedTeal)
 }
 
