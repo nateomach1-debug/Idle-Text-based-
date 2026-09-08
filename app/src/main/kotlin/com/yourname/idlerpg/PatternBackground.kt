@@ -14,6 +14,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.res.imageResource
 import com.yourname.idlerpg.R
 
 // =========================================================
@@ -119,12 +123,16 @@ private fun DrawScope.drawOreGlints(color: Color) {
 }
 
 // Real generated image asset (res/drawable/bg_mining_pickaxes.webp) - a
-// tessellated angled-pickaxe wallpaper pattern - painted to fill the
-// screen. Replaces the earlier procedural-Canvas attempt.
+// tessellated angled-pickaxe wallpaper pattern, TRUE-TILED via
+// ImageShader/TileMode.Repeated so icon size stays fixed regardless of
+// screen size (Crop-to-fill previously stretched one copy to cover the
+// whole screen, which is what made icons look oversized).
 @Composable
 fun Modifier.miningThemedBackground(): Modifier {
-    val painter = painterResource(id = R.drawable.bg_mining_pickaxes)
-    return this.paint(painter, contentScale = ContentScale.Crop)
+    val imageBitmap = imageResource(id = R.drawable.bg_mining_pickaxes)
+    return this.drawBehind {
+        drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
+    }
 }
 
 // Per-skill themed background. MINING gets its own thematic scene;
