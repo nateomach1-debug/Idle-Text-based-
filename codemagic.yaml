@@ -26,17 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output122.txt
-          echo "=== All UI usages of AccessUnlock / allActiveEffects across the codebase ===" > $OUT
-          grep -rln "AccessUnlock\|allActiveEffects" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output123.txt
+          echo "=== The effect-description helper function full definition (MainActivity.kt) ===" > $OUT
+          grep -n "fun.*Effect.*->.*String\|fun describeEffect\|fun effectDescription" -B 5 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Full context of each match ===" >> $OUT
-          grep -rn "AccessUnlock\|allActiveEffects" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== equippedItemIn / EquipSlot.CAPE usages in UI files (to see equip-state read pattern) ===" >> $OUT
-          grep -rn "equippedItemIn\|EquipSlot.CAPE" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Callers of that description function ===" >> $OUT
+          grep -rn "describeEffect\|effectDescription" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output122.txt
+      - discovery_output123.txt
       
   apply-patch:
     name: Apply Patch Script
