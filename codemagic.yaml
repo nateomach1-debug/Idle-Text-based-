@@ -26,26 +26,26 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output113.txt
-          echo "=== SkillType enum definition ===" > $OUT
-          grep -n "enum class SkillType" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output114.txt
+          echo "=== craftOnce() and material consumption ===" > $OUT
+          grep -n "fun craftOnce" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Full SupabaseLeaderboardRepository.kt ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseLeaderboardRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Effect sealed class / Effect.XpBoost definition ===" >> $OUT
+          grep -n "sealed class Effect\|object XpBoost\|data class XpBoost\|Effect.XpBoost" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== GameViewModel.kt: repository property declarations ===" >> $OUT
-          grep -n "Repository(\|Repository =\|private val.*Repository" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== grantXp() signature + extraEffects handling ===" >> $OUT
+          grep -n "fun grantXp" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== GameViewModel.kt: guildLeaderboard StateFlow declaration + refresh pattern (reference for new leaderboard StateFlows) ===" >> $OUT
-          grep -n "guildLeaderboard\|_guildLeaderboard" -B 2 -A 2 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Vendor / shop for-sale item filtering ===" >> $OUT
+          grep -rn "vendorItems\|fun vendorStock\|VendorScreen\|shopItems\|fun isForSale\|buyFromVendor" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== GameViewModel.kt: current character id/name accessors ===" >> $OUT
-          grep -n "currentCharacterId\b\|val characterName\|character?.name\|currentCharacter\b" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Equipped item stat/bonus application (equipment effects) ===" >> $OUT
+          grep -n "fun equippedItems\|fun equipmentBonus\|equippedStats\|fun totalStats\|EquipSlot.CAPE" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== SharedTypes.kt (GuildLeaderboardEntry etc, check for existing name collisions) ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Existing cape items in ItemCatalog (if any) ===" >> $OUT
+          grep -n "CAPE\|cape" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output113.txt
+      - discovery_output114.txt
       
   apply-patch:
     name: Apply Patch Script
