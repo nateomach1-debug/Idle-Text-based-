@@ -26,14 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output124.txt
-          echo "=== Lines 60-100 of MainActivity.kt (effect description function + signature) ===" > $OUT
-          sed -n '60,100p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output125.txt
+          echo "=== Call sites of effectSummaryText( ===" > $OUT
+          grep -n "effectSummaryText(" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Any function whose name contains 'escribe' or 'ffect' as a word (broader net) ===" >> $OUT
-          grep -rn "fun [A-Za-z]*[Ee]ffect[A-Za-z]*(\|fun [A-Za-z]*escribe[A-Za-z]*(" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Wider context around each call site ===" >> $OUT
+          grep -n "effectSummaryText(" -B 20 -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output124.txt
+      - discovery_output125.txt
       
   apply-patch:
     name: Apply Patch Script
