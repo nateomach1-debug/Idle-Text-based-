@@ -86,6 +86,86 @@ object ItemCatalog {
             rarity = Rarity.UNCOMMON, isTradeable = false, isStackable = false,
             equipSlot = EquipSlot.WEAPON, combatStyle = CombatStyle.MELEE, levelRequired = 1,
             stats = ItemStats(attackBonus = 2, maxHitBonus = 2)
+        ),
+        ItemDefinition(
+            id = "mining_cape", name = "Mining Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "MINING"
+        ),
+        ItemDefinition(
+            id = "woodcutting_cape", name = "Woodcutting Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "WOODCUTTING"
+        ),
+        ItemDefinition(
+            id = "fishing_cape", name = "Fishing Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "FISHING"
+        ),
+        ItemDefinition(
+            id = "farming_cape", name = "Farming Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "FARMING"
+        ),
+        ItemDefinition(
+            id = "thieving_cape", name = "Thieving Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "THIEVING"
+        ),
+        ItemDefinition(
+            id = "smithing_cape", name = "Smithing Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "SMITHING"
+        ),
+        ItemDefinition(
+            id = "cooking_cape", name = "Cooking Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "COOKING"
+        ),
+        ItemDefinition(
+            id = "crafting_cape", name = "Crafting Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "CRAFTING"
+        ),
+        ItemDefinition(
+            id = "fletching_cape", name = "Fletching Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "FLETCHING"
+        ),
+        ItemDefinition(
+            id = "alchemy_cape", name = "Alchemy Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "ALCHEMY"
+        ),
+        ItemDefinition(
+            id = "magic_cape", name = "Magic Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "MAGIC"
+        ),
+        ItemDefinition(
+            id = "attack_cape", name = "Attack Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "ATTACK"
+        ),
+        ItemDefinition(
+            id = "strength_cape", name = "Strength Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "STRENGTH"
+        ),
+        ItemDefinition(
+            id = "defense_cape", name = "Defense Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "DEFENSE"
+        ),
+        ItemDefinition(
+            id = "prayer_cape", name = "Prayer Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "PRAYER"
+        ),
+        ItemDefinition(
+            id = "archery_cape", name = "Archery Cape", category = ItemCategory.ARMOR,
+            rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
+            equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "ARCHERY"
         )
    ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
 

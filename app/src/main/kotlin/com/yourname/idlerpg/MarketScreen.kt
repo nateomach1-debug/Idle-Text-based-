@@ -34,7 +34,23 @@ data class VendorBuyableItem(
 object VendorBuyCatalog {
     val items = listOf(
         VendorBuyableItem("flour", "Flour", 2L),
-        VendorBuyableItem("vial_of_water", "Vial of Water", 2L)
+        VendorBuyableItem("vial_of_water", "Vial of Water", 2L),
+        VendorBuyableItem("mining_cape", "Mining Cape", 10000L),
+        VendorBuyableItem("woodcutting_cape", "Woodcutting Cape", 10000L),
+        VendorBuyableItem("fishing_cape", "Fishing Cape", 10000L),
+        VendorBuyableItem("farming_cape", "Farming Cape", 10000L),
+        VendorBuyableItem("thieving_cape", "Thieving Cape", 10000L),
+        VendorBuyableItem("smithing_cape", "Smithing Cape", 10000L),
+        VendorBuyableItem("cooking_cape", "Cooking Cape", 10000L),
+        VendorBuyableItem("crafting_cape", "Crafting Cape", 10000L),
+        VendorBuyableItem("fletching_cape", "Fletching Cape", 10000L),
+        VendorBuyableItem("alchemy_cape", "Alchemy Cape", 10000L),
+        VendorBuyableItem("magic_cape", "Magic Cape", 10000L),
+        VendorBuyableItem("attack_cape", "Attack Cape", 10000L),
+        VendorBuyableItem("strength_cape", "Strength Cape", 10000L),
+        VendorBuyableItem("defense_cape", "Defense Cape", 10000L),
+        VendorBuyableItem("prayer_cape", "Prayer Cape", 10000L),
+        VendorBuyableItem("archery_cape", "Archery Cape", 10000L)
     )
 }
 

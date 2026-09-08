@@ -72,6 +72,8 @@ sealed class Effect {
     data class AccessUnlock(val description: String) : Effect()
     data class FlatStatBonus(val statName: String, val amount: Int) : Effect()
     data class TimerReduction(val scope: EffectScope, val percent: Double) : Effect()
+    data class MaterialSaveChance(val scope: EffectScope, val percent: Double) : Effect()
+    data class CraftSuccessBoost(val scope: EffectScope, val percent: Double) : Effect()
 }
 
 object EffectStacker {
@@ -91,6 +93,12 @@ object EffectStacker {
 
     fun totalTimerReductionPercent(effects: List<Effect>, skill: SkillType): Double =
         effects.filterIsInstance<Effect.TimerReduction>().filter { appliesTo(it.scope, skill) }.sumOf { it.percent }
+
+    fun totalMaterialSaveChancePercent(effects: List<Effect>, skill: SkillType): Double =
+        effects.filterIsInstance<Effect.MaterialSaveChance>().filter { appliesTo(it.scope, skill) }.sumOf { it.percent }
+
+    fun totalCraftSuccessBoostPercent(effects: List<Effect>, skill: SkillType): Double =
+        effects.filterIsInstance<Effect.CraftSuccessBoost>().filter { appliesTo(it.scope, skill) }.sumOf { it.percent }
 
     fun allAccessUnlocks(effects: List<Effect>): List<Effect.AccessUnlock> = effects.filterIsInstance<Effect.AccessUnlock>()
     fun allFlatStatBonuses(effects: List<Effect>): List<Effect.FlatStatBonus> = effects.filterIsInstance<Effect.FlatStatBonus>()
@@ -112,6 +120,71 @@ object UnlockTable {
         SkillUnlock(SkillType.MAGIC, 40, listOf(
             Effect.TimerReduction(EffectScope.Group(SkillGroup.PRODUCTION), 5.0),
             Effect.AccessUnlock("Teleportation spell")
+        )),
+        // ---- Mastery perks (level 50, one per skill) ----
+        SkillUnlock(SkillType.ATTACK, 50, listOf(
+            Effect.AccessUnlock("Combat Mastery: +5% hit chance (melee)"),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.ATTACK), 5.0)
+        )),
+        SkillUnlock(SkillType.STRENGTH, 50, listOf(
+            Effect.AccessUnlock("Combat Mastery: +5% min/max hit damage (melee)"),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.STRENGTH), 5.0)
+        )),
+        SkillUnlock(SkillType.DEFENSE, 50, listOf(
+            Effect.AccessUnlock("Combat Mastery: +5% incoming damage reduction"),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.DEFENSE), 5.0)
+        )),
+        SkillUnlock(SkillType.ARCHERY, 50, listOf(
+            Effect.AccessUnlock("Combat Mastery: +5% hit chance (ranged)"),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.ARCHERY), 5.0)
+        )),
+        SkillUnlock(SkillType.MAGIC, 50, listOf(
+            Effect.AccessUnlock("Combat Mastery: +5% hit chance (magic)"),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.MAGIC), 5.0)
+        )),
+        SkillUnlock(SkillType.PRAYER, 50, listOf(
+            Effect.AccessUnlock("Combat Mastery: +5% reduced monster damage while a prayer is active"),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.PRAYER), 5.0)
+        )),
+        SkillUnlock(SkillType.MINING, 50, listOf(
+            Effect.DropRateBoost(EffectScope.SingleSkill(SkillType.MINING), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.MINING), 5.0)
+        )),
+        SkillUnlock(SkillType.WOODCUTTING, 50, listOf(
+            Effect.DropRateBoost(EffectScope.SingleSkill(SkillType.WOODCUTTING), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.WOODCUTTING), 5.0)
+        )),
+        SkillUnlock(SkillType.FISHING, 50, listOf(
+            Effect.DropRateBoost(EffectScope.SingleSkill(SkillType.FISHING), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.FISHING), 5.0)
+        )),
+        SkillUnlock(SkillType.FARMING, 50, listOf(
+            Effect.DropRateBoost(EffectScope.SingleSkill(SkillType.FARMING), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.FARMING), 5.0)
+        )),
+        SkillUnlock(SkillType.THIEVING, 50, listOf(
+            Effect.DropRateBoost(EffectScope.SingleSkill(SkillType.THIEVING), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.THIEVING), 5.0)
+        )),
+        SkillUnlock(SkillType.SMITHING, 50, listOf(
+            Effect.MaterialSaveChance(EffectScope.SingleSkill(SkillType.SMITHING), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.SMITHING), 5.0)
+        )),
+        SkillUnlock(SkillType.COOKING, 50, listOf(
+            Effect.CraftSuccessBoost(EffectScope.SingleSkill(SkillType.COOKING), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.COOKING), 5.0)
+        )),
+        SkillUnlock(SkillType.CRAFTING, 50, listOf(
+            Effect.MaterialSaveChance(EffectScope.SingleSkill(SkillType.CRAFTING), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.CRAFTING), 5.0)
+        )),
+        SkillUnlock(SkillType.FLETCHING, 50, listOf(
+            Effect.MaterialSaveChance(EffectScope.SingleSkill(SkillType.FLETCHING), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.FLETCHING), 5.0)
+        )),
+        SkillUnlock(SkillType.ALCHEMY, 50, listOf(
+            Effect.MaterialSaveChance(EffectScope.SingleSkill(SkillType.ALCHEMY), 10.0),
+            Effect.XpBoost(EffectScope.SingleSkill(SkillType.ALCHEMY), 5.0)
         ))
     )
 

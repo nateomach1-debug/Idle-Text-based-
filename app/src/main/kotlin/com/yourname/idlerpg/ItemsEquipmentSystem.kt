@@ -1900,14 +1900,14 @@ object CraftingSuccessCalculator {
     private const val BASE_SUCCESS_PERCENT = 80.0
     private const val PERCENT_PER_LEVEL_ABOVE = 1.0
 
-    fun successChancePercent(playerSkillLevel: Int, recipe: Recipe): Double {
+    fun successChancePercent(playerSkillLevel: Int, recipe: Recipe, bonusPercent: Double = 0.0): Double {
         val levelsAbove = (playerSkillLevel - recipe.levelRequired).coerceAtLeast(0)
-        val chance = BASE_SUCCESS_PERCENT + (levelsAbove * PERCENT_PER_LEVEL_ABOVE)
+        val chance = BASE_SUCCESS_PERCENT + (levelsAbove * PERCENT_PER_LEVEL_ABOVE) + bonusPercent
         return chance.coerceAtMost(100.0)
     }
 
-    fun rollSuccess(playerSkillLevel: Int, recipe: Recipe): Boolean {
-        val chance = successChancePercent(playerSkillLevel, recipe)
+    fun rollSuccess(playerSkillLevel: Int, recipe: Recipe, bonusPercent: Double = 0.0): Boolean {
+        val chance = successChancePercent(playerSkillLevel, recipe, bonusPercent)
         return Random.nextDouble(0.0, 100.0) < chance
     }
 }
@@ -2103,7 +2103,13 @@ class Inventory(
 class CraftingResult(val succeeded: Boolean, val itemId: String, val quantityProduced: Int)
 
 class CraftingService {
-    fun craftOnce(inventory: Inventory, itemId: String, playerSkillLevel: Int): ServiceResult<CraftingResult> {
+    fun craftOnce(
+        inventory: Inventory,
+        itemId: String,
+        playerSkillLevel: Int,
+        materialSaveChancePercent: Double = 0.0,
+        successBonusPercent: Double = 0.0
+    ): ServiceResult<CraftingResult> {
         val recipe = RecipeCatalog.forOutput(itemId) ?: return ServiceResult.Failure("No recipe for this item.")
         if (playerSkillLevel < recipe.levelRequired) {
             return ServiceResult.Failure("Requires " + recipe.skillRequired + " level " + recipe.levelRequired + ".")
@@ -2115,11 +2121,17 @@ class CraftingService {
             }
         }
 
+        // Mastery Perk (Smithing/Crafting/Fletching/Alchemy): each ingredient
+        // independently has a chance to not be consumed, rather than one
+        // all-or-nothing roll for the whole craft.
         for (ingredient in recipe.ingredients) {
-            inventory.removeItem(ingredient.itemId, ingredient.quantity)
+            val saved = materialSaveChancePercent > 0.0 && Random.nextDouble(0.0, 100.0) < materialSaveChancePercent
+            if (!saved) {
+                inventory.removeItem(ingredient.itemId, ingredient.quantity)
+            }
         }
 
-        val succeeded = CraftingSuccessCalculator.rollSuccess(playerSkillLevel, recipe)
+        val succeeded = CraftingSuccessCalculator.rollSuccess(playerSkillLevel, recipe, successBonusPercent)
         if (succeeded) {
             inventory.addItem(recipe.outputItemId, recipe.outputQuantity)
         }

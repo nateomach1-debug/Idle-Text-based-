@@ -89,6 +89,8 @@ private fun effectSummaryText(effect: Effect): String = when (effect) {
     is Effect.CostDiscount -> "-" + effect.percent + "% cost"
     is Effect.FlatStatBonus -> "+" + effect.amount + " " + effect.statName
     is Effect.TimerReduction -> "-" + effect.percent + "% action time"
+    is Effect.MaterialSaveChance -> "+" + effect.percent + "% material save chance"
+    is Effect.CraftSuccessBoost -> "+" + effect.percent + "% success chance"
 }
 
 private val RECIPE_BASED_SKILL_LABELS: Map<String, String> = mapOf(
@@ -928,7 +930,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                         onSellToVendor = { sellItemId, quantity ->
                                             gameViewModel.sellItemToVendor(sellItemId, quantity)
                                         },
-                                        vendorBuyableItems = VendorBuyCatalog.items,
+                                        vendorBuyableItems = gameViewModel.vendorBuyableItems(),
                                         onBuyFromVendor = { buyItemId, quantity ->
                                             gameViewModel.buyItemFromVendor(buyItemId, quantity)
                                         }

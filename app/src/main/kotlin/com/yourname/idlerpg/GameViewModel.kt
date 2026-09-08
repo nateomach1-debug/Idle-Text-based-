@@ -3,6 +3,10 @@ package com.yourname.idlerpg.data
 import com.yourname.idlerpg.LeaderboardCategory
 import com.yourname.idlerpg.LeaderboardRow
 import com.yourname.idlerpg.SupabaseLeaderboardRepository
+import com.yourname.idlerpg.UnlockTable
+import com.yourname.idlerpg.EffectStacker
+import com.yourname.idlerpg.VendorBuyCatalog
+import com.yourname.idlerpg.VendorBuyableItem
 
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.withTimeoutOrNull
@@ -306,6 +310,57 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val percent = guildXpBonusPercent()
         if (percent <= 0.0) return emptyList()
         return SkillGroup.entries.map { group -> Effect.XpBoost(EffectScope.Group(group), percent) }
+    }
+
+    // =========================================================
+    // MASTERY PERKS + SKILL CAPES
+    // Level-50 perks live in UnlockTable (existing level->effect
+    // mechanism). Capes add an equal-sized extra bonus on top while
+    // worn, mirroring the guild XP bonus pattern above: extra Effects
+    // merged in at every grantXp() call site via capeBonusEffects().
+    // Combat's hit-chance/damage/reduction bonuses are NOT routed
+    // through the Effect system (combat's accuracy/damage formulas
+    // are already hardcoded, not effect-driven) - those use direct
+    // level/cape checks via masteryBonusPercent() instead.
+    // =========================================================
+    private fun capeItemIdFor(skillType: SkillType): String = skillType.name.lowercase() + "_cape"
+
+    private fun hasSkillCapeEquipped(characterId: String, skillType: SkillType): Boolean =
+        inventoryService.inventoryFor(characterId).equippedItemIn(EquipSlot.CAPE) == capeItemIdFor(skillType)
+
+    private fun masteryBonusPercent(level: Int, hasCape: Boolean, baseBonus: Double, capeBonus: Double): Double = when {
+        hasCape -> capeBonus
+        level >= 50 -> baseBonus
+        else -> 0.0
+    }
+
+    private fun capeBonusEffects(characterId: String): List<Effect> {
+        val equippedCapeId = inventoryService.inventoryFor(characterId).equippedItemIn(EquipSlot.CAPE) ?: return emptyList()
+        val skill = SkillType.values().find { capeItemIdFor(it) == equippedCapeId } ?: return emptyList()
+        val xpBoost = Effect.XpBoost(EffectScope.SingleSkill(skill), 5.0)
+        val specific: Effect? = when (skill) {
+            SkillType.MINING, SkillType.WOODCUTTING, SkillType.FISHING, SkillType.FARMING, SkillType.THIEVING ->
+                Effect.DropRateBoost(EffectScope.SingleSkill(skill), 10.0)
+            SkillType.SMITHING, SkillType.CRAFTING, SkillType.FLETCHING, SkillType.ALCHEMY ->
+                Effect.MaterialSaveChance(EffectScope.SingleSkill(skill), 10.0)
+            SkillType.COOKING -> Effect.CraftSuccessBoost(EffectScope.SingleSkill(skill), 10.0)
+            else -> null // combat skills: handled directly via hasSkillCapeEquipped() in tickCombat
+        }
+        return listOfNotNull(xpBoost, specific)
+    }
+
+    fun vendorBuyableItems(): List<VendorBuyableItem> {
+        val characterId = _currentCharacterId.value
+        return VendorBuyCatalog.items.filter { vendorItem ->
+            val def = ItemCatalog.find(vendorItem.itemId)
+            val requiredSkillName = def?.skillRequired
+            if (requiredSkillName == null || characterId == null) {
+                true
+            } else {
+                val skillType = SkillType.values().find { it.name == requiredSkillName }
+                if (skillType == null) true else skillLevel(characterId, skillType) >= (def.levelRequired)
+            }
+        }
     }
 
     fun currentInventoryQuantityOf(itemId: String): Int {
@@ -849,14 +904,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         when (weapon?.style) {
             CombatStyle.MAGIC -> {
                 val magicLevel = skillLevel(characterId, SkillType.MAGIC)
-                accuracy = magicLevel * 2 + weapon.baseAccuracy
+                val magicMastery = masteryBonusPercent(magicLevel, hasSkillCapeEquipped(characterId, SkillType.MAGIC), 5.0, 10.0)
+                accuracy = ((magicLevel * 2 + weapon.baseAccuracy) * (1.0 + magicMastery / 100.0)).toInt()
                 maxHit = (magicLevel / 3) + weapon.baseMaxHit
                 minHit = magicLevel / 10
                 attackSpeedSeconds = weapon.attackSpeedSeconds
             }
             CombatStyle.RANGED -> {
                 val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
-                accuracy = archeryLevel * 2 + weapon.baseAccuracy
+                val archeryMastery = masteryBonusPercent(archeryLevel, hasSkillCapeEquipped(characterId, SkillType.ARCHERY), 5.0, 10.0)
+                accuracy = ((archeryLevel * 2 + weapon.baseAccuracy) * (1.0 + archeryMastery / 100.0)).toInt()
                 maxHit = (archeryLevel / 3) + weapon.baseMaxHit
                 minHit = archeryLevel / 10
                 attackSpeedSeconds = weapon.attackSpeedSeconds
@@ -864,9 +921,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             else -> {
                 val attackLevel = skillLevel(characterId, SkillType.ATTACK)
                 val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
-                accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
-                maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
-                minHit = strengthLevel / 10
+                val attackMastery = masteryBonusPercent(attackLevel, hasSkillCapeEquipped(characterId, SkillType.ATTACK), 5.0, 10.0)
+                val strengthMastery = masteryBonusPercent(strengthLevel, hasSkillCapeEquipped(characterId, SkillType.STRENGTH), 5.0, 10.0)
+                accuracy = ((attackLevel * 2 + (weapon?.baseAccuracy ?: 5)) * (1.0 + attackMastery / 100.0)).toInt()
+                maxHit = (((strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)) * (1.0 + strengthMastery / 100.0)).toInt()
+                minHit = ((strengthLevel / 10) * (1.0 + strengthMastery / 100.0)).toInt()
                 attackSpeedSeconds = weapon?.attackSpeedSeconds ?: 2.4
             }
         }
@@ -902,7 +961,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
                 if (attack.didHit) {
                     log.add(CombatLogEntry("You hit for " + attack.damageDealt + "."))
-                    val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong(), guildXpBonusEffects())
+                    val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong(), guildXpBonusEffects() + capeBonusEffects(characterId))
                     if (xpGrant is ServiceResult.Success) refreshSkills()
                 } else {
                     log.add(CombatLogEntry("You missed."))
@@ -932,18 +991,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val monster = session.currentMonster
                 if (monster != null && Random.nextDouble(0.0, 100.0) < 40.0) {
                     val rawDmg = Random.nextInt(1, (monster.defenseRating / 3).coerceAtLeast(1) + 1)
-                    val prayerAdjustedDmg = if (inventoryService.inventoryFor(characterId).selectedPrayerId == "rock_skin") {
+                    val activePrayerId = inventoryService.inventoryFor(characterId).selectedPrayerId
+                    val prayerSpecificDmg = if (activePrayerId == "rock_skin") {
                         (rawDmg * 0.8).toInt().coerceAtLeast(1)
                     } else {
                         rawDmg
                     }
+                    // Mastery Perk (Prayer): extra reduction whenever ANY prayer is
+                    // active, stacking on top of that prayer's own specific effect.
+                    val prayerMasteryReductionPercent = if (activePrayerId != null) {
+                        val prayerLevel = skillLevel(characterId, SkillType.PRAYER)
+                        masteryBonusPercent(prayerLevel, hasSkillCapeEquipped(characterId, SkillType.PRAYER), 5.0, 10.0)
+                    } else {
+                        0.0
+                    }
+                    val prayerAdjustedDmg = (prayerSpecificDmg * (1.0 - prayerMasteryReductionPercent / 100.0)).toInt().coerceAtLeast(1)
                     // Defense passively reduces incoming damage regardless of which skill is
                     // currently selected to train, matching the classic "defense stat" model
                     // rather than only mattering while actively training it. Capped at 50%
                     // reduction so high Defense meaningfully helps survivability without making
                     // combat damage-immune; at least 1 damage always gets through.
                     val defenseLevel = skillLevel(characterId, SkillType.DEFENSE)
-                    val defenseReductionPercent = (defenseLevel * 0.5).coerceAtMost(50.0)
+                    val defenseMastery = masteryBonusPercent(defenseLevel, hasSkillCapeEquipped(characterId, SkillType.DEFENSE), 5.0, 10.0)
+                    val defenseReductionPercent = (defenseLevel * 0.5 + defenseMastery).coerceAtMost(50.0)
                     val dmg = (prayerAdjustedDmg * (1.0 - defenseReductionPercent / 100.0)).toInt().coerceAtLeast(1)
                     combatService.applyDamageToCharacter(characterId, dmg)
                     log.add(CombatLogEntry(monster.name + " hits you for " + dmg + "."))
@@ -1749,10 +1819,22 @@ fun logout() {
                 if (requiredSeedId != null) {
                     inventory.removeItem(requiredSeedId, effectiveActions.toInt())
                 }
-                progressionService.grantXp(characterId, skillType, action.xpPerAction * effectiveActions, guildXpBonusEffects())
+                progressionService.grantXp(characterId, skillType, action.xpPerAction * effectiveActions, guildXpBonusEffects() + capeBonusEffects(characterId))
                 inventory.addItem(queue.itemId, effectiveActions.toInt())
                 if (skillType == SkillType.MINING) {
                     MiningBonusGemTable.rollAndGrant(inventory, effectiveActions.toInt())
+                }
+                // Mastery Perk (gathering skills): chance of one bonus item per
+                // completed action, rolled independently per action.
+                val gatherBook = progressionService.skillBookFor(characterId)
+                val gatherActiveEffects = UnlockTable.allActiveEffects(gatherBook) + capeBonusEffects(characterId)
+                val dropRateBoostPercent = EffectStacker.totalDropRateBoostPercent(gatherActiveEffects, skillType)
+                if (dropRateBoostPercent > 0.0) {
+                    var bonusCount = 0
+                    repeat(effectiveActions.toInt()) {
+                        if (Random.nextDouble(0.0, 100.0) < dropRateBoostPercent) bonusCount++
+                    }
+                    if (bonusCount > 0) inventory.addItem(queue.itemId, bonusCount)
                 }
             }
             if (requiredSeedId != null && effectiveActions < actionsCompleted) {
@@ -1800,12 +1882,16 @@ fun logout() {
         val inventory = inventoryService.inventoryFor(characterId)
         val xpPerAttempt = CraftingTierCurve.xpFor(recipe.levelRequired)
 
+        val craftActiveEffects = UnlockTable.allActiveEffects(book) + capeBonusEffects(characterId)
+        val materialSaveChancePercent = EffectStacker.totalMaterialSaveChancePercent(craftActiveEffects, skillType)
+        val successBonusPercent = EffectStacker.totalCraftSuccessBoostPercent(craftActiveEffects, skillType)
+
         var successes = 0
         var totalProduced = 0
         var xpGranted = 0L
         var stoppedReason: String? = null
         for (i in 0 until attempts) {
-            val result = craftingService.craftOnce(inventory, itemId, playerLevel)
+            val result = craftingService.craftOnce(inventory, itemId, playerLevel, materialSaveChancePercent, successBonusPercent)
             if (result is ServiceResult.Success) {
                 xpGranted += xpPerAttempt
                 if (result.value.succeeded) {
@@ -1818,7 +1904,7 @@ fun logout() {
             }
         }
         if (xpGranted > 0) {
-            progressionService.grantXp(characterId, skillType, xpGranted, guildXpBonusEffects())
+            progressionService.grantXp(characterId, skillType, xpGranted, guildXpBonusEffects() + capeBonusEffects(characterId))
         }
         return CraftBatchResult(successes, totalProduced, xpGranted, stoppedReason)
     }
