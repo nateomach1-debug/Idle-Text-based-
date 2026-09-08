@@ -26,20 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output126.txt
-          echo "=== Call sites of buildSkillDetailState and buildSmithingState ===" > $OUT
-          grep -n "buildSkillDetailState(\|buildSmithingState(" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output127.txt
+          echo "=== equippedItems.collectAsState() usage across MainActivity.kt ===" > $OUT
+          grep -n "equippedItems" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Wider context around each call site ===" >> $OUT
-          grep -n "buildSkillDetailState(\|buildSmithingState(" -B 15 -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== equippedItems StateFlow exposure on GameViewModel ===" >> $OUT
-          grep -n "val equippedItems\b" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== SkillUnlockSummary data class definition ===" >> $OUT
-          grep -n "data class SkillUnlockSummary" -A 6 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Enclosing composable function name for lines 650-735 ===" >> $OUT
+          sed -n '650,735p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output126.txt
+      - discovery_output127.txt
       
   apply-patch:
     name: Apply Patch Script
