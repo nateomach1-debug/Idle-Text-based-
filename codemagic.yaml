@@ -41,7 +41,7 @@ workflows:
     scripts:
       - name: Run patch scripts
         script: |
-          python3 patch_bury_queue_and_prayer.py
+          python3 patch_mining_bg_image.py
       - name: Commit and push
         script: |
           git config user.email "codemagic@example.com"
