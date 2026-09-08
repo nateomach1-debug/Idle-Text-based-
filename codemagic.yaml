@@ -26,23 +26,25 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output116.txt
-          echo "=== meleeAccuracy / FlatStatBonus consumer (if any) ===" > $OUT
-          grep -rn "meleeAccuracy\|FlatStatBonus" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output117.txt
+          echo "=== VendorBuyCatalog + VendorBuyableItem full definition ===" > $OUT
+          grep -n "object VendorBuyCatalog" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== tickCombat hit chance / damage roll logic ===" >> $OUT
-          grep -n "fun tickCombat" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          grep -n "data class VendorBuyableItem" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Gathering tick / resource-grant-per-action logic ===" >> $OUT
-          grep -n "fun tickSkilling\|fun startSkillAction" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Where vendorBuyableItems is computed/filtered for the ViewModel/UI ===" >> $OUT
+          grep -n "vendorBuyableItems\|fun vendorBuyableItemsFor" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== MarketScreen.kt vendor item listing / catalog construction ===" >> $OUT
-          grep -n "fun MarketScreen" -A 50 ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Rest of tickCombat: MELEE branch + damage/reduction resolution + resolveAttack ===" >> $OUT
+          grep -n "fun tickCombat" -A 140 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt | tail -n 90 >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Vendor catalog data source (what defines vendor-buyable items + prices) ===" >> $OUT
-          grep -n "VendorCatalog\|vendorCatalog\|object Vendor\|vendorStock\|isRealMoneyPurchasable" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== CombatSystem.resolveAttack + Defense reduction formula ===" >> $OUT
+          grep -n "fun resolveAttack\|defenseLevel\|0.005\|coerceAtMost(0.5" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Prayer damage-reduction application site ===" >> $OUT
+          grep -n "selectedPrayerId" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output116.txt
+      - discovery_output117.txt
       
   apply-patch:
     name: Apply Patch Script
