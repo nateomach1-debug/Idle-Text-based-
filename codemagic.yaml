@@ -26,17 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output120.txt
-          echo "=== Current commit HEAD ===" > $OUT
-          git log -1 --oneline >> $OUT
+          OUT=discovery_output121.txt
+          echo "=== SkillsScreen.kt: level-50 / mastery perk display ===" > $OUT
+          grep -n "AccessUnlock\|allActiveEffects\|UnlockTable" ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== GameViewModel.kt import block (fresh check) ===" >> $OUT
-          sed -n '1,20p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== Context around the perk display (wider view) ===" >> $OUT
+          grep -n "fun SkillsScreen\|fun SkillDetailCard\|fun SkillRow" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== VendorBuyCatalog declaration context (modifiers, enclosing scope) ===" >> $OUT
-          sed -n '1,55p' ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT
+          echo "=== SkillSummary data class (what the screen already receives per skill) ===" >> $OUT
+          grep -n "data class SkillSummary" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Where SkillSummary is constructed in GameViewModel.kt ===" >> $OUT
+          grep -n "SkillSummary(" -B 3 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output120.txt
+      - discovery_output121.txt
       
   apply-patch:
     name: Apply Patch Script
