@@ -129,7 +129,7 @@ private fun DrawScope.drawOreGlints(color: Color) {
 // whole screen, which is what made icons look oversized).
 @Composable
 fun Modifier.miningThemedBackground(): Modifier {
-    val imageBitmap = imageResource(id = R.drawable.bg_mining_pickaxes)
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_mining_pickaxes)
     return this.drawBehind {
         drawRect(brush = ShaderBrush(ImageShader(imageBitmap, TileMode.Repeated, TileMode.Repeated)))
     }
