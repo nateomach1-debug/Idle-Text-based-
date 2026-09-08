@@ -36,8 +36,6 @@ import io.github.jan.supabase.auth.auth
 import com.yourname.idlerpg.ui.components.ChatChannelUi
 import com.yourname.idlerpg.ui.components.ChatMessageUi
 import com.yourname.idlerpg.ui.components.DmConversationSummary
-import com.yourname.idlerpg.ui.screens.VendorBuyCatalog
-import com.yourname.idlerpg.ui.screens.VendorBuyableItem
 
 data class OfflineSummary(
     val awaySeconds: Long,
