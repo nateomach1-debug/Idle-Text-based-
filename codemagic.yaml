@@ -26,25 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output117.txt
-          echo "=== VendorBuyCatalog + VendorBuyableItem full definition ===" > $OUT
-          grep -n "object VendorBuyCatalog" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output118.txt
+          echo "=== craftOnce() call site in GameViewModel ===" > $OUT
+          grep -n "craftOnce(" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          grep -n "data class VendorBuyableItem" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Full crafting tick context around the call site ===" >> $OUT
+          grep -n "fun tickCrafting\|fun craftOnceForActiveQueue\|craftingService" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Where vendorBuyableItems is computed/filtered for the ViewModel/UI ===" >> $OUT
-          grep -n "vendorBuyableItems\|fun vendorBuyableItemsFor" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== CraftingSuccessCalculator full definition ===" >> $OUT
+          grep -n "object CraftingSuccessCalculator" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Rest of tickCombat: MELEE branch + damage/reduction resolution + resolveAttack ===" >> $OUT
-          grep -n "fun tickCombat" -A 140 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt | tail -n 90 >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== CombatSystem.resolveAttack + Defense reduction formula ===" >> $OUT
-          grep -n "fun resolveAttack\|defenseLevel\|0.005\|coerceAtMost(0.5" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== Prayer damage-reduction application site ===" >> $OUT
-          grep -n "selectedPrayerId" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Random import check in ItemsEquipmentSystem.kt ===" >> $OUT
+          grep -n "^import" ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output117.txt
+      - discovery_output118.txt
       
   apply-patch:
     name: Apply Patch Script
