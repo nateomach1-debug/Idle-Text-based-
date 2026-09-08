@@ -7,9 +7,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.yourname.idlerpg.R
 
 // =========================================================
 // PROCEDURAL PATTERN BACKGROUNDS
@@ -113,25 +118,19 @@ private fun DrawScope.drawOreGlints(color: Color) {
     }
 }
 
-fun Modifier.miningThemedBackground(): Modifier = this.drawBehind {
-    val baseColor = skillThemeColor("MINING") ?: MutedTeal
-    val gradient = Brush.verticalGradient(
-        colors = listOf(CharcoalBackground, baseColor.copy(alpha = GRADIENT_BOTTOM_ALPHA))
-    )
-    drawRect(brush = gradient)
-    drawMineSupportTrusses(baseColor.copy(alpha = 0.10f))
-    drawOreGlints(ParchmentGold.copy(alpha = 0.30f))
-    drawPickaxeSilhouette(
-        color = baseColor.copy(alpha = 0.16f),
-        center = Offset(size.width * 0.78f, size.height * 0.32f),
-        scale = 1.3f,
-        rotationDegrees = -35f
-    )
+// Real generated image asset (res/drawable/bg_mining_pickaxes.webp) - a
+// tessellated angled-pickaxe wallpaper pattern - painted to fill the
+// screen. Replaces the earlier procedural-Canvas attempt.
+@Composable
+fun Modifier.miningThemedBackground(): Modifier {
+    val painter = painterResource(id = R.drawable.bg_mining_pickaxes)
+    return this.paint(painter, contentScale = ContentScale.Crop)
 }
 
 // Per-skill themed background. MINING gets its own thematic scene;
 // every other skill falls through to the generic tinted pattern until
 // its own themed background is added the same way.
+@Composable
 fun Modifier.skillPatternBackground(skillId: String): Modifier = when (skillId) {
     "MINING" -> this.miningThemedBackground()
     else -> this.proceduralThemeBackground(baseColor = skillThemeColor(skillId) ?: MutedTeal)
