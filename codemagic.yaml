@@ -26,23 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output115.txt
-          echo "=== UnlockTable full definition ===" > $OUT
-          grep -n "object UnlockTable" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output116.txt
+          echo "=== meleeAccuracy / FlatStatBonus consumer (if any) ===" > $OUT
+          grep -rn "meleeAccuracy\|FlatStatBonus" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== DropRateBoost usage sites (beyond definition) ===" >> $OUT
-          grep -rn "DropRateBoost\|totalDropRateBoostPercent" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== tickCombat hit chance / damage roll logic ===" >> $OUT
+          grep -n "fun tickCombat" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== CostDiscount usage sites (beyond definition) ===" >> $OUT
-          grep -rn "CostDiscount\|totalCostDiscountPercent" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Gathering tick / resource-grant-per-action logic ===" >> $OUT
+          grep -n "fun tickSkilling\|fun startSkillAction" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Vendor/shop item listing composable + level-gating patterns ===" >> $OUT
-          grep -n "VendorScreen\|MarketScreen\|fun vendorCatalog\|VendorItem\|isVisibleFor\|levelRequired" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== MarketScreen.kt vendor item listing / catalog construction ===" >> $OUT
+          grep -n "fun MarketScreen" -A 50 ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== equippedItems / how currently-equipped items are read at runtime ===" >> $OUT
-          grep -n "fun equippedItems\|fun equippedItemIn\|_equippedItems\|equippedSlots" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Vendor catalog data source (what defines vendor-buyable items + prices) ===" >> $OUT
+          grep -n "VendorCatalog\|vendorCatalog\|object Vendor\|vendorStock\|isRealMoneyPurchasable" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output115.txt
+      - discovery_output116.txt
       
   apply-patch:
     name: Apply Patch Script
