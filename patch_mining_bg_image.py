@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """
-Corrective patch: imageResource() call-site fix in PatternBackground.kt.
-
-imageResource is declared as an extension function on ImageBitmap.Companion,
-not a free-standing top-level function - needs the ImageBitmap. receiver.
+Corrective patch: missing ImageBitmap import in PatternBackground.kt.
 """
 import os
 
@@ -13,16 +10,16 @@ path = os.path.join(ROOT, "PatternBackground.kt")
 with open(path, "r", encoding="utf-8") as f:
     content = f.read()
 
-old = "    val imageBitmap = imageResource(id = R.drawable.bg_mining_pickaxes)\n"
-new = "    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.bg_mining_pickaxes)\n"
+old = "import androidx.compose.ui.graphics.ImageShader\n"
+new = "import androidx.compose.ui.graphics.ImageBitmap\nimport androidx.compose.ui.graphics.ImageShader\n"
 
-if "ImageBitmap.imageResource(id = R.drawable.bg_mining_pickaxes)" in content:
+if "import androidx.compose.ui.graphics.ImageBitmap\n" in content:
     print("SKIP (already fixed)")
 elif old in content:
     content = content.replace(old, new)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
-    print("PATCHED: imageResource call site")
+    print("PATCHED: added ImageBitmap import")
 else:
     raise RuntimeError("Anchor text not found")
 
