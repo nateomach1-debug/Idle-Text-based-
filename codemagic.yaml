@@ -26,26 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output114.txt
-          echo "=== craftOnce() and material consumption ===" > $OUT
-          grep -n "fun craftOnce" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output115.txt
+          echo "=== UnlockTable full definition ===" > $OUT
+          grep -n "object UnlockTable" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Effect sealed class / Effect.XpBoost definition ===" >> $OUT
-          grep -n "sealed class Effect\|object XpBoost\|data class XpBoost\|Effect.XpBoost" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== DropRateBoost usage sites (beyond definition) ===" >> $OUT
+          grep -rn "DropRateBoost\|totalDropRateBoostPercent" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== grantXp() signature + extraEffects handling ===" >> $OUT
-          grep -n "fun grantXp" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== CostDiscount usage sites (beyond definition) ===" >> $OUT
+          grep -rn "CostDiscount\|totalCostDiscountPercent" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Vendor / shop for-sale item filtering ===" >> $OUT
-          grep -rn "vendorItems\|fun vendorStock\|VendorScreen\|shopItems\|fun isForSale\|buyFromVendor" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Vendor/shop item listing composable + level-gating patterns ===" >> $OUT
+          grep -n "VendorScreen\|MarketScreen\|fun vendorCatalog\|VendorItem\|isVisibleFor\|levelRequired" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Equipped item stat/bonus application (equipment effects) ===" >> $OUT
-          grep -n "fun equippedItems\|fun equipmentBonus\|equippedStats\|fun totalStats\|EquipSlot.CAPE" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== Existing cape items in ItemCatalog (if any) ===" >> $OUT
-          grep -n "CAPE\|cape" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== equippedItems / how currently-equipped items are read at runtime ===" >> $OUT
+          grep -n "fun equippedItems\|fun equippedItemIn\|_equippedItems\|equippedSlots" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output114.txt
+      - discovery_output115.txt
       
   apply-patch:
     name: Apply Patch Script
