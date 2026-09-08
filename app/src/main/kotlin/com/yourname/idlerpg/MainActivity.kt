@@ -93,6 +93,29 @@ private fun effectSummaryText(effect: Effect): String = when (effect) {
     is Effect.CraftSuccessBoost -> "+" + effect.percent + "% success chance"
 }
 
+// Cape's OWN individual contribution (mirrors capeBonusEffects() in
+// GameViewModel.kt exactly - the level-50 perk already grants the base
+// bonus + 5% XP, the cape grants this same amount again on top).
+// Combat skills aren't Effect-driven (hardcoded in tickCombat), hence
+private val COMBAT_CAPE_BONUS_TEXT: Map<SkillType, String> = mapOf(
+    SkillType.ATTACK to "+5% hit chance (melee)",
+    SkillType.STRENGTH to "+5% min/max hit damage (melee)",
+    SkillType.DEFENSE to "+5% incoming damage reduction",
+    SkillType.ARCHERY to "+5% hit chance (ranged)",
+    SkillType.MAGIC to "+5% hit chance (magic)",
+    SkillType.PRAYER to "+5% reduced monster damage while a prayer is active"
+)
+
+private fun capeBonusDescriptionFor(skillType: SkillType): String {
+    val specific = COMBAT_CAPE_BONUS_TEXT[skillType] ?: when (skillType) {
+        SkillType.MINING, SkillType.WOODCUTTING, SkillType.FISHING, SkillType.FARMING, SkillType.THIEVING -> "+10% drop rate"
+        SkillType.SMITHING, SkillType.CRAFTING, SkillType.FLETCHING, SkillType.ALCHEMY -> "+10% material save chance"
+        SkillType.COOKING -> "+10% success chance"
+        else -> ""
+    }
+    return specific + ", +5% XP"
+}
+
 private val RECIPE_BASED_SKILL_LABELS: Map<String, String> = mapOf(
     "CRAFTING" to "Select Recipe",
     "COOKING" to "Select Dish",
@@ -121,7 +144,8 @@ private fun missingIngredientsFor(
 private fun buildSkillDetailState(
     skillId: String,
     summary: SkillSummary,
-    inventoryQuantities: Map<String, Int>
+    inventoryQuantities: Map<String, Int>,
+    hasCapeEquipped: Boolean = false
 ): SkillDetailState {
     val skillType = SkillType.valueOf(skillId)
 
@@ -130,6 +154,10 @@ private fun buildSkillDetailState(
             description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
             levelRequired = unlock.levelRequired
         )
+    } + if (hasCapeEquipped) {
+        listOf(SkillUnlockSummary(description = "Cape equipped: " + capeBonusDescriptionFor(skillType), levelRequired = 99))
+    } else {
+        emptyList()
     }
 
     val next = UnlockTable.allUnlocksFor(skillType)
@@ -197,13 +225,17 @@ private fun recipeToSmithingSummary(recipe: Recipe): SmithingRecipeSummary {
     return SmithingRecipeSummary(recipe.outputItemId, displayName, recipe.levelRequired, ingredients)
 }
 
-private fun buildSmithingState(summary: SkillSummary, inventoryQuantities: Map<String, Int>): SmithingState {
+private fun buildSmithingState(summary: SkillSummary, inventoryQuantities: Map<String, Int>, hasCapeEquipped: Boolean = false): SmithingState {
     val skillType = SkillType.SMITHING
     val earned = UnlockTable.unlocksEarnedAt(skillType, summary.level).map { unlock ->
         SkillUnlockSummary(
             description = unlock.grantedEffects.joinToString(", ") { effectSummaryText(it) },
             levelRequired = unlock.levelRequired
         )
+    } + if (hasCapeEquipped) {
+        listOf(SkillUnlockSummary(description = "Cape equipped: " + capeBonusDescriptionFor(skillType), levelRequired = 99))
+    } else {
+        emptyList()
     }
     val next = UnlockTable.allUnlocksFor(skillType)
         .filter { it.levelRequired > summary.level }
@@ -690,6 +722,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
 
                     Row(modifier = Modifier.fillMaxSize().weight(1f)) {
                         val isModerator by gameViewModel.isModerator.collectAsState()
+                        val equippedItemsForSkills by gameViewModel.equippedItems.collectAsState()
                         SideRail(
                             currentDestination = currentDestination,
                             destinations = AppDestination.values().filter { it != AppDestination.MODERATION || isModerator },
@@ -733,19 +766,33 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     Box(modifier = Modifier.fillMaxSize()) {
                                         when (screen.skillId) {
                                             "SMITHING" -> SmithingScreen(
-                                                buildSmithingState(it, inventoryQuantities),
+                                                buildSmithingState(
+                                                    it,
+                                                    inventoryQuantities,
+                                                    hasCapeEquipped = equippedItemsForSkills[EquipSlot.CAPE] == "smithing_cape"
+                                                ),
                                                 { skillsScreenState = SkillsScreenState.List },
                                                 { itemId -> gameViewModel.startCraftingAction(itemId) }
                                             )
                                             in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
-                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                                buildSkillDetailState(
+                                                    screen.skillId,
+                                                    it,
+                                                    inventoryQuantities,
+                                                    hasCapeEquipped = equippedItemsForSkills[EquipSlot.CAPE] == screen.skillId.lowercase() + "_cape"
+                                                ),
                                                 { skillsScreenState = SkillsScreenState.List },
                                                 { itemId -> gameViewModel.startCraftingAction(itemId) },
                                                 startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId),
                                                 activeQueue = activeQueue
                                             )
                                             else -> SkillDetailScreen(
-                                                buildSkillDetailState(screen.skillId, it, inventoryQuantities),
+                                                buildSkillDetailState(
+                                                    screen.skillId,
+                                                    it,
+                                                    inventoryQuantities,
+                                                    hasCapeEquipped = equippedItemsForSkills[EquipSlot.CAPE] == screen.skillId.lowercase() + "_cape"
+                                                ),
                                                 { skillsScreenState = SkillsScreenState.List },
                                                 { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) },
                                                 activeQueue = activeQueue
