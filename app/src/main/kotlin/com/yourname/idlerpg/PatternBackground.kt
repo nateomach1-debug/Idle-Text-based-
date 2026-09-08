@@ -5,7 +5,11 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 
 // =========================================================
 // PROCEDURAL PATTERN BACKGROUNDS
@@ -45,10 +49,93 @@ fun Modifier.proceduralThemeBackground(baseColor: Color, accentColor: Color = ba
     drawDiagonalHatch(accentColor.copy(alpha = PATTERN_LINE_ALPHA), spacingPx = PATTERN_LINE_SPACING_DP * density)
 }
 
-// Per-skill themed background. Falls back to MutedTeal for any skillId
-// without a mapped color (shouldn't normally happen from the Skills tab).
-fun Modifier.skillPatternBackground(skillId: String): Modifier =
-    this.proceduralThemeBackground(baseColor = skillThemeColor(skillId) ?: MutedTeal)
+// =========================================================
+// MINING - themed background (test case for the per-skill rollout).
+// A large rotated pickaxe silhouette watermark, tiled A-frame mine-
+// support trusses (like timber props down a shaft), and scattered
+// ore-glint diamonds, layered on the existing gradient base.
+// =========================================================
+private fun DrawScope.drawPickaxeSilhouette(color: Color, center: Offset, scale: Float, rotationDegrees: Float) {
+    rotate(rotationDegrees, pivot = center) {
+        val handleLength = 220f * scale
+        val handleWidth = 10f * scale
+        drawLine(
+            color = color,
+            start = Offset(center.x, center.y - handleLength / 2f),
+            end = Offset(center.x, center.y + handleLength / 2f),
+            strokeWidth = handleWidth,
+            cap = StrokeCap.Round
+        )
+        val headY = center.y - handleLength / 2f
+        val bladeSpan = 95f * scale
+        val headPath = Path().apply {
+            moveTo(center.x - bladeSpan, headY - bladeSpan * 0.5f)
+            quadraticBezierTo(center.x, headY - bladeSpan * 0.05f, center.x + bladeSpan, headY - bladeSpan * 0.5f)
+        }
+        drawPath(path = headPath, color = color, style = Stroke(width = handleWidth * 0.85f, cap = StrokeCap.Round))
+    }
+}
+
+private fun DrawScope.drawMineSupportTrusses(color: Color) {
+    val spacing = 170f * density
+    var y = spacing * 0.4f
+    while (y < size.height) {
+        val topY = y - 55f * density
+        val bottomY = y + 55f * density
+        val leftX = size.width * 0.10f
+        val rightX = size.width * 0.90f
+        val midX = size.width / 2f
+        drawLine(color = color, start = Offset(leftX, bottomY), end = Offset(midX, topY), strokeWidth = 2.5f)
+        drawLine(color = color, start = Offset(rightX, bottomY), end = Offset(midX, topY), strokeWidth = 2.5f)
+        drawLine(color = color, start = Offset(leftX, bottomY), end = Offset(rightX, bottomY), strokeWidth = 2.5f)
+        y += spacing
+    }
+}
+
+private fun DrawScope.drawOreGlints(color: Color) {
+    val relativePositions = listOf(
+        Offset(0.15f, 0.20f), Offset(0.68f, 0.10f), Offset(0.33f, 0.52f),
+        Offset(0.82f, 0.45f), Offset(0.52f, 0.76f), Offset(0.10f, 0.83f),
+        Offset(0.92f, 0.80f)
+    )
+    relativePositions.forEach { rel ->
+        val cx = rel.x * size.width
+        val cy = rel.y * size.height
+        val r = 5f * density
+        val diamond = Path().apply {
+            moveTo(cx, cy - r)
+            lineTo(cx + r, cy)
+            lineTo(cx, cy + r)
+            lineTo(cx - r, cy)
+            close()
+        }
+        drawPath(path = diamond, color = color)
+    }
+}
+
+fun Modifier.miningThemedBackground(): Modifier = this.drawBehind {
+    val baseColor = skillThemeColor("MINING") ?: MutedTeal
+    val gradient = Brush.verticalGradient(
+        colors = listOf(CharcoalBackground, baseColor.copy(alpha = GRADIENT_BOTTOM_ALPHA))
+    )
+    drawRect(brush = gradient)
+    drawMineSupportTrusses(baseColor.copy(alpha = 0.10f))
+    drawOreGlints(ParchmentGold.copy(alpha = 0.30f))
+    drawPickaxeSilhouette(
+        color = baseColor.copy(alpha = 0.16f),
+        center = Offset(size.width * 0.78f, size.height * 0.32f),
+        scale = 1.3f,
+        rotationDegrees = -35f
+    )
+}
+
+// Per-skill themed background. MINING gets its own thematic scene;
+// every other skill falls through to the generic tinted pattern until
+// its own themed background is added the same way.
+fun Modifier.skillPatternBackground(skillId: String): Modifier = when (skillId) {
+    "MINING" -> this.miningThemedBackground()
+    else -> this.proceduralThemeBackground(baseColor = skillThemeColor(skillId) ?: MutedTeal)
+}
 
 // General app background for screens not tied to one skill (Home, Combat,
 // Inventory, Market, Guild, Chat) - uses the base gold accent, not a skill color.
