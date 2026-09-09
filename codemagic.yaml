@@ -26,14 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output135.txt
-          echo "=== Lines 55-90 of MainActivity.kt (setContent + IdleRpgTheme context) ===" > $OUT
-          sed -n '55,90p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output136.txt
+          echo "=== SmithingScreen.kt package declaration ===" > $OUT
+          grep -n "^package " ./app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Icons.Filled.Settings availability check (used elsewhere already?) ===" >> $OUT
-          grep -rn "Icons.Filled.Settings\|Icons.Filled.Leaderboard" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Confirm SideRail.kt still needs the import (not yet reached last run) ===" >> $OUT
+          grep -n "^package \|import com.yourname.idlerpg.ui.theme.overrideColor" ./app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output135.txt
+      - discovery_output136.txt
       
   apply-patch:
     name: Apply Patch Script
