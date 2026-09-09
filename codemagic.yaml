@@ -26,21 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output132.txt
-          echo "=== Count of Text( calls across the app, and how many pass explicit color= ===" > $OUT
-          grep -rc "Text(" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt | awk -F: '{sum+=$2} END {print "total Text( calls:", sum}' >> $OUT
-          grep -rc "color = " ./app/src/main/kotlin/com/yourname/idlerpg/*.kt | awk -F: '{sum+=$2} END {print "total color= usages (all composables, not just Text):", sum}' >> $OUT
+          OUT=discovery_output133.txt
+          echo "=== Existing SharedPreferences pattern (InventoryScreen/SkillsScreen/SessionManager) ===" > $OUT
+          grep -n "SharedPreferences\|getSharedPreferences\|\.edit()\|putString\|putBoolean\|putInt\|getString(\|getBoolean(\|getInt(" ./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt ./app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Theme.kt: MaterialTheme / colorScheme setup ===" >> $OUT
-          grep -n "MaterialTheme\|colorScheme\|ColorScheme\|LocalContentColor\|LocalTextStyle" ./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== Top-level app theme wrapper (where MaterialTheme { ... } wraps everything) ===" >> $OUT
-          grep -rn "fun.*Theme(\|MaterialTheme(" ./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== Existing persisted settings/preferences mechanism (SharedPreferences/DataStore) ===" >> $OUT
-          grep -rln "SharedPreferences\|DataStore\|dataStore" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Full Theme.kt ===" >> $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt >> $OUT
     artifacts:
-      - discovery_output132.txt
+      - discovery_output133.txt
       
   apply-patch:
     name: Apply Patch Script
