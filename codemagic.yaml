@@ -26,14 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output136.txt
-          echo "=== SmithingScreen.kt package declaration ===" > $OUT
-          grep -n "^package " ./app/src/main/kotlin/com/yourname/idlerpg/SmithingScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output137.txt
+          echo "=== Zone unlock checking logic ===" > $OUT
+          grep -rn "fun isZoneUnlocked\|zoneUnlocked\|unlockedZones\|fun availableZones" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Confirm SideRail.kt still needs the import (not yet reached last run) ===" >> $OUT
-          grep -n "^package \|import com.yourname.idlerpg.ui.theme.overrideColor" ./app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Where trainingSkill / activeCombatSkill gets set when switching skills mid-combat ===" >> $OUT
+          grep -n "trainingSkill\|fun selectSkill\|fun startTraining\|fun setActiveSkill" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== ZoneSelectScreen.kt - how zone selection triggers combat start ===" >> $OUT
+          grep -n "fun ZoneSelectScreen\|onZoneSelected\|fun startCombat" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ZoneSelectScreen.kt ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output136.txt
+      - discovery_output137.txt
       
   apply-patch:
     name: Apply Patch Script
