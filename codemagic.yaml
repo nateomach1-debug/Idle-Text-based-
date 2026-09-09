@@ -26,20 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output134.txt
-          echo "=== PREFS_NAME declaration ===" > $OUT
-          grep -rn "PREFS_NAME =" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output135.txt
+          echo "=== Lines 55-90 of MainActivity.kt (setContent + IdleRpgTheme context) ===" > $OUT
+          sed -n '55,90p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
-          echo "=== All 42 explicit color= call sites, file:line ===" >> $OUT
-          grep -rn "color = " ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== IdleRpgTheme call site in MainActivity.kt ===" >> $OUT
-          grep -n "IdleRpgTheme" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== LEADERBOARDS branch in the when(currentDestination) block, for the SETTINGS pattern to copy ===" >> $OUT
-          grep -n "AppDestination.LEADERBOARDS" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Icons.Filled.Settings availability check (used elsewhere already?) ===" >> $OUT
+          grep -rn "Icons.Filled.Settings\|Icons.Filled.Leaderboard" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output134.txt
+      - discovery_output135.txt
       
   apply-patch:
     name: Apply Patch Script
