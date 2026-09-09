@@ -26,11 +26,21 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output131.txt
-          echo "=== Color constant definitions (hex values) ===" > $OUT
-          grep -n "val MiningStone\|val WoodcuttingGreen\|val FishingBlue\|val FarmingTan\|val ThievingPurple\|val SmithingOrange\|val CookingEmber\|val CraftingViolet\|val FletchingOlive\|val AlchemyToxic\|val MagicArcane\|val MutedTeal\|val ParchmentGold" ./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output132.txt
+          echo "=== Count of Text( calls across the app, and how many pass explicit color= ===" > $OUT
+          grep -rc "Text(" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt | awk -F: '{sum+=$2} END {print "total Text( calls:", sum}' >> $OUT
+          grep -rc "color = " ./app/src/main/kotlin/com/yourname/idlerpg/*.kt | awk -F: '{sum+=$2} END {print "total color= usages (all composables, not just Text):", sum}' >> $OUT
+          echo "" >> $OUT
+          echo "=== Theme.kt: MaterialTheme / colorScheme setup ===" >> $OUT
+          grep -n "MaterialTheme\|colorScheme\|ColorScheme\|LocalContentColor\|LocalTextStyle" ./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Top-level app theme wrapper (where MaterialTheme { ... } wraps everything) ===" >> $OUT
+          grep -rn "fun.*Theme(\|MaterialTheme(" ./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Existing persisted settings/preferences mechanism (SharedPreferences/DataStore) ===" >> $OUT
+          grep -rln "SharedPreferences\|DataStore\|dataStore" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output131.txt
+      - discovery_output132.txt
       
   apply-patch:
     name: Apply Patch Script
