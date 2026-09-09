@@ -822,6 +822,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         LevelCurve.levelForXp(progressionService.skillBookFor(characterId).get(skillType).xp)
 
     fun setTrainingSkill(skillType: SkillType) {
+        // Switching the trained skill mid-combat previously left the active
+        // session running in whatever zone was already entered - the zone's
+        // level gate is only checked in enterCombatZone(), not on every skill
+        // switch, so a lower-level skill could keep fighting (and earning XP)
+        // in a zone it never actually unlocked. End the session here so the
+        // player must legitimately re-enter a zone, correctly re-validated
+        // against the new skill's level.
+        if (_combatViewData.value != null) {
+            leaveCombatZone()
+        }
         _trainingSkill.value = skillType
         val characterId = _currentCharacterId.value
         _trainingSkillLevel.value = characterId?.let { skillLevel(it, skillType) } ?: 1
