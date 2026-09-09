@@ -1,5 +1,7 @@
 package com.yourname.idlerpg.ui.screens
 
+import com.yourname.idlerpg.ui.theme.overrideColor
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

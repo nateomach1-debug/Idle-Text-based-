@@ -1,5 +1,7 @@
 package com.yourname.idlerpg.ui.screens
 
+import com.yourname.idlerpg.ui.theme.overrideColor
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
