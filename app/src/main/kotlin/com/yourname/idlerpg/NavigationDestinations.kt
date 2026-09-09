@@ -15,5 +15,6 @@ enum class AppDestination(val label: String, val iconName: String) {
     MARKET("Market", "storefront"),
     GUILD("Guild", "flag"),
     LEADERBOARDS("Leaderboards", "leaderboard"),
+    SETTINGS("Settings", "settings"),
     MODERATION("Moderation", "shield_person")
 }

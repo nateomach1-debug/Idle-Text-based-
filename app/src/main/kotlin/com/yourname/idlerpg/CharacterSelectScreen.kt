@@ -111,7 +111,7 @@ fun CharacterCreateScreen(
 
         errorMessage?.let {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+            Text(text = it, style = MaterialTheme.typography.labelSmall, color = overrideColor(MaterialTheme.colorScheme.error))
         }
 
         Spacer(modifier = Modifier.height(20.dp))

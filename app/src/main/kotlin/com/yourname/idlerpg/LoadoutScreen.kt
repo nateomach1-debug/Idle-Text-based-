@@ -174,11 +174,11 @@ fun LoadoutScreen(
                         .padding(12.dp)
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = prayer.displayName, style = MaterialTheme.typography.bodyMedium, color = textColor)
-                        Text(text = prayer.description, style = MaterialTheme.typography.labelSmall, color = textColor)
+                        Text(text = prayer.displayName, style = MaterialTheme.typography.bodyMedium, color = overrideColor(textColor))
+                        Text(text = prayer.description, style = MaterialTheme.typography.labelSmall, color = overrideColor(textColor))
                     }
                     if (locked) {
-                        Text(text = "Lv " + prayer.levelRequired, style = MaterialTheme.typography.labelSmall, color = textColor)
+                        Text(text = "Lv " + prayer.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(textColor))
                     }
                 }
             }

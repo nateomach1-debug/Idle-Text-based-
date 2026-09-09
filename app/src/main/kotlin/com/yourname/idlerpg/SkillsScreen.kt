@@ -101,7 +101,7 @@ fun SkillsScreen(
                 Text(
                     text = "Total level: " + totalLevel,
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = overrideColor(MaterialTheme.colorScheme.onSurfaceVariant)
                 )
             }
             ViewModeToggle(
@@ -212,7 +212,7 @@ private fun SkillListRow(skill: SkillSummary, onClick: () -> Unit) {
             Text(
                 text = formatXpProgress(skill),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = overrideColor(MaterialTheme.colorScheme.onSurfaceVariant),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = androidx.compose.ui.text.style.TextAlign.End
             )
@@ -241,7 +241,7 @@ private fun SkillGridTile(skill: SkillSummary, onClick: () -> Unit) {
         Text(
             text = formatXpProgress(skill),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = overrideColor(MaterialTheme.colorScheme.onSurfaceVariant)
         )
     }
 }

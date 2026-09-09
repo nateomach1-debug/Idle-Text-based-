@@ -35,6 +35,7 @@ private fun iconFor(destination: AppDestination): ImageVector = when (destinatio
     AppDestination.MARKET -> Icons.Filled.Storefront
     AppDestination.GUILD -> Icons.Filled.Flag
     AppDestination.LEADERBOARDS -> Icons.Filled.Leaderboard
+    AppDestination.SETTINGS -> Icons.Filled.Settings
     AppDestination.MODERATION -> Icons.Filled.AdminPanelSettings
 }
 
@@ -130,7 +131,7 @@ private fun RailItem(
             Text(
                 text = destination.label,
                 style = MaterialTheme.typography.bodyMedium,
-                color = contentColor
+                color = overrideColor(contentColor)
             )
         }
     }

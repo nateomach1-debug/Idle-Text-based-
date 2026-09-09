@@ -124,7 +124,7 @@ private fun InCombatView(data: CombatViewData) {
             label = "Enemy",
             current = data.monsterCurrentHp ?: 0,
             max = data.monsterMaxHp ?: 1,
-            color = MaterialTheme.colorScheme.error
+            color = overrideColor(MaterialTheme.colorScheme.error)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -135,7 +135,7 @@ private fun InCombatView(data: CombatViewData) {
             label = "HP",
             current = data.playerCurrentHp,
             max = data.playerMaxHp,
-            color = MaterialTheme.colorScheme.primary
+            color = overrideColor(MaterialTheme.colorScheme.primary)
         )
     }
 }

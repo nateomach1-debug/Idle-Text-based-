@@ -69,7 +69,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            IdleRpgTheme {
+            val textColorOverride by gameViewModel.textColorOverride.collectAsState()
+            val textOutlineEnabled by gameViewModel.textOutlineEnabled.collectAsState()
+            val textOutlineColor by gameViewModel.textOutlineColor.collectAsState()
+            IdleRpgTheme(
+                textColorOverride = textColorOverride,
+                outlineEnabled = textOutlineEnabled,
+                outlineColor = textOutlineColor
+            ) {
                 AppRoot(gameViewModel)
             }
         }
@@ -1098,6 +1105,20 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     rows = leaderboardRows,
                                     isLoading = leaderboardLoading,
                                     onCategorySelected = { gameViewModel.fetchLeaderboard(it) }
+                                )
+                            }
+
+                            AppDestination.SETTINGS -> {
+                                val settingsTextColorOverride by gameViewModel.textColorOverride.collectAsState()
+                                val settingsOutlineEnabled by gameViewModel.textOutlineEnabled.collectAsState()
+                                val settingsOutlineColor by gameViewModel.textOutlineColor.collectAsState()
+                                SettingsScreen(
+                                    textColorOverride = settingsTextColorOverride,
+                                    outlineEnabled = settingsOutlineEnabled,
+                                    outlineColor = settingsOutlineColor,
+                                    onTextColorChanged = { gameViewModel.setTextColorOverride(it) },
+                                    onOutlineEnabledChanged = { gameViewModel.setTextOutlineEnabled(it) },
+                                    onOutlineColorChanged = { gameViewModel.setTextOutlineColor(it) }
                                 )
                             }
 

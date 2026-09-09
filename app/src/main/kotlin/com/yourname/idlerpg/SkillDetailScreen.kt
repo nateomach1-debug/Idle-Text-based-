@@ -187,8 +187,8 @@ private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> 
             .padding(vertical = 12.dp, horizontal = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium, color = contentColor)
-        Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall, color = contentColor)
+        Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium, color = overrideColor(contentColor))
+        Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(contentColor))
     }
 
     if (showMissingDialog) {

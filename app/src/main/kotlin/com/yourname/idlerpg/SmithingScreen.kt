@@ -333,15 +333,15 @@ private fun SmithingRecipeRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(text = recipe.displayName, style = MaterialTheme.typography.bodyMedium, color = contentColor)
-            Text(text = "Lv. " + recipe.levelRequired, style = MaterialTheme.typography.labelSmall, color = contentColor)
+            Text(text = recipe.displayName, style = MaterialTheme.typography.bodyMedium, color = overrideColor(contentColor))
+            Text(text = "Lv. " + recipe.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(contentColor))
         }
         if (showIngredients && recipe.ingredients.isNotEmpty()) {
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = recipe.ingredients.joinToString(", ") { it.quantity.toString() + "x " + it.displayName },
                 style = MaterialTheme.typography.labelSmall,
-                color = contentColor
+                color = overrideColor(contentColor)
             )
         }
     }

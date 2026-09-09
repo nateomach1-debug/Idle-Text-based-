@@ -6,6 +6,8 @@ import com.yourname.idlerpg.SupabaseLeaderboardRepository
 import com.yourname.idlerpg.UnlockTable
 import com.yourname.idlerpg.EffectStacker
 import com.yourname.idlerpg.ui.screens.VendorBuyCatalog
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.yourname.idlerpg.ui.screens.VendorBuyableItem
 
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -183,6 +185,43 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _selectedLeaderboardCategory = MutableStateFlow(LeaderboardCategory.TOTAL_LEVEL)
     val selectedLeaderboardCategory: StateFlow<LeaderboardCategory> = _selectedLeaderboardCategory.asStateFlow()
+
+    // =========================================================
+    // SETTINGS: text color override + outline (Settings tab)
+    // Persisted via SharedPreferences (idlerpg_prefs, same file/
+    // convention as inventory/skills view-mode prefs).
+    // =========================================================
+    private val settingsPrefs = application.getSharedPreferences("idlerpg_prefs", android.content.Context.MODE_PRIVATE)
+
+    private val _textColorOverride = MutableStateFlow<Color?>(
+        if (settingsPrefs.contains("text_color_override")) Color(settingsPrefs.getInt("text_color_override", 0)) else null
+    )
+    val textColorOverride: StateFlow<Color?> = _textColorOverride.asStateFlow()
+
+    private val _textOutlineEnabled = MutableStateFlow(settingsPrefs.getBoolean("text_outline_enabled", false))
+    val textOutlineEnabled: StateFlow<Boolean> = _textOutlineEnabled.asStateFlow()
+
+    private val _textOutlineColor = MutableStateFlow(Color(settingsPrefs.getInt("text_outline_color", android.graphics.Color.BLACK)))
+    val textOutlineColor: StateFlow<Color> = _textOutlineColor.asStateFlow()
+
+    fun setTextColorOverride(color: Color?) {
+        _textColorOverride.value = color
+        if (color == null) {
+            settingsPrefs.edit().remove("text_color_override").apply()
+        } else {
+            settingsPrefs.edit().putInt("text_color_override", color.toArgb()).apply()
+        }
+    }
+
+    fun setTextOutlineEnabled(enabled: Boolean) {
+        _textOutlineEnabled.value = enabled
+        settingsPrefs.edit().putBoolean("text_outline_enabled", enabled).apply()
+    }
+
+    fun setTextOutlineColor(color: Color) {
+        _textOutlineColor.value = color
+        settingsPrefs.edit().putInt("text_outline_color", color.toArgb()).apply()
+    }
 
     fun fetchLeaderboard(category: LeaderboardCategory) {
         _selectedLeaderboardCategory.value = category

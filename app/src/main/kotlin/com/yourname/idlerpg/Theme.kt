@@ -5,7 +5,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -84,109 +88,65 @@ private val IdleRpgDarkColors = darkColorScheme(
 // =========================================================
 // TYPOGRAPHY
 // Bold serif for headers, clean sans-serif for body/data.
+// Parameterized by the Settings tab's text-color-override and
+// outline settings so every style updates together from one
+// place, rather than touching each Text() call site.
 // =========================================================
 
 private val HeaderFont = FontFamily.Serif
 private val BodyFont = FontFamily.SansSerif
 
-val IdleRpgTypography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = HeaderFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 40.sp,
-        color = TextPrimary
-    ),
-    displayMedium = TextStyle(
-        fontFamily = HeaderFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 34.sp,
-        color = TextPrimary
-    ),
-    displaySmall = TextStyle(
-        fontFamily = HeaderFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
-        color = TextPrimary
-    ),
-    headlineLarge = TextStyle(
-        fontFamily = HeaderFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        color = TextPrimary
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = HeaderFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        color = TextPrimary
-    ),
-    headlineSmall = TextStyle(
-        fontFamily = HeaderFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 19.sp,
-        color = TextPrimary
-    ),
-    titleLarge = TextStyle(
-        fontFamily = HeaderFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 19.sp,
-        color = TextPrimary
-    ),
-    titleMedium = TextStyle(
-        fontFamily = HeaderFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 17.sp,
-        color = TextPrimary
-    ),
-    titleSmall = TextStyle(
-        fontFamily = HeaderFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 15.sp,
-        color = TextPrimary
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        color = TextPrimary
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 15.sp,
-        color = TextPrimary
-    ),
-    bodySmall = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
-        color = TextPrimary
-    ),
-    labelLarge = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Medium,
-        fontSize = 13.sp,
-        color = TextSecondary
-    ),
-    labelMedium = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        color = TextSecondary
-    ),
-    labelSmall = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        color = TextSecondary
-    )
-)
+// Settings-driven text color override, available to any composable
+// via overrideColor() below - covers the handful of Text() calls
+// elsewhere in the app that pass their own explicit color= param
+// (which bypasses Typography's embedded color entirely).
+val LocalTextColorOverride = compositionLocalOf<Color?> { null }
 
 @Composable
-fun IdleRpgTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = IdleRpgDarkColors,
-        typography = IdleRpgTypography,
-        content = content
+fun overrideColor(fallback: Color): Color = LocalTextColorOverride.current ?: fallback
+
+private fun outlineShadow(enabled: Boolean, color: Color): Shadow? =
+    if (enabled) Shadow(color = color, offset = Offset.Zero, blurRadius = 8f) else null
+
+private fun buildIdleRpgTypography(
+    textColorOverride: Color?,
+    outlineEnabled: Boolean,
+    outlineColor: Color
+): Typography {
+    val primary = textColorOverride ?: TextPrimary
+    val secondary = textColorOverride ?: TextSecondary
+    val shadow = outlineShadow(outlineEnabled, outlineColor)
+    return Typography(
+        displayLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 40.sp, color = primary, shadow = shadow),
+        displayMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 34.sp, color = primary, shadow = shadow),
+        displaySmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = primary, shadow = shadow),
+        headlineLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = primary, shadow = shadow),
+        headlineMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = primary, shadow = shadow),
+        headlineSmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, color = primary, shadow = shadow),
+        titleLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, color = primary, shadow = shadow),
+        titleMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, color = primary, shadow = shadow),
+        titleSmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = primary, shadow = shadow),
+        bodyLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 16.sp, color = primary, shadow = shadow),
+        bodyMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 15.sp, color = primary, shadow = shadow),
+        bodySmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 13.sp, color = primary, shadow = shadow),
+        labelLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 13.sp, color = secondary, shadow = shadow),
+        labelMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = secondary, shadow = shadow),
+        labelSmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = secondary, shadow = shadow)
     )
+}
+
+@Composable
+fun IdleRpgTheme(
+    textColorOverride: Color? = null,
+    outlineEnabled: Boolean = false,
+    outlineColor: Color = Color.Black,
+    content: @Composable () -> Unit
+) {
+    CompositionLocalProvider(LocalTextColorOverride provides textColorOverride) {
+        MaterialTheme(
+            colorScheme = IdleRpgDarkColors,
+            typography = buildIdleRpgTypography(textColorOverride, outlineEnabled, outlineColor),
+            content = content
+        )
+    }
 }
