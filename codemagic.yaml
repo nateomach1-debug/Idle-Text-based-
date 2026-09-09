@@ -26,14 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output133.txt
-          echo "=== Existing SharedPreferences pattern (InventoryScreen/SkillsScreen/SessionManager) ===" > $OUT
-          grep -n "SharedPreferences\|getSharedPreferences\|\.edit()\|putString\|putBoolean\|putInt\|getString(\|getBoolean(\|getInt(" ./app/src/main/kotlin/com/yourname/idlerpg/InventoryScreen.kt ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt ./app/src/main/kotlin/com/yourname/idlerpg/SessionManager.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output134.txt
+          echo "=== PREFS_NAME declaration ===" > $OUT
+          grep -rn "PREFS_NAME =" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Full Theme.kt ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/Theme.kt >> $OUT
+          echo "=== All 42 explicit color= call sites, file:line ===" >> $OUT
+          grep -rn "color = " ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== IdleRpgTheme call site in MainActivity.kt ===" >> $OUT
+          grep -n "IdleRpgTheme" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== LEADERBOARDS branch in the when(currentDestination) block, for the SETTINGS pattern to copy ===" >> $OUT
+          grep -n "AppDestination.LEADERBOARDS" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output133.txt
+      - discovery_output134.txt
       
   apply-patch:
     name: Apply Patch Script
