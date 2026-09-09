@@ -1,5 +1,7 @@
 package com.yourname.idlerpg.ui.navigation
 
+import com.yourname.idlerpg.ui.theme.overrideColor
+
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
