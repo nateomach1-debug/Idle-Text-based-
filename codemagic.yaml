@@ -26,17 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output137.txt
-          echo "=== Zone unlock checking logic ===" > $OUT
-          grep -rn "fun isZoneUnlocked\|zoneUnlocked\|unlockedZones\|fun availableZones" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output138.txt
+          echo "=== Full context around _trainingSkill.value = skillType (line 825) ===" > $OUT
+          sed -n '795,860p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== Where trainingSkill / activeCombatSkill gets set when switching skills mid-combat ===" >> $OUT
-          grep -n "trainingSkill\|fun selectSkill\|fun startTraining\|fun setActiveSkill" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Active combat session resume/reconnect logic ===" >> $OUT
+          grep -n "activeCombatSession\|resumeCombat\|hasActiveCombat\|currentZoneId\|_currentZoneId" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== ZoneSelectScreen.kt - how zone selection triggers combat start ===" >> $OUT
-          grep -n "fun ZoneSelectScreen\|onZoneSelected\|fun startCombat" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ZoneSelectScreen.kt ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== MainActivity.kt: COMBAT destination branch (zone select vs in-combat routing) ===" >> $OUT
+          grep -n "AppDestination.COMBAT" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output137.txt
+      - discovery_output138.txt
       
   apply-patch:
     name: Apply Patch Script
