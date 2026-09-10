@@ -30,6 +30,7 @@ import java.time.Instant
 
 data class HomeScreenState(
     val activeQueue: ActiveQueueInfo?, // null if no active queue
+    val activeCombat: CombatViewData?, // null if not currently in a combat zone
     val softCurrency: Long,
     val premiumCurrency: Long,
     val currentHp: Int?,              // null if not in/near combat -- hides the HP bar entirely
@@ -65,7 +66,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        QueueCard(queue = state.activeQueue)
+        QueueCard(queue = state.activeQueue, combat = state.activeCombat)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -133,7 +134,7 @@ private fun HpBar(current: Int, max: Int, isRecovering: Boolean) {
 }
 
 @Composable
-private fun QueueCard(queue: ActiveQueueInfo?) {
+private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -141,6 +142,17 @@ private fun QueueCard(queue: ActiveQueueInfo?) {
             .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp)
     ) {
+        if (combat != null) {
+            Text(text = combat.zoneName, style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            val statusText = when (combat.viewState) {
+                CombatViewState.IN_COMBAT -> "Fighting " + (combat.monsterName ?: "a monster")
+                CombatViewState.SEARCHING -> "Searching in " + combat.zoneName
+            }
+            Text(text = statusText, style = MaterialTheme.typography.bodyMedium)
+            return@Column
+        }
+
         if (queue == null) {
             Text(text = "No active queue", style = MaterialTheme.typography.bodyMedium)
             return@Column

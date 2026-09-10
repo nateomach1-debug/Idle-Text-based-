@@ -566,8 +566,10 @@ fun AppRoot(gameViewModel: GameViewModel) {
     val activeQueue by gameViewModel.activeQueueInfo.collectAsState()
     val currency by gameViewModel.currency.collectAsState()
     val combatHp by gameViewModel.combatHp.collectAsState()
+    val homeCombatViewData by gameViewModel.combatViewData.collectAsState()
     val homeState = HomeScreenState(
         activeQueue = activeQueue,
+        activeCombat = homeCombatViewData,
         softCurrency = currency.first,
         premiumCurrency = currency.second,
         currentHp = combatHp?.first,
