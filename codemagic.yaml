@@ -26,14 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output145.txt
-          echo "=== All @Composable private fun declarations in SkillsScreen.kt ===" > $OUT
-          grep -n "^private fun\|^fun\|@Composable" ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT
+          OUT=discovery_output146.txt
+          echo "=== SkillListRow full body ===" > $OUT
+          sed -n '193,225p' ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT
           echo "" >> $OUT
-          echo "=== fun SkillsScreen top-level composable, full body ===" >> $OUT
-          grep -n "fun SkillsScreen(" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== SkillGridTile full body ===" >> $OUT
+          sed -n '225,251p' ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== Imports (top of file) ===" >> $OUT
+          sed -n '1,35p' ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT
     artifacts:
-      - discovery_output145.txt
+      - discovery_output146.txt
       
   apply-patch:
     name: Apply Patch Script
