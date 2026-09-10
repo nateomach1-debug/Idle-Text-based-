@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Guarded patch: show combat as a Home tab queue entry - zone + monster
-name when actively fighting, "Searching in <zone>" between encounters.
+Guarded patch: add the currently-trained combat skill to the Home tab's
+combat queue card.
 """
 import os
 
@@ -32,99 +32,75 @@ def guarded_replace(path, old, new, marker):
 
 home_path = os.path.join(ROOT, "HomeScreen.kt")
 
-# 1. HomeScreenState gets a new activeCombat field
+# 1. HomeScreenState gets a new trainingSkillLabel field
 guarded_replace(
     home_path,
-    old=(
-        "data class HomeScreenState(\n"
-        "    val activeQueue: ActiveQueueInfo?, // null if no active queue\n"
-    ),
+    old="    val activeCombat: CombatViewData?, // null if not currently in a combat zone\n",
     new=(
-        "data class HomeScreenState(\n"
-        "    val activeQueue: ActiveQueueInfo?, // null if no active queue\n"
         "    val activeCombat: CombatViewData?, // null if not currently in a combat zone\n"
+        "    val trainingSkillLabel: String?,   // e.g. \"Attack\" - only rendered alongside activeCombat\n"
     ),
-    marker="val activeCombat: CombatViewData?, // null if not currently in a combat zone",
+    marker="val trainingSkillLabel: String?,   // e.g. \"Attack\" - only rendered alongside activeCombat",
 )
 
-# 2. HomeScreen() passes the new field down to QueueCard
+# 2. HomeScreen() passes it down to QueueCard
 guarded_replace(
     home_path,
-    old="        QueueCard(queue = state.activeQueue)\n",
-    new="        QueueCard(queue = state.activeQueue, combat = state.activeCombat)\n",
-    marker="QueueCard(queue = state.activeQueue, combat = state.activeCombat)",
+    old="        QueueCard(queue = state.activeQueue, combat = state.activeCombat)\n",
+    new="        QueueCard(queue = state.activeQueue, combat = state.activeCombat, trainingSkillLabel = state.trainingSkillLabel)\n",
+    marker="QueueCard(queue = state.activeQueue, combat = state.activeCombat, trainingSkillLabel = state.trainingSkillLabel)",
 )
 
-# 3. QueueCard renders combat status when present, ahead of the
-#    skilling/crafting queue rendering (the two are mutually exclusive -
-#    a character is either training a skill/crafting, or fighting).
+# 3. QueueCard renders the skill label between zone name and status
 guarded_replace(
     home_path,
     old=(
-        "private fun QueueCard(queue: ActiveQueueInfo?) {\n"
-        "    Column(\n"
-        "        modifier = Modifier\n"
-        "            .fillMaxWidth()\n"
-        "            .clip(RoundedCornerShape(14.dp))\n"
-        "            .background(MaterialTheme.colorScheme.surface)\n"
-        "            .padding(16.dp)\n"
-        "    ) {\n"
-        "        if (queue == null) {\n"
-        "            Text(text = \"No active queue\", style = MaterialTheme.typography.bodyMedium)\n"
-        "            return@Column\n"
-        "        }\n"
+        "private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?) {\n"
     ),
     new=(
-        "private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?) {\n"
-        "    Column(\n"
-        "        modifier = Modifier\n"
-        "            .fillMaxWidth()\n"
-        "            .clip(RoundedCornerShape(14.dp))\n"
-        "            .background(MaterialTheme.colorScheme.surface)\n"
-        "            .padding(16.dp)\n"
-        "    ) {\n"
+        "private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?, trainingSkillLabel: String? = null) {\n"
+    ),
+    marker="private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?, trainingSkillLabel: String? = null) {",
+)
+
+guarded_replace(
+    home_path,
+    old=(
         "        if (combat != null) {\n"
         "            Text(text = combat.zoneName, style = MaterialTheme.typography.titleMedium)\n"
         "            Spacer(modifier = Modifier.height(8.dp))\n"
-        "            val statusText = when (combat.viewState) {\n"
-        "                CombatViewState.IN_COMBAT -> \"Fighting \" + (combat.monsterName ?: \"a monster\")\n"
-        "                CombatViewState.SEARCHING -> \"Searching in \" + combat.zoneName\n"
-        "            }\n"
-        "            Text(text = statusText, style = MaterialTheme.typography.bodyMedium)\n"
-        "            return@Column\n"
-        "        }\n"
-        "\n"
-        "        if (queue == null) {\n"
-        "            Text(text = \"No active queue\", style = MaterialTheme.typography.bodyMedium)\n"
-        "            return@Column\n"
-        "        }\n"
     ),
-    marker="if (combat != null) {\n            Text(text = combat.zoneName, style = MaterialTheme.typography.titleMedium)",
+    new=(
+        "        if (combat != null) {\n"
+        "            Text(text = combat.zoneName, style = MaterialTheme.typography.titleMedium)\n"
+        "            if (trainingSkillLabel != null) {\n"
+        "                Text(text = \"Training \" + trainingSkillLabel, style = MaterialTheme.typography.bodySmall)\n"
+        "            }\n"
+        "            Spacer(modifier = Modifier.height(8.dp))\n"
+    ),
+    marker="Text(text = \"Training \" + trainingSkillLabel, style = MaterialTheme.typography.bodySmall)",
 )
 
-# 4. MainActivity.kt: collect combatViewData and thread it into homeState
+# 4. MainActivity.kt: pass the already-collected trainingSkill through
 main_activity_path = os.path.join(ROOT, "MainActivity.kt")
 guarded_replace(
     main_activity_path,
     old=(
-        "    val activeQueue by gameViewModel.activeQueueInfo.collectAsState()\n"
-        "    val currency by gameViewModel.currency.collectAsState()\n"
-        "    val combatHp by gameViewModel.combatHp.collectAsState()\n"
-        "    val homeState = HomeScreenState(\n"
-        "        activeQueue = activeQueue,\n"
-        "        softCurrency = currency.first,\n"
-    ),
-    new=(
-        "    val activeQueue by gameViewModel.activeQueueInfo.collectAsState()\n"
-        "    val currency by gameViewModel.currency.collectAsState()\n"
-        "    val combatHp by gameViewModel.combatHp.collectAsState()\n"
         "    val homeCombatViewData by gameViewModel.combatViewData.collectAsState()\n"
         "    val homeState = HomeScreenState(\n"
         "        activeQueue = activeQueue,\n"
         "        activeCombat = homeCombatViewData,\n"
         "        softCurrency = currency.first,\n"
     ),
-    marker="val homeCombatViewData by gameViewModel.combatViewData.collectAsState()",
+    new=(
+        "    val homeCombatViewData by gameViewModel.combatViewData.collectAsState()\n"
+        "    val homeState = HomeScreenState(\n"
+        "        activeQueue = activeQueue,\n"
+        "        activeCombat = homeCombatViewData,\n"
+        "        trainingSkillLabel = trainingSkill.name.lowercase().replaceFirstChar { it.uppercase() },\n"
+        "        softCurrency = currency.first,\n"
+    ),
+    marker="trainingSkillLabel = trainingSkill.name.lowercase().replaceFirstChar { it.uppercase() },",
 )
 
-print("\nAll Home-tab combat queue patches applied successfully.")
+print("\nAll training-skill-label patches applied successfully.")
