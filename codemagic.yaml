@@ -26,14 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output144.txt
-          echo "=== SkillsScreen.kt: List state row composable ===" > $OUT
-          grep -n "fun SkillRow\|fun SkillListItem\|fun SkillCard" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output145.txt
+          echo "=== All @Composable private fun declarations in SkillsScreen.kt ===" > $OUT
+          grep -n "^private fun\|^fun\|@Composable" ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT
           echo "" >> $OUT
-          echo "=== SkillType enum for the full 16-skill list (order/names) ===" >> $OUT
-          grep -n "enum class SkillType" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/SkillProgressionSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== fun SkillsScreen top-level composable, full body ===" >> $OUT
+          grep -n "fun SkillsScreen(" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output144.txt
+      - discovery_output145.txt
       
   apply-patch:
     name: Apply Patch Script
