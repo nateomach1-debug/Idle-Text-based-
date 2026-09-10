@@ -821,7 +821,28 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun skillLevel(characterId: String, skillType: SkillType): Int =
         LevelCurve.levelForXp(progressionService.skillBookFor(characterId).get(skillType).xp)
 
-    fun setTrainingSkill(skillType: SkillType) {
+    fun setTrainingSkill(skillType: SkillType): ServiceResult<Unit> {
+        val characterId = _currentCharacterId.value
+
+        // Archery/Magic require the matching weapon type equipped - trainingSkill
+        // (which skill earns XP) was previously completely unlinked from the
+        // equipped weapon's actual combatStyle (which drives the combat math in
+        // tickCombat), letting you e.g. train Archery with no bow equipped at all.
+        val requiredStyle = when (skillType) {
+            SkillType.ARCHERY -> CombatStyle.RANGED
+            SkillType.MAGIC -> CombatStyle.MAGIC
+            else -> null
+        }
+        if (requiredStyle != null) {
+            val equippedWeaponId = characterId?.let { inventoryService.inventoryFor(it).equippedItemIn(EquipSlot.WEAPON) }
+            val equippedStyle = equippedWeaponId?.let { ItemCatalog.find(it)?.combatStyle }
+            if (equippedStyle != requiredStyle) {
+                val weaponNoun = if (skillType == SkillType.ARCHERY) "a bow" else "a magic weapon"
+                val skillLabel = skillType.name.lowercase().replaceFirstChar { it.uppercase() }
+                return ServiceResult.Failure("Equip " + weaponNoun + " to train " + skillLabel + ".")
+            }
+        }
+
         // Switching the trained skill mid-combat previously left the active
         // session running in whatever zone was already entered - the zone's
         // level gate is only checked in enterCombatZone(), not on every skill
@@ -833,8 +854,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             leaveCombatZone()
         }
         _trainingSkill.value = skillType
-        val characterId = _currentCharacterId.value
         _trainingSkillLevel.value = characterId?.let { skillLevel(it, skillType) } ?: 1
+        return ServiceResult.Success(Unit)
     }
 
     private fun refreshCombatHp() {

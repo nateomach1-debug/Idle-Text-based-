@@ -1,5 +1,7 @@
 package com.yourname.idlerpg
 
+import android.widget.Toast
+
 import com.yourname.idlerpg.ui.components.ReportMessageDialog
 
 import android.os.Bundle
@@ -519,6 +521,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
         )
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
     var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
@@ -762,9 +765,13 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     allSkills = allSkills,
                                     onSkillSelected = { selectedSkillId ->
                                         if (selectedSkillId in COMBAT_TRAINING_SKILL_IDS) {
-                                            gameViewModel.setTrainingSkill(SkillType.valueOf(selectedSkillId))
-                                            currentDestination = AppDestination.COMBAT
-                                            combatScreenState = CombatScreenState.ZoneSelect
+                                            when (val result = gameViewModel.setTrainingSkill(SkillType.valueOf(selectedSkillId))) {
+                                                is ServiceResult.Failure -> Toast.makeText(context, result.reason, Toast.LENGTH_SHORT).show()
+                                                is ServiceResult.Success -> {
+                                                    currentDestination = AppDestination.COMBAT
+                                                    combatScreenState = CombatScreenState.ZoneSelect
+                                                }
+                                            }
                                         } else {
                                             skillsScreenState = SkillsScreenState.Detail(selectedSkillId)
                                         }
