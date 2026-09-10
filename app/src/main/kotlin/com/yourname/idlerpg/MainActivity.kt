@@ -576,7 +576,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
         currentHp = combatHp?.first,
         maxHp = combatHp?.second,
         isRecovering = false,
-        unreadNotificationCount = 2
+        unreadNotificationCount = 0
     )
 
     val recoveringUntil = remember { mutableStateOf<Instant?>(null) }
