@@ -26,11 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output147.txt
-          echo "=== SkillSummary data class definition ===" > $OUT
-          grep -n "data class SkillSummary" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output148.txt
+          echo "=== CombatStyle enum ===" > $OUT
+          grep -n "enum class CombatStyle" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Weapon ItemDefinitions with combatStyle = MAGIC or RANGED ===" >> $OUT
+          grep -n "combatStyle = CombatStyle.MAGIC\|combatStyle = CombatStyle.RANGED" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Where trainingSkill maps to combat style / determines weapon requirement, in setTrainingSkill and tickCombat ===" >> $OUT
+          grep -n "fun setTrainingSkill" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== COMBAT_TRAINING_SKILL_IDS definition ===" >> $OUT
+          grep -n "COMBAT_TRAINING_SKILL_IDS" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output147.txt
+      - discovery_output148.txt
       
   apply-patch:
     name: Apply Patch Script
