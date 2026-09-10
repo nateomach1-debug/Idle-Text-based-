@@ -26,17 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output146.txt
-          echo "=== SkillListRow full body ===" > $OUT
-          sed -n '193,225p' ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== SkillGridTile full body ===" >> $OUT
-          sed -n '225,251p' ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== Imports (top of file) ===" >> $OUT
-          sed -n '1,35p' ./app/src/main/kotlin/com/yourname/idlerpg/SkillsScreen.kt >> $OUT
+          OUT=discovery_output147.txt
+          echo "=== SkillSummary data class definition ===" > $OUT
+          grep -n "data class SkillSummary" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output146.txt
+      - discovery_output147.txt
       
   apply-patch:
     name: Apply Patch Script
