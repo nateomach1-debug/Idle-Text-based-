@@ -1,52 +1,130 @@
 #!/usr/bin/env python3
 """
-Guarded patch: close the combat exploit where switching trainingSkill
-mid-combat never actually ends the active session, letting an under-
-leveled skill keep earning XP in a zone it never legitimately unlocked.
+Guarded patch: show combat as a Home tab queue entry - zone + monster
+name when actively fighting, "Searching in <zone>" between encounters.
 """
 import os
 
 ROOT = "app/src/main/kotlin/com/yourname/idlerpg"
-path = os.path.join(ROOT, "GameViewModel.kt")
 
-with open(path, "r", encoding="utf-8") as f:
-    content = f.read()
 
-old = (
-    "    fun setTrainingSkill(skillType: SkillType) {\n"
-    "        _trainingSkill.value = skillType\n"
-    "        val characterId = _currentCharacterId.value\n"
-    "        _trainingSkillLevel.value = characterId?.let { skillLevel(it, skillType) } ?: 1\n"
-    "    }\n"
-)
-new = (
-    "    fun setTrainingSkill(skillType: SkillType) {\n"
-    "        // Switching the trained skill mid-combat previously left the active\n"
-    "        // session running in whatever zone was already entered - the zone's\n"
-    "        // level gate is only checked in enterCombatZone(), not on every skill\n"
-    "        // switch, so a lower-level skill could keep fighting (and earning XP)\n"
-    "        // in a zone it never actually unlocked. End the session here so the\n"
-    "        // player must legitimately re-enter a zone, correctly re-validated\n"
-    "        // against the new skill's level.\n"
-    "        if (_combatViewData.value != null) {\n"
-    "            leaveCombatZone()\n"
-    "        }\n"
-    "        _trainingSkill.value = skillType\n"
-    "        val characterId = _currentCharacterId.value\n"
-    "        _trainingSkillLevel.value = characterId?.let { skillLevel(it, skillType) } ?: 1\n"
-    "    }\n"
-)
+def read(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
 
-marker = "Switching the trained skill mid-combat previously left"
-if marker in content:
-    print("SKIP (already applied)")
-else:
-    count = content.count(old)
-    if count != 1:
-        raise RuntimeError(f"Expected exactly 1 match, found {count}.\n--- old_str ---\n{old}\n--- end ---")
-    content = content.replace(old, new)
+
+def write(path, content):
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
-    print("PATCHED: setTrainingSkill now ends active combat session on skill switch")
 
-print("Done.")
+
+def guarded_replace(path, old, new, marker):
+    content = read(path)
+    if marker in content:
+        print(f"SKIP (already applied): {path} :: {marker[:50]}")
+        return
+    count = content.count(old)
+    if count != 1:
+        raise RuntimeError(f"Expected exactly 1 match in {path}, found {count}.\n--- old_str ---\n{old}\n--- end ---")
+    write(path, content.replace(old, new))
+    print(f"PATCHED: {path} :: {marker[:50]}")
+
+
+home_path = os.path.join(ROOT, "HomeScreen.kt")
+
+# 1. HomeScreenState gets a new activeCombat field
+guarded_replace(
+    home_path,
+    old=(
+        "data class HomeScreenState(\n"
+        "    val activeQueue: ActiveQueueInfo?, // null if no active queue\n"
+    ),
+    new=(
+        "data class HomeScreenState(\n"
+        "    val activeQueue: ActiveQueueInfo?, // null if no active queue\n"
+        "    val activeCombat: CombatViewData?, // null if not currently in a combat zone\n"
+    ),
+    marker="val activeCombat: CombatViewData?, // null if not currently in a combat zone",
+)
+
+# 2. HomeScreen() passes the new field down to QueueCard
+guarded_replace(
+    home_path,
+    old="        QueueCard(queue = state.activeQueue)\n",
+    new="        QueueCard(queue = state.activeQueue, combat = state.activeCombat)\n",
+    marker="QueueCard(queue = state.activeQueue, combat = state.activeCombat)",
+)
+
+# 3. QueueCard renders combat status when present, ahead of the
+#    skilling/crafting queue rendering (the two are mutually exclusive -
+#    a character is either training a skill/crafting, or fighting).
+guarded_replace(
+    home_path,
+    old=(
+        "private fun QueueCard(queue: ActiveQueueInfo?) {\n"
+        "    Column(\n"
+        "        modifier = Modifier\n"
+        "            .fillMaxWidth()\n"
+        "            .clip(RoundedCornerShape(14.dp))\n"
+        "            .background(MaterialTheme.colorScheme.surface)\n"
+        "            .padding(16.dp)\n"
+        "    ) {\n"
+        "        if (queue == null) {\n"
+        "            Text(text = \"No active queue\", style = MaterialTheme.typography.bodyMedium)\n"
+        "            return@Column\n"
+        "        }\n"
+    ),
+    new=(
+        "private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?) {\n"
+        "    Column(\n"
+        "        modifier = Modifier\n"
+        "            .fillMaxWidth()\n"
+        "            .clip(RoundedCornerShape(14.dp))\n"
+        "            .background(MaterialTheme.colorScheme.surface)\n"
+        "            .padding(16.dp)\n"
+        "    ) {\n"
+        "        if (combat != null) {\n"
+        "            Text(text = combat.zoneName, style = MaterialTheme.typography.titleMedium)\n"
+        "            Spacer(modifier = Modifier.height(8.dp))\n"
+        "            val statusText = when (combat.viewState) {\n"
+        "                CombatViewState.IN_COMBAT -> \"Fighting \" + (combat.monsterName ?: \"a monster\")\n"
+        "                CombatViewState.SEARCHING -> \"Searching in \" + combat.zoneName\n"
+        "            }\n"
+        "            Text(text = statusText, style = MaterialTheme.typography.bodyMedium)\n"
+        "            return@Column\n"
+        "        }\n"
+        "\n"
+        "        if (queue == null) {\n"
+        "            Text(text = \"No active queue\", style = MaterialTheme.typography.bodyMedium)\n"
+        "            return@Column\n"
+        "        }\n"
+    ),
+    marker="if (combat != null) {\n            Text(text = combat.zoneName, style = MaterialTheme.typography.titleMedium)",
+)
+
+# 4. MainActivity.kt: collect combatViewData and thread it into homeState
+main_activity_path = os.path.join(ROOT, "MainActivity.kt")
+guarded_replace(
+    main_activity_path,
+    old=(
+        "    val activeQueue by gameViewModel.activeQueueInfo.collectAsState()\n"
+        "    val currency by gameViewModel.currency.collectAsState()\n"
+        "    val combatHp by gameViewModel.combatHp.collectAsState()\n"
+        "    val homeState = HomeScreenState(\n"
+        "        activeQueue = activeQueue,\n"
+        "        softCurrency = currency.first,\n"
+    ),
+    new=(
+        "    val activeQueue by gameViewModel.activeQueueInfo.collectAsState()\n"
+        "    val currency by gameViewModel.currency.collectAsState()\n"
+        "    val combatHp by gameViewModel.combatHp.collectAsState()\n"
+        "    val homeCombatViewData by gameViewModel.combatViewData.collectAsState()\n"
+        "    val homeState = HomeScreenState(\n"
+        "        activeQueue = activeQueue,\n"
+        "        activeCombat = homeCombatViewData,\n"
+        "        softCurrency = currency.first,\n"
+    ),
+    marker="val homeCombatViewData by gameViewModel.combatViewData.collectAsState()",
+)
+
+print("\nAll Home-tab combat queue patches applied successfully.")
