@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +33,47 @@ enum class SkillsViewMode { LIST, GRID }
 
 private const val PREFS_NAME = "idlerpg_prefs"
 private const val KEY_SKILLS_VIEW_MODE = "skills_view_mode"
+
+private val SKILL_DESCRIPTIONS: Map<String, String> = mapOf(
+    "MINING" to "Mine ore from rocks. Higher levels unlock better ore and mine faster.",
+    "WOODCUTTING" to "Chop trees for logs. Higher levels unlock better trees and chop faster.",
+    "FISHING" to "Catch fish at fishing spots. Higher levels unlock better fish and catch faster.",
+    "FARMING" to "Harvest crops from farm plots. Higher levels unlock better crops and harvest faster.",
+    "THIEVING" to "Pickpocket and steal for loot and coin. Higher levels unlock riskier, more rewarding targets.",
+    "SMITHING" to "Smelt ore into bars and forge them into weapons and armor.",
+    "COOKING" to "Cook raw food into meals you can eat to heal during combat.",
+    "CRAFTING" to "Craft leather, cloth, and jewelry into wearable gear.",
+    "FLETCHING" to "Craft bows and arrows for use with the Archery combat style.",
+    "ALCHEMY" to "Brew potions that grant temporary combat and skilling boosts.",
+    "MAGIC" to "Train your magic combat style, and unlock utility spells like teleportation.",
+    "ATTACK" to "Trains your melee hit chance. Higher levels land more hits with melee weapons.",
+    "STRENGTH" to "Trains your melee hit damage. Higher levels deal more damage per hit with melee weapons.",
+    "DEFENSE" to "Reduces the damage you take from monsters. Higher levels reduce incoming damage further.",
+    "PRAYER" to "Activate prayers for combat bonuses like extra damage reduction.",
+    "ARCHERY" to "Trains your ranged hit chance and damage when fighting with a bow."
+)
+
+@Composable
+private fun SkillInfoButton(skillId: String) {
+    var showDialog by remember { mutableStateOf(false) }
+    IconButton(onClick = { showDialog = true }, modifier = Modifier.size(28.dp)) {
+        Icon(
+            imageVector = Icons.Filled.Info,
+            contentDescription = "What does this skill do?",
+            tint = overrideColor(MaterialTheme.colorScheme.onSurfaceVariant)
+        )
+    }
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            confirmButton = {
+                TextButton(onClick = { showDialog = false }) { Text("Got it") }
+            },
+            title = { Text(skillId.lowercase().replaceFirstChar { it.uppercase() }) },
+            text = { Text(SKILL_DESCRIPTIONS[skillId] ?: "No description available.") }
+        )
+    }
+}
 
 private fun loadSavedViewMode(context: Context): SkillsViewMode {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -204,8 +246,11 @@ private fun SkillListRow(skill: SkillSummary, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(text = skill.displayName, style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = skill.displayName, style = MaterialTheme.typography.titleMedium)
+                    SkillInfoButton(skillId = skill.skillId)
+                }
                 Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
             }
             Spacer(modifier = Modifier.height(6.dp))
@@ -234,7 +279,10 @@ private fun SkillGridTile(skill: SkillSummary, onClick: () -> Unit) {
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = skill.displayName, style = MaterialTheme.typography.labelSmall)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = skill.displayName, style = MaterialTheme.typography.labelSmall)
+            SkillInfoButton(skillId = skill.skillId)
+        }
         Spacer(modifier = Modifier.height(4.dp))
         Text(text = "Lv. " + skill.level, style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(4.dp))
