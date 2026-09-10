@@ -26,20 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output151.txt
-          echo "=== Battlestaff full ItemDefinition ===" > $OUT
-          grep -n "id = \"battlestaff\"" -B 2 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output152.txt
+          echo "=== Full Battlestaff ItemDefinition ===" > $OUT
+          sed -n '2436,2450p' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT
           echo "" >> $OUT
-          echo "=== ItemCategory enum options ===" >> $OUT
-          grep -n "enum class ItemCategory" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Full Copper Ore ItemDefinition ===" >> $OUT
+          sed -n '15,22p' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT
           echo "" >> $OUT
-          echo "=== Example existing MATERIAL-category item for shape reference ===" >> $OUT
-          grep -n "ItemCategory.MATERIAL" -B 3 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt | head -20 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== ItemStats data class full definition ===" >> $OUT
+          grep -n "data class ItemStats" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Zone list (for deciding which zones drop the new essences) ===" >> $OUT
-          grep -n "Zone(" -A 3 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt | grep "id =\|name =" >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== LootEntry data class ===" >> $OUT
+          grep -n "data class LootEntry" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== rollLoot bone-grant section, full context, for the pattern to copy ===" >> $OUT
+          sed -n '427,460p' ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT
     artifacts:
-      - discovery_output151.txt
+      - discovery_output152.txt
       
   apply-patch:
     name: Apply Patch Script
