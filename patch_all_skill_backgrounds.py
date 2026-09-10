@@ -98,21 +98,13 @@ guarded_replace(
 )
 
 # =======================================================================
-# 2. MainActivity.kt - handle the ServiceResult at the call site,
-#    surfacing failures via Toast.
+# 2. MainActivity.kt - Toast import, context, and ServiceResult handling
+#    at the skill-selection call site.
 # =======================================================================
 ma_path = os.path.join(ROOT, "MainActivity.kt")
 
-guarded_replace(
-    ma_path,
-    old="import androidx.compose.ui.platform.LocalContext\n" if False else "",
-    new="",
-    marker="__noop__",  # placeholder, real import handled below with a safe check
-)
-
 content = read(ma_path)
 if "import android.widget.Toast\n" not in content:
-    # Insert right after the package line, safe regardless of existing import ordering.
     guarded_replace(
         ma_path,
         old="package com.yourname.idlerpg\n",
