@@ -26,20 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output150.txt
-          echo "=== Monster data class + drop table structure ===" > $OUT
-          grep -n "data class Monster\|data class DropTableEntry\|class LootDrop\|val drops" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output151.txt
+          echo "=== Battlestaff full ItemDefinition ===" > $OUT
+          grep -n "id = \"battlestaff\"" -B 2 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Where monster drops actually get rolled/granted after a kill ===" >> $OUT
-          grep -n "fun rollDrops\|fun grantDrops\|monsterDefeated" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== ItemCategory enum options ===" >> $OUT
+          grep -n "enum class ItemCategory" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Recipe data class + RecipeCatalog structure ===" >> $OUT
-          grep -n "data class Recipe\|data class RecipeIngredient\|object RecipeCatalog" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Example existing MATERIAL-category item for shape reference ===" >> $OUT
+          grep -n "ItemCategory.MATERIAL" -B 3 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt | head -20 >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Example existing recipes (Crafting skill) for pattern reference ===" >> $OUT
-          grep -n "skillRequired = SkillType.CRAFTING\|skillRequired = \"CRAFTING\"" -B 3 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Zone list (for deciding which zones drop the new essences) ===" >> $OUT
+          grep -n "Zone(" -A 3 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt | grep "id =\|name =" >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output150.txt
+      - discovery_output151.txt
       
   apply-patch:
     name: Apply Patch Script
