@@ -1832,6 +1832,97 @@ object RecipeCatalog {
             levelRequired = 50
         ),
         Recipe(
+            outputItemId = "staff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("copper_ore", 2), RecipeIngredient("tin_ore", 1)),
+            skillRequired = "CRAFTING",
+            levelRequired = 1
+        ),
+        Recipe(
+            outputItemId = "fire_staff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("staff", 1), RecipeIngredient("fire_essence", 3)),
+            skillRequired = "CRAFTING",
+            levelRequired = 8
+        ),
+        Recipe(
+            outputItemId = "earth_staff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("staff", 1), RecipeIngredient("earth_essence", 3)),
+            skillRequired = "CRAFTING",
+            levelRequired = 8
+        ),
+        Recipe(
+            outputItemId = "water_staff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("staff", 1), RecipeIngredient("water_essence", 3)),
+            skillRequired = "CRAFTING",
+            levelRequired = 8
+        ),
+        Recipe(
+            outputItemId = "wind_staff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("staff", 1), RecipeIngredient("wind_essence", 3)),
+            skillRequired = "CRAFTING",
+            levelRequired = 8
+        ),
+        Recipe(
+            outputItemId = "fire_battlestaff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("fire_staff", 1), RecipeIngredient("fire_essence", 5), RecipeIngredient("volcanic_rock", 1)),
+            skillRequired = "CRAFTING",
+            levelRequired = 45
+        ),
+        Recipe(
+            outputItemId = "earth_battlestaff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("earth_staff", 1), RecipeIngredient("earth_essence", 5), RecipeIngredient("volcanic_rock", 1)),
+            skillRequired = "CRAFTING",
+            levelRequired = 45
+        ),
+        Recipe(
+            outputItemId = "water_battlestaff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("water_staff", 1), RecipeIngredient("water_essence", 5), RecipeIngredient("volcanic_rock", 1)),
+            skillRequired = "CRAFTING",
+            levelRequired = 45
+        ),
+        Recipe(
+            outputItemId = "wind_battlestaff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("wind_staff", 1), RecipeIngredient("wind_essence", 5), RecipeIngredient("volcanic_rock", 1)),
+            skillRequired = "CRAFTING",
+            levelRequired = 45
+        ),
+        Recipe(
+            outputItemId = "mystic_fire_staff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("fire_battlestaff", 1), RecipeIngredient("fire_essence", 8), RecipeIngredient("celestial_silver", 1)),
+            skillRequired = "CRAFTING",
+            levelRequired = 65
+        ),
+        Recipe(
+            outputItemId = "mystic_earth_staff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("earth_battlestaff", 1), RecipeIngredient("earth_essence", 8), RecipeIngredient("celestial_silver", 1)),
+            skillRequired = "CRAFTING",
+            levelRequired = 65
+        ),
+        Recipe(
+            outputItemId = "mystic_water_staff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("water_battlestaff", 1), RecipeIngredient("water_essence", 8), RecipeIngredient("celestial_silver", 1)),
+            skillRequired = "CRAFTING",
+            levelRequired = 65
+        ),
+        Recipe(
+            outputItemId = "mystic_wind_staff",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("wind_battlestaff", 1), RecipeIngredient("wind_essence", 8), RecipeIngredient("celestial_silver", 1)),
+            skillRequired = "CRAFTING",
+            levelRequired = 65
+        ),
+        Recipe(
             outputItemId = "dragonstone_amulet",
             outputQuantity = 1,
             ingredients = listOf(RecipeIngredient("amulet_u", 1), RecipeIngredient("dragonstone", 1), RecipeIngredient("bowstring", 1)),

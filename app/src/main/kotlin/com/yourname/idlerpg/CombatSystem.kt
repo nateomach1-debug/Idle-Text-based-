@@ -442,6 +442,16 @@ class CombatService {
         }
         state.lootPool.add(LootEntry(boneType, 1, 1, 100.0))
         state.pendingCoins += CoinDropTable.rollCoins(monster.levelRequirement)
+
+        // Elemental essences (Fire/Earth/Water/Wind) used for magic weapon
+        // crafting - a flat chance per kill to gather one, uniformly random
+        // type, independent of the monster's own loot table (same guaranteed-
+        // roll pattern as bones, works across all zones without needing
+        // per-monster loot table entries).
+        if (Random.nextDouble(0.0, 100.0) < 15.0) {
+            val essenceType = listOf("fire_essence", "earth_essence", "water_essence", "wind_essence").random()
+            state.lootPool.add(LootEntry(essenceType, 1, 1, 100.0))
+        }
     }
 
     fun collectLoot(characterId: String): ServiceResult<List<LootEntry>> {
