@@ -26,14 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output153.txt
-          echo "=== 'weapon' variable resolution in tickCombat (where it comes from) ===" > $OUT
-          grep -n "val weapon\b\|val weapon =\|val weapon:" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output154.txt
+          echo "=== Bone burying function(s) ===" > $OUT
+          grep -rn "fun buryBone\|fun buryAll\|buryBones\|fun.*[Bb]ury" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== baseAccuracy / baseMaxHit field definitions (WeaponDefinition or similar) ===" >> $OUT
-          grep -rn "baseAccuracy\|baseMaxHit\|attackSpeedSeconds" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Bone-related queue/batch state (is burying a queued/batch action or a single tap?) ===" >> $OUT
+          grep -rn "BoneQueue\|buryQueue\|BuryQueue\|activeBury" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output153.txt
+      - discovery_output154.txt
       
   apply-patch:
     name: Apply Patch Script
