@@ -26,23 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output149.txt
-          echo "=== ServiceResult sealed class shape ===" > $OUT
-          grep -n "sealed class ServiceResult" -A 6 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output150.txt
+          echo "=== Monster data class + drop table structure ===" > $OUT
+          grep -n "data class Monster\|data class DropTableEntry\|class LootDrop\|val drops" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Existing Toast usage anywhere in the app ===" >> $OUT
-          grep -rn "Toast.makeText\|SnackbarHost\|snackbarHostState" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Where monster drops actually get rolled/granted after a kill ===" >> $OUT
+          grep -n "fun rollDrops\|fun grantDrops\|monsterDefeated" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== context/LocalContext availability near onSkillSelected in MainActivity.kt ===" >> $OUT
-          grep -n "val context = LocalContext.current" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Recipe data class + RecipeCatalog structure ===" >> $OUT
+          grep -n "data class Recipe\|data class RecipeIngredient\|object RecipeCatalog" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/ItemsEquipmentSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== The single magic weapon item (name/id) ===" >> $OUT
-          sed -n '2430,2450p' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== ItemCatalog.find signature ===" >> $OUT
-          grep -n "fun find" ./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Example existing recipes (Crafting skill) for pattern reference ===" >> $OUT
+          grep -n "skillRequired = SkillType.CRAFTING\|skillRequired = \"CRAFTING\"" -B 3 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output149.txt
+      - discovery_output150.txt
       
   apply-patch:
     name: Apply Patch Script
