@@ -570,6 +570,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
     val homeState = HomeScreenState(
         activeQueue = activeQueue,
         activeCombat = homeCombatViewData,
+        trainingSkillLabel = trainingSkill.name.lowercase().replaceFirstChar { it.uppercase() },
         softCurrency = currency.first,
         premiumCurrency = currency.second,
         currentHp = combatHp?.first,

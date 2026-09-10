@@ -31,6 +31,7 @@ import java.time.Instant
 data class HomeScreenState(
     val activeQueue: ActiveQueueInfo?, // null if no active queue
     val activeCombat: CombatViewData?, // null if not currently in a combat zone
+    val trainingSkillLabel: String?,   // e.g. "Attack" - only rendered alongside activeCombat
     val softCurrency: Long,
     val premiumCurrency: Long,
     val currentHp: Int?,              // null if not in/near combat -- hides the HP bar entirely
@@ -66,7 +67,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        QueueCard(queue = state.activeQueue, combat = state.activeCombat)
+        QueueCard(queue = state.activeQueue, combat = state.activeCombat, trainingSkillLabel = state.trainingSkillLabel)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -134,7 +135,7 @@ private fun HpBar(current: Int, max: Int, isRecovering: Boolean) {
 }
 
 @Composable
-private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?) {
+private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?, trainingSkillLabel: String? = null) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -144,6 +145,9 @@ private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?) {
     ) {
         if (combat != null) {
             Text(text = combat.zoneName, style = MaterialTheme.typography.titleMedium)
+            if (trainingSkillLabel != null) {
+                Text(text = "Training " + trainingSkillLabel, style = MaterialTheme.typography.bodySmall)
+            }
             Spacer(modifier = Modifier.height(8.dp))
             val statusText = when (combat.viewState) {
                 CombatViewState.IN_COMBAT -> "Fighting " + (combat.monsterName ?: "a monster")
