@@ -26,20 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output148.txt
-          echo "=== CombatStyle enum ===" > $OUT
-          grep -n "enum class CombatStyle" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output149.txt
+          echo "=== ServiceResult sealed class shape ===" > $OUT
+          grep -n "sealed class ServiceResult" -A 6 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Weapon ItemDefinitions with combatStyle = MAGIC or RANGED ===" >> $OUT
-          grep -n "combatStyle = CombatStyle.MAGIC\|combatStyle = CombatStyle.RANGED" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Existing Toast usage anywhere in the app ===" >> $OUT
+          grep -rn "Toast.makeText\|SnackbarHost\|snackbarHostState" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Where trainingSkill maps to combat style / determines weapon requirement, in setTrainingSkill and tickCombat ===" >> $OUT
-          grep -n "fun setTrainingSkill" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== context/LocalContext availability near onSkillSelected in MainActivity.kt ===" >> $OUT
+          grep -n "val context = LocalContext.current" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== COMBAT_TRAINING_SKILL_IDS definition ===" >> $OUT
-          grep -n "COMBAT_TRAINING_SKILL_IDS" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== The single magic weapon item (name/id) ===" >> $OUT
+          sed -n '2430,2450p' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== ItemCatalog.find signature ===" >> $OUT
+          grep -n "fun find" ./app/src/main/kotlin/com/yourname/idlerpg/SharedTypes.kt ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output148.txt
+      - discovery_output149.txt
       
   apply-patch:
     name: Apply Patch Script
