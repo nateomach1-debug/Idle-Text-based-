@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """
-Guarded patch: show bone burying in the Home tab's active queue card,
-including how many bones are left to bury. ActiveQueue.BuryQueue already
-existed with the exact shape needed (itemId, targetQuantity,
-quantityCompleted, secondsPerAction, startedAt) - it just fell through
-the `else -> null` branch that builds ActiveQueueInfo, so it silently
-never showed anywhere.
+Guarded patch: bone-burying "X left" count wasn't live-updating on the
+Home tab because refreshActiveQueue() was only called when the queue
+stopped (target reached / ran out of bones), never after each batch of
+completed buries mid-queue.
 """
 import os
 
@@ -15,31 +13,26 @@ with open(path, "r", encoding="utf-8") as f:
     content = f.read()
 
 old = (
-    "            is ActiveQueue.CraftingQueue -> ActiveQueueInfo(\n"
-    "                label = \"Crafting \" + formatItemName(queue.itemId),\n"
-    "                secondsPerAction = queue.secondsPerAction,\n"
-    "                startedAt = queue.startedAt\n"
-    "            )\n"
-    "            else -> null\n"
+    "        if (effectiveAttempts > 0) {\n"
+    "            inventory.removeItem(queue.itemId, effectiveAttempts)\n"
+    "            progressionService.grantXp(characterId, SkillType.PRAYER, boneInfo.xpAmount * effectiveAttempts, guildXpBonusEffects())\n"
+    "            queue.quantityCompleted += effectiveAttempts\n"
+    "            refreshInventory()\n"
+    "            refreshSkills()\n"
+    "        }\n"
 )
 new = (
-    "            is ActiveQueue.CraftingQueue -> ActiveQueueInfo(\n"
-    "                label = \"Crafting \" + formatItemName(queue.itemId),\n"
-    "                secondsPerAction = queue.secondsPerAction,\n"
-    "                startedAt = queue.startedAt\n"
-    "            )\n"
-    "            is ActiveQueue.BuryQueue -> {\n"
-    "                val remaining = queue.targetQuantity - queue.quantityCompleted\n"
-    "                ActiveQueueInfo(\n"
-    "                    label = \"Burying \" + formatItemName(queue.itemId) + \" (\" + remaining + \" left)\",\n"
-    "                    secondsPerAction = queue.secondsPerAction,\n"
-    "                    startedAt = queue.startedAt\n"
-    "                )\n"
-    "            }\n"
-    "            else -> null\n"
+    "        if (effectiveAttempts > 0) {\n"
+    "            inventory.removeItem(queue.itemId, effectiveAttempts)\n"
+    "            progressionService.grantXp(characterId, SkillType.PRAYER, boneInfo.xpAmount * effectiveAttempts, guildXpBonusEffects())\n"
+    "            queue.quantityCompleted += effectiveAttempts\n"
+    "            refreshInventory()\n"
+    "            refreshSkills()\n"
+    "            refreshActiveQueue()\n"
+    "        }\n"
 )
 
-marker = "is ActiveQueue.BuryQueue -> {"
+marker = "queue.quantityCompleted += effectiveAttempts\n            refreshInventory()\n            refreshSkills()\n            refreshActiveQueue()\n"
 if marker in content:
     print("SKIP (already applied)")
 else:
@@ -49,6 +42,6 @@ else:
     content = content.replace(old, new)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
-    print("PATCHED: ActiveQueue.BuryQueue now shows in Home tab queue")
+    print("PATCHED: refreshActiveQueue() now called after each completed bury batch")
 
 print("Done.")
