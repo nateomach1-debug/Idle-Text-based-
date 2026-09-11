@@ -26,17 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output156.txt
-          echo "=== Function name containing the ActiveQueueInfo when-block (context above line 2107) ===" > $OUT
-          sed -n '2085,2112p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== All call sites of that refresh function ===" >> $OUT
-          grep -n "refreshActiveQueue\|updateActiveQueueInfo" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND - need function name from above" >> $OUT
-          echo "" >> $OUT
-          echo "=== Bone burying tick function (tickBurying or similar) ===" >> $OUT
-          grep -n "fun tickBury\|fun tickBurying\|quantityCompleted =" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output157.txt
+          echo "=== Full tickBurying function body ===" > $OUT
+          sed -n '1207,1260p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
     artifacts:
-      - discovery_output156.txt
+      - discovery_output157.txt
       
   apply-patch:
     name: Apply Patch Script
