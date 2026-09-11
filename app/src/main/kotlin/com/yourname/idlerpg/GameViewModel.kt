@@ -1229,6 +1229,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             queue.quantityCompleted += effectiveAttempts
             refreshInventory()
             refreshSkills()
+            refreshActiveQueue()
         }
 
         if (queue.isTargetReached()) {
