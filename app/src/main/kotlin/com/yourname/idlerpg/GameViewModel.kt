@@ -2121,6 +2121,14 @@ fun logout() {
                 secondsPerAction = queue.secondsPerAction,
                 startedAt = queue.startedAt
             )
+            is ActiveQueue.BuryQueue -> {
+                val remaining = queue.targetQuantity - queue.quantityCompleted
+                ActiveQueueInfo(
+                    label = "Burying " + formatItemName(queue.itemId) + " (" + remaining + " left)",
+                    secondsPerAction = queue.secondsPerAction,
+                    startedAt = queue.startedAt
+                )
+            }
             else -> null
         }
     }
