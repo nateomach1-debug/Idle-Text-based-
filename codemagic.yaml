@@ -26,21 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output160.txt
-
-          echo "=== A. Locate ItemCatalog definition anywhere in app/src ===" > $OUT
-          grep -rn "object ItemCatalog\|class ItemCatalog" ./app/src >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output161.txt
+          echo "=== MarketOrderRow data class definition ===" > $OUT
+          grep -n "data class MarketOrderRow" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-
-          echo "=== B. Full dump of whatever file that is, if found ===" >> $OUT
-          FILE=$(grep -rl "object ItemCatalog\|class ItemCatalog" ./app/src | head -1)
-          if [ -n "$FILE" ]; then
-            grep -n "" "$FILE" >> $OUT
-          else
-            echo "NOT FOUND" >> $OUT
-          fi
+          echo "=== market_orders table schema (for column types) ===" >> $OUT
+          grep -n -A 20 "CREATE TABLE.*market_orders" ./*.sql >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output160.txt
+      - discovery_output161.txt
       
   apply-patch:
     name: Apply Patch Script
