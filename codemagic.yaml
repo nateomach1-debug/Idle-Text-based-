@@ -26,11 +26,24 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output167.txt
-          echo "=== MainActivity.kt lines 855-915 (end of Combat branch + start of Inventory branch) ===" > $OUT
-          sed -n '855,915p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output168.txt
+
+          echo "=== A. buildSkillDetailState function (where recipes get filtered by level) ===" > $OUT
+          grep -rn "fun buildSkillDetailState" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== B. SkillDetailScreen composable (how it renders the recipe/item list) ===" >> $OUT
+          grep -rn "fun SkillDetailScreen" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== C. RECIPE_BASED_SKILL_LABELS definition (confirm Crafting/Fletching are in it) ===" >> $OUT
+          grep -rn "RECIPE_BASED_SKILL_LABELS" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== D. SkillDetailState data class definition ===" >> $OUT
+          grep -rn "data class SkillDetailState\|class SkillDetailState" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output167.txt
+      - discovery_output168.txt
       
   apply-patch:
     name: Apply Patch Script
