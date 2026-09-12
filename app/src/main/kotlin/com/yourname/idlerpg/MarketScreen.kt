@@ -1,5 +1,6 @@
 package com.yourname.idlerpg.ui.screens
 
+import com.yourname.idlerpg.ItemCatalog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -94,6 +95,8 @@ fun MarketScreen(
     myBuyOrders: List<MarketOrderSummary>,
     mySellOrders: List<MarketOrderSummary>,
     onCancelOrder: (String) -> Unit,
+    onPlaceBuyOrder: (String, Int, Long) -> Unit,
+    onPlaceSellOrder: (String, Int, Long) -> Unit,
     // Sell to Vendor
     vendorSellableItems: List<InventoryItemSummary>,
     onSellToVendor: (String, Int) -> Unit,
@@ -136,7 +139,7 @@ fun MarketScreen(
 
         when (currentTab) {
             MarketTab.BROWSE -> BrowseTab(listings, showingBuyOrders, onToggleBrowseMode, onItemSelected)
-            MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder)
+            MarketTab.MY_ORDERS -> MyOrdersTab(myBuyOrders, mySellOrders, onCancelOrder, vendorSellableItems, onPlaceBuyOrder, onPlaceSellOrder)
             MarketTab.SELL_TO_VENDOR -> SellToVendorTab(vendorSellableItems, onSellToVendor)
             MarketTab.BUY_FROM_VENDOR -> BuyFromVendorTab(vendorBuyableItems, onBuyFromVendor)
         }
@@ -176,6 +179,7 @@ private fun MarketTabButton(
 
 // ---------------- Browse ----------------
 
+
 @Composable
 private fun BrowseTab(
     listings: List<MarketListingSummary>,
@@ -183,6 +187,11 @@ private fun BrowseTab(
     onToggleMode: () -> Unit,
     onItemSelected: (String) -> Unit
 ) {
+    val filteredListings = remember(listings, showingBuyOrders) {
+        if (showingBuyOrders) listings.filter { it.bestBuyPrice != null }
+        else listings.filter { it.bestSellPrice != null }
+    }
+
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -201,7 +210,15 @@ private fun BrowseTab(
         Spacer(modifier = Modifier.height(12.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(listings) { listing ->
+            if (filteredListings.isEmpty()) {
+                item {
+                    Text(
+                        text = if (showingBuyOrders) "No buy orders right now." else "Nothing for sale right now.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+            items(filteredListings) { listing ->
                 ListingRow(listing, onClick = { onItemSelected(listing.itemId) })
             }
         }
@@ -234,21 +251,179 @@ private fun ListingRow(listing: MarketListingSummary, onClick: () -> Unit) {
 private fun MyOrdersTab(
     buyOrders: List<MarketOrderSummary>,
     sellOrders: List<MarketOrderSummary>,
-    onCancel: (String) -> Unit
+    onCancel: (String) -> Unit,
+    inventoryItems: List<InventoryItemSummary>,
+    onPlaceBuyOrder: (String, Int, Long) -> Unit,
+    onPlaceSellOrder: (String, Int, Long) -> Unit
 ) {
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        item { Text(text = "Buy Orders", style = MaterialTheme.typography.titleMedium) }
-        if (buyOrders.isEmpty()) {
-            item { Text(text = "No open buy orders.", style = MaterialTheme.typography.bodyMedium) }
-        }
-        items(buyOrders) { order -> OrderRow(order, onCancel) }
+    var showPostOrderDialog by remember { mutableStateOf(false) }
 
-        item { Spacer(modifier = Modifier.height(12.dp)); Text(text = "Sell Orders", style = MaterialTheme.typography.titleMedium) }
-        if (sellOrders.isEmpty()) {
-            item { Text(text = "No open sell orders.", style = MaterialTheme.typography.bodyMedium) }
+    Column(modifier = Modifier.fillMaxSize()) {
+        Button(onClick = { showPostOrderDialog = true }, modifier = Modifier.fillMaxWidth()) {
+            Text("Post Order")
         }
-        items(sellOrders) { order -> OrderRow(order, onCancel) }
+        Spacer(modifier = Modifier.height(12.dp))
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item { Text(text = "Buy Orders", style = MaterialTheme.typography.titleMedium) }
+            if (buyOrders.isEmpty()) {
+                item { Text(text = "No open buy orders.", style = MaterialTheme.typography.bodyMedium) }
+            }
+            items(buyOrders) { order -> OrderRow(order, onCancel) }
+
+            item { Spacer(modifier = Modifier.height(12.dp)); Text(text = "Sell Orders", style = MaterialTheme.typography.titleMedium) }
+            if (sellOrders.isEmpty()) {
+                item { Text(text = "No open sell orders.", style = MaterialTheme.typography.bodyMedium) }
+            }
+            items(sellOrders) { order -> OrderRow(order, onCancel) }
+        }
     }
+
+    if (showPostOrderDialog) {
+        PostOrderDialog(
+            inventoryItems = inventoryItems,
+            onDismiss = { showPostOrderDialog = false },
+            onPlaceBuyOrder = { itemId, qty, price ->
+                onPlaceBuyOrder(itemId, qty, price)
+                showPostOrderDialog = false
+            },
+            onPlaceSellOrder = { itemId, qty, price ->
+                onPlaceSellOrder(itemId, qty, price)
+                showPostOrderDialog = false
+            }
+        )
+    }
+}
+
+private enum class PostOrderMode { BUY, SELL }
+
+@Composable
+private fun PostOrderDialog(
+    inventoryItems: List<InventoryItemSummary>,
+    onDismiss: () -> Unit,
+    onPlaceBuyOrder: (String, Int, Long) -> Unit,
+    onPlaceSellOrder: (String, Int, Long) -> Unit
+) {
+    var mode by remember { mutableStateOf(PostOrderMode.SELL) }
+    var itemDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedItemId by remember(mode) { mutableStateOf<String?>(null) }
+    var quantityText by remember { mutableStateOf("1") }
+    var priceText by remember { mutableStateOf("") }
+
+    val tradeableCatalogItems = remember { ItemCatalog.items.filter { it.isTradeable } }
+    val selectedInventoryItem = inventoryItems.find { it.itemId == selectedItemId }
+    val selectedCatalogItem = tradeableCatalogItems.find { it.id == selectedItemId }
+    val selectedDisplayName = if (mode == PostOrderMode.SELL) selectedInventoryItem?.displayName else selectedCatalogItem?.name
+
+    val enteredQuantity = quantityText.toIntOrNull()
+    val enteredPrice = priceText.toLongOrNull()
+    val maxSellQuantity = selectedInventoryItem?.quantity ?: Int.MAX_VALUE
+    val isValidQuantity = enteredQuantity != null && enteredQuantity > 0 &&
+        (mode == PostOrderMode.BUY || enteredQuantity <= maxSellQuantity)
+    val isValid = selectedItemId != null && isValidQuantity && enteredPrice != null && enteredPrice > 0
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Post Order") },
+        text = {
+            Column {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = mode == PostOrderMode.SELL,
+                        onClick = { mode = PostOrderMode.SELL; selectedItemId = null },
+                        label = { Text("Sell") }
+                    )
+                    FilterChip(
+                        selected = mode == PostOrderMode.BUY,
+                        onClick = { mode = PostOrderMode.BUY; selectedItemId = null },
+                        label = { Text("Buy") }
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                ExposedDropdownMenuBox(
+                    expanded = itemDropdownExpanded,
+                    onExpandedChange = { itemDropdownExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = selectedDisplayName ?: "Select an item",
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = itemDropdownExpanded) }
+                    )
+                    ExposedDropdownMenu(
+                        expanded = itemDropdownExpanded,
+                        onDismissRequest = { itemDropdownExpanded = false }
+                    ) {
+                        if (mode == PostOrderMode.SELL) {
+                            inventoryItems.forEach { item ->
+                                DropdownMenuItem(
+                                    text = { Text(item.displayName + " (x" + item.quantity + ")") },
+                                    onClick = {
+                                        selectedItemId = item.itemId
+                                        quantityText = item.quantity.toString()
+                                        itemDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        } else {
+                            tradeableCatalogItems.forEach { item ->
+                                DropdownMenuItem(
+                                    text = { Text(item.name) },
+                                    onClick = {
+                                        selectedItemId = item.id
+                                        itemDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (selectedItemId != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = quantityText,
+                            onValueChange = { new -> if (new.length <= 6 && new.all { it.isDigit() }) quantityText = new },
+                            label = { Text("Amount") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        OutlinedTextField(
+                            value = priceText,
+                            onValueChange = { new -> if (new.length <= 9 && new.all { it.isDigit() }) priceText = new },
+                            label = { Text("Price/unit") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                    }
+                    if (mode == PostOrderMode.SELL && enteredQuantity != null && enteredQuantity > maxSellQuantity) {
+                        Text(
+                            text = "You only have " + maxSellQuantity + ".",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val itemId = selectedItemId ?: return@TextButton
+                    val qty = enteredQuantity ?: return@TextButton
+                    val price = enteredPrice ?: return@TextButton
+                    if (mode == PostOrderMode.SELL) onPlaceSellOrder(itemId, qty, price)
+                    else onPlaceBuyOrder(itemId, qty, price)
+                },
+                enabled = isValid
+            ) { Text("Post") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
 }
 
 @Composable
