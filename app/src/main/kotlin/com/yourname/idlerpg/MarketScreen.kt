@@ -296,6 +296,7 @@ private fun MyOrdersTab(
 
 private enum class PostOrderMode { BUY, SELL }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PostOrderDialog(
     inventoryItems: List<InventoryItemSummary>,
