@@ -7,6 +7,7 @@ import com.yourname.idlerpg.ui.components.ReportMessageDialog
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.graphics.Color
@@ -523,6 +524,10 @@ fun AppRoot(gameViewModel: GameViewModel) {
 
     val context = androidx.compose.ui.platform.LocalContext.current
     var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
+
+    BackHandler(enabled = currentDestination != AppDestination.HOME) {
+        currentDestination = AppDestination.HOME
+    }
     var skillsScreenState by remember { mutableStateOf<SkillsScreenState>(SkillsScreenState.List) }
     var combatScreenState by remember { mutableStateOf<CombatScreenState>(CombatScreenState.ZoneSelect) }
     var inventoryScreenState by remember { mutableStateOf<InventoryScreenState>(InventoryScreenState.Items) }
@@ -760,7 +765,11 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 HomeScreen(state = homeState)
                             }
 
-                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
+                            AppDestination.SKILLS -> {
+                                BackHandler(enabled = skillsScreenState is SkillsScreenState.Detail) {
+                                    skillsScreenState = SkillsScreenState.List
+                                }
+                                when (val screen = skillsScreenState) {
                                 is SkillsScreenState.List -> SkillsScreen(
                                     allSkills = allSkills,
                                     onSkillSelected = { selectedSkillId ->
@@ -818,8 +827,16 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     }
                                 }
                             }
+                            }
 
-                            AppDestination.COMBAT -> when (combatScreenState) {
+                            AppDestination.COMBAT -> {
+                                BackHandler(enabled = combatScreenState != CombatScreenState.ZoneSelect) {
+                                    if (combatScreenState == CombatScreenState.InZone) {
+                                        gameViewModel.leaveCombatZone()
+                                    }
+                                    combatScreenState = CombatScreenState.ZoneSelect
+                                }
+                                when (combatScreenState) {
                                 CombatScreenState.ZoneSelect -> ZoneSelectScreen(
                                     zones = zones, playerLevel = trainingSkillLevel,
                                     onZoneSelected = { zoneId ->
@@ -865,8 +882,13 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     onPrayerSelected = { gameViewModel.selectPrayer(it) }
                                 )
                             }
+                            }
 
-                            AppDestination.INVENTORY -> when (inventoryScreenState) {
+                            AppDestination.INVENTORY -> {
+                                BackHandler(enabled = inventoryScreenState != InventoryScreenState.Items) {
+                                    inventoryScreenState = InventoryScreenState.Items
+                                }
+                                when (inventoryScreenState) {
                                 InventoryScreenState.Items -> InventoryScreen(
                                     items = inventoryItems,
                                     onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
@@ -905,6 +927,7 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                     prayerLevel = allSkills["PRAYER"]?.level ?: 1,
                                     onPrayerSelected = { gameViewModel.selectPrayer(it) }
                                 )
+                            }
                             }
 
                             AppDestination.MARKET -> {
@@ -951,6 +974,15 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                 }
 
                                 val itemId = selectedMarketItemId
+
+                                BackHandler(enabled = itemId != null) {
+                                    selectedMarketItemId = null
+                                    prefilledSellQuantity = null
+                                }
+                                BackHandler(enabled = itemId == null && marketTab != MarketTab.BROWSE) {
+                                    marketTab = MarketTab.BROWSE
+                                }
+
                                 if (itemId != null) {
                                     val orderBookDetail = remember(itemId, marketPriceSummaries) {
                                         val summary = marketPriceSummaries.find { it.itemId == itemId }
