@@ -1,47 +1,70 @@
-#!/usr/bin/env python3
-"""
-Guarded patch: bone-burying "X left" count wasn't live-updating on the
-Home tab because refreshActiveQueue() was only called when the queue
-stopped (target reached / ran out of bones), never after each batch of
-completed buries mid-queue.
-"""
-import os
+import pathlib
 
-path = "app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt"
+path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt")
+text = path.read_text()
 
-with open(path, "r", encoding="utf-8") as f:
-    content = f.read()
+old = """                                    MarketScreen(
+                                        currentTab = marketTab,
+                                        onTabSelected = { marketTab = it },
+                                        listings = marketListingsUi,
+                                        showingBuyOrders = showingBuyOrders,
+                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+                                        onItemSelected = { selectedMarketItemId = it },
+                                        myBuyOrders = myBuyOrdersUi,
+                                        mySellOrders = mySellOrdersUi,
+                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) } 
+                                        vendorSellableItems = inventoryItems,
+                                        onPlaceBuyOrder = { itemId, quantity, price ->
+                                            gameViewModel.placeBuyOrder(itemId, quantity, price),
+                                        onPlaceSellOrder = { itemId, quantity, price ->
+                                            gameViewModel.placeSellOrder(itemId, quantity, price),
+                                        onSellToVendor = { sellItemId, quantity ->
+                                            gameViewModel.sellItemToVendor(sellItemId, quantity),
+                                        vendorBuyableItems = gameViewModel.vendorBuyableItems(),
+                                        onBuyFromVendor = { buyItemId, quantity ->
+                                            gameViewModel.buyItemFromVendor(buyItemId, quantity)
+                                        }
+                                    )"""
 
-old = (
-    "        if (effectiveAttempts > 0) {\n"
-    "            inventory.removeItem(queue.itemId, effectiveAttempts)\n"
-    "            progressionService.grantXp(characterId, SkillType.PRAYER, boneInfo.xpAmount * effectiveAttempts, guildXpBonusEffects())\n"
-    "            queue.quantityCompleted += effectiveAttempts\n"
-    "            refreshInventory()\n"
-    "            refreshSkills()\n"
-    "        }\n"
-)
-new = (
-    "        if (effectiveAttempts > 0) {\n"
-    "            inventory.removeItem(queue.itemId, effectiveAttempts)\n"
-    "            progressionService.grantXp(characterId, SkillType.PRAYER, boneInfo.xpAmount * effectiveAttempts, guildXpBonusEffects())\n"
-    "            queue.quantityCompleted += effectiveAttempts\n"
-    "            refreshInventory()\n"
-    "            refreshSkills()\n"
-    "            refreshActiveQueue()\n"
-    "        }\n"
-)
+new = """                                    MarketScreen(
+                                        currentTab = marketTab,
+                                        onTabSelected = { marketTab = it },
+                                        listings = marketListingsUi,
+                                        showingBuyOrders = showingBuyOrders,
+                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
+                                        onItemSelected = { selectedMarketItemId = it },
+                                        myBuyOrders = myBuyOrdersUi,
+                                        mySellOrders = mySellOrdersUi,
+                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
+                                        vendorSellableItems = inventoryItems,
+                                        onPlaceBuyOrder = { itemId, quantity, price ->
+                                            gameViewModel.placeBuyOrder(itemId, quantity, price)
+                                        },
+                                        onPlaceSellOrder = { itemId, quantity, price ->
+                                            gameViewModel.placeSellOrder(itemId, quantity, price)
+                                        },
+                                        onSellToVendor = { sellItemId, quantity ->
+                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
+                                        },
+                                        vendorBuyableItems = gameViewModel.vendorBuyableItems(),
+                                        onBuyFromVendor = { buyItemId, quantity ->
+                                            gameViewModel.buyItemFromVendor(buyItemId, quantity)
+                                        }
+                                    )"""
 
-marker = "queue.quantityCompleted += effectiveAttempts\n            refreshInventory()\n            refreshSkills()\n            refreshActiveQueue()\n"
-if marker in content:
-    print("SKIP (already applied)")
-else:
-    count = content.count(old)
-    if count != 1:
-        raise RuntimeError(f"Expected exactly 1 match, found {count}.\n--- old_str ---\n{old}\n--- end ---")
-    content = content.replace(old, new)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(content)
-    print("PATCHED: refreshActiveQueue() now called after each completed bury batch")
+count = text.count(old)
+if count == 0:
+    raise SystemExit(
+        "PATCH FAILED: expected corrupted MarketScreen(...) block not found in "
+        "MainActivity.kt - it may already be fixed, or differ from what was expected. "
+        "No changes made."
+    )
+elif count > 1:
+    raise SystemExit(
+        f"PATCH FAILED: block matched {count} times (expected exactly 1) - "
+        "refusing to guess which one. No changes made."
+    )
 
-print("Done.")
+text = text.replace(old, new)
+path.write_text(text)
+print("Patched MainActivity.kt: fixed dropped braces/commas in the MarketScreen(...) call.")
