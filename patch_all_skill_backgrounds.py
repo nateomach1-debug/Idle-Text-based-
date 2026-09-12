@@ -1,377 +1,172 @@
 import pathlib
 
-path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt")
-text = path.read_text()
+main_activity_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt")
+skill_detail_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt")
 
-edits = []  # list of (label, old, new)
-
-# 1. Import
-edits.append((
-    "import BackHandler",
-    "import androidx.activity.compose.setContent",
-    "import androidx.activity.compose.setContent\nimport androidx.activity.compose.BackHandler",
-))
-
-# 2. Top-level Home BackHandler
-edits.append((
-    "top-level Home BackHandler",
-    "    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }",
-    "    var currentDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }\n\n"
-    "    BackHandler(enabled = currentDestination != AppDestination.HOME) {\n"
-    "        currentDestination = AppDestination.HOME\n"
-    "    }",
-))
-
-# 3. Skills: Detail -> List
-edits.append((
-    "Skills BackHandler",
-    """                            AppDestination.SKILLS -> when (val screen = skillsScreenState) {
-                                is SkillsScreenState.List -> SkillsScreen(
-                                    allSkills = allSkills,
-                                    onSkillSelected = { selectedSkillId ->
-                                        if (selectedSkillId in COMBAT_TRAINING_SKILL_IDS) {
-                                            when (val result = gameViewModel.setTrainingSkill(SkillType.valueOf(selectedSkillId))) {
-                                                is ServiceResult.Failure -> Toast.makeText(context, result.reason, Toast.LENGTH_SHORT).show()
-                                                is ServiceResult.Success -> {
-                                                    currentDestination = AppDestination.COMBAT
-                                                    combatScreenState = CombatScreenState.ZoneSelect
-                                                }
-                                            }
-                                        } else {
-                                            skillsScreenState = SkillsScreenState.Detail(selectedSkillId)
-                                        }
-                                    },
-                                    listState = skillsListScrollState,
-                                    gridState = skillsGridScrollState
-                                )
-                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-                                    Box(modifier = Modifier.fillMaxSize()) {
-                                        when (screen.skillId) {
-                                            "SMITHING" -> SmithingScreen(
-                                                buildSmithingState(
-                                                    it,
-                                                    inventoryQuantities,
-                                                    hasCapeEquipped = equippedItemsForSkills[EquipSlot.CAPE] == "smithing_cape"
-                                                ),
-                                                { skillsScreenState = SkillsScreenState.List },
-                                                { itemId -> gameViewModel.startCraftingAction(itemId) }
-                                            )
-                                            in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
-                                                buildSkillDetailState(
-                                                    screen.skillId,
-                                                    it,
-                                                    inventoryQuantities,
-                                                    hasCapeEquipped = equippedItemsForSkills[EquipSlot.CAPE] == screen.skillId.lowercase() + "_cape"
-                                                ),
-                                                { skillsScreenState = SkillsScreenState.List },
-                                                { itemId -> gameViewModel.startCraftingAction(itemId) },
-                                                startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId),
-                                                activeQueue = activeQueue
-                                            )
-                                            else -> SkillDetailScreen(
-                                                buildSkillDetailState(
-                                                    screen.skillId,
-                                                    it,
-                                                    inventoryQuantities,
-                                                    hasCapeEquipped = equippedItemsForSkills[EquipSlot.CAPE] == screen.skillId.lowercase() + "_cape"
-                                                ),
-                                                { skillsScreenState = SkillsScreenState.List },
-                                                { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) },
-                                                activeQueue = activeQueue
-                                            )
-                                        }
-                                    }
-                                }
-                            }""",
-    """                            AppDestination.SKILLS -> {
-                                BackHandler(enabled = skillsScreenState is SkillsScreenState.Detail) {
-                                    skillsScreenState = SkillsScreenState.List
-                                }
-                                when (val screen = skillsScreenState) {
-                                is SkillsScreenState.List -> SkillsScreen(
-                                    allSkills = allSkills,
-                                    onSkillSelected = { selectedSkillId ->
-                                        if (selectedSkillId in COMBAT_TRAINING_SKILL_IDS) {
-                                            when (val result = gameViewModel.setTrainingSkill(SkillType.valueOf(selectedSkillId))) {
-                                                is ServiceResult.Failure -> Toast.makeText(context, result.reason, Toast.LENGTH_SHORT).show()
-                                                is ServiceResult.Success -> {
-                                                    currentDestination = AppDestination.COMBAT
-                                                    combatScreenState = CombatScreenState.ZoneSelect
-                                                }
-                                            }
-                                        } else {
-                                            skillsScreenState = SkillsScreenState.Detail(selectedSkillId)
-                                        }
-                                    },
-                                    listState = skillsListScrollState,
-                                    gridState = skillsGridScrollState
-                                )
-                                is SkillsScreenState.Detail -> allSkills[screen.skillId]?.let {
-                                    Box(modifier = Modifier.fillMaxSize()) {
-                                        when (screen.skillId) {
-                                            "SMITHING" -> SmithingScreen(
-                                                buildSmithingState(
-                                                    it,
-                                                    inventoryQuantities,
-                                                    hasCapeEquipped = equippedItemsForSkills[EquipSlot.CAPE] == "smithing_cape"
-                                                ),
-                                                { skillsScreenState = SkillsScreenState.List },
-                                                { itemId -> gameViewModel.startCraftingAction(itemId) }
-                                            )
-                                            in RECIPE_BASED_SKILL_LABELS -> SkillDetailScreen(
-                                                buildSkillDetailState(
-                                                    screen.skillId,
-                                                    it,
-                                                    inventoryQuantities,
-                                                    hasCapeEquipped = equippedItemsForSkills[EquipSlot.CAPE] == screen.skillId.lowercase() + "_cape"
-                                                ),
-                                                { skillsScreenState = SkillsScreenState.List },
-                                                { itemId -> gameViewModel.startCraftingAction(itemId) },
-                                                startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId),
-                                                activeQueue = activeQueue
-                                            )
-                                            else -> SkillDetailScreen(
-                                                buildSkillDetailState(
-                                                    screen.skillId,
-                                                    it,
-                                                    inventoryQuantities,
-                                                    hasCapeEquipped = equippedItemsForSkills[EquipSlot.CAPE] == screen.skillId.lowercase() + "_cape"
-                                                ),
-                                                { skillsScreenState = SkillsScreenState.List },
-                                                { actionId -> gameViewModel.startSkillAction(SkillType.valueOf(screen.skillId), actionId) },
-                                                activeQueue = activeQueue
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                            }""",
-))
-
-# 4. Combat: InZone/Loadout -> ZoneSelect (leaves zone server-side if InZone)
-edits.append((
-    "Combat BackHandler",
-    """                            AppDestination.COMBAT -> when (combatScreenState) {
-                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
-                                    zones = zones, playerLevel = trainingSkillLevel,
-                                    onZoneSelected = { zoneId ->
-                                        val result = gameViewModel.enterCombatZone(zoneId)
-                                        if (result is ServiceResult.Success) {
-                                            combatScreenState = CombatScreenState.InZone
-                                        }
-                                    },
-                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
-                                )
-                                CombatScreenState.InZone -> {
-                                    val currentCombatData = combatViewData
-                                    if (currentCombatData != null) {
-                                        CombatViewScreen(
-                                            data = currentCombatData,
-                                            onLeaveZone = {
-                                                gameViewModel.leaveCombatZone()
-                                                combatScreenState = CombatScreenState.ZoneSelect
-                                            }
-                                        )
-                                    } else {
-                                        combatScreenState = CombatScreenState.ZoneSelect
-                                    }
-                                }
-                                CombatScreenState.Loadout -> LoadoutScreen(
-                                    state = LoadoutState(
-                                        availableFoodOptions, loadoutSettings.selectedFoodId,
-                                        availablePotionOptions, loadoutSettings.selectedPotionId,
-                                        loadoutSettings.potionTimerRemainingSeconds,
-                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
-                                    ),
-                                    trainingSkill = trainingSkill,
-                                    allowedTrainingSkills = gameViewModel.allowedTrainingSkills,
-                                    onTrainingSkillSelected = { gameViewModel.setTrainingSkill(it) },
-                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
-                                    onFoodSelected = { gameViewModel.selectFood(it) },
-                                    onPotionSelected = { gameViewModel.selectPotion(it) },
-                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
-                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) },
-                                    selectedPrayerId = loadoutSettings.selectedPrayerId,
-                                    prayerOptions = gameViewModel.prayerOptions,
-                                    prayerLevel = allSkills["PRAYER"]?.level ?: 1,
-                                    onPrayerSelected = { gameViewModel.selectPrayer(it) }
-                                )
-                            }""",
-    """                            AppDestination.COMBAT -> {
-                                BackHandler(enabled = combatScreenState != CombatScreenState.ZoneSelect) {
-                                    if (combatScreenState == CombatScreenState.InZone) {
-                                        gameViewModel.leaveCombatZone()
-                                    }
-                                    combatScreenState = CombatScreenState.ZoneSelect
-                                }
-                                when (combatScreenState) {
-                                CombatScreenState.ZoneSelect -> ZoneSelectScreen(
-                                    zones = zones, playerLevel = trainingSkillLevel,
-                                    onZoneSelected = { zoneId ->
-                                        val result = gameViewModel.enterCombatZone(zoneId)
-                                        if (result is ServiceResult.Success) {
-                                            combatScreenState = CombatScreenState.InZone
-                                        }
-                                    },
-                                    onOpenLoadout = { combatScreenState = CombatScreenState.Loadout }
-                                )
-                                CombatScreenState.InZone -> {
-                                    val currentCombatData = combatViewData
-                                    if (currentCombatData != null) {
-                                        CombatViewScreen(
-                                            data = currentCombatData,
-                                            onLeaveZone = {
-                                                gameViewModel.leaveCombatZone()
-                                                combatScreenState = CombatScreenState.ZoneSelect
-                                            }
-                                        )
-                                    } else {
-                                        combatScreenState = CombatScreenState.ZoneSelect
-                                    }
-                                }
-                                CombatScreenState.Loadout -> LoadoutScreen(
-                                    state = LoadoutState(
-                                        availableFoodOptions, loadoutSettings.selectedFoodId,
-                                        availablePotionOptions, loadoutSettings.selectedPotionId,
-                                        loadoutSettings.potionTimerRemainingSeconds,
-                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
-                                    ),
-                                    trainingSkill = trainingSkill,
-                                    allowedTrainingSkills = gameViewModel.allowedTrainingSkills,
-                                    onTrainingSkillSelected = { gameViewModel.setTrainingSkill(it) },
-                                    onBack = { combatScreenState = CombatScreenState.ZoneSelect },
-                                    onFoodSelected = { gameViewModel.selectFood(it) },
-                                    onPotionSelected = { gameViewModel.selectPotion(it) },
-                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
-                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) },
-                                    selectedPrayerId = loadoutSettings.selectedPrayerId,
-                                    prayerOptions = gameViewModel.prayerOptions,
-                                    prayerLevel = allSkills["PRAYER"]?.level ?: 1,
-                                    onPrayerSelected = { gameViewModel.selectPrayer(it) }
-                                )
-                            }
-                            }""",
-))
-
-# 5. Inventory: Equipment/Loadout -> Items
-edits.append((
-    "Inventory BackHandler",
-    """                            AppDestination.INVENTORY -> when (inventoryScreenState) {
-                                InventoryScreenState.Items -> InventoryScreen(
-                                    items = inventoryItems,
-                                    onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
-                                    onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
-                                    onUseItem = { itemId -> gameViewModel.useInventoryItem(itemId) },
-                                    onSellOnMarket = { itemId ->
-                                        val item = inventoryItems.find { it.itemId == itemId }
-                                        selectedMarketItemId = itemId
-                                        prefilledSellQuantity = item?.quantity
-                                        currentDestination = AppDestination.MARKET
-                                    },
-                                    onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
-                                    onBuryItem = { itemId, qty -> gameViewModel.startBuryAction(itemId, qty) },
-                                    canEquip = ::canEquip,
-                                    canBury = ::canBury
-                                )
-                                InventoryScreenState.Equipment -> EquipmentScreen(
-                                    state = EquipmentScreenState(equipped, lockedEquipSlots),
-                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
-                                    onSlotTapped = { slot -> gameViewModel.unequipSlot(EquipSlot.valueOf(slot.name)) }
-                                )
-                                InventoryScreenState.Loadout -> LoadoutScreen(
-                                    state = LoadoutState(
-                                        availableFoodOptions, loadoutSettings.selectedFoodId,
-                                        availablePotionOptions, loadoutSettings.selectedPotionId,
-                                        loadoutSettings.potionTimerRemainingSeconds,
-                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
-                                    ),
-                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
-                                    onFoodSelected = { gameViewModel.selectFood(it) },
-                                    onPotionSelected = { gameViewModel.selectPotion(it) },
-                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
-                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) },
-                                    selectedPrayerId = loadoutSettings.selectedPrayerId,
-                                    prayerOptions = gameViewModel.prayerOptions,
-                                    prayerLevel = allSkills["PRAYER"]?.level ?: 1,
-                                    onPrayerSelected = { gameViewModel.selectPrayer(it) }
-                                )
-                            }""",
-    """                            AppDestination.INVENTORY -> {
-                                BackHandler(enabled = inventoryScreenState != InventoryScreenState.Items) {
-                                    inventoryScreenState = InventoryScreenState.Items
-                                }
-                                when (inventoryScreenState) {
-                                InventoryScreenState.Items -> InventoryScreen(
-                                    items = inventoryItems,
-                                    onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
-                                    onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
-                                    onUseItem = { itemId -> gameViewModel.useInventoryItem(itemId) },
-                                    onSellOnMarket = { itemId ->
-                                        val item = inventoryItems.find { it.itemId == itemId }
-                                        selectedMarketItemId = itemId
-                                        prefilledSellQuantity = item?.quantity
-                                        currentDestination = AppDestination.MARKET
-                                    },
-                                    onEquipItem = { itemId -> gameViewModel.equipItem(itemId) },
-                                    onBuryItem = { itemId, qty -> gameViewModel.startBuryAction(itemId, qty) },
-                                    canEquip = ::canEquip,
-                                    canBury = ::canBury
-                                )
-                                InventoryScreenState.Equipment -> EquipmentScreen(
-                                    state = EquipmentScreenState(equipped, lockedEquipSlots),
-                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
-                                    onSlotTapped = { slot -> gameViewModel.unequipSlot(EquipSlot.valueOf(slot.name)) }
-                                )
-                                InventoryScreenState.Loadout -> LoadoutScreen(
-                                    state = LoadoutState(
-                                        availableFoodOptions, loadoutSettings.selectedFoodId,
-                                        availablePotionOptions, loadoutSettings.selectedPotionId,
-                                        loadoutSettings.potionTimerRemainingSeconds,
-                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
-                                    ),
-                                    onBack = { inventoryScreenState = InventoryScreenState.Items },
-                                    onFoodSelected = { gameViewModel.selectFood(it) },
-                                    onPotionSelected = { gameViewModel.selectPotion(it) },
-                                    onAutoHealChanged = { gameViewModel.setAutoHealThreshold(it) },
-                                    onAutoFleeChanged = { gameViewModel.setAutoFleeThreshold(it) },
-                                    selectedPrayerId = loadoutSettings.selectedPrayerId,
-                                    prayerOptions = gameViewModel.prayerOptions,
-                                    prayerLevel = allSkills["PRAYER"]?.level ?: 1,
-                                    onPrayerSelected = { gameViewModel.selectPrayer(it) }
-                                )
-                            }
-                            }""",
-))
-
-# 6. Market: order-book detail -> Browse tab -> (falls through to Home via top-level handler)
-edits.append((
-    "Market BackHandler",
-    "                                val itemId = selectedMarketItemId\n                                if (itemId != null) {",
-    "                                val itemId = selectedMarketItemId\n\n"
-    "                                BackHandler(enabled = itemId != null) {\n"
-    "                                    selectedMarketItemId = null\n"
-    "                                    prefilledSellQuantity = null\n"
-    "                                }\n"
-    "                                BackHandler(enabled = itemId == null && marketTab != MarketTab.BROWSE) {\n"
-    "                                    marketTab = MarketTab.BROWSE\n"
-    "                                }\n\n"
-    "                                if (itemId != null) {",
-))
+main_activity_text = main_activity_path.read_text()
+skill_detail_text = skill_detail_path.read_text()
 
 errors = []
-for label, old, new in edits:
-    count = text.count(old)
-    if count != 1:
-        errors.append(f"  - {label}: expected 1 match, found {count}")
+
+# --- MainActivity.kt: buildSkillDetailState filter/map ---
+ma_old = """    val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
+        RecipeCatalog.recipes
+            .filter { it.skillRequired == skillId && it.levelRequired <= summary.level }
+            .map {
+                SkillActionSummary(
+                    actionId = it.outputItemId,
+                    displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
+                    levelRequired = it.levelRequired,
+                    missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+                )
+            }
+            .sortedBy { it.levelRequired }"""
+
+ma_new = """    val showLockedRecipes = skillId == "CRAFTING" || skillId == "FLETCHING"
+    val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
+        RecipeCatalog.recipes
+            .filter { it.skillRequired == skillId && (showLockedRecipes || it.levelRequired <= summary.level) }
+            .map {
+                SkillActionSummary(
+                    actionId = it.outputItemId,
+                    displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
+                    levelRequired = it.levelRequired,
+                    missingIngredients = if (it.levelRequired <= summary.level) missingIngredientsFor(it.ingredients, inventoryQuantities) else emptyList(),
+                    isLocked = it.levelRequired > summary.level
+                )
+            }
+            .sortedBy { it.levelRequired }"""
+
+count = main_activity_text.count(ma_old)
+if count != 1:
+    errors.append(f"MainActivity.kt buildSkillDetailState edit: expected 1 match, found {count}")
+
+# --- SkillDetailScreen.kt: SkillActionSummary data class ---
+sd_old_1 = """data class SkillActionSummary(
+    val actionId: String,
+    val displayName: String,
+    val levelRequired: Int,
+    val missingIngredients: List<MissingIngredientSummary> = emptyList()
+)"""
+
+sd_new_1 = """data class SkillActionSummary(
+    val actionId: String,
+    val displayName: String,
+    val levelRequired: Int,
+    val missingIngredients: List<MissingIngredientSummary> = emptyList(),
+    val isLocked: Boolean = false
+)"""
+
+count = skill_detail_text.count(sd_old_1)
+if count != 1:
+    errors.append(f"SkillDetailScreen.kt SkillActionSummary edit: expected 1 match, found {count}")
+
+# --- SkillDetailScreen.kt: ActionRow ---
+sd_old_2 = """@Composable
+private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> Unit) {
+    var showMissingDialog by remember { mutableStateOf(false) }
+    val affordable = action.missingIngredients.isEmpty()
+    val contentColor = if (affordable) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable {
+                if (affordable) onActionSelected(action.actionId) else showMissingDialog = true
+            }
+            .padding(vertical = 12.dp, horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium, color = overrideColor(contentColor))
+        Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(contentColor))
+    }
+
+    if (showMissingDialog) {
+        MissingIngredientsDialog(
+            itemName = action.displayName,
+            missing = action.missingIngredients,
+            onDismiss = { showMissingDialog = false }
+        )
+    }
+}"""
+
+sd_new_2 = """@Composable
+private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> Unit) {
+    var showMissingDialog by remember { mutableStateOf(false) }
+    var showLockedDialog by remember { mutableStateOf(false) }
+    val affordable = !action.isLocked && action.missingIngredients.isEmpty()
+    val contentColor = if (affordable) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable {
+                when {
+                    action.isLocked -> showLockedDialog = true
+                    affordable -> onActionSelected(action.actionId)
+                    else -> showMissingDialog = true
+                }
+            }
+            .padding(vertical = 12.dp, horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = (if (action.isLocked) "\\uD83D\\uDD12 " else "") + action.displayName,
+            style = MaterialTheme.typography.bodyMedium,
+            color = overrideColor(contentColor)
+        )
+        Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(contentColor))
+    }
+
+    if (showMissingDialog) {
+        MissingIngredientsDialog(
+            itemName = action.displayName,
+            missing = action.missingIngredients,
+            onDismiss = { showMissingDialog = false }
+        )
+    }
+
+    if (showLockedDialog) {
+        AlertDialog(
+            onDismissRequest = { showLockedDialog = false },
+            title = { Text(text = "Not yet unlocked", style = MaterialTheme.typography.titleMedium) },
+            text = {
+                Text(text = action.displayName + " requires level " + action.levelRequired + ".")
+            },
+            confirmButton = {
+                TextButton(onClick = { showLockedDialog = false }) {
+                    Text(text = "OK")
+                }
+            }
+        )
+    }
+}"""
+
+count = skill_detail_text.count(sd_old_2)
+if count != 1:
+    errors.append(f"SkillDetailScreen.kt ActionRow edit: expected 1 match, found {count}")
 
 if errors:
     raise SystemExit(
         "PATCH FAILED: one or more expected blocks did not match exactly once. "
-        "No changes made to the file.\n" + "\n".join(errors)
+        "No changes made to either file.\n" + "\n".join(f"  - {e}" for e in errors)
     )
 
-for label, old, new in edits:
-    text = text.replace(old, new)
+main_activity_text = main_activity_text.replace(ma_old, ma_new)
+skill_detail_text = skill_detail_text.replace(sd_old_1, sd_new_1).replace(sd_old_2, sd_new_2)
 
-path.write_text(text)
-print(f"Patched MainActivity.kt: applied {len(edits)} back-navigation edits successfully.")
+main_activity_path.write_text(main_activity_text)
+skill_detail_path.write_text(skill_detail_text)
+
+print("Patched MainActivity.kt: Crafting/Fletching recipes no longer hidden, just marked isLocked.")
+print("Patched SkillDetailScreen.kt: SkillActionSummary.isLocked added, ActionRow shows locked items with a lock icon + 'Not yet unlocked' dialog.")
