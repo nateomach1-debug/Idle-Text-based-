@@ -26,24 +26,26 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output169.txt
+          OUT=discovery_output170.txt
 
-          echo "=== A. Full RECIPE_BASED_SKILL_LABELS map ===" > $OUT
-          sed -n '129,140p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "=== A. Offline progress calculation (elapsed time / cap / rate logic) ===" > $OUT
+          grep -rln "offline" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          grep -rn "fun.*[Oo]ffline" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND (function names)" >> $OUT
+          echo "" >> $OUT
+          grep -rn "maxOfflineSeconds\|MAX_OFFLINE\|offlineCapSeconds\|offlineCapHours\|coerceAtMost.*offline\|offline.*coerceAtMost" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND (cap constant)" >> $OUT
           echo "" >> $OUT
 
-          echo "=== B. Rest of SkillDetailScreen.kt (action picker UI) ===" >> $OUT
-          sed -n '113,220p' ./app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt >> $OUT
+          echo "=== B. placeBuyOrder / placeSellOrder in GameViewModel.kt ===" >> $OUT
+          grep -n "fun placeBuyOrder\|fun placeSellOrder" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== C. SkillActionSummary data class ===" >> $OUT
-          grep -rn "data class SkillActionSummary" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== C. Leaderboards screen row rendering ===" >> $OUT
+          grep -rln "Leaderboard" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-
-          echo "=== D. missingIngredientsFor function ===" >> $OUT
-          grep -rn "fun missingIngredientsFor" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          grep -rn "fun LeaderboardRow\|fun.*LeaderboardEntry\|rank ==\|rank <=" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND (row fn)" >> $OUT
     artifacts:
-      - discovery_output169.txt
+      - discovery_output170.txt
       
   apply-patch:
     name: Apply Patch Script
