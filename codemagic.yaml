@@ -26,11 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output157.txt
-          echo "=== Full tickBurying function body ===" > $OUT
-          sed -n '1207,1260p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          OUT=discovery_output158.txt
+          echo "=== MarketScreen.kt: top-level structure, sub-tabs ===" > $OUT
+          grep -n "fun MarketScreen\|MarketTab\|\"Browse\"\|\"Orders\"\|\"Vendor\"\|\"Buy\"" ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Browse composable + wanted/for-sale toggle ===" >> $OUT
+          grep -n "fun BrowseTab\|fun MarketBrowse\|showWanted\|isWanted\|OrderSide\|BUY.*SELL" ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== Orders tab composable (player's own orders) ===" >> $OUT
+          grep -n "fun OrdersTab\|fun MyOrders\|myOrders\|playerOrders" ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== MarketOrder data class ===" >> $OUT
+          grep -n "data class MarketOrder" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output157.txt
+      - discovery_output158.txt
       
   apply-patch:
     name: Apply Patch Script
