@@ -1,62 +1,20 @@
 import pathlib
 
-path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt")
+path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt")
 text = path.read_text()
 
-old = """                                    MarketScreen(
-                                        currentTab = marketTab,
-                                        onTabSelected = { marketTab = it },
-                                        listings = marketListingsUi,
-                                        showingBuyOrders = showingBuyOrders,
-                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
-                                        onItemSelected = { selectedMarketItemId = it },
-                                        myBuyOrders = myBuyOrdersUi,
-                                        mySellOrders = mySellOrdersUi,
-                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) } 
-                                        vendorSellableItems = inventoryItems,
-                                        onPlaceBuyOrder = { itemId, quantity, price ->
-                                            gameViewModel.placeBuyOrder(itemId, quantity, price),
-                                        onPlaceSellOrder = { itemId, quantity, price ->
-                                            gameViewModel.placeSellOrder(itemId, quantity, price),
-                                        onSellToVendor = { sellItemId, quantity ->
-                                            gameViewModel.sellItemToVendor(sellItemId, quantity),
-                                        vendorBuyableItems = gameViewModel.vendorBuyableItems(),
-                                        onBuyFromVendor = { buyItemId, quantity ->
-                                            gameViewModel.buyItemFromVendor(buyItemId, quantity)
-                                        }
-                                    )"""
+old = """@Composable
+private fun PostOrderDialog("""
 
-new = """                                    MarketScreen(
-                                        currentTab = marketTab,
-                                        onTabSelected = { marketTab = it },
-                                        listings = marketListingsUi,
-                                        showingBuyOrders = showingBuyOrders,
-                                        onToggleBrowseMode = { showingBuyOrders = !showingBuyOrders },
-                                        onItemSelected = { selectedMarketItemId = it },
-                                        myBuyOrders = myBuyOrdersUi,
-                                        mySellOrders = mySellOrdersUi,
-                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
-                                        vendorSellableItems = inventoryItems,
-                                        onPlaceBuyOrder = { itemId, quantity, price ->
-                                            gameViewModel.placeBuyOrder(itemId, quantity, price)
-                                        },
-                                        onPlaceSellOrder = { itemId, quantity, price ->
-                                            gameViewModel.placeSellOrder(itemId, quantity, price)
-                                        },
-                                        onSellToVendor = { sellItemId, quantity ->
-                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
-                                        },
-                                        vendorBuyableItems = gameViewModel.vendorBuyableItems(),
-                                        onBuyFromVendor = { buyItemId, quantity ->
-                                            gameViewModel.buyItemFromVendor(buyItemId, quantity)
-                                        }
-                                    )"""
+new = """@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PostOrderDialog("""
 
 count = text.count(old)
 if count == 0:
     raise SystemExit(
-        "PATCH FAILED: expected corrupted MarketScreen(...) block not found in "
-        "MainActivity.kt - it may already be fixed, or differ from what was expected. "
+        "PATCH FAILED: expected '@Composable\\nprivate fun PostOrderDialog(' not found "
+        "in MarketScreen.kt - it may already be patched, or differ from what was expected. "
         "No changes made."
     )
 elif count > 1:
@@ -67,4 +25,4 @@ elif count > 1:
 
 text = text.replace(old, new)
 path.write_text(text)
-print("Patched MainActivity.kt: fixed dropped braces/commas in the MarketScreen(...) call.")
+print("Patched MarketScreen.kt: added @OptIn(ExperimentalMaterial3Api::class) to PostOrderDialog.")
