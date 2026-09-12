@@ -26,35 +26,32 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output163.txt
+          OUT=discovery_output164.txt
 
-          echo "=== A. List all background image files (drawable dirs) ===" > $OUT
-          find ./app/src/main/res -iname "*bg*" -o -iname "*background*" >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== A. Any existing BackHandler usage (avoid conflicts) ===" > $OUT
+          grep -rn "BackHandler" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== B. Mining/Woodcutting background filenames specifically (already shipped, for naming convention) ===" >> $OUT
-          find ./app/src/main/res -iname "*mining*" -o -iname "*woodcutting*" >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== B. Top-level screen state (enum/sealed class + how it's switched) ===" >> $OUT
+          grep -n "enum class Screen\|sealed class Screen\|var currentScreen\|currentDestination" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt ./app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt ./app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== C. Fishing/Farming background filenames if they already exist as placeholders ===" >> $OUT
-          find ./app/src/main/res -iname "*fishing*" -o -iname "*farming*" >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== C. Full NavigationDestinations.kt (top-level screen definitions) ===" >> $OUT
+          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== D. Kotlin mapping of skill -> background drawable resource ===" >> $OUT
-          grep -rn -i "skillbackground\|R.drawable.bg_\|backgroundFor" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== D. Guild sub-tab state (enum + remembered var), similar to MarketTab ===" >> $OUT
+          grep -rn "enum class GuildTab\|var guildTab\|GuildTab\." ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== E. Image dimensions/format of one known-good background (mining) if found ===" >> $OUT
-          MINING_FILE=$(find ./app/src/main/res -iname "*mining*" | head -1)
-          if [ -n "$MINING_FILE" ]; then
-            echo "File: $MINING_FILE" >> $OUT
-            file "$MINING_FILE" >> $OUT
-            ls -la "$MINING_FILE" >> $OUT
-          else
-            echo "NOT FOUND" >> $OUT
-          fi
+          echo "=== E. Any other 'enum class .*Tab' across the whole app (find every sub-tab screen) ===" >> $OUT
+          grep -rn "enum class.*Tab" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== F. Existing import block of MainActivity.kt (check for androidx.activity.compose.BackHandler) ===" >> $OUT
+          sed -n '1,40p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output163.txt
+      - discovery_output164.txt
       
   apply-patch:
     name: Apply Patch Script
