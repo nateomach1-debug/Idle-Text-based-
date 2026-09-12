@@ -26,20 +26,40 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output158.txt
-          echo "=== MarketScreen.kt: top-level structure, sub-tabs ===" > $OUT
-          grep -n "fun MarketScreen\|MarketTab\|\"Browse\"\|\"Orders\"\|\"Vendor\"\|\"Buy\"" ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output159.txt
+
+          echo "=== 1a. MarketScreen(...) call site(s) - host wiring, excludes the fun definition ===" > $OUT
+          grep -rn "MarketScreen(" ./app/src/main/kotlin/com/yourname/idlerpg/ | grep -v "fun MarketScreen(" >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Browse composable + wanted/for-sale toggle ===" >> $OUT
-          grep -n "fun BrowseTab\|fun MarketBrowse\|showWanted\|isWanted\|OrderSide\|BUY.*SELL" ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+
+          echo "=== 1b. showingBuyOrders / onToggleBrowseMode state, wherever it lives ===" >> $OUT
+          grep -rn "showingBuyOrders\|onToggleBrowseMode\|toggleBrowseMode\|ToggleBrowseMode" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Orders tab composable (player's own orders) ===" >> $OUT
-          grep -n "fun OrdersTab\|fun MyOrders\|myOrders\|playerOrders" ./app/src/main/kotlin/com/yourname/idlerpg/MarketScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+
+          echo "=== 2. SupabaseMarketRepository.kt - myOrders/placeBuyOrder/placeSellOrder bodies ===" >> $OUT
+          grep -n "fun myOrders\|fun placeBuyOrder\|fun placeSellOrder" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== MarketOrder data class ===" >> $OUT
-          grep -n "data class MarketOrder" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+
+          echo "=== 2b. All .rpc(...) calls in SupabaseMarketRepository.kt (to identify real RPC names) ===" >> $OUT
+          grep -n "\.rpc(" -A 2 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== 3. All Supabase SQL function names defined at repo root ===" >> $OUT
+          grep -n "CREATE OR REPLACE FUNCTION\|CREATE FUNCTION" ./*.sql >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== 3b. Full body of any order-related SQL function (case-insensitive match on 'order') ===" >> $OUT
+          grep -n -i -A 40 "CREATE OR REPLACE FUNCTION.*order\|CREATE FUNCTION.*order" ./*.sql >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== 4a. Full ItemCatalog.kt (every item in game, for buy-order dropdown) ===" >> $OUT
+          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/ItemCatalog.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== 4b. Inventory item enumeration (vendorSellableItems / InventoryItemSummary source, for sell-order dropdown) ===" >> $OUT
+          grep -rn "InventoryItemSummary\|vendorSellableItems\|fun inventoryFor\|fun allItems" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output158.txt
+      - discovery_output159.txt
       
   apply-patch:
     name: Apply Patch Script
