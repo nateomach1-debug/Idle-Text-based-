@@ -26,26 +26,24 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output170.txt
+          OUT=discovery_output171.txt
 
-          echo "=== A. Offline progress calculation (elapsed time / cap / rate logic) ===" > $OUT
-          grep -rln "offline" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          grep -rn "fun.*[Oo]ffline" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND (function names)" >> $OUT
-          echo "" >> $OUT
-          grep -rn "maxOfflineSeconds\|MAX_OFFLINE\|offlineCapSeconds\|offlineCapHours\|coerceAtMost.*offline\|offline.*coerceAtMost" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND (cap constant)" >> $OUT
+          echo "=== A. OfflineIdleMechanicsSystem.kt lines 1-60 (class fields, maxPlausibleElapsed) ===" > $OUT
+          sed -n '1,60p' ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
           echo "" >> $OUT
 
-          echo "=== B. placeBuyOrder / placeSellOrder in GameViewModel.kt ===" >> $OUT
-          grep -n "fun placeBuyOrder\|fun placeSellOrder" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== B. resolveOfflineProgress full body ===" >> $OUT
+          sed -n '239,320p' ./app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt >> $OUT
           echo "" >> $OUT
 
-          echo "=== C. Leaderboards screen row rendering ===" >> $OUT
-          grep -rln "Leaderboard" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== C. Full placeBuyOrder + placeSellOrder in GameViewModel.kt ===" >> $OUT
+          sed -n '2179,2225p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          grep -rn "fun LeaderboardRow\|fun.*LeaderboardEntry\|rank ==\|rank <=" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND (row fn)" >> $OUT
+
+          echo "=== D. LeaderboardsScreen.kt full content ===" >> $OUT
+          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/LeaderboardsScreen.kt >> $OUT
     artifacts:
-      - discovery_output170.txt
+      - discovery_output171.txt
       
   apply-patch:
     name: Apply Patch Script
