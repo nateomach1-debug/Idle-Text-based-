@@ -1,225 +1,202 @@
 import pathlib
 
-main_activity_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt")
-skill_detail_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt")
+offline_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt")
+gvm_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt")
+leaderboard_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/LeaderboardsScreen.kt")
 
-main_activity_text = main_activity_path.read_text()
-skill_detail_text = skill_detail_path.read_text()
+offline_text = offline_path.read_text()
+gvm_text = gvm_path.read_text()
+leaderboard_text = leaderboard_path.read_text()
 
 errors = []
-ma_changed = False
-sd_changed = False
 
 # ============================================================
-# MainActivity.kt: buildSkillDetailState
+# 1. OfflineEfficiencyCurve: 12h full, 12h @ 50%, then 0% (was 12h full, 72h @ 50%, then 25% floor)
 # ============================================================
+offline_old = """    private val fullRateWindow: Duration = Duration.ofHours(12)
+    private val reducedRateWindow: Duration = Duration.ofHours(72)
+    private const val FULL_RATE_PERCENT = 100.0
+    private const val REDUCED_RATE_PERCENT = 50.0
+    private const val FLOOR_RATE_PERCENT = 25.0"""
 
-# Case A: the Crafting/Fletching-only patch already landed - just widen it to all 4 skills.
-ma_case_a_old = """    val showLockedRecipes = skillId == "CRAFTING" || skillId == "FLETCHING"
-    val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
-        RecipeCatalog.recipes
-            .filter { it.skillRequired == skillId && (showLockedRecipes || it.levelRequired <= summary.level) }
-            .map {
-                SkillActionSummary(
-                    actionId = it.outputItemId,
-                    displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
-                    levelRequired = it.levelRequired,
-                    missingIngredients = if (it.levelRequired <= summary.level) missingIngredientsFor(it.ingredients, inventoryQuantities) else emptyList(),
-                    isLocked = it.levelRequired > summary.level
-                )
-            }
-            .sortedBy { it.levelRequired }"""
+offline_new = """    private val fullRateWindow: Duration = Duration.ofHours(12)
+    private val reducedRateWindow: Duration = Duration.ofHours(24)
+    private const val FULL_RATE_PERCENT = 100.0
+    private const val REDUCED_RATE_PERCENT = 50.0
+    private const val FLOOR_RATE_PERCENT = 0.0"""
 
-# Case B: neither patch has landed yet - the original unmodified code.
-ma_case_b_old = """    val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
-        RecipeCatalog.recipes
-            .filter { it.skillRequired == skillId && it.levelRequired <= summary.level }
-            .map {
-                SkillActionSummary(
-                    actionId = it.outputItemId,
-                    displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
-                    levelRequired = it.levelRequired,
-                    missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
-                )
-            }
-            .sortedBy { it.levelRequired }"""
-
-ma_new = """    val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
-        RecipeCatalog.recipes
-            .filter { it.skillRequired == skillId }
-            .map {
-                SkillActionSummary(
-                    actionId = it.outputItemId,
-                    displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
-                    levelRequired = it.levelRequired,
-                    missingIngredients = if (it.levelRequired <= summary.level) missingIngredientsFor(it.ingredients, inventoryQuantities) else emptyList(),
-                    isLocked = it.levelRequired > summary.level
-                )
-            }
-            .sortedBy { it.levelRequired }"""
-
-count_a = main_activity_text.count(ma_case_a_old)
-count_b = main_activity_text.count(ma_case_b_old)
-count_already_done = main_activity_text.count(ma_new)
-
-if count_already_done == 1 and count_a == 0 and count_b == 0:
-    pass  # already fully applied, nothing to do
-elif count_a == 1:
-    main_activity_text = main_activity_text.replace(ma_case_a_old, ma_new)
-    ma_changed = True
-elif count_b == 1:
-    main_activity_text = main_activity_text.replace(ma_case_b_old, ma_new)
-    ma_changed = True
-else:
-    errors.append(
-        f"MainActivity.kt: none of the expected states matched cleanly "
-        f"(case A count={count_a}, case B count={count_b}, already-done count={count_already_done})"
-    )
-
-# ============================================================
-# SkillDetailScreen.kt: SkillActionSummary + ActionRow
-# ============================================================
-
-sd_old_1 = """data class SkillActionSummary(
-    val actionId: String,
-    val displayName: String,
-    val levelRequired: Int,
-    val missingIngredients: List<MissingIngredientSummary> = emptyList()
-)"""
-
-sd_new_1 = """data class SkillActionSummary(
-    val actionId: String,
-    val displayName: String,
-    val levelRequired: Int,
-    val missingIngredients: List<MissingIngredientSummary> = emptyList(),
-    val isLocked: Boolean = false
-)"""
-
-sd_old_2 = """@Composable
-private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> Unit) {
-    var showMissingDialog by remember { mutableStateOf(false) }
-    val affordable = action.missingIngredients.isEmpty()
-    val contentColor = if (affordable) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .clickable {
-                if (affordable) onActionSelected(action.actionId) else showMissingDialog = true
-            }
-            .padding(vertical = 12.dp, horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium, color = overrideColor(contentColor))
-        Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(contentColor))
-    }
-
-    if (showMissingDialog) {
-        MissingIngredientsDialog(
-            itemName = action.displayName,
-            missing = action.missingIngredients,
-            onDismiss = { showMissingDialog = false }
-        )
-    }
-}"""
-
-sd_new_2 = """@Composable
-private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> Unit) {
-    var showMissingDialog by remember { mutableStateOf(false) }
-    var showLockedDialog by remember { mutableStateOf(false) }
-    val affordable = !action.isLocked && action.missingIngredients.isEmpty()
-    val contentColor = if (affordable) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .clickable {
-                when {
-                    action.isLocked -> showLockedDialog = true
-                    affordable -> onActionSelected(action.actionId)
-                    else -> showMissingDialog = true
-                }
-            }
-            .padding(vertical = 12.dp, horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = (if (action.isLocked) "\\uD83D\\uDD12 " else "") + action.displayName,
-            style = MaterialTheme.typography.bodyMedium,
-            color = overrideColor(contentColor)
-        )
-        Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(contentColor))
-    }
-
-    if (showMissingDialog) {
-        MissingIngredientsDialog(
-            itemName = action.displayName,
-            missing = action.missingIngredients,
-            onDismiss = { showMissingDialog = false }
-        )
-    }
-
-    if (showLockedDialog) {
-        AlertDialog(
-            onDismissRequest = { showLockedDialog = false },
-            title = { Text(text = "Not yet unlocked", style = MaterialTheme.typography.titleMedium) },
-            text = {
-                Text(text = action.displayName + " requires level " + action.levelRequired + ".")
-            },
-            confirmButton = {
-                TextButton(onClick = { showLockedDialog = false }) {
-                    Text(text = "OK")
-                }
-            }
-        )
-    }
-}"""
-
-count_sd1_old = skill_detail_text.count(sd_old_1)
-count_sd1_new = skill_detail_text.count(sd_new_1)
-count_sd2_old = skill_detail_text.count(sd_old_2)
-count_sd2_new = skill_detail_text.count(sd_new_2)
-
-if count_sd1_new == 1:
+count = offline_text.count(offline_old)
+if count == 1:
+    offline_text = offline_text.replace(offline_old, offline_new)
+elif offline_text.count(offline_new) == 1:
     pass  # already applied
-elif count_sd1_old == 1:
-    skill_detail_text = skill_detail_text.replace(sd_old_1, sd_new_1)
-    sd_changed = True
 else:
-    errors.append(f"SkillDetailScreen.kt SkillActionSummary: expected old or new form exactly once, found old={count_sd1_old} new={count_sd1_new}")
+    errors.append(f"OfflineIdleMechanicsSystem.kt curve constants: expected 1 match, found {count}")
 
-if count_sd2_new == 1:
+# ============================================================
+# 2. Market order cap: 2 open buy + 2 open sell (per side)
+# ============================================================
+gvm_old = """    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure { _marketActionError.value = it.message ?: it.toString() }
+            result.onSuccess { order ->
+                _marketActionError.value = null
+                val filled = order.originalQuantity - order.remainingQuantity
+                if (filled > 0) {
+                    inventoryService.inventoryFor(characterId).addItem(itemId, filled)
+                    refreshInventory()
+                }
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
+            }
+        }
+    }
+
+    fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val realInventory = inventoryService.inventoryFor(characterId)
+        if (realInventory.quantityOf(itemId) < quantity) return
+
+        realInventory.removeItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.placeSellOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.addItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
+            }
+        }
+    }"""
+
+gvm_new = """    private val MAX_OPEN_ORDERS_PER_SIDE = 2
+
+    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        if (_myBuyOrders.value.count { it.remainingQuantity > 0 } >= MAX_OPEN_ORDERS_PER_SIDE) {
+            _marketActionError.value = "You can only have $MAX_OPEN_ORDERS_PER_SIDE open buy orders at a time."
+            return
+        }
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure { _marketActionError.value = it.message ?: it.toString() }
+            result.onSuccess { order ->
+                _marketActionError.value = null
+                val filled = order.originalQuantity - order.remainingQuantity
+                if (filled > 0) {
+                    inventoryService.inventoryFor(characterId).addItem(itemId, filled)
+                    refreshInventory()
+                }
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
+            }
+        }
+    }
+
+    fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        if (_mySellOrders.value.count { it.remainingQuantity > 0 } >= MAX_OPEN_ORDERS_PER_SIDE) {
+            _marketActionError.value = "You can only have $MAX_OPEN_ORDERS_PER_SIDE open sell orders at a time."
+            return
+        }
+        val realInventory = inventoryService.inventoryFor(characterId)
+        if (realInventory.quantityOf(itemId) < quantity) return
+
+        realInventory.removeItem(itemId, quantity)
+        refreshInventory()
+
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.placeSellOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
+            result.onFailure {
+                _marketActionError.value = it.message ?: it.toString()
+                realInventory.addItem(itemId, quantity)
+                refreshInventory()
+            }
+            result.onSuccess {
+                _marketActionError.value = null
+                refreshCurrency()
+                refreshMarketListings()
+                refreshMyOrders()
+            }
+        }
+    }"""
+
+count_old = gvm_text.count(gvm_old)
+count_new = gvm_text.count(gvm_new)
+if count_new == 1:
     pass  # already applied
-elif count_sd2_old == 1:
-    skill_detail_text = skill_detail_text.replace(sd_old_2, sd_new_2)
-    sd_changed = True
+elif count_old == 1:
+    gvm_text = gvm_text.replace(gvm_old, gvm_new)
 else:
-    errors.append(f"SkillDetailScreen.kt ActionRow: expected old or new form exactly once, found old={count_sd2_old} new={count_sd2_new}")
+    errors.append(f"GameViewModel.kt placeBuyOrder/placeSellOrder: expected old or new form exactly once, found old={count_old} new={count_new}")
+
+# ============================================================
+# 3. Leaderboards: scale 1st/2nd/3rd place name text size
+# ============================================================
+lb_old = """                items(rows) { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "#" + row.rank + "  " + row.name, style = MaterialTheme.typography.bodyLarge)
+                        Text(text = row.valueLabel, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    HorizontalDivider()
+                }"""
+
+lb_new = """                items(rows) { row ->
+                    val nameStyle = when (row.rank) {
+                        1 -> MaterialTheme.typography.headlineSmall
+                        2 -> MaterialTheme.typography.titleLarge
+                        3 -> MaterialTheme.typography.titleMedium
+                        else -> MaterialTheme.typography.bodyLarge
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "#" + row.rank + "  " + row.name, style = nameStyle)
+                        Text(text = row.valueLabel, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    HorizontalDivider()
+                }"""
+
+count_old = leaderboard_text.count(lb_old)
+count_new = leaderboard_text.count(lb_new)
+if count_new == 1:
+    pass  # already applied
+elif count_old == 1:
+    leaderboard_text = leaderboard_text.replace(lb_old, lb_new)
+else:
+    errors.append(f"LeaderboardsScreen.kt row rendering: expected old or new form exactly once, found old={count_old} new={count_new}")
 
 if errors:
     raise SystemExit(
-        "PATCH FAILED: could not confidently determine current file state. "
-        "No changes made to either file.\n" + "\n".join(f"  - {e}" for e in errors)
+        "PATCH FAILED: one or more expected blocks did not match exactly once. "
+        "No changes made to any file.\n" + "\n".join(f"  - {e}" for e in errors)
     )
 
-if ma_changed:
-    main_activity_path.write_text(main_activity_text)
-    print("Patched MainActivity.kt: all 4 recipe-based skills (Crafting/Cooking/Fletching/Alchemy) now show locked recipes.")
-else:
-    print("MainActivity.kt: already up to date, no change needed.")
+offline_path.write_text(offline_text)
+gvm_path.write_text(gvm_text)
+leaderboard_path.write_text(leaderboard_text)
 
-if sd_changed:
-    skill_detail_path.write_text(skill_detail_text)
-    print("Patched SkillDetailScreen.kt.")
-else:
-    print("SkillDetailScreen.kt: already up to date, no change needed.")
+print("Patched OfflineIdleMechanicsSystem.kt: offline progress is now 12h full rate, 12h at 50%, then 0% (capped at 24h total).")
+print("Patched GameViewModel.kt: market orders capped at 2 open buy + 2 open sell (MAX_OPEN_ORDERS_PER_SIDE).")
+print("Patched LeaderboardsScreen.kt: 1st/2nd/3rd place names now scale down in size (headlineSmall/titleLarge/titleMedium), rest unchanged.")
