@@ -26,24 +26,24 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output168.txt
+          OUT=discovery_output169.txt
 
-          echo "=== A. buildSkillDetailState function (where recipes get filtered by level) ===" > $OUT
-          grep -rn "fun buildSkillDetailState" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== A. Full RECIPE_BASED_SKILL_LABELS map ===" > $OUT
+          sed -n '129,140p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
 
-          echo "=== B. SkillDetailScreen composable (how it renders the recipe/item list) ===" >> $OUT
-          grep -rn "fun SkillDetailScreen" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== B. Rest of SkillDetailScreen.kt (action picker UI) ===" >> $OUT
+          sed -n '113,220p' ./app/src/main/kotlin/com/yourname/idlerpg/SkillDetailScreen.kt >> $OUT
           echo "" >> $OUT
 
-          echo "=== C. RECIPE_BASED_SKILL_LABELS definition (confirm Crafting/Fletching are in it) ===" >> $OUT
-          grep -rn "RECIPE_BASED_SKILL_LABELS" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== C. SkillActionSummary data class ===" >> $OUT
+          grep -rn "data class SkillActionSummary" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== D. SkillDetailState data class definition ===" >> $OUT
-          grep -rn "data class SkillDetailState\|class SkillDetailState" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== D. missingIngredientsFor function ===" >> $OUT
+          grep -rn "fun missingIngredientsFor" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output168.txt
+      - discovery_output169.txt
       
   apply-patch:
     name: Apply Patch Script
