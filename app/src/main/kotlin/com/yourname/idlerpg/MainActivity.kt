@@ -180,10 +180,9 @@ private fun buildSkillDetailState(
             )
         }
 
-    val showLockedRecipes = skillId == "CRAFTING" || skillId == "FLETCHING"
     val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
         RecipeCatalog.recipes
-            .filter { it.skillRequired == skillId && (showLockedRecipes || it.levelRequired <= summary.level) }
+            .filter { it.skillRequired == skillId }
             .map {
                 SkillActionSummary(
                     actionId = it.outputItemId,
