@@ -989,14 +989,17 @@ fun AppRoot(gameViewModel: GameViewModel) {
                                         onItemSelected = { selectedMarketItemId = it },
                                         myBuyOrders = myBuyOrdersUi,
                                         mySellOrders = mySellOrdersUi,
-                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) } 
+                                        onCancelOrder = { orderId -> gameViewModel.cancelMarketOrder(orderId) },
                                         vendorSellableItems = inventoryItems,
                                         onPlaceBuyOrder = { itemId, quantity, price ->
-                                            gameViewModel.placeBuyOrder(itemId, quantity, price),
+                                            gameViewModel.placeBuyOrder(itemId, quantity, price)
+                                        },
                                         onPlaceSellOrder = { itemId, quantity, price ->
-                                            gameViewModel.placeSellOrder(itemId, quantity, price),
+                                            gameViewModel.placeSellOrder(itemId, quantity, price)
+                                        },
                                         onSellToVendor = { sellItemId, quantity ->
-                                            gameViewModel.sellItemToVendor(sellItemId, quantity),
+                                            gameViewModel.sellItemToVendor(sellItemId, quantity)
+                                        },
                                         vendorBuyableItems = gameViewModel.vendorBuyableItems(),
                                         onBuyFromVendor = { buyItemId, quantity ->
                                             gameViewModel.buyItemFromVendor(buyItemId, quantity)
