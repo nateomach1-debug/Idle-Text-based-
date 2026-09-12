@@ -26,16 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output165.txt
-
-          echo "=== A. marketTab declaration (rememberSaveable/remember) ===" > $OUT
-          grep -n "var marketTab\|marketTab by" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== B. Lines 750-1010 of MainActivity.kt (the when(currentDestination) block + MARKET branch) ===" >> $OUT
-          sed -n '750,1010p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output166.txt
+          echo "=== MainActivity.kt lines 108-170 (Combat Loadout end + Inventory branch start) ===" > $OUT
+          sed -n '108,170p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output165.txt
+      - discovery_output166.txt
       
   apply-patch:
     name: Apply Patch Script
