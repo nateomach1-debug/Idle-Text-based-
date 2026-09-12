@@ -26,32 +26,16 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output164.txt
+          OUT=discovery_output165.txt
 
-          echo "=== A. Any existing BackHandler usage (avoid conflicts) ===" > $OUT
-          grep -rn "BackHandler" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== A. marketTab declaration (rememberSaveable/remember) ===" > $OUT
+          grep -n "var marketTab\|marketTab by" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== B. Top-level screen state (enum/sealed class + how it's switched) ===" >> $OUT
-          grep -n "enum class Screen\|sealed class Screen\|var currentScreen\|currentDestination" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt ./app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt ./app/src/main/kotlin/com/yourname/idlerpg/SideRail.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== C. Full NavigationDestinations.kt (top-level screen definitions) ===" >> $OUT
-          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== D. Guild sub-tab state (enum + remembered var), similar to MarketTab ===" >> $OUT
-          grep -rn "enum class GuildTab\|var guildTab\|GuildTab\." ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== E. Any other 'enum class .*Tab' across the whole app (find every sub-tab screen) ===" >> $OUT
-          grep -rn "enum class.*Tab" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== F. Existing import block of MainActivity.kt (check for androidx.activity.compose.BackHandler) ===" >> $OUT
-          sed -n '1,40p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "=== B. Lines 750-1010 of MainActivity.kt (the when(currentDestination) block + MARKET branch) ===" >> $OUT
+          sed -n '750,1010p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output164.txt
+      - discovery_output165.txt
       
   apply-patch:
     name: Apply Patch Script
