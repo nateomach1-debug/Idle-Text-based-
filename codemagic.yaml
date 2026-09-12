@@ -26,40 +26,21 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output159.txt
+          OUT=discovery_output160.txt
 
-          echo "=== 1a. MarketScreen(...) call site(s) - host wiring, excludes the fun definition ===" > $OUT
-          grep -rn "MarketScreen(" ./app/src/main/kotlin/com/yourname/idlerpg/ | grep -v "fun MarketScreen(" >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== A. Locate ItemCatalog definition anywhere in app/src ===" > $OUT
+          grep -rn "object ItemCatalog\|class ItemCatalog" ./app/src >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== 1b. showingBuyOrders / onToggleBrowseMode state, wherever it lives ===" >> $OUT
-          grep -rn "showingBuyOrders\|onToggleBrowseMode\|toggleBrowseMode\|ToggleBrowseMode" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== 2. SupabaseMarketRepository.kt - myOrders/placeBuyOrder/placeSellOrder bodies ===" >> $OUT
-          grep -n "fun myOrders\|fun placeBuyOrder\|fun placeSellOrder" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== 2b. All .rpc(...) calls in SupabaseMarketRepository.kt (to identify real RPC names) ===" >> $OUT
-          grep -n "\.rpc(" -A 2 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== 3. All Supabase SQL function names defined at repo root ===" >> $OUT
-          grep -n "CREATE OR REPLACE FUNCTION\|CREATE FUNCTION" ./*.sql >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== 3b. Full body of any order-related SQL function (case-insensitive match on 'order') ===" >> $OUT
-          grep -n -i -A 40 "CREATE OR REPLACE FUNCTION.*order\|CREATE FUNCTION.*order" ./*.sql >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== 4a. Full ItemCatalog.kt (every item in game, for buy-order dropdown) ===" >> $OUT
-          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/ItemCatalog.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== 4b. Inventory item enumeration (vendorSellableItems / InventoryItemSummary source, for sell-order dropdown) ===" >> $OUT
-          grep -rn "InventoryItemSummary\|vendorSellableItems\|fun inventoryFor\|fun allItems" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== B. Full dump of whatever file that is, if found ===" >> $OUT
+          FILE=$(grep -rl "object ItemCatalog\|class ItemCatalog" ./app/src | head -1)
+          if [ -n "$FILE" ]; then
+            grep -n "" "$FILE" >> $OUT
+          else
+            echo "NOT FOUND" >> $OUT
+          fi
     artifacts:
-      - discovery_output159.txt
+      - discovery_output160.txt
       
   apply-patch:
     name: Apply Patch Script
