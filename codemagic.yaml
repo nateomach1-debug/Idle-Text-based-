@@ -26,14 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output161.txt
-          echo "=== MarketOrderRow data class definition ===" > $OUT
-          grep -n "data class MarketOrderRow" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output162.txt
+          echo "=== MainActivity.kt lines 975-1010 (post-patch) ===" > $OUT
+          sed -n '975,1010p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
-          echo "=== market_orders table schema (for column types) ===" >> $OUT
-          grep -n -A 20 "CREATE TABLE.*market_orders" ./*.sql >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== All occurrences of vendorSellableItems in MainActivity.kt ===" >> $OUT
+          grep -n "vendorSellableItems" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output161.txt
+      - discovery_output162.txt
       
   apply-patch:
     name: Apply Patch Script
