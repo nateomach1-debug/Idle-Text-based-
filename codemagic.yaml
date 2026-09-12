@@ -26,11 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output166.txt
-          echo "=== MainActivity.kt lines 108-170 (Combat Loadout end + Inventory branch start) ===" > $OUT
-          sed -n '108,170p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output167.txt
+          echo "=== MainActivity.kt lines 855-915 (end of Combat branch + start of Inventory branch) ===" > $OUT
+          sed -n '855,915p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output166.txt
+      - discovery_output167.txt
       
   apply-patch:
     name: Apply Patch Script
