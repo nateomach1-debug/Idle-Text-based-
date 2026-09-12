@@ -180,15 +180,17 @@ private fun buildSkillDetailState(
             )
         }
 
+    val showLockedRecipes = skillId == "CRAFTING" || skillId == "FLETCHING"
     val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
         RecipeCatalog.recipes
-            .filter { it.skillRequired == skillId && it.levelRequired <= summary.level }
+            .filter { it.skillRequired == skillId && (showLockedRecipes || it.levelRequired <= summary.level) }
             .map {
                 SkillActionSummary(
                     actionId = it.outputItemId,
                     displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
                     levelRequired = it.levelRequired,
-                    missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+                    missingIngredients = if (it.levelRequired <= summary.level) missingIngredientsFor(it.ingredients, inventoryQuantities) else emptyList(),
+                    isLocked = it.levelRequired > summary.level
                 )
             }
             .sortedBy { it.levelRequired }

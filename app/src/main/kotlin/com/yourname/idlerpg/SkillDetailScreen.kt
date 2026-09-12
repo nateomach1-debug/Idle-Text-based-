@@ -35,7 +35,8 @@ data class SkillActionSummary(
     val actionId: String,
     val displayName: String,
     val levelRequired: Int,
-    val missingIngredients: List<MissingIngredientSummary> = emptyList()
+    val missingIngredients: List<MissingIngredientSummary> = emptyList(),
+    val isLocked: Boolean = false
 )
 
 data class SkillDetailState(
@@ -172,7 +173,8 @@ private fun ActionPickerSheet(
 @Composable
 private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> Unit) {
     var showMissingDialog by remember { mutableStateOf(false) }
-    val affordable = action.missingIngredients.isEmpty()
+    var showLockedDialog by remember { mutableStateOf(false) }
+    val affordable = !action.isLocked && action.missingIngredients.isEmpty()
     val contentColor = if (affordable) {
         MaterialTheme.colorScheme.onSurface
     } else {
@@ -184,12 +186,20 @@ private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> 
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .clickable {
-                if (affordable) onActionSelected(action.actionId) else showMissingDialog = true
+                when {
+                    action.isLocked -> showLockedDialog = true
+                    affordable -> onActionSelected(action.actionId)
+                    else -> showMissingDialog = true
+                }
             }
             .padding(vertical = 12.dp, horizontal = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = action.displayName, style = MaterialTheme.typography.bodyMedium, color = overrideColor(contentColor))
+        Text(
+            text = (if (action.isLocked) "\uD83D\uDD12 " else "") + action.displayName,
+            style = MaterialTheme.typography.bodyMedium,
+            color = overrideColor(contentColor)
+        )
         Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(contentColor))
     }
 
@@ -198,6 +208,21 @@ private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> 
             itemName = action.displayName,
             missing = action.missingIngredients,
             onDismiss = { showMissingDialog = false }
+        )
+    }
+
+    if (showLockedDialog) {
+        AlertDialog(
+            onDismissRequest = { showLockedDialog = false },
+            title = { Text(text = "Not yet unlocked", style = MaterialTheme.typography.titleMedium) },
+            text = {
+                Text(text = action.displayName + " requires level " + action.levelRequired + ".")
+            },
+            confirmButton = {
+                TextButton(onClick = { showLockedDialog = false }) {
+                    Text(text = "OK")
+                }
+            }
         )
     }
 }
