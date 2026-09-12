@@ -26,14 +26,35 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output162.txt
-          echo "=== MainActivity.kt lines 975-1010 (post-patch) ===" > $OUT
-          sed -n '975,1010p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          OUT=discovery_output163.txt
+
+          echo "=== A. List all background image files (drawable dirs) ===" > $OUT
+          find ./app/src/main/res -iname "*bg*" -o -iname "*background*" >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== All occurrences of vendorSellableItems in MainActivity.kt ===" >> $OUT
-          grep -n "vendorSellableItems" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+
+          echo "=== B. Mining/Woodcutting background filenames specifically (already shipped, for naming convention) ===" >> $OUT
+          find ./app/src/main/res -iname "*mining*" -o -iname "*woodcutting*" >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== C. Fishing/Farming background filenames if they already exist as placeholders ===" >> $OUT
+          find ./app/src/main/res -iname "*fishing*" -o -iname "*farming*" >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== D. Kotlin mapping of skill -> background drawable resource ===" >> $OUT
+          grep -rn -i "skillbackground\|R.drawable.bg_\|backgroundFor" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== E. Image dimensions/format of one known-good background (mining) if found ===" >> $OUT
+          MINING_FILE=$(find ./app/src/main/res -iname "*mining*" | head -1)
+          if [ -n "$MINING_FILE" ]; then
+            echo "File: $MINING_FILE" >> $OUT
+            file "$MINING_FILE" >> $OUT
+            ls -la "$MINING_FILE" >> $OUT
+          else
+            echo "NOT FOUND" >> $OUT
+          fi
     artifacts:
-      - discovery_output162.txt
+      - discovery_output163.txt
       
   apply-patch:
     name: Apply Patch Script
