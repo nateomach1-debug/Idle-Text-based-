@@ -26,22 +26,24 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output189.txt
+          OUT=discovery_output190.txt
 
-          echo "=== A. ModerationScreen.kt lines 178-280 (ManualMuteSection body) ===" > $OUT
-          sed -n '178,280p' ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
+          echo "=== A. GameViewModel.kt lines 1230-1300 (auto-heal check inside tickCombat) ===" > $OUT
+          sed -n '1230,1300p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
 
-          echo "=== B. ModerationScreen( call site in MainActivity.kt ===" >> $OUT
-          grep -n "ModerationScreen(" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== B. fun selectFood full body ===" >> $OUT
+          grep -n "fun selectFood" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
 
-          echo "=== C. GameViewModel.kt selectFood / autoHeal / tickCombat auto-heal logic ===" >> $OUT
-          grep -n "fun selectFood\|fun setAutoHealThreshold\|autoHealThresholdPercent" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== C. muteCharacterAsModerator (pattern for how mod actions find accounts/characters) ===" >> $OUT
+          grep -n "fun muteCharacterAsModerator" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          grep -n "fun tickCombat" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+
+          echo "=== D. isModerator / moderation gating state in MainActivity.kt (how ModerationScreen destination is shown) ===" >> $OUT
+          grep -n "isModerator\|AppDestination.MODERATION" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output189.txt
+      - discovery_output190.txt
       
   apply-patch:
     name: Apply Patch Script
