@@ -26,27 +26,28 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output173.txt
+          OUT=discovery_output174.txt
 
-          echo "=== A. Gradle files (build.gradle.kts locations, version catalog) ===" > $OUT
-          find . -maxdepth 3 -iname "build.gradle*" -o -iname "libs.versions.toml" | grep -v node_modules >> $OUT
-          echo "" >> $OUT
-          echo "=== A2. app/build.gradle.kts full content ===" >> $OUT
-          grep -n "" ./app/build.gradle.kts >> $OUT || echo "NOT FOUND (maybe .gradle not .gradle.kts)" >> $OUT
+          echo "=== A. Every occurrence of premiumCurrency across the whole app ===" >> $OUT
+          grep -rn "premiumCurrency" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== B. market_currency_balance RPC usage + currency balance StateFlow pattern (template to copy for gems) ===" >> $OUT
-          grep -n "market_currency_balance\|refreshCurrency\|_currency\b\|currencyBalance" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== B. account.premiumCurrency's containing data class definition ===" >> $OUT
+          grep -rn "class.*Account\b" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== C. Settings screen file(s) - RGB slider / overrideColor / glow toggle location ===" >> $OUT
-          grep -rln "overrideColor\|IdleRpgTypography" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== C. Where _currency (Pair<Long,Long>) is displayed in UI ===" >> $OUT
+          grep -rn "\.currency\.collectAsState\|gameViewModel\.currency\|currency\.value\b" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== D. AppDestination enum + SideRail entries (to see where a Gem Shop entry point could go) ===" >> $OUT
-          grep -n "enum class AppDestination" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/NavigationDestinations.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== D. Full app/build.gradle ===" >> $OUT
+          grep -n "" ./app/build.gradle >> $OUT
+          echo "" >> $OUT
+
+          echo "=== E. Full libs.versions.toml ===" >> $OUT
+          grep -n "" ./gradle/libs.versions.toml >> $OUT
     artifacts:
-      - discovery_output173.txt
+      - discovery_output174.txt
       
   apply-patch:
     name: Apply Patch Script
