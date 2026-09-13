@@ -26,17 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output181.txt
-          echo "=== A. Full refreshCurrency() body ===" > $OUT
-          grep -n "fun refreshCurrency" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          OUT=discovery_output182.txt
+          echo "=== fun AppRoot signature ===" > $OUT
+          grep -n "fun AppRoot" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== B. _marketActionError declaration (pattern to match for new error StateFlow) ===" >> $OUT
-          grep -n "_marketActionError" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== Where AppRoot is called from onCreate ===" >> $OUT
+          grep -n "AppRoot(" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
-          echo "=== C. saveGame() full body ===" >> $OUT
-          grep -n "fun saveGame" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== package line of MainActivity.kt ===" >> $OUT
+          sed -n '1p' ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output181.txt
+      - discovery_output182.txt
       
   apply-patch:
     name: Apply Patch Script
