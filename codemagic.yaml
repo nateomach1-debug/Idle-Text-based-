@@ -26,24 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output175.txt
-
-          echo "=== A. Full MonetizationSystem.kt ===" > $OUT
-          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt >> $OUT
-          echo "" >> $OUT
-
-          echo "=== B. SubscriptionTier enum ===" >> $OUT
-          grep -n "enum class SubscriptionTier" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== C. Is MonetizationSystem referenced anywhere (GameViewModel, MainActivity, etc.)? ===" >> $OUT
-          grep -rn "MonetizationSystem\|CurrencyBundle\|balanceFor" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT REFERENCED ANYWHERE ELSE" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== D. HomeScreen.kt CurrencyRow (how premium currency is currently displayed) ===" >> $OUT
-          grep -n "fun CurrencyRow" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/HomeScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output176.txt
+          echo "=== AccountCharacterSystem.kt lines 190-290 (grantPremiumCurrency-type function + export/import) ===" > $OUT
+          sed -n '190,290p' ./app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt >> $OUT
     artifacts:
-      - discovery_output175.txt
+      - discovery_output176.txt
       
   apply-patch:
     name: Apply Patch Script
