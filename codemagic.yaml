@@ -26,20 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output178.txt
-
-          echo "=== A. AppDestination.SETTINGS branch in MainActivity.kt (which composable renders Settings) ===" > $OUT
-          grep -n "AppDestination.SETTINGS ->" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output179.txt
+          echo "=== Full SettingsScreen.kt ===" > $OUT
+          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-
-          echo "=== B. class AccountService declaration (confirm addCurrency lives here) ===" >> $OUT
-          grep -n "class AccountService" ./app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== C. textColorOverride / textOutlineEnabled state + setter functions in GameViewModel.kt ===" >> $OUT
-          grep -n "textColorOverride\|textOutlineEnabled\|textOutlineColor\|fun setTextColor\|fun setTextOutline" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Full Account data class (all fields) ===" >> $OUT
+          sed -n '16,32p' ./app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt >> $OUT
     artifacts:
-      - discovery_output178.txt
+      - discovery_output179.txt
       
   apply-patch:
     name: Apply Patch Script
