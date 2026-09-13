@@ -26,14 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output186.txt
-          echo "=== Any existing onDestroy/onStart/onStop overrides in MainActivity.kt ===" > $OUT
-          grep -n "override fun onDestroy\|override fun onStart\|override fun onStop\|override fun onPause\|override fun onResume" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NONE FOUND - safe to add" >> $OUT
+          OUT=discovery_output187.txt
+          echo "=== Full SettingsScreen.kt (final re-fetch before Patch C) ===" > $OUT
+          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt >> $OUT
           echo "" >> $OUT
-          echo "=== Full onCreate() body (to find safe insertion point for billingManager.startConnection()) ===" >> $OUT
-          grep -n "class MainActivity" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "=== SettingsScreen( call site in MainActivity.kt, post-Patch-B ===" >> $OUT
+          grep -n "SettingsScreen(" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
     artifacts:
-      - discovery_output186.txt
+      - discovery_output187.txt
       
   apply-patch:
     name: Apply Patch Script
