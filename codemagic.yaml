@@ -26,14 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output187.txt
-          echo "=== Full SettingsScreen.kt (final re-fetch before Patch C) ===" > $OUT
-          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt >> $OUT
+          OUT=discovery_output188.txt
+
+          echo "=== A. Moderation screen file + existing mute/ban action pattern (for grant-gems UI) ===" > $OUT
+          grep -rln "fun ModerationScreen\|fun muteAccount\|banAccount(" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== SettingsScreen( call site in MainActivity.kt, post-Patch-B ===" >> $OUT
-          grep -n "SettingsScreen(" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "=== A2. Full ModerationScreen.kt ===" >> $OUT
+          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT || echo "NOT FOUND at that path" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== B. Auto-heal/auto-eat logic in combat tick ===" >> $OUT
+          grep -n "autoHealThresholdPercent\|fun tickCombat\|selectedFoodId\|healAmount" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+
+          echo "=== C. LoadoutScreen.kt food picker (for unequip option) ===" >> $OUT
+          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt >> $OUT || echo "NOT FOUND at that path" >> $OUT
     artifacts:
-      - discovery_output187.txt
+      - discovery_output188.txt
       
   apply-patch:
     name: Apply Patch Script
