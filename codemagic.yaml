@@ -26,24 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output177.txt
+          OUT=discovery_output178.txt
 
-          echo "=== A. MainActivity class declaration + onCreate start ===" > $OUT
-          grep -n "class MainActivity" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== A. AppDestination.SETTINGS branch in MainActivity.kt (which composable renders Settings) ===" > $OUT
+          grep -n "AppDestination.SETTINGS ->" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== B. GameViewModel: how it references AccountCharacterSystem / current account / accountId ===" >> $OUT
-          grep -n "AccountCharacterSystem\|currentAccount\|val account\|_currentAccountId\|accountId" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== B. class AccountService declaration (confirm addCurrency lives here) ===" >> $OUT
+          grep -n "class AccountService" ./app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== C. GameStateRepository save trigger function (how/when saves happen) ===" >> $OUT
-          grep -n "fun save\|saveGameState\|fun persist" ./app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-
-          echo "=== D. Full SettingsScreen.kt (or wherever the RGB slider/glow toggle UI lives) ===" >> $OUT
-          grep -rln "RGB\|glowEnabled\|hexInput\|colorOverride" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND (filename)" >> $OUT
+          echo "=== C. textColorOverride / textOutlineEnabled state + setter functions in GameViewModel.kt ===" >> $OUT
+          grep -n "textColorOverride\|textOutlineEnabled\|textOutlineColor\|fun setTextColor\|fun setTextOutline" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output177.txt
+      - discovery_output178.txt
       
   apply-patch:
     name: Apply Patch Script
