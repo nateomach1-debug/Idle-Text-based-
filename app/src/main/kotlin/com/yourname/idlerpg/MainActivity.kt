@@ -69,8 +69,12 @@ private val COMBAT_TRAINING_SKILL_IDS = setOf("ATTACK", "STRENGTH", "DEFENSE", "
 
 class MainActivity : ComponentActivity() {
     private val gameViewModel: GameViewModel by viewModels()
+    private val billingManager by lazy {
+        BillingManager(this) { bundleId -> gameViewModel.creditPremiumCurrency(bundleId) }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        billingManager.startConnection()
         setContent {
             val textColorOverride by gameViewModel.textColorOverride.collectAsState()
             val textOutlineEnabled by gameViewModel.textOutlineEnabled.collectAsState()
@@ -80,13 +84,18 @@ class MainActivity : ComponentActivity() {
                 outlineEnabled = textOutlineEnabled,
                 outlineColor = textOutlineColor
             ) {
-                AppRoot(gameViewModel)
+                AppRoot(gameViewModel, onLaunchPurchase = { bundleId -> billingManager.launchPurchase(this@MainActivity, bundleId) })
             }
         }
     }
 override fun onPause() {
         super.onPause()
         gameViewModel.saveGame()
+    }
+
+    override fun onDestroy() {
+        billingManager.endConnection()
+        super.onDestroy()
     }
 }
 
@@ -428,7 +437,7 @@ private sealed class InventoryScreenState {
 }
 
 @Composable
-fun AppRoot(gameViewModel: GameViewModel) {
+fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
     val currentAccountId by gameViewModel.currentAccountId.collectAsState()
     val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
     var isCreatingAccount by remember { mutableStateOf(false) }

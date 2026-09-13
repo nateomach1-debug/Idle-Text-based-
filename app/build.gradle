@@ -73,4 +73,7 @@ dependencies {
     implementation 'io.github.jan-tennert.supabase:postgrest-kt'
     implementation 'io.github.jan-tennert.supabase:realtime-kt'
     implementation 'io.ktor:ktor-client-android:3.1.1'
+
+    // Google Play Billing - premium currency (Gems) purchases.
+    implementation 'com.android.billingclient:billing-ktx:9.1.0'
 }
