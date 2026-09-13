@@ -80,12 +80,18 @@ fun LeaderboardsScreen(
             }
             else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(rows) { row ->
+                    val nameStyle = when (row.rank) {
+                        1 -> MaterialTheme.typography.headlineSmall
+                        2 -> MaterialTheme.typography.titleLarge
+                        3 -> MaterialTheme.typography.titleMedium
+                        else -> MaterialTheme.typography.bodyLarge
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "#" + row.rank + "  " + row.name, style = MaterialTheme.typography.bodyLarge)
+                        Text(text = "#" + row.rank + "  " + row.name, style = nameStyle)
                         Text(text = row.valueLabel, style = MaterialTheme.typography.bodyMedium)
                     }
                     HorizontalDivider()

@@ -2176,9 +2176,15 @@ fun logout() {
         }
     }
 
+    private val MAX_OPEN_ORDERS_PER_SIDE = 2
+
     fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
         val characterId = _currentCharacterId.value ?: return
         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        if (_myBuyOrders.value.count { it.remainingQuantity > 0 } >= MAX_OPEN_ORDERS_PER_SIDE) {
+            _marketActionError.value = "You can only have $MAX_OPEN_ORDERS_PER_SIDE open buy orders at a time."
+            return
+        }
         viewModelScope.launch {
             val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
             result.onFailure { _marketActionError.value = it.message ?: it.toString() }
@@ -2199,6 +2205,10 @@ fun logout() {
     fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
         val characterId = _currentCharacterId.value ?: return
         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        if (_mySellOrders.value.count { it.remainingQuantity > 0 } >= MAX_OPEN_ORDERS_PER_SIDE) {
+            _marketActionError.value = "You can only have $MAX_OPEN_ORDERS_PER_SIDE open sell orders at a time."
+            return
+        }
         val realInventory = inventoryService.inventoryFor(characterId)
         if (realInventory.quantityOf(itemId) < quantity) return
 

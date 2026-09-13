@@ -71,10 +71,10 @@ fun interface MaterialAvailabilityCheck {
 
 object OfflineEfficiencyCurve {
     private val fullRateWindow: Duration = Duration.ofHours(12)
-    private val reducedRateWindow: Duration = Duration.ofHours(72)
+    private val reducedRateWindow: Duration = Duration.ofHours(24)
     private const val FULL_RATE_PERCENT = 100.0
     private const val REDUCED_RATE_PERCENT = 50.0
-    private const val FLOOR_RATE_PERCENT = 25.0
+    private const val FLOOR_RATE_PERCENT = 0.0
 
     fun efficiencyAt(elapsed: Duration): Double {
         return when {
