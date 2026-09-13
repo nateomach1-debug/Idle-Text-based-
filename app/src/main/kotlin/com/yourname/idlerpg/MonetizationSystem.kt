@@ -177,6 +177,28 @@ object CurrencyBundleCatalog {
     fun find(bundleId: String): CurrencyBundle? = bundles.find { it.id == bundleId }
 }
 
+// =========================================================
+// PREMIUM COSMETIC TEXT PRESETS (Gem-purchasable Settings presets)
+// =========================================================
+
+data class PremiumPreset(
+    val id: String,
+    val displayName: String,
+    val gemCost: Long,
+    val textColorArgb: Long,
+    val outlineColorArgb: Long
+)
+
+object PremiumPresetCatalog {
+    val presets = listOf(
+        PremiumPreset(id = "preset_ember_glow", displayName = "Ember Glow", gemCost = 150, textColorArgb = 0xFFFFB86CL, outlineColorArgb = 0xFF8B0000L),
+        PremiumPreset(id = "preset_arctic_shimmer", displayName = "Arctic Shimmer", gemCost = 150, textColorArgb = 0xFF9AEAFFL, outlineColorArgb = 0xFF00E5FFL),
+        PremiumPreset(id = "preset_royal_amethyst", displayName = "Royal Amethyst", gemCost = 150, textColorArgb = 0xFFC77DFFL, outlineColorArgb = 0xFF7209B7L)
+    )
+
+    fun find(presetId: String): PremiumPreset? = presets.find { it.id == presetId }
+}
+
 class CurrencyPurchaseService {
     private val premiumBalances: MutableMap<String, Long> = mutableMapOf()
 

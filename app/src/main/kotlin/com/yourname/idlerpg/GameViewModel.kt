@@ -1298,6 +1298,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _currency = MutableStateFlow(0L to 0L)
     val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
 
+    private val _unlockedPresets = MutableStateFlow<Set<String>>(emptySet())
+    val unlockedPresets: StateFlow<Set<String>> = _unlockedPresets.asStateFlow()
+
+    private val _premiumActionError = MutableStateFlow<String?>(null)
+    val premiumActionError: StateFlow<String?> = _premiumActionError.asStateFlow()
+
     init {
         viewModelScope.launch(Dispatchers.Default) {
             var lastTickMillis = System.currentTimeMillis()
@@ -2137,11 +2143,37 @@ fun logout() {
     fun refreshCurrency() {
         val accountId = _currentAccountId.value ?: return
         val account = accountService.accountById(accountId) ?: return
+        _unlockedPresets.value = account.unlockedPresets.toSet()
         val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
             _currency.value = gold to account.premiumCurrency
         }
+    }
+
+    fun creditPremiumCurrency(bundleId: String) {
+        val accountId = _currentAccountId.value ?: return
+        val bundle = CurrencyBundleCatalog.find(bundleId) ?: return
+        val result = accountService.addCurrency(accountId, bundle.premiumCurrencyGranted)
+        if (result is ServiceResult.Failure) {
+            _premiumActionError.value = result.reason
+            return
+        }
+        _premiumActionError.value = null
+        refreshCurrency()
+        saveGame()
+    }
+
+    fun purchasePreset(presetId: String) {
+        val accountId = _currentAccountId.value ?: return
+        val result = accountService.purchasePreset(accountId, presetId)
+        if (result is ServiceResult.Failure) {
+            _premiumActionError.value = result.reason
+            return
+        }
+        _premiumActionError.value = null
+        refreshCurrency()
+        saveGame()
     }
 
     // =========================================================

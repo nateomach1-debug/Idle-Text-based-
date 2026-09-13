@@ -27,7 +27,8 @@ private var passwordSalt: String, // Base64-encoded
     var banReason: String? = null,
     var mutedUntil: Instant? = null,
     var subscriptionTier: SubscriptionTier = SubscriptionTier.NONE,
-    var premiumCurrency: Long = 0
+    var premiumCurrency: Long = 0,
+    var unlockedPresets: MutableSet<String> = mutableSetOf()
 ) {
     fun isMuted(now: Instant = Instant.now()): Boolean = mutedUntil?.isAfter(now) == true
     internal fun exposePasswordHashForExport(): String = passwordHash
@@ -53,7 +54,8 @@ data class AccountExport(
     val id: String, val email: String, val username: String, val passwordHash: String, val passwordSalt: String,
     val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
     val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
-    val subscriptionTier: String, val premiumCurrency: Long
+    val subscriptionTier: String, val premiumCurrency: Long,
+    val unlockedPresets: String = ""
 )
 
 data class CharacterExport(
@@ -209,6 +211,16 @@ class AccountService {
         return ServiceResult.Success(account)
     }
 
+    fun purchasePreset(accountId: String, presetId: String): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        if (presetId in account.unlockedPresets) return ServiceResult.Failure("Already unlocked.")
+        val preset = PremiumPresetCatalog.find(presetId) ?: return ServiceResult.Failure("Unknown preset.")
+        if (account.premiumCurrency < preset.gemCost) return ServiceResult.Failure("Not enough Gems.")
+        account.premiumCurrency -= preset.gemCost
+        account.unlockedPresets.add(presetId)
+        return ServiceResult.Success(account)
+    }
+
     fun charactersFor(accountId: String): List<Character> =
         charactersByAccountId[accountId]?.mapNotNull { charactersById[it] } ?: emptyList()
 
@@ -254,7 +266,8 @@ private fun verifyPassword(password: String, salt: ByteArray, expectedHash: Stri
             it.id, it.email, it.username, it.exposePasswordHashForExport(), it.exposePasswordSaltForExport(),
             it.createdAt.toString(), it.lastLoginAt.toString(), it.ageBracket.name, it.region,
             it.isBanned, it.banReason, it.mutedUntil?.toString(),
-            it.subscriptionTier.name, it.premiumCurrency
+            it.subscriptionTier.name, it.premiumCurrency,
+            it.unlockedPresets.joinToString(",")
         )
     }
 
@@ -274,7 +287,8 @@ private fun verifyPassword(password: String, salt: ByteArray, expectedHash: Stri
             isBanned = export.isBanned, banReason = export.banReason,
             mutedUntil = export.mutedUntil?.let { Instant.parse(it) },
             subscriptionTier = SubscriptionTier.valueOf(export.subscriptionTier),
-            premiumCurrency = export.premiumCurrency
+            premiumCurrency = export.premiumCurrency,
+            unlockedPresets = export.unlockedPresets.split(",").filter { it.isNotBlank() }.toMutableSet()
         )
         accountsById[account.id] = account
         accountsByUsername[account.username.lowercase()] = account.id

@@ -56,6 +56,7 @@ class GameStateRepository(private val context: Context) {
             obj.put("mutedUntil", acc.mutedUntil)
             obj.put("subscriptionTier", acc.subscriptionTier)
             obj.put("premiumCurrency", acc.premiumCurrency)
+            obj.put("unlockedPresets", acc.unlockedPresets)
             accountsArray.put(obj)
         }
         root.put("accounts", accountsArray)
@@ -266,7 +267,8 @@ class GameStateRepository(private val context: Context) {
                     banReason = if (obj.isNull("banReason")) null else obj.getString("banReason"),
                     mutedUntil = if (obj.isNull("mutedUntil")) null else obj.getString("mutedUntil"),
                     subscriptionTier = obj.getString("subscriptionTier"),
-                    premiumCurrency = obj.getLong("premiumCurrency")
+                    premiumCurrency = obj.getLong("premiumCurrency"),
+                    unlockedPresets = obj.optString("unlockedPresets", "")
                 )
             )
         }
