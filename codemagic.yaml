@@ -26,23 +26,22 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output188.txt
+          OUT=discovery_output189.txt
 
-          echo "=== A. Moderation screen file + existing mute/ban action pattern (for grant-gems UI) ===" > $OUT
-          grep -rln "fun ModerationScreen\|fun muteAccount\|banAccount(" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== A2. Full ModerationScreen.kt ===" >> $OUT
-          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT || echo "NOT FOUND at that path" >> $OUT
+          echo "=== A. ModerationScreen.kt lines 178-280 (ManualMuteSection body) ===" > $OUT
+          sed -n '178,280p' ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
           echo "" >> $OUT
 
-          echo "=== B. Auto-heal/auto-eat logic in combat tick ===" >> $OUT
-          grep -n "autoHealThresholdPercent\|fun tickCombat\|selectedFoodId\|healAmount" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== B. ModerationScreen( call site in MainActivity.kt ===" >> $OUT
+          grep -n "ModerationScreen(" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
 
-          echo "=== C. LoadoutScreen.kt food picker (for unequip option) ===" >> $OUT
-          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt >> $OUT || echo "NOT FOUND at that path" >> $OUT
+          echo "=== C. GameViewModel.kt selectFood / autoHeal / tickCombat auto-heal logic ===" >> $OUT
+          grep -n "fun selectFood\|fun setAutoHealThreshold\|autoHealThresholdPercent" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          grep -n "fun tickCombat" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
     artifacts:
-      - discovery_output188.txt
+      - discovery_output189.txt
       
   apply-patch:
     name: Apply Patch Script
