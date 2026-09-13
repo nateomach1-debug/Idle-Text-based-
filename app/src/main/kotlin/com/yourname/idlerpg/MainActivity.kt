@@ -1170,13 +1170,19 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                 val settingsTextColorOverride by gameViewModel.textColorOverride.collectAsState()
                                 val settingsOutlineEnabled by gameViewModel.textOutlineEnabled.collectAsState()
                                 val settingsOutlineColor by gameViewModel.textOutlineColor.collectAsState()
+                                val premiumCurrencyBalance by gameViewModel.currency.collectAsState()
+                                val ownedPresets by gameViewModel.unlockedPresets.collectAsState()
                                 SettingsScreen(
                                     textColorOverride = settingsTextColorOverride,
                                     outlineEnabled = settingsOutlineEnabled,
                                     outlineColor = settingsOutlineColor,
                                     onTextColorChanged = { gameViewModel.setTextColorOverride(it) },
                                     onOutlineEnabledChanged = { gameViewModel.setTextOutlineEnabled(it) },
-                                    onOutlineColorChanged = { gameViewModel.setTextOutlineColor(it) }
+                                    onOutlineColorChanged = { gameViewModel.setTextOutlineColor(it) },
+                                    premiumCurrency = premiumCurrencyBalance.second,
+                                    unlockedPresets = ownedPresets,
+                                    onPurchaseBundle = onLaunchPurchase,
+                                    onPurchasePreset = { presetId -> gameViewModel.purchasePreset(presetId) }
                                 )
                             }
 
