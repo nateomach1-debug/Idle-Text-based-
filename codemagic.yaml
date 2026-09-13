@@ -26,24 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output190.txt
-
-          echo "=== A. GameViewModel.kt lines 1230-1300 (auto-heal check inside tickCombat) ===" > $OUT
-          sed -n '1230,1300p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          OUT=discovery_output191.txt
+          echo "=== All call sites of tickConsumables( ===" > $OUT
+          grep -n "tickConsumables(" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-
-          echo "=== B. fun selectFood full body ===" >> $OUT
-          grep -n "fun selectFood" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-
-          echo "=== C. muteCharacterAsModerator (pattern for how mod actions find accounts/characters) ===" >> $OUT
-          grep -n "fun muteCharacterAsModerator" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-
-          echo "=== D. isModerator / moderation gating state in MainActivity.kt (how ModerationScreen destination is shown) ===" >> $OUT
-          grep -n "isModerator\|AppDestination.MODERATION" ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "=== Surrounding context of the main game-tick loop (search for a periodic ticker calling tickCombat) ===" >> $OUT
+          grep -n "fun tickCombat\|tickCombat(\|GAME_TICK\|fixedRateTimer\|tickJob\|viewModelScope.launch.*delay\|while (true)" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
     artifacts:
-      - discovery_output190.txt
+      - discovery_output191.txt
       
   apply-patch:
     name: Apply Patch Script
