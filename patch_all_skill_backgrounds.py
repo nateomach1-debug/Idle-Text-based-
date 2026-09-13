@@ -1,202 +1,286 @@
 import pathlib
 
-offline_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/OfflineIdleMechanicsSystem.kt")
+account_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/AccountCharacterSystem.kt")
+monetization_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt")
+gamestate_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/GameStateRepository.kt")
 gvm_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt")
-leaderboard_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/LeaderboardsScreen.kt")
 
-offline_text = offline_path.read_text()
+account_text = account_path.read_text()
+monetization_text = monetization_path.read_text()
+gamestate_text = gamestate_path.read_text()
 gvm_text = gvm_path.read_text()
-leaderboard_text = leaderboard_path.read_text()
 
 errors = []
 
-# ============================================================
-# 1. OfflineEfficiencyCurve: 12h full, 12h @ 50%, then 0% (was 12h full, 72h @ 50%, then 25% floor)
-# ============================================================
-offline_old = """    private val fullRateWindow: Duration = Duration.ofHours(12)
-    private val reducedRateWindow: Duration = Duration.ofHours(72)
-    private const val FULL_RATE_PERCENT = 100.0
-    private const val REDUCED_RATE_PERCENT = 50.0
-    private const val FLOOR_RATE_PERCENT = 25.0"""
 
-offline_new = """    private val fullRateWindow: Duration = Duration.ofHours(12)
-    private val reducedRateWindow: Duration = Duration.ofHours(24)
-    private const val FULL_RATE_PERCENT = 100.0
-    private const val REDUCED_RATE_PERCENT = 50.0
-    private const val FLOOR_RATE_PERCENT = 0.0"""
+def apply_edit(text, old, new, marker, label, errors):
+    """marker: a substring that only exists once the edit has already landed.
+    Checked first so appending-style edits (where old is a prefix of new) don't
+    get re-applied on a second run."""
+    if text.count(marker) >= 1:
+        return text, False  # already applied
+    count_old = text.count(old)
+    if count_old == 1:
+        return text.replace(old, new), True
+    errors.append(f"{label}: expected exactly 1 match of old block (and marker absent), found old={count_old}")
+    return text, False
 
-count = offline_text.count(offline_old)
-if count == 1:
-    offline_text = offline_text.replace(offline_old, offline_new)
-elif offline_text.count(offline_new) == 1:
-    pass  # already applied
-else:
-    errors.append(f"OfflineIdleMechanicsSystem.kt curve constants: expected 1 match, found {count}")
 
 # ============================================================
-# 2. Market order cap: 2 open buy + 2 open sell (per side)
+# AccountCharacterSystem.kt
 # ============================================================
-gvm_old = """    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
-        val characterId = _currentCharacterId.value ?: return
-        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+
+acc_old_1 = """    var subscriptionTier: SubscriptionTier = SubscriptionTier.NONE,
+    var premiumCurrency: Long = 0
+) {"""
+acc_new_1 = """    var subscriptionTier: SubscriptionTier = SubscriptionTier.NONE,
+    var premiumCurrency: Long = 0,
+    var unlockedPresets: MutableSet<String> = mutableSetOf()
+) {"""
+account_text, c1 = apply_edit(account_text, acc_old_1, acc_new_1, "var unlockedPresets: MutableSet<String>", "Account data class", errors)
+
+acc_old_2 = """data class AccountExport(
+    val id: String, val email: String, val username: String, val passwordHash: String, val passwordSalt: String,
+    val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
+    val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
+    val subscriptionTier: String, val premiumCurrency: Long
+)"""
+acc_new_2 = """data class AccountExport(
+    val id: String, val email: String, val username: String, val passwordHash: String, val passwordSalt: String,
+    val createdAt: String, val lastLoginAt: String, val ageBracket: String, val region: String,
+    val isBanned: Boolean, val banReason: String?, val mutedUntil: String?,
+    val subscriptionTier: String, val premiumCurrency: Long,
+    val unlockedPresets: String = ""
+)"""
+account_text, c2 = apply_edit(account_text, acc_old_2, acc_new_2, 'val unlockedPresets: String = ""', "AccountExport data class", errors)
+
+acc_old_3 = """    fun exportAllAccounts(): List<AccountExport> = accountsById.values.map {
+        AccountExport(
+            it.id, it.email, it.username, it.exposePasswordHashForExport(), it.exposePasswordSaltForExport(),
+            it.createdAt.toString(), it.lastLoginAt.toString(), it.ageBracket.name, it.region,
+            it.isBanned, it.banReason, it.mutedUntil?.toString(),
+            it.subscriptionTier.name, it.premiumCurrency
+        )
+    }"""
+acc_new_3 = """    fun exportAllAccounts(): List<AccountExport> = accountsById.values.map {
+        AccountExport(
+            it.id, it.email, it.username, it.exposePasswordHashForExport(), it.exposePasswordSaltForExport(),
+            it.createdAt.toString(), it.lastLoginAt.toString(), it.ageBracket.name, it.region,
+            it.isBanned, it.banReason, it.mutedUntil?.toString(),
+            it.subscriptionTier.name, it.premiumCurrency,
+            it.unlockedPresets.joinToString(",")
+        )
+    }"""
+account_text, c3 = apply_edit(account_text, acc_old_3, acc_new_3, "it.unlockedPresets.joinToString", "exportAllAccounts()", errors)
+
+acc_old_4 = """    fun restoreAccount(export: AccountExport) {
+        val account = Account(
+            id = export.id, email = export.email, username = export.username,
+            passwordHash = export.passwordHash, passwordSalt = export.passwordSalt,
+            createdAt = Instant.parse(export.createdAt), lastLoginAt = Instant.parse(export.lastLoginAt),
+            ageBracket = AgeBracket.valueOf(export.ageBracket), region = export.region,
+            isBanned = export.isBanned, banReason = export.banReason,
+            mutedUntil = export.mutedUntil?.let { Instant.parse(it) },
+            subscriptionTier = SubscriptionTier.valueOf(export.subscriptionTier),
+            premiumCurrency = export.premiumCurrency
+        )
+        accountsById[account.id] = account
+        accountsByUsername[account.username.lowercase()] = account.id
+        accountsByEmail[account.email.lowercase()] = account.id
+    }"""
+acc_new_4 = """    fun restoreAccount(export: AccountExport) {
+        val account = Account(
+            id = export.id, email = export.email, username = export.username,
+            passwordHash = export.passwordHash, passwordSalt = export.passwordSalt,
+            createdAt = Instant.parse(export.createdAt), lastLoginAt = Instant.parse(export.lastLoginAt),
+            ageBracket = AgeBracket.valueOf(export.ageBracket), region = export.region,
+            isBanned = export.isBanned, banReason = export.banReason,
+            mutedUntil = export.mutedUntil?.let { Instant.parse(it) },
+            subscriptionTier = SubscriptionTier.valueOf(export.subscriptionTier),
+            premiumCurrency = export.premiumCurrency,
+            unlockedPresets = export.unlockedPresets.split(",").filter { it.isNotBlank() }.toMutableSet()
+        )
+        accountsById[account.id] = account
+        accountsByUsername[account.username.lowercase()] = account.id
+        accountsByEmail[account.email.lowercase()] = account.id
+    }"""
+account_text, c4 = apply_edit(account_text, acc_old_4, acc_new_4, "unlockedPresets = export.unlockedPresets.split", "restoreAccount()", errors)
+
+acc_old_5 = """    fun addCurrency(accountId: String, premium: Long = 0): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        if (premium < 0) return ServiceResult.Failure("Currency amounts cannot be negative.")
+        account.premiumCurrency += premium
+        return ServiceResult.Success(account)
+    }"""
+acc_new_5 = """    fun addCurrency(accountId: String, premium: Long = 0): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        if (premium < 0) return ServiceResult.Failure("Currency amounts cannot be negative.")
+        account.premiumCurrency += premium
+        return ServiceResult.Success(account)
+    }
+
+    fun purchasePreset(accountId: String, presetId: String): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        if (presetId in account.unlockedPresets) return ServiceResult.Failure("Already unlocked.")
+        val preset = PremiumPresetCatalog.find(presetId) ?: return ServiceResult.Failure("Unknown preset.")
+        if (account.premiumCurrency < preset.gemCost) return ServiceResult.Failure("Not enough Gems.")
+        account.premiumCurrency -= preset.gemCost
+        account.unlockedPresets.add(presetId)
+        return ServiceResult.Success(account)
+    }"""
+account_text, c5 = apply_edit(account_text, acc_old_5, acc_new_5, "fun purchasePreset(accountId: String, presetId: String)", "AccountService.addCurrency/purchasePreset", errors)
+
+# ============================================================
+# MonetizationSystem.kt
+# ============================================================
+
+mon_old = """object CurrencyBundleCatalog {
+    val bundles = listOf(
+        CurrencyBundle(id = "bundle_small", realMoneyPriceUsd = 4.99, premiumCurrencyGranted = 500),
+        CurrencyBundle(id = "bundle_medium", realMoneyPriceUsd = 9.99, premiumCurrencyGranted = 1100, bonusPercent = 10.0),
+        CurrencyBundle(id = "bundle_large", realMoneyPriceUsd = 24.99, premiumCurrencyGranted = 3000, bonusPercent = 20.0)
+    )
+
+    fun find(bundleId: String): CurrencyBundle? = bundles.find { it.id == bundleId }
+}"""
+mon_new = """object CurrencyBundleCatalog {
+    val bundles = listOf(
+        CurrencyBundle(id = "bundle_small", realMoneyPriceUsd = 4.99, premiumCurrencyGranted = 500),
+        CurrencyBundle(id = "bundle_medium", realMoneyPriceUsd = 9.99, premiumCurrencyGranted = 1100, bonusPercent = 10.0),
+        CurrencyBundle(id = "bundle_large", realMoneyPriceUsd = 24.99, premiumCurrencyGranted = 3000, bonusPercent = 20.0)
+    )
+
+    fun find(bundleId: String): CurrencyBundle? = bundles.find { it.id == bundleId }
+}
+
+// =========================================================
+// PREMIUM COSMETIC TEXT PRESETS (Gem-purchasable Settings presets)
+// =========================================================
+
+data class PremiumPreset(
+    val id: String,
+    val displayName: String,
+    val gemCost: Long,
+    val textColorArgb: Long,
+    val outlineColorArgb: Long
+)
+
+object PremiumPresetCatalog {
+    val presets = listOf(
+        PremiumPreset(id = "preset_ember_glow", displayName = "Ember Glow", gemCost = 150, textColorArgb = 0xFFFFB86CL, outlineColorArgb = 0xFF8B0000L),
+        PremiumPreset(id = "preset_arctic_shimmer", displayName = "Arctic Shimmer", gemCost = 150, textColorArgb = 0xFF9AEAFFL, outlineColorArgb = 0xFF00E5FFL),
+        PremiumPreset(id = "preset_royal_amethyst", displayName = "Royal Amethyst", gemCost = 150, textColorArgb = 0xFFC77DFFL, outlineColorArgb = 0xFF7209B7L)
+    )
+
+    fun find(presetId: String): PremiumPreset? = presets.find { it.id == presetId }
+}"""
+monetization_text, c6 = apply_edit(monetization_text, mon_old, mon_new, "object PremiumPresetCatalog", "MonetizationSystem.kt PremiumPresetCatalog", errors)
+
+# ============================================================
+# GameStateRepository.kt
+# ============================================================
+
+gs_old_1 = """            obj.put("subscriptionTier", acc.subscriptionTier)
+            obj.put("premiumCurrency", acc.premiumCurrency)
+            accountsArray.put(obj)"""
+gs_new_1 = """            obj.put("subscriptionTier", acc.subscriptionTier)
+            obj.put("premiumCurrency", acc.premiumCurrency)
+            obj.put("unlockedPresets", acc.unlockedPresets)
+            accountsArray.put(obj)"""
+gamestate_text, c7 = apply_edit(gamestate_text, gs_old_1, gs_new_1, 'obj.put("unlockedPresets"', "GameStateRepository.kt save()", errors)
+
+gs_old_2 = """                    subscriptionTier = obj.getString("subscriptionTier"),
+                    premiumCurrency = obj.getLong("premiumCurrency")
+                )
+            )
+        }
+
+        val characters = mutableListOf<CharacterExport>()"""
+gs_new_2 = """                    subscriptionTier = obj.getString("subscriptionTier"),
+                    premiumCurrency = obj.getLong("premiumCurrency"),
+                    unlockedPresets = obj.optString("unlockedPresets", "")
+                )
+            )
+        }
+
+        val characters = mutableListOf<CharacterExport>()"""
+gamestate_text, c8 = apply_edit(gamestate_text, gs_old_2, gs_new_2, 'unlockedPresets = obj.optString("unlockedPresets"', "GameStateRepository.kt load()", errors)
+
+# ============================================================
+# GameViewModel.kt
+# ============================================================
+
+gvm_old_1 = """    private val _currency = MutableStateFlow(0L to 0L)
+    val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()"""
+gvm_new_1 = """    private val _currency = MutableStateFlow(0L to 0L)
+    val currency: StateFlow<Pair<Long, Long>> = _currency.asStateFlow()
+
+    private val _unlockedPresets = MutableStateFlow<Set<String>>(emptySet())
+    val unlockedPresets: StateFlow<Set<String>> = _unlockedPresets.asStateFlow()
+
+    private val _premiumActionError = MutableStateFlow<String?>(null)
+    val premiumActionError: StateFlow<String?> = _premiumActionError.asStateFlow()"""
+gvm_text, c9 = apply_edit(gvm_text, gvm_old_1, gvm_new_1, "_unlockedPresets = MutableStateFlow<Set<String>>", "GameViewModel.kt new StateFlows", errors)
+
+gvm_old_2 = """    fun refreshCurrency() {
+        val accountId = _currentAccountId.value ?: return
+        val account = accountService.accountById(accountId) ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
-            val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
-            result.onFailure { _marketActionError.value = it.message ?: it.toString() }
-            result.onSuccess { order ->
-                _marketActionError.value = null
-                val filled = order.originalQuantity - order.remainingQuantity
-                if (filled > 0) {
-                    inventoryService.inventoryFor(characterId).addItem(itemId, filled)
-                    refreshInventory()
-                }
-                refreshCurrency()
-                refreshMarketListings()
-                refreshMyOrders()
-            }
+            val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
+            _currency.value = gold to account.premiumCurrency
+        }
+    }"""
+gvm_new_2 = """    fun refreshCurrency() {
+        val accountId = _currentAccountId.value ?: return
+        val account = accountService.accountById(accountId) ?: return
+        _unlockedPresets.value = account.unlockedPresets.toSet()
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
+            _currency.value = gold to account.premiumCurrency
         }
     }
 
-    fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
-        val characterId = _currentCharacterId.value ?: return
-        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-        val realInventory = inventoryService.inventoryFor(characterId)
-        if (realInventory.quantityOf(itemId) < quantity) return
-
-        realInventory.removeItem(itemId, quantity)
-        refreshInventory()
-
-        viewModelScope.launch {
-            val result = SupabaseMarketRepository.placeSellOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
-            result.onFailure {
-                _marketActionError.value = it.message ?: it.toString()
-                realInventory.addItem(itemId, quantity)
-                refreshInventory()
-            }
-            result.onSuccess {
-                _marketActionError.value = null
-                refreshCurrency()
-                refreshMarketListings()
-                refreshMyOrders()
-            }
-        }
-    }"""
-
-gvm_new = """    private val MAX_OPEN_ORDERS_PER_SIDE = 2
-
-    fun placeBuyOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
-        val characterId = _currentCharacterId.value ?: return
-        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-        if (_myBuyOrders.value.count { it.remainingQuantity > 0 } >= MAX_OPEN_ORDERS_PER_SIDE) {
-            _marketActionError.value = "You can only have $MAX_OPEN_ORDERS_PER_SIDE open buy orders at a time."
+    fun creditPremiumCurrency(bundleId: String) {
+        val accountId = _currentAccountId.value ?: return
+        val bundle = CurrencyBundleCatalog.find(bundleId) ?: return
+        val result = accountService.addCurrency(accountId, bundle.premiumCurrencyGranted)
+        if (result is ServiceResult.Failure) {
+            _premiumActionError.value = result.reason
             return
         }
-        viewModelScope.launch {
-            val result = SupabaseMarketRepository.placeBuyOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
-            result.onFailure { _marketActionError.value = it.message ?: it.toString() }
-            result.onSuccess { order ->
-                _marketActionError.value = null
-                val filled = order.originalQuantity - order.remainingQuantity
-                if (filled > 0) {
-                    inventoryService.inventoryFor(characterId).addItem(itemId, filled)
-                    refreshInventory()
-                }
-                refreshCurrency()
-                refreshMarketListings()
-                refreshMyOrders()
-            }
-        }
+        _premiumActionError.value = null
+        refreshCurrency()
+        saveGame()
     }
 
-    fun placeSellOrder(itemId: String, quantity: Int, pricePerUnit: Long) {
-        val characterId = _currentCharacterId.value ?: return
-        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
-        if (_mySellOrders.value.count { it.remainingQuantity > 0 } >= MAX_OPEN_ORDERS_PER_SIDE) {
-            _marketActionError.value = "You can only have $MAX_OPEN_ORDERS_PER_SIDE open sell orders at a time."
+    fun purchasePreset(presetId: String) {
+        val accountId = _currentAccountId.value ?: return
+        val result = accountService.purchasePreset(accountId, presetId)
+        if (result is ServiceResult.Failure) {
+            _premiumActionError.value = result.reason
             return
         }
-        val realInventory = inventoryService.inventoryFor(characterId)
-        if (realInventory.quantityOf(itemId) < quantity) return
-
-        realInventory.removeItem(itemId, quantity)
-        refreshInventory()
-
-        viewModelScope.launch {
-            val result = SupabaseMarketRepository.placeSellOrder(supabaseCharacterId, itemId, quantity, pricePerUnit)
-            result.onFailure {
-                _marketActionError.value = it.message ?: it.toString()
-                realInventory.addItem(itemId, quantity)
-                refreshInventory()
-            }
-            result.onSuccess {
-                _marketActionError.value = null
-                refreshCurrency()
-                refreshMarketListings()
-                refreshMyOrders()
-            }
-        }
+        _premiumActionError.value = null
+        refreshCurrency()
+        saveGame()
     }"""
-
-count_old = gvm_text.count(gvm_old)
-count_new = gvm_text.count(gvm_new)
-if count_new == 1:
-    pass  # already applied
-elif count_old == 1:
-    gvm_text = gvm_text.replace(gvm_old, gvm_new)
-else:
-    errors.append(f"GameViewModel.kt placeBuyOrder/placeSellOrder: expected old or new form exactly once, found old={count_old} new={count_new}")
-
-# ============================================================
-# 3. Leaderboards: scale 1st/2nd/3rd place name text size
-# ============================================================
-lb_old = """                items(rows) { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "#" + row.rank + "  " + row.name, style = MaterialTheme.typography.bodyLarge)
-                        Text(text = row.valueLabel, style = MaterialTheme.typography.bodyMedium)
-                    }
-                    HorizontalDivider()
-                }"""
-
-lb_new = """                items(rows) { row ->
-                    val nameStyle = when (row.rank) {
-                        1 -> MaterialTheme.typography.headlineSmall
-                        2 -> MaterialTheme.typography.titleLarge
-                        3 -> MaterialTheme.typography.titleMedium
-                        else -> MaterialTheme.typography.bodyLarge
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "#" + row.rank + "  " + row.name, style = nameStyle)
-                        Text(text = row.valueLabel, style = MaterialTheme.typography.bodyMedium)
-                    }
-                    HorizontalDivider()
-                }"""
-
-count_old = leaderboard_text.count(lb_old)
-count_new = leaderboard_text.count(lb_new)
-if count_new == 1:
-    pass  # already applied
-elif count_old == 1:
-    leaderboard_text = leaderboard_text.replace(lb_old, lb_new)
-else:
-    errors.append(f"LeaderboardsScreen.kt row rendering: expected old or new form exactly once, found old={count_old} new={count_new}")
+gvm_text, c10 = apply_edit(gvm_text, gvm_old_2, gvm_new_2, "fun creditPremiumCurrency(bundleId: String)", "GameViewModel.kt refreshCurrency + new functions", errors)
 
 if errors:
     raise SystemExit(
-        "PATCH FAILED: one or more expected blocks did not match exactly once. "
-        "No changes made to any file.\n" + "\n".join(f"  - {e}" for e in errors)
+        "PATCH A FAILED: one or more expected blocks did not match. No changes made to any file.\n"
+        + "\n".join(f"  - {e}" for e in errors)
     )
 
-offline_path.write_text(offline_text)
+account_path.write_text(account_text)
+monetization_path.write_text(monetization_text)
+gamestate_path.write_text(gamestate_text)
 gvm_path.write_text(gvm_text)
-leaderboard_path.write_text(leaderboard_text)
 
-print("Patched OfflineIdleMechanicsSystem.kt: offline progress is now 12h full rate, 12h at 50%, then 0% (capped at 24h total).")
-print("Patched GameViewModel.kt: market orders capped at 2 open buy + 2 open sell (MAX_OPEN_ORDERS_PER_SIDE).")
-print("Patched LeaderboardsScreen.kt: 1st/2nd/3rd place names now scale down in size (headlineSmall/titleLarge/titleMedium), rest unchanged.")
+print("Patch A applied successfully:")
+print("  - AccountCharacterSystem.kt: Account.unlockedPresets field, AccountExport threading, AccountService.purchasePreset")
+print("  - MonetizationSystem.kt: PremiumPreset + PremiumPresetCatalog (3 presets, 150 Gems each)")
+print("  - GameStateRepository.kt: unlockedPresets save/load (backward-compatible with old saves)")
+print("  - GameViewModel.kt: unlockedPresets/premiumActionError StateFlows, creditPremiumCurrency(), purchasePreset()")
