@@ -1,10 +1,9 @@
 import pathlib
 
-gradle_path = pathlib.Path("app/build.gradle")
+settings_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt")
 main_activity_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt")
-billing_manager_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/BillingManager.kt")
 
-gradle_text = gradle_path.read_text()
+settings_text = settings_path.read_text()
 main_activity_text = main_activity_path.read_text()
 
 errors = []
@@ -21,266 +20,326 @@ def apply_edit(text, old, new, marker, label, errors):
 
 
 # ============================================================
-# 1. app/build.gradle - Play Billing Library dependency
+# 1. SettingsScreen.kt - full targeted rewrite
 # ============================================================
-gradle_old = "    implementation 'io.ktor:ktor-client-android:3.1.1'\n}"
-gradle_new = (
-    "    implementation 'io.ktor:ktor-client-android:3.1.1'\n\n"
-    "    // Google Play Billing - premium currency (Gems) purchases.\n"
-    "    implementation 'com.android.billingclient:billing-ktx:9.1.0'\n"
-    "}"
-)
-gradle_text, c1 = apply_edit(gradle_text, gradle_old, gradle_new, "com.android.billingclient:billing-ktx", "app/build.gradle billing dependency", errors)
 
-# ============================================================
-# 2. MainActivity.kt - billingManager property + startConnection()
-# ============================================================
-ma_old_1 = """class MainActivity : ComponentActivity() {
-    private val gameViewModel: GameViewModel by viewModels()
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {"""
-ma_new_1 = """class MainActivity : ComponentActivity() {
-    private val gameViewModel: GameViewModel by viewModels()
-    private val billingManager by lazy {
-        BillingManager(this) { bundleId -> gameViewModel.creditPremiumCurrency(bundleId) }
+settings_old = '''package com.yourname.idlerpg.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun SettingsScreen(
+    textColorOverride: Color?,
+    outlineEnabled: Boolean,
+    outlineColor: Color,
+    onTextColorChanged: (Color?) -> Unit,
+    onOutlineEnabledChanged: (Boolean) -> Unit,
+    onOutlineColorChanged: (Color) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
+        Text(text = "Settings", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(text = "Text Color", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        RgbHexColorPicker(
+            color = textColorOverride ?: Color(0xFFEDE8DD),
+            onColorChange = { onTextColorChanged(it) }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = { onTextColorChanged(null) }) {
+            Text("Reset to Default")
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Text Outline", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Switch(checked = outlineEnabled, onCheckedChange = { onOutlineEnabledChanged(it) })
+        }
+        if (outlineEnabled) {
+            Spacer(modifier = Modifier.height(8.dp))
+            RgbHexColorPicker(
+                color = outlineColor,
+                onColorChange = { onOutlineColorChanged(it) }
+            )
+        }
     }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        billingManager.startConnection()
-        setContent {"""
-main_activity_text, c2 = apply_edit(main_activity_text, ma_old_1, ma_new_1, "private val billingManager by lazy", "MainActivity.kt billingManager property", errors)
+}'''
 
-# ============================================================
-# 3. MainActivity.kt - AppRoot call site + onDestroy lifecycle hook
-# ============================================================
-ma_old_2 = """                AppRoot(gameViewModel)
+settings_new = '''package com.yourname.idlerpg.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.yourname.idlerpg.CurrencyBundleCatalog
+import com.yourname.idlerpg.PremiumPreset
+import com.yourname.idlerpg.PremiumPresetCatalog
+
+@Composable
+fun SettingsScreen(
+    textColorOverride: Color?,
+    outlineEnabled: Boolean,
+    outlineColor: Color,
+    onTextColorChanged: (Color?) -> Unit,
+    onOutlineEnabledChanged: (Boolean) -> Unit,
+    onOutlineColorChanged: (Color) -> Unit,
+    premiumCurrency: Long = 0,
+    unlockedPresets: Set<String> = emptySet(),
+    onPurchaseBundle: (String) -> Unit = {},
+    onPurchasePreset: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    var showGemShop by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
+        Text(text = "Settings", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(text = "Text Color", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        RgbHexColorPicker(
+            color = textColorOverride ?: Color(0xFFEDE8DD),
+            onColorChange = { onTextColorChanged(it) }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = { onTextColorChanged(null) }) {
+            Text("Reset to Default")
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Text Outline", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Switch(checked = outlineEnabled, onCheckedChange = { onOutlineEnabledChanged(it) })
+        }
+        if (outlineEnabled) {
+            Spacer(modifier = Modifier.height(8.dp))
+            RgbHexColorPicker(
+                color = outlineColor,
+                onColorChange = { onOutlineColorChanged(it) }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "Gems: " + premiumCurrency, style = MaterialTheme.typography.titleMedium)
+            Button(onClick = { showGemShop = true }) {
+                Text("Get More Gems")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "Premium Text Presets", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        PremiumPresetCatalog.presets.forEach { preset ->
+            PresetCard(
+                preset = preset,
+                isUnlocked = preset.id in unlockedPresets,
+                canAfford = premiumCurrency >= preset.gemCost,
+                onPurchase = { onPurchasePreset(preset.id) },
+                onApply = {
+                    onTextColorChanged(Color(preset.textColorArgb.toInt()))
+                    onOutlineEnabledChanged(true)
+                    onOutlineColorChanged(Color(preset.outlineColorArgb.toInt()))
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+
+    if (showGemShop) {
+        GemShopDialog(
+            onPurchaseBundle = onPurchaseBundle,
+            onDismiss = { showGemShop = false }
+        )
+    }
+}
+
+@Composable
+private fun GemShopDialog(
+    onPurchaseBundle: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Get More Gems") },
+        text = {
+            Column {
+                CurrencyBundleCatalog.bundles.forEach { bundle ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            val bonusText = if (bundle.bonusPercent > 0.0) " (+" + bundle.bonusPercent.toInt() + "% bonus)" else ""
+                            Text(text = bundle.premiumCurrencyGranted.toString() + " Gems" + bonusText, style = MaterialTheme.typography.bodyLarge)
+                            Text(text = "$" + bundle.realMoneyPriceUsd, style = MaterialTheme.typography.bodyMedium)
+                        }
+                        Button(onClick = { onPurchaseBundle(bundle.id) }) {
+                            Text("Buy")
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+private fun PresetCard(
+    preset: PremiumPreset,
+    isUnlocked: Boolean,
+    canAfford: Boolean,
+    onPurchase: () -> Unit,
+    onApply: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(Color(preset.textColorArgb.toInt()), RoundedCornerShape(4.dp))
+                    .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+            )
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(Color(preset.outlineColorArgb.toInt()), RoundedCornerShape(4.dp))
+                    .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+            )
+            Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+            Column {
+                Text(text = preset.displayName, style = MaterialTheme.typography.bodyLarge)
+                if (!isUnlocked) {
+                    Text(text = preset.gemCost.toString() + " Gems", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        if (isUnlocked) {
+            Button(onClick = onApply) {
+                Text("Apply")
+            }
+        } else {
+            Button(onClick = onPurchase, enabled = canAfford) {
+                Text("Unlock")
             }
         }
     }
-override fun onPause() {
-        super.onPause()
-        gameViewModel.saveGame()
-    }
-}"""
-ma_new_2 = """                AppRoot(gameViewModel, onLaunchPurchase = { bundleId -> billingManager.launchPurchase(this@MainActivity, bundleId) })
-            }
-        }
-    }
-override fun onPause() {
-        super.onPause()
-        gameViewModel.saveGame()
-    }
+}'''
 
-    override fun onDestroy() {
-        billingManager.endConnection()
-        super.onDestroy()
-    }
-}"""
-main_activity_text, c3 = apply_edit(main_activity_text, ma_old_2, ma_new_2, "override fun onDestroy() {", "MainActivity.kt AppRoot call site + onDestroy", errors)
+settings_text, c1 = apply_edit(settings_text, settings_old, settings_new, "GemShopDialog", "SettingsScreen.kt full rewrite", errors)
 
 # ============================================================
-# 4. MainActivity.kt - AppRoot function signature
+# 2. MainActivity.kt - thread premiumCurrency/unlockedPresets/onPurchaseBundle/onPurchasePreset into the call site
 # ============================================================
-ma_old_3 = "fun AppRoot(gameViewModel: GameViewModel) {"
-ma_new_3 = "fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {"
-main_activity_text, c4 = apply_edit(main_activity_text, ma_old_3, ma_new_3, "fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase", "MainActivity.kt AppRoot signature", errors)
+
+ma_old = """                                SettingsScreen(
+                                    textColorOverride = settingsTextColorOverride,
+                                    outlineEnabled = settingsOutlineEnabled,
+                                    outlineColor = settingsOutlineColor,
+                                    onTextColorChanged = { gameViewModel.setTextColorOverride(it) },
+                                    onOutlineEnabledChanged = { gameViewModel.setTextOutlineEnabled(it) },
+                                    onOutlineColorChanged = { gameViewModel.setTextOutlineColor(it) }
+                                )"""
+
+ma_new = """                                val premiumCurrencyBalance by gameViewModel.currency.collectAsState()
+                                val ownedPresets by gameViewModel.unlockedPresets.collectAsState()
+                                SettingsScreen(
+                                    textColorOverride = settingsTextColorOverride,
+                                    outlineEnabled = settingsOutlineEnabled,
+                                    outlineColor = settingsOutlineColor,
+                                    onTextColorChanged = { gameViewModel.setTextColorOverride(it) },
+                                    onOutlineEnabledChanged = { gameViewModel.setTextOutlineEnabled(it) },
+                                    onOutlineColorChanged = { gameViewModel.setTextOutlineColor(it) },
+                                    premiumCurrency = premiumCurrencyBalance.second,
+                                    unlockedPresets = ownedPresets,
+                                    onPurchaseBundle = onLaunchPurchase,
+                                    onPurchasePreset = { presetId -> gameViewModel.purchasePreset(presetId) }
+                                )"""
+
+main_activity_text, c2 = apply_edit(main_activity_text, ma_old, ma_new, "val premiumCurrencyBalance by gameViewModel.currency.collectAsState()", "MainActivity.kt SettingsScreen call site", errors)
 
 if errors:
     raise SystemExit(
-        "PATCH B FAILED: one or more expected blocks did not match. No changes made to any file.\n"
+        "PATCH C FAILED: one or more expected blocks did not match. No changes made to either file.\n"
         + "\n".join(f"  - {e}" for e in errors)
     )
 
-# ============================================================
-# 5. New file: BillingManager.kt (only created if it doesn't already exist)
-# ============================================================
-billing_manager_content = '''package com.yourname.idlerpg
-
-import android.app.Activity
-import android.content.Context
-import android.util.Base64
-import android.util.Log
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.BillingClientStateListener
-import com.android.billingclient.api.BillingFlowParams
-import com.android.billingclient.api.BillingResult
-import com.android.billingclient.api.ConsumeParams
-import com.android.billingclient.api.PendingPurchasesParams
-import com.android.billingclient.api.ProductDetails
-import com.android.billingclient.api.Purchase
-import com.android.billingclient.api.PurchasesUpdatedListener
-import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchasesParams
-import java.security.KeyFactory
-import java.security.PublicKey
-import java.security.Signature
-import java.security.spec.X509EncodedKeySpec
-
-// =========================================================
-// GOOGLE PLAY BILLING - Premium currency (Gems) purchases.
-//
-// TODO before shipping: paste the app's Base64-encoded RSA public key
-// from Play Console > Monetization setup > Licensing into
-// LICENSE_PUBLIC_KEY_BASE64 below. Until that is filled in, ALL purchases
-// are rejected (fail-closed) rather than silently accepted unverified.
-//
-// Product IDs below must be created in Play Console (Monetization >
-// Products > In-app products) with EXACTLY these IDs, matching
-// CurrencyBundleCatalog in MonetizationSystem.kt one-to-one:
-// bundle_small, bundle_medium, bundle_large
-// =========================================================
-
-private const val LICENSE_PUBLIC_KEY_BASE64 = ""
-
-class BillingManager(
-    context: Context,
-    private val onVerifiedPurchase: (bundleId: String) -> Unit
-) {
-    private val appContext = context.applicationContext
-    private var productDetailsByBundleId: Map<String, ProductDetails> = emptyMap()
-
-    private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
-        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-            purchases.forEach { handlePurchase(it) }
-        } else {
-            Log.w("BillingManager", "Purchase flow ended with code " + billingResult.responseCode + ": " + billingResult.debugMessage)
-        }
-    }
-
-    private val billingClient: BillingClient = BillingClient.newBuilder(appContext)
-        .setListener(purchasesUpdatedListener)
-        .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
-        .enableAutoServiceReconnection()
-        .build()
-
-    fun startConnection() {
-        if (billingClient.isReady) return
-        billingClient.startConnection(object : BillingClientStateListener {
-            override fun onBillingSetupFinished(billingResult: BillingResult) {
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    queryProducts()
-                    queryExistingPurchases()
-                } else {
-                    Log.w("BillingManager", "Billing setup failed: " + billingResult.debugMessage)
-                }
-            }
-
-            override fun onBillingServiceDisconnected() {
-                // enableAutoServiceReconnection() handles reconnection automatically.
-            }
-        })
-    }
-
-    fun endConnection() {
-        billingClient.endConnection()
-    }
-
-    private fun queryProducts() {
-        val products = CurrencyBundleCatalog.bundles.map { bundle ->
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(bundle.id)
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build()
-        }
-        val params = QueryProductDetailsParams.newBuilder().setProductList(products).build()
-        billingClient.queryProductDetailsAsync(params) { billingResult, queryProductDetailsResult ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                productDetailsByBundleId = queryProductDetailsResult.productDetailsList.associateBy { it.productId }
-                if (queryProductDetailsResult.unfetchedProductList.isNotEmpty()) {
-                    Log.w("BillingManager", "Unfetched products: " + queryProductDetailsResult.unfetchedProductList.map { it.productId })
-                }
-            } else {
-                Log.w("BillingManager", "queryProductDetailsAsync failed: " + billingResult.debugMessage)
-            }
-        }
-    }
-
-    private fun queryExistingPurchases() {
-        val params = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.INAPP)
-            .build()
-        billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                purchases.forEach { handlePurchase(it) }
-            }
-        }
-    }
-
-    fun launchPurchase(activity: Activity, bundleId: String) {
-        val productDetails = productDetailsByBundleId[bundleId]
-        if (productDetails == null) {
-            Log.w("BillingManager", "No cached ProductDetails for " + bundleId + " - not ready yet.")
-            return
-        }
-        val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
-            .setProductDetails(productDetails)
-            .build()
-        val flowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(listOf(productDetailsParams))
-            .build()
-        billingClient.launchBillingFlow(activity, flowParams)
-    }
-
-    private fun handlePurchase(purchase: Purchase) {
-        if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return
-        if (!isSignatureValid(purchase)) {
-            Log.w("BillingManager", "Purchase signature verification failed - not crediting Gems.")
-            return
-        }
-        val bundleId = purchase.products.firstOrNull() ?: return
-        onVerifiedPurchase(bundleId)
-
-        val consumeParams = ConsumeParams.newBuilder()
-            .setPurchaseToken(purchase.purchaseToken)
-            .build()
-        billingClient.consumeAsync(consumeParams) { billingResult, _ ->
-            if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                Log.w("BillingManager", "consumeAsync failed: " + billingResult.debugMessage)
-            }
-        }
-    }
-
-    private fun isSignatureValid(purchase: Purchase): Boolean {
-        if (LICENSE_PUBLIC_KEY_BASE64.isBlank()) {
-            Log.e("BillingManager", "LICENSE_PUBLIC_KEY_BASE64 is not set - rejecting all purchases until Play Console licensing key is configured.")
-            return false
-        }
-        return try {
-            val publicKey = generatePublicKey(LICENSE_PUBLIC_KEY_BASE64)
-            val signatureAlgorithm = Signature.getInstance("SHA1withRSA")
-            signatureAlgorithm.initVerify(publicKey)
-            signatureAlgorithm.update(purchase.originalJson.toByteArray())
-            signatureAlgorithm.verify(Base64.decode(purchase.signature, Base64.DEFAULT))
-        } catch (e: Exception) {
-            Log.e("BillingManager", "Signature verification error", e)
-            false
-        }
-    }
-
-    private fun generatePublicKey(base64Key: String): PublicKey {
-        val keyBytes = Base64.decode(base64Key, Base64.DEFAULT)
-        val keyFactory = KeyFactory.getInstance("RSA")
-        return keyFactory.generatePublic(X509EncodedKeySpec(keyBytes))
-    }
-}
-'''
-
-billing_manager_created = False
-if not billing_manager_path.exists():
-    billing_manager_path.write_text(billing_manager_content)
-    billing_manager_created = True
-
-gradle_path.write_text(gradle_text)
+settings_path.write_text(settings_text)
 main_activity_path.write_text(main_activity_text)
 
-any_changed = any([c1, c2, c3, c4]) or billing_manager_created
+any_changed = any([c1, c2])
 if any_changed:
-    print("Patch B applied:")
-    print("  - app/build.gradle: added com.android.billingclient:billing-ktx:9.1.0")
-    print("  - BillingManager.kt: " + ("created new file" if billing_manager_created else "already existed, left untouched"))
-    print("  - MainActivity.kt: billingManager property + startConnection()/endConnection() lifecycle, AppRoot signature + call site updated")
-    print("")
-    print("NOTE: LICENSE_PUBLIC_KEY_BASE64 in BillingManager.kt is still blank - all purchases will be rejected (fail-closed) until you paste in the Play Console licensing key.")
+    print("Patch C applied:")
+    print("  - SettingsScreen.kt: gem balance display, Get More Gems shop dialog (3 bundles), 3 premium preset cards (unlock/apply)")
+    print("  - MainActivity.kt: threaded premiumCurrency/unlockedPresets/onPurchaseBundle/onPurchasePreset into the SettingsScreen call site")
 else:
-    print("Patch B: already fully applied, no changes made.")
+    print("Patch C: already fully applied, no changes made.")
