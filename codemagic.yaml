@@ -26,11 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output183.txt
-          echo "=== SettingsScreen( call site in MainActivity.kt ===" > $OUT
-          grep -n "SettingsScreen(" -A 12 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output184.txt
+          echo "=== Full SettingsScreen.kt (fresh re-fetch) ===" > $OUT
+          grep -n "" ./app/src/main/kotlin/com/yourname/idlerpg/ui/screens/SettingsScreen.kt >> $OUT || echo "NOT FOUND at ui/screens path" >> $OUT
     artifacts:
-      - discovery_output183.txt
+      - discovery_output184.txt
       
   apply-patch:
     name: Apply Patch Script
