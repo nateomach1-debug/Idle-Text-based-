@@ -2,6 +2,8 @@ package com.yourname.idlerpg.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,36 +50,14 @@ fun SettingsScreen(
 ) {
     var showGemShop by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
         Text(text = "Settings", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(20.dp))
-
-        Text(text = "Text Color", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        RgbHexColorPicker(
-            color = textColorOverride ?: Color(0xFFEDE8DD),
-            onColorChange = { onTextColorChanged(it) }
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { onTextColorChanged(null) }) {
-            Text("Reset to Default")
-        }
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(text = "Text Outline", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            Switch(checked = outlineEnabled, onCheckedChange = { onOutlineEnabledChanged(it) })
-        }
-        if (outlineEnabled) {
-            Spacer(modifier = Modifier.height(8.dp))
-            RgbHexColorPicker(
-                color = outlineColor,
-                onColorChange = { onOutlineColorChanged(it) }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(28.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -106,6 +86,33 @@ fun SettingsScreen(
                 }
             )
             Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Text(text = "Text Color", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        RgbHexColorPicker(
+            color = textColorOverride ?: Color(0xFFEDE8DD),
+            onColorChange = { onTextColorChanged(it) }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = { onTextColorChanged(null) }) {
+            Text("Reset to Default")
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Text Outline", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Switch(checked = outlineEnabled, onCheckedChange = { onOutlineEnabledChanged(it) })
+        }
+        if (outlineEnabled) {
+            Spacer(modifier = Modifier.height(8.dp))
+            RgbHexColorPicker(
+                color = outlineColor,
+                onColorChange = { onOutlineColorChanged(it) }
+            )
         }
     }
 
