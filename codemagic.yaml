@@ -28,25 +28,25 @@ workflows:
         script: |
           OUT=discovery_output196.txt
           echo "=== Mute/Ban Kotlin call sites (GameViewModel) ===" > $OUT
-          grep -n "muteCharacter\|banCharacter\|unmuteCharacter\|unbanCharacter" -B 2 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          grep -n "muteCharacter\|banCharacter\|unmuteCharacter\|unbanCharacter" -B 2 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || true
           echo "" >> $OUT
           echo "=== ManualMuteSection full context in ModerationScreen ===" >> $OUT
-          grep -n "ManualMuteSection\|ManualBanSection\|ManualGrantGemsSection" -B 3 -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
+          grep -n "ManualMuteSection\|ManualBanSection\|ManualGrantGemsSection" -B 3 -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT || true
           echo "" >> $OUT
           echo "=== rpc( calls across kotlin files ===" >> $OUT
-          grep -rn "\.rpc(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
+          grep -rn "\.rpc(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || true
           echo "" >> $OUT
           echo "=== Mute/Ban SQL RPC definitions ===" >> $OUT
-          grep -n "mute\|ban" -B 2 -A 20 ./*.sql >> $OUT
+          grep -n "mute\|ban" -B 2 -A 20 ./*.sql >> $OUT || true
           echo "" >> $OUT
           echo "=== Moderator/role check pattern in SQL ===" >> $OUT
-          grep -n "is_moderator\|is_mod\|role\s*=\s*'mod" -B 2 -A 10 ./*.sql >> $OUT
+          grep -n "is_moderator\|is_mod\|role\s*=\s*'mod" -B 2 -A 10 ./*.sql >> $OUT || true
           echo "" >> $OUT
           echo "=== Account/AccountService premiumCurrency + grantTestGems ===" >> $OUT
-          grep -n "premiumCurrency\|grantTestGems\|purchasePreset\|class Account\b\|class AccountService" -B 2 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT
+          grep -n "premiumCurrency\|grantTestGems\|purchasePreset\|class Account\b\|class AccountService" -B 2 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT || true
           echo "" >> $OUT
           echo "=== characters table schema ===" >> $OUT
-          grep -n "create table.*characters\|characters (" -A 20 ./*.sql >> $OUT
+          grep -n "create table.*characters\|characters (" -A 20 ./*.sql >> $OUT || true
     artifacts:
       - discovery_output196.txt
       
