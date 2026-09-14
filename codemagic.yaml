@@ -26,14 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output193.txt
-          echo "=== GameViewModel.kt lines 929-1030 (tickCombat full body) ===" > $OUT
-          sed -n '929,1030p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          OUT=discovery_output194.txt
+          echo "=== ModerationScreen.kt lines 1-60 (top of file: imports, signature, top-level layout) ===" > $OUT
+          sed -n '1,60p' ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
           echo "" >> $OUT
-          echo "=== stateFor / healCharacter in the combat service (confirm mutable reference vs new object each call) ===" >> $OUT
-          grep -rn "fun stateFor\|fun healCharacter" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT
+          echo "=== ManualMuteSection composable (full, as a UI pattern to copy) ===" >> $OUT
+          grep -n "fun ManualMuteSection" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== ModerationScreen( call site in MainActivity.kt, full ===" >> $OUT
+          grep -n "AppDestination.MODERATION ->" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== LoadoutScreen.kt food ConsumableRow forEach section (for the unequip fix) ===" >> $OUT
+          grep -n "selectedFoodId\|onFoodSelected\|ConsumableRow(" ./app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt >> $OUT
     artifacts:
-      - discovery_output193.txt
+      - discovery_output194.txt
       
   apply-patch:
     name: Apply Patch Script
