@@ -26,14 +26,28 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output195.txt
-          echo "=== ManualMuteSection( call site within ModerationScreen ===" > $OUT
-          grep -n "ManualMuteSection(" ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== 5 lines of context around that call ===" >> $OUT
-          grep -n "ManualMuteSection(" -B 3 -A 3 ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
+          echo "=== Mute/Ban Kotlin call sites ===" >> "$OUT"
+grep -n "muteCharacter\|banCharacter\|unmuteCharacter\|unbanCharacter" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
+
+echo "=== ModerationScreen.kt full content ===" >> "$OUT"
+cat ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
+
+echo "=== Mute/Ban SQL RPCs ===" >> "$OUT"
+grep -n "mute\|ban" -A 20 ./*.sql >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
+
+echo "=== Moderator/role check pattern in SQL ===" >> "$OUT"
+grep -n "is_moderator\|is_mod\|role\s*=\s*'mod" -A 10 ./*.sql >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
+
+echo "=== Account.kt / AccountService.kt premiumCurrency + grantTestGems ===" >> "$OUT"
+grep -n "premiumCurrency\|grantTestGems\|purchasePreset\|class Account\b\|class AccountService" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
+
+echo "=== characters table schema ===" >> "$OUT"
+grep -n "create table.*characters\|characters\s*(" -A 20 ./*.sql >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
+
+echo "=== GameViewModel.kt grantTestGems + moderation RPC calls ===" >> "$OUT"
+grep -n "grantTestGems\|supabaseClient.postgrest.rpc\|\.rpc(" -B 2 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
     artifacts:
-      - discovery_output195.txt
+      - discovery_output1.txt
       
   apply-patch:
     name: Apply Patch Script
