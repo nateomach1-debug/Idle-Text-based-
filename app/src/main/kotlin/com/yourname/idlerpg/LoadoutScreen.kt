@@ -44,7 +44,7 @@ data class LoadoutState(
 fun LoadoutScreen(
     state: LoadoutState,
     onBack: () -> Unit,
-    onFoodSelected: (String) -> Unit,
+    onFoodSelected: (String?) -> Unit,
     onPotionSelected: (String) -> Unit,
     onAutoHealChanged: (Int) -> Unit,
     onAutoFleeChanged: (Int) -> Unit,
@@ -120,7 +120,7 @@ fun LoadoutScreen(
                 ConsumableRow(
                     option = food,
                     isSelected = food.itemId == state.selectedFoodId,
-                    onClick = { onFoodSelected(food.itemId) }
+                    onClick = { onFoodSelected(if (food.itemId == state.selectedFoodId) null else food.itemId) }
                 )
             }
         }

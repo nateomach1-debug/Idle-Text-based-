@@ -39,6 +39,7 @@ fun ModerationScreen(
     onResolveAppeal: (appealId: String, grant: Boolean, notes: String) -> Unit,
     onMuteCharacter: (characterId: String, durationSeconds: Int, reason: String) -> Unit,
     onUnmuteCharacter: (characterId: String) -> Unit,
+    onGrantGems: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -72,6 +73,10 @@ fun ModerationScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         ManualMuteSection(onMuteCharacter, onUnmuteCharacter)
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        ManualGrantGemsSection(onGrantGems)
     }
 }
 
@@ -174,6 +179,41 @@ private fun AppealsSection(
 // For muting a character directly, outside the report flow -
 // e.g. acting on something reported through another channel.
 // ---------------------------------------------------------
+
+@Composable
+private fun ManualGrantGemsSection(
+    onGrantGems: (Long) -> Unit
+) {
+    var amountText by remember { mutableStateOf("500") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(12.dp)
+    ) {
+        Text(text = "Grant Gems (testing only - credits your own logged-in account)", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = amountText,
+            onValueChange = { input -> if (input.all { it.isDigit() }) amountText = input },
+            label = { Text(text = "Amount") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = {
+                val amount = amountText.toLongOrNull()
+                if (amount != null && amount > 0) {
+                    onGrantGems(amount)
+                }
+            }
+        ) {
+            Text(text = "Grant Gems")
+        }
+    }
+}
 
 @Composable
 private fun ManualMuteSection(

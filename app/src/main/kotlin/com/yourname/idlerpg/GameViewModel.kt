@@ -2176,6 +2176,22 @@ fun logout() {
         saveGame()
     }
 
+    // Moderator/testing tool only - credits the currently logged-in account
+    // directly, bypassing Play Billing entirely. Does NOT target other
+    // players' accounts (this app's Account/AccountService layer is local
+    // per-device, not a live server-side directory).
+    fun grantTestGems(amount: Long) {
+        val accountId = _currentAccountId.value ?: return
+        val result = accountService.addCurrency(accountId, amount)
+        if (result is ServiceResult.Failure) {
+            _premiumActionError.value = result.reason
+            return
+        }
+        _premiumActionError.value = null
+        refreshCurrency()
+        saveGame()
+    }
+
     // =========================================================
     // MARKET (server-side via Supabase - shared order book across all players)
     // =========================================================
