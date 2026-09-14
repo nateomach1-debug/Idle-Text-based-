@@ -26,26 +26,26 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output197.txt
-          echo "=== All .sql files in repo (recursive) ===" > $OUT
-          find . -name "*.sql" >> $OUT
+          OUT=discovery_output198.txt
+          echo "=== SupabaseModerationRepository.kt FULL ===" > $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseModerationRepository.kt >> $OUT
           echo "" >> $OUT
-          echo "=== admin_mute_character / admin_unmute_character full definitions ===" >> $OUT
-          grep -rn "CREATE OR REPLACE FUNCTION public.admin_mute_character\|CREATE OR REPLACE FUNCTION public.admin_unmute_character" -A 40 . --include=*.sql >> $OUT || true
+          echo "=== SupabaseMarketRepository.kt FULL ===" >> $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt >> $OUT
           echo "" >> $OUT
-          echo "=== market_currency_balance + combat_grant_coins full definitions ===" >> $OUT
-          grep -rn "CREATE OR REPLACE FUNCTION public.market_currency_balance\|CREATE OR REPLACE FUNCTION public.combat_grant_coins" -A 40 . --include=*.sql >> $OUT || true
+          echo "=== GameViewModel.kt: currency/gem related (grantTestGems, refreshCurrency, creditPremiumCurrency, purchasePreset, currency StateFlow) ===" >> $OUT
+          grep -n "grantTestGems\|refreshCurrency\|creditPremiumCurrency\|purchasePreset\|premiumCurrency\|_currency\|val currency\|softCurrency" -B 3 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== is_moderator / moderator check helper function ===" >> $OUT
-          grep -rn "is_moderator" -B 3 -A 15 . --include=*.sql >> $OUT || true
+          echo "=== MainActivity.kt: onGrantGems + ModerationScreen call site ===" >> $OUT
+          grep -n "onGrantGems\|ModerationScreen(" -B 5 -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
           echo "" >> $OUT
-          echo "=== gold/currency table schema (wherever it lives) ===" >> $OUT
-          grep -rln "gold\|currency" . --include=*.sql >> $OUT || true
+          echo "=== filename holding AccountService class ===" >> $OUT
+          grep -rl "class AccountService" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
           echo "" >> $OUT
-          echo "=== character_owned_by_caller helper (used by send_chat_message) ===" >> $OUT
-          grep -rn "CREATE OR REPLACE FUNCTION public.character_owned_by_caller" -A 15 . --include=*.sql >> $OUT || true
+          echo "=== AccountService/Account: premiumCurrency, addCurrency, purchasePreset, unlockedPresets ===" >> $OUT
+          grep -n "premiumCurrency\|addCurrency\|purchasePreset\|unlockedPresets\|class Account\b" -B 2 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT
     artifacts:
-      - discovery_output197.txt
+      - discovery_output198.txt
       
   apply-patch:
     name: Apply Patch Script
