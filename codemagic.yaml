@@ -26,17 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output192.txt
-          echo "=== GameViewModel.kt lines 1295-1330 (the loop containing tickConsumables/tickCombat calls) ===" > $OUT
-          sed -n '1295,1330p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          OUT=discovery_output193.txt
+          echo "=== GameViewModel.kt lines 929-1030 (tickCombat full body) ===" > $OUT
+          sed -n '929,1030p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== Function name enclosing that loop (search backward for 'private fun' before line 1310) ===" >> $OUT
-          awk 'NR<=1310 && /private fun|fun /{line=NR": "$0} END{print line}' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== All other while(true) loops or periodic coroutines in GameViewModel.kt ===" >> $OUT
-          grep -n "while (true)\|fixedRateTimer\|delay(1000\|delay(1_000" ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "=== stateFor / healCharacter in the combat service (confirm mutable reference vs new object each call) ===" >> $OUT
+          grep -rn "fun stateFor\|fun healCharacter" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT
     artifacts:
-      - discovery_output192.txt
+      - discovery_output193.txt
       
   apply-patch:
     name: Apply Patch Script
