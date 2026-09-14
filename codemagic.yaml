@@ -26,28 +26,29 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          echo "=== Mute/Ban Kotlin call sites ===" >> "$OUT"
-grep -n "muteCharacter\|banCharacter\|unmuteCharacter\|unbanCharacter" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
-
-echo "=== ModerationScreen.kt full content ===" >> "$OUT"
-cat ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
-
-echo "=== Mute/Ban SQL RPCs ===" >> "$OUT"
-grep -n "mute\|ban" -A 20 ./*.sql >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
-
-echo "=== Moderator/role check pattern in SQL ===" >> "$OUT"
-grep -n "is_moderator\|is_mod\|role\s*=\s*'mod" -A 10 ./*.sql >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
-
-echo "=== Account.kt / AccountService.kt premiumCurrency + grantTestGems ===" >> "$OUT"
-grep -n "premiumCurrency\|grantTestGems\|purchasePreset\|class Account\b\|class AccountService" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
-
-echo "=== characters table schema ===" >> "$OUT"
-grep -n "create table.*characters\|characters\s*(" -A 20 ./*.sql >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
-
-echo "=== GameViewModel.kt grantTestGems + moderation RPC calls ===" >> "$OUT"
-grep -n "grantTestGems\|supabaseClient.postgrest.rpc\|\.rpc(" -B 2 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> "$OUT" 2>/dev/null || echo "NOT FOUND" >> "$OUT"
+          OUT=discovery_output196.txt
+          echo "=== Mute/Ban Kotlin call sites (GameViewModel) ===" > $OUT
+          grep -n "muteCharacter\|banCharacter\|unmuteCharacter\|unbanCharacter" -B 2 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== ManualMuteSection full context in ModerationScreen ===" >> $OUT
+          grep -n "ManualMuteSection\|ManualBanSection\|ManualGrantGemsSection" -B 3 -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== rpc( calls across kotlin files ===" >> $OUT
+          grep -rn "\.rpc(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
+          echo "" >> $OUT
+          echo "=== Mute/Ban SQL RPC definitions ===" >> $OUT
+          grep -n "mute\|ban" -B 2 -A 20 ./*.sql >> $OUT
+          echo "" >> $OUT
+          echo "=== Moderator/role check pattern in SQL ===" >> $OUT
+          grep -n "is_moderator\|is_mod\|role\s*=\s*'mod" -B 2 -A 10 ./*.sql >> $OUT
+          echo "" >> $OUT
+          echo "=== Account/AccountService premiumCurrency + grantTestGems ===" >> $OUT
+          grep -n "premiumCurrency\|grantTestGems\|purchasePreset\|class Account\b\|class AccountService" -B 2 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== characters table schema ===" >> $OUT
+          grep -n "create table.*characters\|characters (" -A 20 ./*.sql >> $OUT
     artifacts:
-      - discovery_output1.txt
+      - discovery_output196.txt
       
   apply-patch:
     name: Apply Patch Script
