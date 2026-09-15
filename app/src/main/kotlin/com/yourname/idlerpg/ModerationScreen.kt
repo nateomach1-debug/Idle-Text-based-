@@ -39,7 +39,7 @@ fun ModerationScreen(
     onResolveAppeal: (appealId: String, grant: Boolean, notes: String) -> Unit,
     onMuteCharacter: (characterId: String, durationSeconds: Int, reason: String) -> Unit,
     onUnmuteCharacter: (characterId: String) -> Unit,
-    onGrantGems: (Long) -> Unit = {},
+    onGrantGems: (String, Long, String) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
