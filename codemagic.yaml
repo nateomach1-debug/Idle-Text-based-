@@ -26,20 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output204.txt
-          echo "=== SettingsScreen.kt lines 1-50 (full param signature) ===" > $OUT
-          sed -n '1,50p' ./app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt >> $OUT 2>/dev/null || true
+          OUT=discovery_output205.txt
+          echo "=== GameViewModel.kt: textColorOverride/textOutlineEnabled/textOutlineColor StateFlow + setters ===" > $OUT
+          grep -n "textColorOverride\|textOutlineEnabled\|textOutlineColor" -B 2 -A 3 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== MainActivity.kt: mutableStateOf declarations for text color/outline ===" >> $OUT
-          grep -n "textColorOverride\|textOutlineEnabled\|textOutlineColor" -B 2 -A 2 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== MainActivity.kt: SettingsScreen( call site ===" >> $OUT
-          grep -n "SettingsScreen(" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== MonetizationSystem.kt lines 180-260 (PremiumPreset + Catalog) ===" >> $OUT
-          sed -n '180,260p' ./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt >> $OUT 2>/dev/null || true
+          echo "=== fun setTextColorOverride / setTextOutlineEnabled / setTextOutlineColor full bodies ===" >> $OUT
+          grep -n "fun setTextColorOverride\|fun setTextOutlineEnabled\|fun setTextOutlineColor" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output204.txt
+      - discovery_output205.txt
       
   apply-patch:
     name: Apply Patch Script
