@@ -221,6 +221,19 @@ class AccountService {
         return ServiceResult.Success(account)
     }
 
+    // Local-only preset unlock, used once currency has already been spent
+    // server-side via SupabaseMarketRepository.spendGems (see
+    // GameViewModel.purchasePreset). Does not touch premiumCurrency - that
+    // field is a vestige of the old local-only gem flow and is no longer
+    // the source of truth for gem balances.
+    fun unlockPreset(accountId: String, presetId: String): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        if (presetId in account.unlockedPresets) return ServiceResult.Failure("Already unlocked.")
+        val preset = PremiumPresetCatalog.find(presetId) ?: return ServiceResult.Failure("Unknown preset.")
+        account.unlockedPresets.add(presetId)
+        return ServiceResult.Success(account)
+    }
+
     fun charactersFor(accountId: String): List<Character> =
         charactersByAccountId[accountId]?.mapNotNull { charactersById[it] } ?: emptyList()
 

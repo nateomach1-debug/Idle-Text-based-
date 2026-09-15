@@ -108,6 +108,26 @@ object SupabaseMarketRepository {
         }).decodeAs<Long>()
     }
 
+    suspend fun gemsBalance(characterId: String): Result<Long> = runCatching {
+        client.postgrest.rpc("gems_balance", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun spendGems(characterId: String, amount: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("spend_gems", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun creditGems(characterId: String, amount: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("credit_gems", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+        }).decodeAs<Long>()
+    }
+
     suspend fun listings(): Result<List<MarketListingRow>> = runCatching {
         client.postgrest.rpc("market_listings").decodeList<MarketListingRow>()
     }

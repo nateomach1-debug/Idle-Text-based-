@@ -1150,7 +1150,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                     onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
                                     onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
                                     onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) },
-                                    onGrantGems = { amount -> gameViewModel.grantTestGems(amount) }
+                                    onGrantGems = { id, amount, reason -> gameViewModel.grantGemsAsModerator(id, amount, reason) }
                                 )
                             }
 

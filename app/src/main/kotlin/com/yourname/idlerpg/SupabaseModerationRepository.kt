@@ -197,4 +197,16 @@ object SupabaseModerationRepository {
             put("p_character_id", characterId)
         })
     }
+
+    // ---------------------------------------------------------
+    // PREMIUM CURRENCY (GEMS) - MODERATOR GRANT
+    // ---------------------------------------------------------
+
+    suspend fun grantGems(characterId: String, amount: Long, reason: String): Result<Long> = runCatching {
+        client.postgrest.rpc("admin_grant_gems", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+            put("p_reason", reason)
+        }).decodeAs<Long>()
+    }
 }

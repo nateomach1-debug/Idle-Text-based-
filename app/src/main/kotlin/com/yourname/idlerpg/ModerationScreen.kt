@@ -182,9 +182,11 @@ private fun AppealsSection(
 
 @Composable
 private fun ManualGrantGemsSection(
-    onGrantGems: (Long) -> Unit
+    onGrantGems: (String, Long, String) -> Unit
 ) {
+    var characterId by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("500") }
+    var reason by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -193,7 +195,14 @@ private fun ManualGrantGemsSection(
             .background(MaterialTheme.colorScheme.surface)
             .padding(12.dp)
     ) {
-        Text(text = "Grant Gems (testing only - credits your own logged-in account)", style = MaterialTheme.typography.titleMedium)
+        Text(text = "Grant Gems", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = characterId,
+            onValueChange = { characterId = it },
+            label = { Text(text = "Character ID") },
+            modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = amountText,
@@ -202,11 +211,18 @@ private fun ManualGrantGemsSection(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = reason,
+            onValueChange = { reason = it },
+            label = { Text(text = "Reason") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = {
                 val amount = amountText.toLongOrNull()
-                if (amount != null && amount > 0) {
-                    onGrantGems(amount)
+                if (amount != null && amount > 0 && characterId.isNotBlank() && reason.isNotBlank()) {
+                    onGrantGems(characterId, amount, reason)
                 }
             }
         ) {

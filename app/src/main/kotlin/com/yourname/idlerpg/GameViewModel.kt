@@ -2147,49 +2147,61 @@ fun logout() {
         val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
             val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
-            _currency.value = gold to account.premiumCurrency
+            val gems = SupabaseMarketRepository.gemsBalance(characterId).getOrNull() ?: 0L
+            _currency.value = gold to gems
         }
     }
 
     fun creditPremiumCurrency(bundleId: String) {
-        val accountId = _currentAccountId.value ?: return
         val bundle = CurrencyBundleCatalog.find(bundleId) ?: return
-        val result = accountService.addCurrency(accountId, bundle.premiumCurrencyGranted)
-        if (result is ServiceResult.Failure) {
-            _premiumActionError.value = result.reason
-            return
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.creditGems(characterId, bundle.premiumCurrencyGranted)
+            result.onFailure { _premiumActionError.value = it.message ?: it.toString() }
+            result.onSuccess {
+                _premiumActionError.value = null
+                refreshCurrency()
+                saveGame()
+            }
         }
-        _premiumActionError.value = null
-        refreshCurrency()
-        saveGame()
     }
 
     fun purchasePreset(presetId: String) {
         val accountId = _currentAccountId.value ?: return
-        val result = accountService.purchasePreset(accountId, presetId)
-        if (result is ServiceResult.Failure) {
-            _premiumActionError.value = result.reason
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        val account = accountService.accountById(accountId) ?: return
+        if (presetId in account.unlockedPresets) {
+            _premiumActionError.value = "Already unlocked."
             return
         }
-        _premiumActionError.value = null
-        refreshCurrency()
-        saveGame()
+        val preset = PremiumPresetCatalog.find(presetId) ?: return
+        viewModelScope.launch {
+            val spendResult = SupabaseMarketRepository.spendGems(characterId, preset.gemCost)
+            spendResult.onFailure { _premiumActionError.value = it.message ?: it.toString() }
+            spendResult.onSuccess {
+                val result = accountService.unlockPreset(accountId, presetId)
+                if (result is ServiceResult.Failure) {
+                    _premiumActionError.value = result.reason
+                    return@onSuccess
+                }
+                _premiumActionError.value = null
+                refreshCurrency()
+                saveGame()
+            }
+        }
     }
 
-    // Moderator/testing tool only - credits the currently logged-in account
-    // directly, bypassing Play Billing entirely. Does NOT target other
-    // players' accounts (this app's Account/AccountService layer is local
-    // per-device, not a live server-side directory).
-    fun grantTestGems(amount: Long) {
-        val accountId = _currentAccountId.value ?: return
-        val result = accountService.addCurrency(accountId, amount)
-        if (result is ServiceResult.Failure) {
-            _premiumActionError.value = result.reason
-            return
+    // Moderator tool - grants Gems to ANY player by their Supabase character
+    // id, via the server-authoritative admin_grant_gems RPC (SECURITY
+    // DEFINER, independently re-checks caller_is_moderator() server-side,
+    // same pattern as muteCharacterAsModerator/unmuteCharacterAsModerator
+    // above). Replaces the old self-only grantTestGems, which only touched
+    // the local logged-in account's in-memory Account.premiumCurrency and
+    // never actually reached other players.
+    fun grantGemsAsModerator(characterId: String, amount: Long, reason: String) {
+        viewModelScope.launch {
+            SupabaseModerationRepository.grantGems(characterId, amount, reason)
         }
-        _premiumActionError.value = null
-        refreshCurrency()
-        saveGame()
     }
 
     // =========================================================
