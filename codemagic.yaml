@@ -26,17 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output202.txt
-          echo "=== All gradle/version files in repo ===" > $OUT
-          find . -iname "build.gradle*" -o -iname "*.versions.toml" >> $OUT 2>/dev/null || true
+          OUT=discovery_output203.txt
+          echo "=== MonetizationSystem.kt FULL ===" > $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== Contents of every file found above ===" >> $OUT
-          for f in $(find . -iname "build.gradle*" -o -iname "*.versions.toml" 2>/dev/null); do
-            echo "--- $f ---" >> $OUT
-            grep -in "compose\|material3\|kotlin_version\|kotlinCompilerExtension" "$f" >> $OUT 2>/dev/null || true
-          done
+          echo "=== SettingsScreen.kt lines 1-200 (top of file, main composable signature) ===" >> $OUT
+          sed -n '1,200p' ./app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt >> $OUT 2>/dev/null || true
+          echo "" >> $OUT
+          echo "=== Account.kt / AccountCharacterSystem.kt: text styling fields (textColorOverride, outlineColorArgb, outlineEnabled) ===" >> $OUT
+          grep -n "textColorOverride\|outlineColorArgb\|outlineEnabled\|applyPreset" -B 2 -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT 2>/dev/null || true
+          echo "" >> $OUT
+          echo "=== GameViewModel.kt: onTextColorChanged/onOutlineColorChanged/onOutlineEnabledChanged/applyPreset functions ===" >> $OUT
+          grep -n "fun onTextColorChanged\|fun onOutlineColorChanged\|fun onOutlineEnabledChanged\|fun applyPreset\|fun purchasePreset" -B 2 -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
+          echo "" >> $OUT
+          echo "=== MainActivity.kt: IdleRpgTheme( call site ===" >> $OUT
+          grep -n "IdleRpgTheme(" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output202.txt
+      - discovery_output203.txt
       
   apply-patch:
     name: Apply Patch Script
