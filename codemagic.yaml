@@ -26,17 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output201.txt
-          echo "=== Compose/Material3 versions (version catalog) ===" > $OUT
-          find . -iname "libs.versions.toml" -exec grep -Hn "compose\|material3" {} \; >> $OUT
+          OUT=discovery_output202.txt
+          echo "=== All gradle/version files in repo ===" > $OUT
+          find . -iname "build.gradle*" -o -iname "*.versions.toml" >> $OUT
           echo "" >> $OUT
-          echo "=== displayName render sites (chat, character select, etc) ===" >> $OUT
-          grep -rn "\.displayName" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== ChatScreen.kt message row rendering (if exists) ===" >> $OUT
-          find . -iname "ChatScreen.kt" -exec cat {} \; >> $OUT
+          echo "=== Contents of every file found above ===" >> $OUT
+          for f in $(find . -iname "build.gradle*" -o -iname "*.versions.toml"); do
+            echo "--- $f ---" >> $OUT
+            grep -in "compose\|material3\|kotlin_version\|kotlinCompilerExtension" "$f" >> $OUT
+          done
     artifacts:
-      - discovery_output201.txt
+      - discovery_output202.txt
       
   apply-patch:
     name: Apply Patch Script
