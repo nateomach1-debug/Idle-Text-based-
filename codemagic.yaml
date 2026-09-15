@@ -28,12 +28,12 @@ workflows:
         script: |
           OUT=discovery_output202.txt
           echo "=== All gradle/version files in repo ===" > $OUT
-          find . -iname "build.gradle*" -o -iname "*.versions.toml" >> $OUT
+          find . -iname "build.gradle*" -o -iname "*.versions.toml" >> $OUT 2>/dev/null || true
           echo "" >> $OUT
           echo "=== Contents of every file found above ===" >> $OUT
-          for f in $(find . -iname "build.gradle*" -o -iname "*.versions.toml"); do
+          for f in $(find . -iname "build.gradle*" -o -iname "*.versions.toml" 2>/dev/null); do
             echo "--- $f ---" >> $OUT
-            grep -in "compose\|material3\|kotlin_version\|kotlinCompilerExtension" "$f" >> $OUT
+            grep -in "compose\|material3\|kotlin_version\|kotlinCompilerExtension" "$f" >> $OUT 2>/dev/null || true
           done
     artifacts:
       - discovery_output202.txt
