@@ -1,49 +1,148 @@
-import pathlib
+import sys
 
-gvm_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt")
-loadout_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/LoadoutScreen.kt")
-moderation_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt")
-main_activity_path = pathlib.Path("app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt")
+BASE = "app/src/main/kotlin/com/yourname/idlerpg/"
 
-gvm_text = gvm_path.read_text()
-loadout_text = loadout_path.read_text()
-moderation_text = moderation_path.read_text()
-main_activity_text = main_activity_path.read_text()
+def guarded_replace(path, old, new, label):
+    with open(path, "r", encoding="utf-8") as f:
+        text = f.read()
 
-errors = []
+    # Check idempotency FIRST: for edits that append/extend rather than fully
+    # replace, old_str can still be present (unchanged) inside an
+    # already-patched file, since new_str = old_str + extra content. Checking
+    # new_str first prevents re-applying (and duplicating) such edits.
+    if new in text:
+        print(f"SKIP (already applied): {label} ({path})")
+        return True
+
+    count = text.count(old)
+    if count == 1:
+        text = text.replace(old, new)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+        print(f"OK: {label} ({path})")
+        return True
+    elif count == 0:
+        print(f"FAIL (old_str not found, new_str not found either): {label} ({path})")
+        return False
+    else:
+        print(f"FAIL (old_str matched {count} times, expected 1): {label} ({path})")
+        return False
 
 
-def apply_edit(text, old, new, marker, label, errors):
-    if text.count(marker) >= 1:
-        return text, False  # already applied
-    count_old = text.count(old)
-    if count_old == 1:
-        return text.replace(old, new), True
-    errors.append(f"{label}: expected exactly 1 match of old block (and marker absent), found old={count_old}")
-    return text, False
+def check_braces(path):
+    with open(path, "r", encoding="utf-8") as f:
+        text = f.read()
+    opens = text.count("{")
+    closes = text.count("}")
+    if opens != closes:
+        print(f"WARNING: brace mismatch in {path}: {{ = {opens}, }} = {closes}")
+        return False
+    print(f"Brace check OK: {path} ({{ = {opens}, }} = {closes})")
+    return True
 
 
-# ============================================================
-# 1. GameViewModel.kt - fix auto-heal maxHp initialization race
-# ============================================================
-gvm_old_1 = """    private fun tickConsumables(elapsedSeconds: Long) {
-        val characterId = _currentCharacterId.value ?: return
-        val inventory = inventoryService.inventoryFor(characterId)
-        val combatState = combatService.stateFor(characterId)"""
-gvm_new_1 = """    private fun tickConsumables(elapsedSeconds: Long) {
-        val characterId = _currentCharacterId.value ?: return
-        val inventory = inventoryService.inventoryFor(characterId)
-        val combatState = combatService.stateFor(characterId, maxHpFor(characterId))"""
-gvm_text, c1 = apply_edit(gvm_text, gvm_old_1, gvm_new_1, "combatService.stateFor(characterId, maxHpFor(characterId))\n\n", "GameViewModel.kt tickConsumables maxHp fix", errors)
-# NOTE: the marker above intentionally includes trailing context distinguishing this
-# call site from tickCombat's identical call (handled by a more specific check below).
+results = []
 
-# ============================================================
-# 2. GameViewModel.kt - new grantTestGems() function
-# ============================================================
-gvm_old_2 = """    fun purchasePreset(presetId: String) {
+# ---------------------------------------------------------
+# 1. SupabaseModerationRepository.kt - add grantGems
+# ---------------------------------------------------------
+path = BASE + "SupabaseModerationRepository.kt"
+old = '''    suspend fun unmuteCharacter(characterId: String): Result<Unit> = runCatching {
+        client.postgrest.rpc("admin_unmute_character", buildJsonObject {
+            put("p_character_id", characterId)
+        })
+    }
+}'''
+new = '''    suspend fun unmuteCharacter(characterId: String): Result<Unit> = runCatching {
+        client.postgrest.rpc("admin_unmute_character", buildJsonObject {
+            put("p_character_id", characterId)
+        })
+    }
+
+    // ---------------------------------------------------------
+    // PREMIUM CURRENCY (GEMS) - MODERATOR GRANT
+    // ---------------------------------------------------------
+
+    suspend fun grantGems(characterId: String, amount: Long, reason: String): Result<Long> = runCatching {
+        client.postgrest.rpc("admin_grant_gems", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+            put("p_reason", reason)
+        }).decodeAs<Long>()
+    }
+}'''
+results.append(guarded_replace(path, old, new, "add grantGems to SupabaseModerationRepository"))
+
+# ---------------------------------------------------------
+# 2. SupabaseMarketRepository.kt - add gemsBalance/spendGems/creditGems
+# ---------------------------------------------------------
+path = BASE + "SupabaseMarketRepository.kt"
+old = '''    suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
+        client.postgrest.rpc("market_currency_balance", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeAs<Long>()
+    }'''
+new = '''    suspend fun currencyBalance(characterId: String): Result<Long> = runCatching {
+        client.postgrest.rpc("market_currency_balance", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun gemsBalance(characterId: String): Result<Long> = runCatching {
+        client.postgrest.rpc("gems_balance", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun spendGems(characterId: String, amount: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("spend_gems", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+        }).decodeAs<Long>()
+    }
+
+    suspend fun creditGems(characterId: String, amount: Long): Result<Long> = runCatching {
+        client.postgrest.rpc("credit_gems", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+        }).decodeAs<Long>()
+    }'''
+results.append(guarded_replace(path, old, new, "add gemsBalance/spendGems/creditGems to SupabaseMarketRepository"))
+
+# ---------------------------------------------------------
+# 3a. GameViewModel.kt - refreshCurrency now reads gems from server
+# ---------------------------------------------------------
+path = BASE + "GameViewModel.kt"
+old = '''    fun refreshCurrency() {
         val accountId = _currentAccountId.value ?: return
-        val result = accountService.purchasePreset(accountId, presetId)
+        val account = accountService.accountById(accountId) ?: return
+        _unlockedPresets.value = account.unlockedPresets.toSet()
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
+            _currency.value = gold to account.premiumCurrency
+        }
+    }'''
+new = '''    fun refreshCurrency() {
+        val accountId = _currentAccountId.value ?: return
+        val account = accountService.accountById(accountId) ?: return
+        _unlockedPresets.value = account.unlockedPresets.toSet()
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val gold = SupabaseMarketRepository.currencyBalance(characterId).getOrNull() ?: 0L
+            val gems = SupabaseMarketRepository.gemsBalance(characterId).getOrNull() ?: 0L
+            _currency.value = gold to gems
+        }
+    }'''
+results.append(guarded_replace(path, old, new, "refreshCurrency reads gems from server"))
+
+# ---------------------------------------------------------
+# 3b. GameViewModel.kt - creditPremiumCurrency + purchasePreset + grantTestGems -> grantGemsAsModerator
+# ---------------------------------------------------------
+old = '''    fun creditPremiumCurrency(bundleId: String) {
+        val accountId = _currentAccountId.value ?: return
+        val bundle = CurrencyBundleCatalog.find(bundleId) ?: return
+        val result = accountService.addCurrency(accountId, bundle.premiumCurrencyGranted)
         if (result is ServiceResult.Failure) {
             _premiumActionError.value = result.reason
             return
@@ -51,8 +150,9 @@ gvm_old_2 = """    fun purchasePreset(presetId: String) {
         _premiumActionError.value = null
         refreshCurrency()
         saveGame()
-    }"""
-gvm_new_2 = """    fun purchasePreset(presetId: String) {
+    }
+
+    fun purchasePreset(presetId: String) {
         val accountId = _currentAccountId.value ?: return
         val result = accountService.purchasePreset(accountId, presetId)
         if (result is ServiceResult.Failure) {
@@ -78,63 +178,65 @@ gvm_new_2 = """    fun purchasePreset(presetId: String) {
         _premiumActionError.value = null
         refreshCurrency()
         saveGame()
-    }"""
-gvm_text, c2 = apply_edit(gvm_text, gvm_old_2, gvm_new_2, "fun grantTestGems(amount: Long)", "GameViewModel.kt grantTestGems", errors)
-
-# ============================================================
-# 3. LoadoutScreen.kt - onFoodSelected becomes nullable
-# ============================================================
-lo_old_1 = "    onFoodSelected: (String) -> Unit,"
-lo_new_1 = "    onFoodSelected: (String?) -> Unit,"
-loadout_text, c3 = apply_edit(loadout_text, lo_old_1, lo_new_1, "onFoodSelected: (String?) -> Unit,", "LoadoutScreen.kt onFoodSelected signature", errors)
-
-# ============================================================
-# 4. LoadoutScreen.kt - tap selected food again to unequip
-# ============================================================
-lo_old_2 = "onClick = { onFoodSelected(food.itemId) }"
-lo_new_2 = "onClick = { onFoodSelected(if (food.itemId == state.selectedFoodId) null else food.itemId) }"
-loadout_text, c4 = apply_edit(loadout_text, lo_old_2, lo_new_2, "if (food.itemId == state.selectedFoodId) null else food.itemId", "LoadoutScreen.kt food unequip onClick", errors)
-
-# ============================================================
-# 5. ModerationScreen.kt - signature + new composable + call site
-# ============================================================
-mod_old_1 = """@Composable
-fun ModerationScreen(
-    state: ModerationState,
-    onResolveReport: (reportId: String, actionTaken: Boolean) -> Unit,
-    onResolveAppeal: (appealId: String, grant: Boolean, notes: String) -> Unit,
-    onMuteCharacter: (characterId: String, durationSeconds: Int, reason: String) -> Unit,
-    onUnmuteCharacter: (characterId: String) -> Unit,
-    modifier: Modifier = Modifier
-) {"""
-mod_new_1 = """@Composable
-fun ModerationScreen(
-    state: ModerationState,
-    onResolveReport: (reportId: String, actionTaken: Boolean) -> Unit,
-    onResolveAppeal: (appealId: String, grant: Boolean, notes: String) -> Unit,
-    onMuteCharacter: (characterId: String, durationSeconds: Int, reason: String) -> Unit,
-    onUnmuteCharacter: (characterId: String) -> Unit,
-    onGrantGems: (Long) -> Unit = {},
-    modifier: Modifier = Modifier
-) {"""
-moderation_text, c5 = apply_edit(moderation_text, mod_old_1, mod_new_1, "onGrantGems: (Long) -> Unit = {},", "ModerationScreen.kt signature", errors)
-
-mod_old_2 = """        ManualMuteSection(onMuteCharacter, onUnmuteCharacter)
+    }'''
+new = '''    fun creditPremiumCurrency(bundleId: String) {
+        val bundle = CurrencyBundleCatalog.find(bundleId) ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.creditGems(characterId, bundle.premiumCurrencyGranted)
+            result.onFailure { _premiumActionError.value = it.message ?: it.toString() }
+            result.onSuccess {
+                _premiumActionError.value = null
+                refreshCurrency()
+                saveGame()
+            }
+        }
     }
-}"""
-mod_new_2 = """        ManualMuteSection(onMuteCharacter, onUnmuteCharacter)
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        ManualGrantGemsSection(onGrantGems)
+    fun purchasePreset(presetId: String) {
+        val accountId = _currentAccountId.value ?: return
+        val characterId = _currentSupabaseCharacterId.value ?: return
+        val account = accountService.accountById(accountId) ?: return
+        if (presetId in account.unlockedPresets) {
+            _premiumActionError.value = "Already unlocked."
+            return
+        }
+        val preset = PremiumPresetCatalog.find(presetId) ?: return
+        viewModelScope.launch {
+            val spendResult = SupabaseMarketRepository.spendGems(characterId, preset.gemCost)
+            spendResult.onFailure { _premiumActionError.value = it.message ?: it.toString() }
+            spendResult.onSuccess {
+                val result = accountService.unlockPreset(accountId, presetId)
+                if (result is ServiceResult.Failure) {
+                    _premiumActionError.value = result.reason
+                    return@onSuccess
+                }
+                _premiumActionError.value = null
+                refreshCurrency()
+                saveGame()
+            }
+        }
     }
-}"""
-moderation_text, c6 = apply_edit(moderation_text, mod_old_2, mod_new_2, "ManualGrantGemsSection(onGrantGems)", "ModerationScreen.kt call site", errors)
 
-mod_old_3 = """@Composable
-private fun ManualMuteSection("""
-mod_new_3 = """@Composable
-private fun ManualGrantGemsSection(
+    // Moderator tool - grants Gems to ANY player by their Supabase character
+    // id, via the server-authoritative admin_grant_gems RPC (SECURITY
+    // DEFINER, independently re-checks caller_is_moderator() server-side,
+    // same pattern as muteCharacterAsModerator/unmuteCharacterAsModerator
+    // above). Replaces the old self-only grantTestGems, which only touched
+    // the local logged-in account's in-memory Account.premiumCurrency and
+    // never actually reached other players.
+    fun grantGemsAsModerator(characterId: String, amount: Long, reason: String) {
+        viewModelScope.launch {
+            SupabaseModerationRepository.grantGems(characterId, amount, reason)
+        }
+    }'''
+results.append(guarded_replace(path, old, new, "creditPremiumCurrency/purchasePreset server-side + grantGemsAsModerator"))
+
+# ---------------------------------------------------------
+# 4. ModerationScreen.kt - ManualGrantGemsSection targets any character
+# ---------------------------------------------------------
+path = BASE + "ModerationScreen.kt"
+old = '''private fun ManualGrantGemsSection(
     onGrantGems: (Long) -> Unit
 ) {
     var amountText by remember { mutableStateOf("500") }
@@ -166,50 +268,133 @@ private fun ManualGrantGemsSection(
             Text(text = "Grant Gems")
         }
     }
-}
+}'''
+new = '''private fun ManualGrantGemsSection(
+    onGrantGems: (String, Long, String) -> Unit
+) {
+    var characterId by remember { mutableStateOf("") }
+    var amountText by remember { mutableStateOf("500") }
+    var reason by remember { mutableStateOf("") }
 
-@Composable
-private fun ManualMuteSection("""
-moderation_text, c7 = apply_edit(moderation_text, mod_old_3, mod_new_3, "private fun ManualGrantGemsSection(", "ModerationScreen.kt new composable", errors)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(12.dp)
+    ) {
+        Text(text = "Grant Gems", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = characterId,
+            onValueChange = { characterId = it },
+            label = { Text(text = "Character ID") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = amountText,
+            onValueChange = { input -> if (input.all { it.isDigit() }) amountText = input },
+            label = { Text(text = "Amount") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = reason,
+            onValueChange = { reason = it },
+            label = { Text(text = "Reason") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = {
+                val amount = amountText.toLongOrNull()
+                if (amount != null && amount > 0 && characterId.isNotBlank() && reason.isNotBlank()) {
+                    onGrantGems(characterId, amount, reason)
+                }
+            }
+        ) {
+            Text(text = "Grant Gems")
+        }
+    }
+}'''
+results.append(guarded_replace(path, old, new, "ManualGrantGemsSection targets any character"))
 
-# ============================================================
-# 6. MainActivity.kt - thread onGrantGems into the ModerationScreen call site
-# ============================================================
-ma_old = """                                ModerationScreen(
-                                    state = moderation,
-                                    onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
-                                    onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
-                                    onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
-                                    onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) }
-                                )"""
-ma_new = """                                ModerationScreen(
+# ---------------------------------------------------------
+# 5. MainActivity.kt - onGrantGems wiring
+# ---------------------------------------------------------
+path = BASE + "MainActivity.kt"
+old = '''                                ModerationScreen(
                                     state = moderation,
                                     onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
                                     onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
                                     onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
                                     onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) },
                                     onGrantGems = { amount -> gameViewModel.grantTestGems(amount) }
-                                )"""
-main_activity_text, c8 = apply_edit(main_activity_text, ma_old, ma_new, "onGrantGems = { amount -> gameViewModel.grantTestGems(amount) }", "MainActivity.kt ModerationScreen call site", errors)
+                                )'''
+new = '''                                ModerationScreen(
+                                    state = moderation,
+                                    onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
+                                    onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
+                                    onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
+                                    onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) },
+                                    onGrantGems = { id, amount, reason -> gameViewModel.grantGemsAsModerator(id, amount, reason) }
+                                )'''
+results.append(guarded_replace(path, old, new, "onGrantGems passes characterId/reason"))
 
-if errors:
-    raise SystemExit(
-        "PATCH E FAILED: one or more expected blocks did not match. No changes made to any file.\n"
-        + "\n".join(f"  - {e}" for e in errors)
-    )
+# ---------------------------------------------------------
+# 6. AccountCharacterSystem.kt - add unlockPreset (local-only, no currency touch)
+# ---------------------------------------------------------
+path = BASE + "AccountCharacterSystem.kt"
+old = '''    fun purchasePreset(accountId: String, presetId: String): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        if (presetId in account.unlockedPresets) return ServiceResult.Failure("Already unlocked.")
+        val preset = PremiumPresetCatalog.find(presetId) ?: return ServiceResult.Failure("Unknown preset.")
+        if (account.premiumCurrency < preset.gemCost) return ServiceResult.Failure("Not enough Gems.")
+        account.premiumCurrency -= preset.gemCost
+        account.unlockedPresets.add(presetId)
+        return ServiceResult.Success(account)
+    }'''
+new = '''    fun purchasePreset(accountId: String, presetId: String): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        if (presetId in account.unlockedPresets) return ServiceResult.Failure("Already unlocked.")
+        val preset = PremiumPresetCatalog.find(presetId) ?: return ServiceResult.Failure("Unknown preset.")
+        if (account.premiumCurrency < preset.gemCost) return ServiceResult.Failure("Not enough Gems.")
+        account.premiumCurrency -= preset.gemCost
+        account.unlockedPresets.add(presetId)
+        return ServiceResult.Success(account)
+    }
 
-gvm_path.write_text(gvm_text)
-loadout_path.write_text(loadout_text)
-moderation_path.write_text(moderation_text)
-main_activity_path.write_text(main_activity_text)
+    // Local-only preset unlock, used once currency has already been spent
+    // server-side via SupabaseMarketRepository.spendGems (see
+    // GameViewModel.purchasePreset). Does not touch premiumCurrency - that
+    // field is a vestige of the old local-only gem flow and is no longer
+    // the source of truth for gem balances.
+    fun unlockPreset(accountId: String, presetId: String): ServiceResult<Account> {
+        val account = accountsById[accountId] ?: return ServiceResult.Failure("Account not found.")
+        if (presetId in account.unlockedPresets) return ServiceResult.Failure("Already unlocked.")
+        val preset = PremiumPresetCatalog.find(presetId) ?: return ServiceResult.Failure("Unknown preset.")
+        account.unlockedPresets.add(presetId)
+        return ServiceResult.Success(account)
+    }'''
+results.append(guarded_replace(path, old, new, "add unlockPreset to AccountService"))
 
-any_changed = any([c1, c2, c3, c4, c5, c6, c7, c8])
-if any_changed:
-    print("Patch E applied:")
-    print("  - GameViewModel.kt: fixed tickConsumables() passing the wrong (default 100) maxHp to combatService.stateFor(), which could permanently lock a character's real max HP at 100 the moment they load in, breaking the auto-heal percentage calc during combat.")
-    print("  - GameViewModel.kt: added grantTestGems(amount) - moderator/testing tool, credits the currently logged-in account only.")
-    print("  - LoadoutScreen.kt: tapping an already-selected food again now unequips it (calls onFoodSelected(null)).")
-    print("  - ModerationScreen.kt: added a 'Grant Gems' section (amount input + button) for testing purchasables.")
-    print("  - MainActivity.kt: wired onGrantGems into the ModerationScreen call site.")
-else:
-    print("Patch E: already fully applied, no changes made.")
+print()
+print("=== Brace balance check ===")
+for rel in [
+    "SupabaseModerationRepository.kt",
+    "SupabaseMarketRepository.kt",
+    "GameViewModel.kt",
+    "ModerationScreen.kt",
+    "MainActivity.kt",
+    "AccountCharacterSystem.kt",
+]:
+    check_braces(BASE + rel)
+
+if not all(results):
+    print()
+    print("One or more edits FAILED - review output above before committing.")
+    sys.exit(1)
+
+print()
+print("All edits applied successfully.")
