@@ -26,26 +26,14 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output198.txt
-          echo "=== SupabaseModerationRepository.kt FULL ===" > $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseModerationRepository.kt >> $OUT
+          OUT=discovery_output199.txt
+          echo "=== ModerationScreen composable full signature (fun ModerationScreen) ===" > $OUT
+          grep -n "fun ModerationScreen(" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
           echo "" >> $OUT
-          echo "=== SupabaseMarketRepository.kt FULL ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/SupabaseMarketRepository.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== GameViewModel.kt: currency/gem related (grantTestGems, refreshCurrency, creditPremiumCurrency, purchasePreset, currency StateFlow) ===" >> $OUT
-          grep -n "grantTestGems\|refreshCurrency\|creditPremiumCurrency\|purchasePreset\|premiumCurrency\|_currency\|val currency\|softCurrency" -B 3 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== MainActivity.kt: onGrantGems + ModerationScreen call site ===" >> $OUT
-          grep -n "onGrantGems\|ModerationScreen(" -B 5 -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/MainActivity.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== filename holding AccountService class ===" >> $OUT
-          grep -rl "class AccountService" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
-          echo "" >> $OUT
-          echo "=== AccountService/Account: premiumCurrency, addCurrency, purchasePreset, unlockedPresets ===" >> $OUT
-          grep -n "premiumCurrency\|addCurrency\|purchasePreset\|unlockedPresets\|class Account\b" -B 2 -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT
+          echo "=== Line 79 context (ManualGrantGemsSection call site inside ModerationScreen) ===" >> $OUT
+          sed -n '60,100p' ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
     artifacts:
-      - discovery_output198.txt
+      - discovery_output199.txt
       
   apply-patch:
     name: Apply Patch Script
