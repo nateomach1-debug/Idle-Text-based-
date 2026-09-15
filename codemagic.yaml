@@ -26,14 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output205.txt
-          echo "=== GameViewModel.kt: textColorOverride/textOutlineEnabled/textOutlineColor StateFlow + setters ===" > $OUT
-          grep -n "textColorOverride\|textOutlineEnabled\|textOutlineColor" -B 2 -A 3 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== fun setTextColorOverride / setTextOutlineEnabled / setTextOutlineColor full bodies ===" >> $OUT
-          grep -n "fun setTextColorOverride\|fun setTextOutlineEnabled\|fun setTextOutlineColor" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
+          OUT=discovery_output206.txt
+          echo "=== SettingsScreen.kt lines 51-125 exact ===" > $OUT
+          sed -n '51,125p' ./app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output205.txt
+      - discovery_output206.txt
       
   apply-patch:
     name: Apply Patch Script
