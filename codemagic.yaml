@@ -26,14 +26,23 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output199.txt
-          echo "=== ModerationScreen composable full signature (fun ModerationScreen) ===" > $OUT
-          grep -n "fun ModerationScreen(" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
+          OUT=discovery_output200.txt
+          echo "=== Theme.kt full content (overrideColor, IdleRpgTypography) ===" > $OUT
+          find . -iname "Theme.kt" -exec cat {} \; >> $OUT
           echo "" >> $OUT
-          echo "=== Line 79 context (ManualGrantGemsSection call site inside ModerationScreen) ===" >> $OUT
-          sed -n '60,100p' ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT
+          echo "=== MonetizationSystem.kt: PremiumPreset + PremiumPresetCatalog full ===" >> $OUT
+          grep -n "data class PremiumPreset\|object PremiumPresetCatalog" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== SettingsScreen.kt FULL ===" >> $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== Compose/Material3 BOM version (build.gradle.kts) ===" >> $OUT
+          find . -iname "build.gradle.kts" -exec grep -Hn "compose\|material3" {} \; >> $OUT
+          echo "" >> $OUT
+          echo "=== overrideColor call sites across kotlin files ===" >> $OUT
+          grep -rn "overrideColor(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
     artifacts:
-      - discovery_output199.txt
+      - discovery_output200.txt
       
   apply-patch:
     name: Apply Patch Script
