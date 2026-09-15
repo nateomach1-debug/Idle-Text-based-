@@ -26,23 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output200.txt
-          echo "=== Theme.kt full content (overrideColor, IdleRpgTypography) ===" > $OUT
-          find . -iname "Theme.kt" -exec cat {} \; >> $OUT
+          OUT=discovery_output201.txt
+          echo "=== Compose/Material3 versions (version catalog) ===" > $OUT
+          find . -iname "libs.versions.toml" -exec grep -Hn "compose\|material3" {} \; >> $OUT
           echo "" >> $OUT
-          echo "=== MonetizationSystem.kt: PremiumPreset + PremiumPresetCatalog full ===" >> $OUT
-          grep -n "data class PremiumPreset\|object PremiumPresetCatalog" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/MonetizationSystem.kt >> $OUT
+          echo "=== displayName render sites (chat, character select, etc) ===" >> $OUT
+          grep -rn "\.displayName" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT
           echo "" >> $OUT
-          echo "=== SettingsScreen.kt FULL ===" >> $OUT
-          cat ./app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== Compose/Material3 BOM version (build.gradle.kts) ===" >> $OUT
-          find . -iname "build.gradle.kts" -exec grep -Hn "compose\|material3" {} \; >> $OUT
-          echo "" >> $OUT
-          echo "=== overrideColor call sites across kotlin files ===" >> $OUT
-          grep -rn "overrideColor(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT
+          echo "=== ChatScreen.kt message row rendering (if exists) ===" >> $OUT
+          find . -iname "ChatScreen.kt" -exec cat {} \; >> $OUT
     artifacts:
-      - discovery_output200.txt
+      - discovery_output201.txt
       
   apply-patch:
     name: Apply Patch Script
