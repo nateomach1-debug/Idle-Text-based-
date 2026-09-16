@@ -181,6 +181,19 @@ private fun resolvedTextColorAndBrush(
     }
 }
 
+private fun styledText(
+    fontFamily: FontFamily,
+    fontWeight: FontWeight,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    color: Color,
+    brush: Brush?,
+    shadow: Shadow?
+): TextStyle = if (brush != null) {
+    TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = fontSize, brush = brush, shadow = shadow)
+} else {
+    TextStyle(fontFamily = fontFamily, fontWeight = fontWeight, fontSize = fontSize, color = color, shadow = shadow)
+}
+
 private fun buildIdleRpgTypography(
     textColorOverride: Color?,
     outlineEnabled: Boolean,
@@ -201,21 +214,21 @@ private fun buildIdleRpgTypography(
     val (secondary, secondaryBrush) = resolvedTextColorAndBrush(baseSecondary, secondaryColor, effectiveMode, animationPhase)
 
     return Typography(
-        displayLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 40.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        displayMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 34.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        displaySmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        headlineLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        headlineMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        headlineSmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        titleLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        titleMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        titleSmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        bodyLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 16.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        bodyMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 15.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        bodySmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 13.sp, color = primary, brush = primaryBrush, shadow = shadow),
-        labelLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 13.sp, color = secondary, brush = secondaryBrush, shadow = shadow),
-        labelMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = secondary, brush = secondaryBrush, shadow = shadow),
-        labelSmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = secondary, brush = secondaryBrush, shadow = shadow)
+        displayLarge = styledText(HeaderFont, FontWeight.Bold, 40.sp, primary, primaryBrush, shadow),
+        displayMedium = styledText(HeaderFont, FontWeight.Bold, 34.sp, primary, primaryBrush, shadow),
+        displaySmall = styledText(HeaderFont, FontWeight.Bold, 28.sp, primary, primaryBrush, shadow),
+        headlineLarge = styledText(HeaderFont, FontWeight.Bold, 24.sp, primary, primaryBrush, shadow),
+        headlineMedium = styledText(HeaderFont, FontWeight.Bold, 22.sp, primary, primaryBrush, shadow),
+        headlineSmall = styledText(HeaderFont, FontWeight.SemiBold, 19.sp, primary, primaryBrush, shadow),
+        titleLarge = styledText(HeaderFont, FontWeight.SemiBold, 19.sp, primary, primaryBrush, shadow),
+        titleMedium = styledText(HeaderFont, FontWeight.SemiBold, 17.sp, primary, primaryBrush, shadow),
+        titleSmall = styledText(HeaderFont, FontWeight.SemiBold, 15.sp, primary, primaryBrush, shadow),
+        bodyLarge = styledText(BodyFont, FontWeight.Normal, 16.sp, primary, primaryBrush, shadow),
+        bodyMedium = styledText(BodyFont, FontWeight.Normal, 15.sp, primary, primaryBrush, shadow),
+        bodySmall = styledText(BodyFont, FontWeight.Normal, 13.sp, primary, primaryBrush, shadow),
+        labelLarge = styledText(BodyFont, FontWeight.Medium, 13.sp, secondary, secondaryBrush, shadow),
+        labelMedium = styledText(BodyFont, FontWeight.Medium, 12.sp, secondary, secondaryBrush, shadow),
+        labelSmall = styledText(BodyFont, FontWeight.Medium, 12.sp, secondary, secondaryBrush, shadow)
     )
 }
 
