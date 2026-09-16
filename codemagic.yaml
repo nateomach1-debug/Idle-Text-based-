@@ -26,11 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output206.txt
-          echo "=== SettingsScreen.kt lines 51-125 exact ===" > $OUT
-          sed -n '51,125p' ./app/src/main/kotlin/com/yourname/idlerpg/SettingsScreen.kt >> $OUT 2>/dev/null || true
+          OUT=discovery_output207.txt
+          echo "=== Actual path(s) of Theme.kt ===" > $OUT
+          find . -iname "Theme.kt" >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output206.txt
+      - discovery_output207.txt
       
   apply-patch:
     name: Apply Patch Script
