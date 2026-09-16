@@ -223,6 +223,33 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         settingsPrefs.edit().putInt("text_outline_color", color.toArgb()).apply()
     }
 
+    private val _textEffectMode = MutableStateFlow(
+        com.yourname.idlerpg.ui.theme.TextEffectMode.valueOf(
+            settingsPrefs.getString("text_effect_mode", com.yourname.idlerpg.ui.theme.TextEffectMode.SOLID.name)
+                ?: com.yourname.idlerpg.ui.theme.TextEffectMode.SOLID.name
+        )
+    )
+    val textEffectMode: StateFlow<com.yourname.idlerpg.ui.theme.TextEffectMode> = _textEffectMode.asStateFlow()
+
+    private val _textSecondaryColor = MutableStateFlow<Color?>(
+        if (settingsPrefs.contains("text_secondary_color")) Color(settingsPrefs.getInt("text_secondary_color", 0)) else null
+    )
+    val textSecondaryColor: StateFlow<Color?> = _textSecondaryColor.asStateFlow()
+
+    fun setTextEffectMode(mode: com.yourname.idlerpg.ui.theme.TextEffectMode) {
+        _textEffectMode.value = mode
+        settingsPrefs.edit().putString("text_effect_mode", mode.name).apply()
+    }
+
+    fun setTextSecondaryColor(color: Color?) {
+        _textSecondaryColor.value = color
+        if (color == null) {
+            settingsPrefs.edit().remove("text_secondary_color").apply()
+        } else {
+            settingsPrefs.edit().putInt("text_secondary_color", color.toArgb()).apply()
+        }
+    }
+
     fun fetchLeaderboard(category: LeaderboardCategory) {
         _selectedLeaderboardCategory.value = category
         viewModelScope.launch {

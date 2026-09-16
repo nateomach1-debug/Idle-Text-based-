@@ -46,6 +46,10 @@ fun SettingsScreen(
     unlockedPresets: Set<String> = emptySet(),
     onPurchaseBundle: (String) -> Unit = {},
     onPurchasePreset: (String) -> Unit = {},
+    effectMode: com.yourname.idlerpg.ui.theme.TextEffectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.SOLID,
+    secondaryColor: Color? = null,
+    onEffectModeChanged: (com.yourname.idlerpg.ui.theme.TextEffectMode) -> Unit = {},
+    onSecondaryColorChanged: (Color?) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showGemShop by remember { mutableStateOf(false) }
@@ -83,6 +87,8 @@ fun SettingsScreen(
                     onTextColorChanged(Color(preset.textColorArgb.toInt()))
                     onOutlineEnabledChanged(true)
                     onOutlineColorChanged(Color(preset.outlineColorArgb.toInt()))
+                    onEffectModeChanged(preset.effectMode)
+                    onSecondaryColorChanged(preset.secondaryColorArgb?.let { Color(it.toInt()) })
                 }
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -99,6 +105,39 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { onTextColorChanged(null) }) {
             Text("Reset to Default")
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Text(text = "Text Effect", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = "Applies once you've set a custom Text Color above.", style = MaterialTheme.typography.labelSmall)
+        Spacer(modifier = Modifier.height(8.dp))
+        com.yourname.idlerpg.ui.theme.TextEffectMode.entries.forEach { mode ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = textEffectModeLabel(mode), style = MaterialTheme.typography.bodyMedium)
+                if (mode == effectMode) {
+                    Text(text = "Selected", style = MaterialTheme.typography.labelSmall)
+                } else {
+                    Button(onClick = { onEffectModeChanged(mode) }) {
+                        Text("Select")
+                    }
+                }
+            }
+        }
+        if (effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.GRADIENT || effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.WAVE) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Second Color", style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(4.dp))
+            RgbHexColorPicker(
+                color = secondaryColor ?: Color(0xFFFFFFFF),
+                onColorChange = { onSecondaryColorChanged(it) }
+            )
         }
 
         Spacer(modifier = Modifier.height(28.dp))
@@ -268,4 +307,13 @@ private fun LabeledSlider(label: String, value: Float, onValueChange: (Float) ->
         )
         Text(text = value.toInt().toString(), modifier = Modifier.padding(start = 8.dp))
     }
+}
+
+private fun textEffectModeLabel(mode: com.yourname.idlerpg.ui.theme.TextEffectMode): String = when (mode) {
+    com.yourname.idlerpg.ui.theme.TextEffectMode.SOLID -> "Solid"
+    com.yourname.idlerpg.ui.theme.TextEffectMode.GRADIENT -> "Gradient"
+    com.yourname.idlerpg.ui.theme.TextEffectMode.PULSE -> "Pulse"
+    com.yourname.idlerpg.ui.theme.TextEffectMode.SHIMMER -> "Shimmer"
+    com.yourname.idlerpg.ui.theme.TextEffectMode.COLOR_CYCLE -> "Color Cycle"
+    com.yourname.idlerpg.ui.theme.TextEffectMode.WAVE -> "Wave"
 }

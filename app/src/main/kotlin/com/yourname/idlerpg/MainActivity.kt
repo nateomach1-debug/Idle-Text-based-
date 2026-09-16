@@ -79,10 +79,14 @@ class MainActivity : ComponentActivity() {
             val textColorOverride by gameViewModel.textColorOverride.collectAsState()
             val textOutlineEnabled by gameViewModel.textOutlineEnabled.collectAsState()
             val textOutlineColor by gameViewModel.textOutlineColor.collectAsState()
+            val textEffectMode by gameViewModel.textEffectMode.collectAsState()
+            val textSecondaryColor by gameViewModel.textSecondaryColor.collectAsState()
             IdleRpgTheme(
                 textColorOverride = textColorOverride,
                 outlineEnabled = textOutlineEnabled,
-                outlineColor = textOutlineColor
+                outlineColor = textOutlineColor,
+                effectMode = textEffectMode,
+                secondaryColor = textSecondaryColor
             ) {
                 AppRoot(gameViewModel, onLaunchPurchase = { bundleId -> billingManager.launchPurchase(this@MainActivity, bundleId) })
             }
@@ -1171,6 +1175,8 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                 val settingsTextColorOverride by gameViewModel.textColorOverride.collectAsState()
                                 val settingsOutlineEnabled by gameViewModel.textOutlineEnabled.collectAsState()
                                 val settingsOutlineColor by gameViewModel.textOutlineColor.collectAsState()
+                                val settingsEffectMode by gameViewModel.textEffectMode.collectAsState()
+                                val settingsSecondaryColor by gameViewModel.textSecondaryColor.collectAsState()
                                 val premiumCurrencyBalance by gameViewModel.currency.collectAsState()
                                 val ownedPresets by gameViewModel.unlockedPresets.collectAsState()
                                 SettingsScreen(
@@ -1183,7 +1189,11 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                     premiumCurrency = premiumCurrencyBalance.second,
                                     unlockedPresets = ownedPresets,
                                     onPurchaseBundle = onLaunchPurchase,
-                                    onPurchasePreset = { presetId -> gameViewModel.purchasePreset(presetId) }
+                                    onPurchasePreset = { presetId -> gameViewModel.purchasePreset(presetId) },
+                                    effectMode = settingsEffectMode,
+                                    secondaryColor = settingsSecondaryColor,
+                                    onEffectModeChanged = { gameViewModel.setTextEffectMode(it) },
+                                    onSecondaryColorChanged = { gameViewModel.setTextSecondaryColor(it) }
                                 )
                             }
 

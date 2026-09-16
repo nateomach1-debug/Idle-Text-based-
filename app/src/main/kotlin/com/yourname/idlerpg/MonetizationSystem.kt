@@ -186,14 +186,23 @@ data class PremiumPreset(
     val displayName: String,
     val gemCost: Long,
     val textColorArgb: Long,
-    val outlineColorArgb: Long
+    val outlineColorArgb: Long,
+    val effectMode: com.yourname.idlerpg.ui.theme.TextEffectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.SOLID,
+    val secondaryColorArgb: Long? = null
 )
 
 object PremiumPresetCatalog {
     val presets = listOf(
         PremiumPreset(id = "preset_ember_glow", displayName = "Ember Glow", gemCost = 150, textColorArgb = 0xFFFFB86CL, outlineColorArgb = 0xFF8B0000L),
         PremiumPreset(id = "preset_arctic_shimmer", displayName = "Arctic Shimmer", gemCost = 150, textColorArgb = 0xFF9AEAFFL, outlineColorArgb = 0xFF00E5FFL),
-        PremiumPreset(id = "preset_royal_amethyst", displayName = "Royal Amethyst", gemCost = 150, textColorArgb = 0xFFC77DFFL, outlineColorArgb = 0xFF7209B7L)
+        PremiumPreset(id = "preset_royal_amethyst", displayName = "Royal Amethyst", gemCost = 150, textColorArgb = 0xFFC77DFFL, outlineColorArgb = 0xFF7209B7L),
+        // Placeholder gem prices, same spirit as other tunable placeholders
+        // in this project - adjust after seeing them live.
+        PremiumPreset(id = "preset_sunset_gradient", displayName = "Sunset Gradient", gemCost = 200, textColorArgb = 0xFFFF6B35L, outlineColorArgb = 0xFF8B0000L, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.GRADIENT, secondaryColorArgb = 0xFFFFD23FL),
+        PremiumPreset(id = "preset_pulse_glow", displayName = "Pulse Glow", gemCost = 250, textColorArgb = 0xFF9AEAFFL, outlineColorArgb = 0xFF00E5FFL, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.PULSE),
+        PremiumPreset(id = "preset_shimmer_silver", displayName = "Shimmer Silver", gemCost = 250, textColorArgb = 0xFFC0C0C0L, outlineColorArgb = 0xFF4A4A4AL, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.SHIMMER),
+        PremiumPreset(id = "preset_rainbow_cycle", displayName = "Rainbow Cycle", gemCost = 300, textColorArgb = 0xFFFF0000L, outlineColorArgb = 0xFF000000L, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.COLOR_CYCLE),
+        PremiumPreset(id = "preset_ocean_wave", displayName = "Ocean Wave", gemCost = 250, textColorArgb = 0xFF00B4D8L, outlineColorArgb = 0xFF03045EL, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.WAVE, secondaryColorArgb = 0xFF90E0EFL)
     )
 
     fun find(presetId: String): PremiumPreset? = presets.find { it.id == presetId }

@@ -1,5 +1,11 @@
 package com.yourname.idlerpg.ui.theme
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -7,13 +13,28 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+
+// =========================================================
+// TEXT EFFECT MODE
+// Drives how the player's chosen text color(s) render, on top
+// of the existing solid-color-override system below. SOLID is
+// the default/free behavior (unchanged). The other 5 modes are
+// only applied once a custom text color has been set - see
+// resolvedTextColorAndBrush() and buildIdleRpgTypography().
+// =========================================================
+
+enum class TextEffectMode { SOLID, GRADIENT, PULSE, SHIMMER, COLOR_CYCLE, WAVE }
 
 // =========================================================
 // COLOR PALETTE
@@ -108,30 +129,93 @@ fun overrideColor(fallback: Color): Color = LocalTextColorOverride.current ?: fa
 private fun outlineShadow(enabled: Boolean, color: Color): Shadow? =
     if (enabled) Shadow(color = color, offset = Offset.Zero, blurRadius = 8f) else null
 
+private fun lerpTowardWhite(color: Color, fraction: Float): Color = Color(
+    red = color.red + (1f - color.red) * fraction,
+    green = color.green + (1f - color.green) * fraction,
+    blue = color.blue + (1f - color.blue) * fraction,
+    alpha = color.alpha
+)
+
+// Resolves a base color (+ optional second color) and the current
+// TextEffectMode into a (Color, Brush?) pair for use on a TextStyle.
+// When brush is non-null, Compose renders the brush and ignores the
+// plain color entirely - only GRADIENT/SHIMMER/WAVE return a brush.
+// PULSE/COLOR_CYCLE instead animate the plain Color itself, since
+// they don't need a spatial gradient. animationPhase cycles 0f..1f
+// continuously and is only meaningful for the 4 animated modes.
+private fun resolvedTextColorAndBrush(
+    base: Color,
+    secondary: Color?,
+    mode: TextEffectMode,
+    animationPhase: Float
+): Pair<Color, Brush?> = when (mode) {
+    TextEffectMode.SOLID -> base to null
+    TextEffectMode.GRADIENT -> base to Brush.linearGradient(listOf(base, secondary ?: base))
+    TextEffectMode.PULSE -> {
+        val alpha = 0.55f + 0.45f * ((kotlin.math.sin(animationPhase * 2 * Math.PI).toFloat() + 1f) / 2f)
+        base.copy(alpha = alpha) to null
+    }
+    TextEffectMode.SHIMMER -> {
+        val highlight = lerpTowardWhite(base, 0.85f)
+        val sweep = (animationPhase % 1f) * 600f - 300f
+        base to Brush.linearGradient(
+            colors = listOf(base, highlight, base),
+            start = Offset(sweep - 150f, 0f),
+            end = Offset(sweep + 150f, 0f)
+        )
+    }
+    TextEffectMode.COLOR_CYCLE -> {
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(base.toArgb(), hsv)
+        val cycledHue = (hsv[0] + animationPhase * 360f) % 360f
+        Color(android.graphics.Color.HSVToColor(floatArrayOf(cycledHue, hsv[1].coerceAtLeast(0.5f), hsv[2].coerceAtLeast(0.7f)))) to null
+    }
+    TextEffectMode.WAVE -> {
+        val sweep = (animationPhase % 1f) * 400f
+        base to Brush.linearGradient(
+            colors = listOf(base, secondary ?: base, base),
+            start = Offset(sweep - 200f, 0f),
+            end = Offset(sweep + 200f, 0f),
+            tileMode = TileMode.Repeated
+        )
+    }
+}
+
 private fun buildIdleRpgTypography(
     textColorOverride: Color?,
     outlineEnabled: Boolean,
-    outlineColor: Color
+    outlineColor: Color,
+    effectMode: TextEffectMode = TextEffectMode.SOLID,
+    secondaryColor: Color? = null,
+    animationPhase: Float = 0f
 ): Typography {
-    val primary = textColorOverride ?: TextPrimary
-    val secondary = textColorOverride ?: TextSecondary
+    val basePrimary = textColorOverride ?: TextPrimary
+    val baseSecondary = textColorOverride ?: TextSecondary
     val shadow = outlineShadow(outlineEnabled, outlineColor)
+
+    // Gradient/animated effects only kick in once the player has actually
+    // chosen a custom text color - the default (un-customized) theme stays
+    // plain SOLID, same gating as textColorOverride itself above.
+    val effectiveMode = if (textColorOverride == null) TextEffectMode.SOLID else effectMode
+    val (primary, primaryBrush) = resolvedTextColorAndBrush(basePrimary, secondaryColor, effectiveMode, animationPhase)
+    val (secondary, secondaryBrush) = resolvedTextColorAndBrush(baseSecondary, secondaryColor, effectiveMode, animationPhase)
+
     return Typography(
-        displayLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 40.sp, color = primary, shadow = shadow),
-        displayMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 34.sp, color = primary, shadow = shadow),
-        displaySmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = primary, shadow = shadow),
-        headlineLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = primary, shadow = shadow),
-        headlineMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = primary, shadow = shadow),
-        headlineSmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, color = primary, shadow = shadow),
-        titleLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, color = primary, shadow = shadow),
-        titleMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, color = primary, shadow = shadow),
-        titleSmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = primary, shadow = shadow),
-        bodyLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 16.sp, color = primary, shadow = shadow),
-        bodyMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 15.sp, color = primary, shadow = shadow),
-        bodySmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 13.sp, color = primary, shadow = shadow),
-        labelLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 13.sp, color = secondary, shadow = shadow),
-        labelMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = secondary, shadow = shadow),
-        labelSmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = secondary, shadow = shadow)
+        displayLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 40.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        displayMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 34.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        displaySmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 28.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        headlineLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        headlineMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        headlineSmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        titleLarge = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        titleMedium = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        titleSmall = TextStyle(fontFamily = HeaderFont, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        bodyLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 16.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        bodyMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 15.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        bodySmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Normal, fontSize = 13.sp, color = primary, brush = primaryBrush, shadow = shadow),
+        labelLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 13.sp, color = secondary, brush = secondaryBrush, shadow = shadow),
+        labelMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = secondary, brush = secondaryBrush, shadow = shadow),
+        labelSmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Medium, fontSize = 12.sp, color = secondary, brush = secondaryBrush, shadow = shadow)
     )
 }
 
@@ -140,12 +224,35 @@ fun IdleRpgTheme(
     textColorOverride: Color? = null,
     outlineEnabled: Boolean = false,
     outlineColor: Color = Color.Black,
+    effectMode: TextEffectMode = TextEffectMode.SOLID,
+    secondaryColor: Color? = null,
     content: @Composable () -> Unit
 ) {
+    val isAnimatedEffect = effectMode == TextEffectMode.PULSE ||
+        effectMode == TextEffectMode.SHIMMER ||
+        effectMode == TextEffectMode.COLOR_CYCLE ||
+        effectMode == TextEffectMode.WAVE
+
+    val animationPhase: Float = if (isAnimatedEffect) {
+        val transition = rememberInfiniteTransition(label = "textEffectTransition")
+        val phase by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 2600, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "textEffectPhase"
+        )
+        phase
+    } else {
+        0f
+    }
+
     CompositionLocalProvider(LocalTextColorOverride provides textColorOverride) {
         MaterialTheme(
             colorScheme = IdleRpgDarkColors,
-            typography = buildIdleRpgTypography(textColorOverride, outlineEnabled, outlineColor),
+            typography = buildIdleRpgTypography(textColorOverride, outlineEnabled, outlineColor, effectMode, secondaryColor, animationPhase),
             content = content
         )
     }
