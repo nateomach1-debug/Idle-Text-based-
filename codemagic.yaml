@@ -26,11 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output207.txt
-          echo "=== Actual path(s) of Theme.kt ===" > $OUT
-          find . -iname "Theme.kt" >> $OUT 2>/dev/null || true
+          OUT=discovery_output208.txt
+          echo "=== ModerationScreen.kt FULL ===" > $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/ModerationScreen.kt >> $OUT 2>/dev/null || true
+          echo "" >> $OUT
+          echo "=== GameViewModel.kt moderation-related error/state (moderationError, muteCharacterAsModerator, unmuteCharacterAsModerator) ===" >> $OUT
+          grep -n "moderationError\|muteCharacterAsModerator\|unmuteCharacterAsModerator\|_moderation" -B 2 -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
+          echo "" >> $OUT
+          echo "=== display_name usage in chat rendering (what name moderators actually see) ===" >> $OUT
+          grep -rn "display_name\|displayName" ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output207.txt
+      - discovery_output208.txt
       
   apply-patch:
     name: Apply Patch Script
