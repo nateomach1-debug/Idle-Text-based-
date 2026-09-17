@@ -1,9 +1,10 @@
 import sys
 
 BASE = "app/src/main/kotlin/com/yourname/idlerpg/"
-THEME = BASE + "Theme.kt"
-MONETIZATION = BASE + "MonetizationSystem.kt"
-SETTINGS = BASE + "SettingsScreen.kt"
+MODERATION_REPO = BASE + "SupabaseModerationRepository.kt"
+GAME_VIEW_MODEL = BASE + "GameViewModel.kt"
+MODERATION_SCREEN = BASE + "ModerationScreen.kt"
+MAIN_ACTIVITY = BASE + "MainActivity.kt"
 
 
 def guarded_replace(path, old, new, label):
@@ -42,266 +43,245 @@ def check_braces(path):
 results = []
 
 # ===========================================================
-# 1. Theme.kt - boost Pulse/Shimmer/ColorCycle/Wave intensity.
-# Root cause: sweep offsets were raw pixel values (150-300px, only
-# ~50-100dp on a high-density screen) - far too narrow to visibly
-# cross normal text widths. Pulse's alpha swing was only 45%.
-# Color Cycle didn't force high saturation/brightness, so a mellow
-# base color barely showed hue rotation. Widened sweep amplitude
-# ~5x, maxed shimmer highlight to pure white, widened pulse alpha
-# swing to 88%, and forced full saturation/brightness on cycle.
+# 1. SupabaseModerationRepository.kt - add findCharacterIdByName
 # ===========================================================
-old = '''    TextEffectMode.PULSE -> {
-        val alpha = 0.55f + 0.45f * ((kotlin.math.sin(animationPhase * 2 * Math.PI).toFloat() + 1f) / 2f)
-        base.copy(alpha = alpha) to null
-    }
-    TextEffectMode.SHIMMER -> {
-        val highlight = lerpTowardWhite(base, 0.85f)
-        val sweep = (animationPhase % 1f) * 600f - 300f
-        base to Brush.linearGradient(
-            colors = listOf(base, highlight, base),
-            start = Offset(sweep - 150f, 0f),
-            end = Offset(sweep + 150f, 0f)
-        )
-    }
-    TextEffectMode.COLOR_CYCLE -> {
-        val hsv = FloatArray(3)
-        android.graphics.Color.colorToHSV(base.toArgb(), hsv)
-        val cycledHue = (hsv[0] + animationPhase * 360f) % 360f
-        Color(android.graphics.Color.HSVToColor(floatArrayOf(cycledHue, hsv[1].coerceAtLeast(0.5f), hsv[2].coerceAtLeast(0.7f)))) to null
-    }
-    TextEffectMode.WAVE -> {
-        val sweep = (animationPhase % 1f) * 400f
-        base to Brush.linearGradient(
-            colors = listOf(base, secondary ?: base, base),
-            start = Offset(sweep - 200f, 0f),
-            end = Offset(sweep + 200f, 0f),
-            tileMode = TileMode.Repeated
-        )
-    }'''
-new = '''    TextEffectMode.PULSE -> {
-        val alpha = 0.12f + 0.88f * ((kotlin.math.sin(animationPhase * 2 * Math.PI).toFloat() + 1f) / 2f)
-        base.copy(alpha = alpha) to null
-    }
-    TextEffectMode.SHIMMER -> {
-        val highlight = lerpTowardWhite(base, 1f)
-        val sweep = (animationPhase % 1f) * 3000f - 1000f
-        base to Brush.linearGradient(
-            colors = listOf(base, highlight, base),
-            start = Offset(sweep - 500f, 0f),
-            end = Offset(sweep + 500f, 0f)
-        )
-    }
-    TextEffectMode.COLOR_CYCLE -> {
-        val hsv = FloatArray(3)
-        android.graphics.Color.colorToHSV(base.toArgb(), hsv)
-        val cycledHue = (hsv[0] + animationPhase * 360f) % 360f
-        Color(android.graphics.Color.HSVToColor(floatArrayOf(cycledHue, 1f, 1f))) to null
-    }
-    TextEffectMode.WAVE -> {
-        val sweep = (animationPhase % 1f) * 2000f
-        base to Brush.linearGradient(
-            colors = listOf(base, secondary ?: base, base),
-            start = Offset(sweep - 600f, 0f),
-            end = Offset(sweep + 600f, 0f),
-            tileMode = TileMode.Repeated
-        )
-    }'''
-results.append(guarded_replace(THEME, old, new, "Theme.kt boost Pulse/Shimmer/ColorCycle/Wave intensity"))
+old = '''    // ---------------------------------------------------------
+    // PREMIUM CURRENCY (GEMS) - MODERATOR GRANT
+    // ---------------------------------------------------------
 
-# ===========================================================
-# 2. MonetizationSystem.kt - free first 3 presets, add Custom Color unlock
-# ===========================================================
-old = '''data class PremiumPreset(
-    val id: String,
-    val displayName: String,
-    val gemCost: Long,
-    val textColorArgb: Long,
-    val outlineColorArgb: Long,
-    val effectMode: com.yourname.idlerpg.ui.theme.TextEffectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.SOLID,
-    val secondaryColorArgb: Long? = null
-)
-
-object PremiumPresetCatalog {
-    val presets = listOf(
-        PremiumPreset(id = "preset_ember_glow", displayName = "Ember Glow", gemCost = 150, textColorArgb = 0xFFFFB86CL, outlineColorArgb = 0xFF8B0000L),
-        PremiumPreset(id = "preset_arctic_shimmer", displayName = "Arctic Shimmer", gemCost = 150, textColorArgb = 0xFF9AEAFFL, outlineColorArgb = 0xFF00E5FFL),
-        PremiumPreset(id = "preset_royal_amethyst", displayName = "Royal Amethyst", gemCost = 150, textColorArgb = 0xFFC77DFFL, outlineColorArgb = 0xFF7209B7L),
-        // Placeholder gem prices, same spirit as other tunable placeholders
-        // in this project - adjust after seeing them live.
-        PremiumPreset(id = "preset_sunset_gradient", displayName = "Sunset Gradient", gemCost = 200, textColorArgb = 0xFFFF6B35L, outlineColorArgb = 0xFF8B0000L, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.GRADIENT, secondaryColorArgb = 0xFFFFD23FL),
-        PremiumPreset(id = "preset_pulse_glow", displayName = "Pulse Glow", gemCost = 250, textColorArgb = 0xFF9AEAFFL, outlineColorArgb = 0xFF00E5FFL, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.PULSE),
-        PremiumPreset(id = "preset_shimmer_silver", displayName = "Shimmer Silver", gemCost = 250, textColorArgb = 0xFFC0C0C0L, outlineColorArgb = 0xFF4A4A4AL, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.SHIMMER),
-        PremiumPreset(id = "preset_rainbow_cycle", displayName = "Rainbow Cycle", gemCost = 300, textColorArgb = 0xFFFF0000L, outlineColorArgb = 0xFF000000L, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.COLOR_CYCLE),
-        PremiumPreset(id = "preset_ocean_wave", displayName = "Ocean Wave", gemCost = 250, textColorArgb = 0xFF00B4D8L, outlineColorArgb = 0xFF03045EL, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.WAVE, secondaryColorArgb = 0xFF90E0EFL)
-    )
-
-    fun find(presetId: String): PremiumPreset? = presets.find { it.id == presetId }
+    suspend fun grantGems(characterId: String, amount: Long, reason: String): Result<Long> = runCatching {
+        client.postgrest.rpc("admin_grant_gems", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+            put("p_reason", reason)
+        }).decodeAs<Long>()
+    }
 }'''
-new = '''data class PremiumPreset(
-    val id: String,
-    val displayName: String,
-    val gemCost: Long,
-    val textColorArgb: Long,
-    val outlineColorArgb: Long,
-    val effectMode: com.yourname.idlerpg.ui.theme.TextEffectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.SOLID,
-    val secondaryColorArgb: Long? = null,
-    val isColorUnlockOnly: Boolean = false
-)
+new = '''    // ---------------------------------------------------------
+    // PREMIUM CURRENCY (GEMS) - MODERATOR GRANT
+    // ---------------------------------------------------------
 
-object PremiumPresetCatalog {
-    val presets = listOf(
-        PremiumPreset(id = "preset_ember_glow", displayName = "Ember Glow", gemCost = 0, textColorArgb = 0xFFFFB86CL, outlineColorArgb = 0xFF8B0000L),
-        PremiumPreset(id = "preset_arctic_shimmer", displayName = "Arctic Shimmer", gemCost = 0, textColorArgb = 0xFF9AEAFFL, outlineColorArgb = 0xFF00E5FFL),
-        PremiumPreset(id = "preset_royal_amethyst", displayName = "Royal Amethyst", gemCost = 0, textColorArgb = 0xFFC77DFFL, outlineColorArgb = 0xFF7209B7L),
-        // Placeholder gem prices, same spirit as other tunable placeholders
-        // in this project - adjust after seeing them live.
-        PremiumPreset(id = "preset_sunset_gradient", displayName = "Sunset Gradient", gemCost = 200, textColorArgb = 0xFFFF6B35L, outlineColorArgb = 0xFF8B0000L, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.GRADIENT, secondaryColorArgb = 0xFFFFD23FL),
-        PremiumPreset(id = "preset_pulse_glow", displayName = "Pulse Glow", gemCost = 250, textColorArgb = 0xFF9AEAFFL, outlineColorArgb = 0xFF00E5FFL, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.PULSE),
-        PremiumPreset(id = "preset_shimmer_silver", displayName = "Shimmer Silver", gemCost = 250, textColorArgb = 0xFFC0C0C0L, outlineColorArgb = 0xFF4A4A4AL, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.SHIMMER),
-        PremiumPreset(id = "preset_rainbow_cycle", displayName = "Rainbow Cycle", gemCost = 300, textColorArgb = 0xFFFF0000L, outlineColorArgb = 0xFF000000L, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.COLOR_CYCLE),
-        PremiumPreset(id = "preset_ocean_wave", displayName = "Ocean Wave", gemCost = 250, textColorArgb = 0xFF00B4D8L, outlineColorArgb = 0xFF03045EL, effectMode = com.yourname.idlerpg.ui.theme.TextEffectMode.WAVE, secondaryColorArgb = 0xFF90E0EFL),
-        // Expensive on purpose: unlocking free-form color entry lets a
-        // player recreate the look of any other premium preset for the
-        // cost of one purchase, so it's priced above the individual presets.
-        PremiumPreset(id = "unlock_custom_color", displayName = "Custom Color License", gemCost = 750, textColorArgb = 0xFFFFFFFFL, outlineColorArgb = 0xFF000000L, isColorUnlockOnly = true)
-    )
+    suspend fun grantGems(characterId: String, amount: Long, reason: String): Result<Long> = runCatching {
+        client.postgrest.rpc("admin_grant_gems", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_amount", amount)
+            put("p_reason", reason)
+        }).decodeAs<Long>()
+    }
 
-    fun find(presetId: String): PremiumPreset? = presets.find { it.id == presetId }
+    // ---------------------------------------------------------
+    // CHARACTER LOOKUP BY DISPLAY NAME
+    // Moderators only ever see a player's display_name (the name
+    // shown in chat), never their raw character id - this resolves
+    // one to the other so the manual mute/grant tools can take the
+    // name a moderator actually has.
+    // ---------------------------------------------------------
+
+    suspend fun findCharacterIdByName(displayName: String): Result<String> = runCatching {
+        client.postgrest.rpc("admin_find_character_id", buildJsonObject {
+            put("p_display_name", displayName)
+        }).decodeAs<String>()
+    }
 }'''
-results.append(guarded_replace(MONETIZATION, old, new, "MonetizationSystem.kt free presets + Custom Color unlock"))
+results.append(guarded_replace(MODERATION_REPO, old, new, "SupabaseModerationRepository.kt findCharacterIdByName"))
 
 # ===========================================================
-# 3. SettingsScreen.kt - skip the color-unlock entry in the normal preset loop
+# 2. GameViewModel.kt - lookup error state + by-name moderator wrappers
 # ===========================================================
-old = '''        PremiumPresetCatalog.presets.forEach { preset ->
-            PresetCard('''
-new = '''        PremiumPresetCatalog.presets.filterNot { it.isColorUnlockOnly }.forEach { preset ->
-            PresetCard('''
-results.append(guarded_replace(SETTINGS, old, new, "SettingsScreen.kt skip color-unlock preset in main loop"))
+old = '''    fun refreshModeration() {
+        if (!_isModerator.value) return
+        viewModelScope.launch {
+            _moderationState.value = _moderationState.value.copy(isLoading = true)
+            val reports = SupabaseModerationRepository.fetchPendingReports()
+            val appeals = SupabaseModerationRepository.fetchPendingAppeals()
+            _moderationState.value = ModerationState(reports, appeals, isLoading = false)
+        }
+    }
+
+    fun resolveReport(reportId: String, actionTaken: Boolean) {'''
+new = '''    fun refreshModeration() {
+        if (!_isModerator.value) return
+        viewModelScope.launch {
+            _moderationState.value = _moderationState.value.copy(isLoading = true)
+            val reports = SupabaseModerationRepository.fetchPendingReports()
+            val appeals = SupabaseModerationRepository.fetchPendingAppeals()
+            _moderationState.value = ModerationState(reports, appeals, isLoading = false)
+        }
+    }
+
+    private val _moderationLookupError = MutableStateFlow<String?>(null)
+    val moderationLookupError: StateFlow<String?> = _moderationLookupError.asStateFlow()
+
+    // Moderator convenience - resolves a display name (the name shown in
+    // chat) to its Supabase character id via admin_find_character_id, then
+    // delegates to the existing mute/unmute/grant RPCs directly. A failed
+    // lookup (typo, no such name) surfaces in moderationLookupError instead
+    // of silently doing nothing.
+    fun muteCharacterByNameAsModerator(displayName: String, durationSeconds: Int, reason: String) {
+        viewModelScope.launch {
+            _moderationLookupError.value = null
+            val idResult = SupabaseModerationRepository.findCharacterIdByName(displayName)
+            idResult.onFailure { _moderationLookupError.value = it.message ?: it.toString() }
+            idResult.onSuccess { characterId ->
+                SupabaseModerationRepository.muteCharacter(characterId, durationSeconds, reason)
+            }
+        }
+    }
+
+    fun unmuteCharacterByNameAsModerator(displayName: String) {
+        viewModelScope.launch {
+            _moderationLookupError.value = null
+            val idResult = SupabaseModerationRepository.findCharacterIdByName(displayName)
+            idResult.onFailure { _moderationLookupError.value = it.message ?: it.toString() }
+            idResult.onSuccess { characterId ->
+                SupabaseModerationRepository.unmuteCharacter(characterId)
+            }
+        }
+    }
+
+    fun grantGemsByNameAsModerator(displayName: String, amount: Long, reason: String) {
+        viewModelScope.launch {
+            _moderationLookupError.value = null
+            val idResult = SupabaseModerationRepository.findCharacterIdByName(displayName)
+            idResult.onFailure { _moderationLookupError.value = it.message ?: it.toString() }
+            idResult.onSuccess { characterId ->
+                SupabaseModerationRepository.grantGems(characterId, amount, reason)
+            }
+        }
+    }
+
+    fun resolveReport(reportId: String, actionTaken: Boolean) {'''
+results.append(guarded_replace(GAME_VIEW_MODEL, old, new, "GameViewModel.kt by-name moderator wrappers + lookup error state"))
 
 # ===========================================================
-# 4. SettingsScreen.kt - gate Text Color + Second Color pickers behind
-# the Custom Color License; Reset to Default stays free.
+# 3. ModerationScreen.kt - lookupError param + display, relabel fields
 # ===========================================================
-old = '''        Text(text = "Text Color", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        RgbHexColorPicker(
-            color = textColorOverride ?: Color(0xFFEDE8DD),
-            onColorChange = { onTextColorChanged(it) }
+old = '''@Composable
+fun ModerationScreen(
+    state: ModerationState,
+    onResolveReport: (reportId: String, actionTaken: Boolean) -> Unit,
+    onResolveAppeal: (appealId: String, grant: Boolean, notes: String) -> Unit,
+    onMuteCharacter: (characterId: String, durationSeconds: Int, reason: String) -> Unit,
+    onUnmuteCharacter: (characterId: String) -> Unit,
+    onGrantGems: (String, Long, String) -> Unit = { _, _, _ -> },
+    modifier: Modifier = Modifier
+) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp)
+            .verticalScroll(scrollState)
+    ) {
+        Text(
+            text = "Moderation",
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { onTextColorChanged(null) }) {
-            Text("Reset to Default")
-        }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(16.dp))'''
+new = '''@Composable
+fun ModerationScreen(
+    state: ModerationState,
+    onResolveReport: (reportId: String, actionTaken: Boolean) -> Unit,
+    onResolveAppeal: (appealId: String, grant: Boolean, notes: String) -> Unit,
+    onMuteCharacter: (characterId: String, durationSeconds: Int, reason: String) -> Unit,
+    onUnmuteCharacter: (characterId: String) -> Unit,
+    onGrantGems: (String, Long, String) -> Unit = { _, _, _ -> },
+    lookupError: String? = null,
+    modifier: Modifier = Modifier
+) {
+    val scrollState = rememberScrollState()
 
-        Text(text = "Text Effect", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = "Applies once you've set a custom Text Color above.", style = MaterialTheme.typography.labelSmall)
-        Spacer(modifier = Modifier.height(8.dp))
-        com.yourname.idlerpg.ui.theme.TextEffectMode.entries.forEach { mode ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = textEffectModeLabel(mode), style = MaterialTheme.typography.bodyMedium)
-                if (mode == effectMode) {
-                    Text(text = "Selected", style = MaterialTheme.typography.labelSmall)
-                } else {
-                    Button(onClick = { onEffectModeChanged(mode) }) {
-                        Text("Select")
-                    }
-                }
-            }
-        }
-        if (effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.GRADIENT || effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.WAVE) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp)
+            .verticalScroll(scrollState)
+    ) {
+        Text(
+            text = "Moderation",
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        if (lookupError != null) {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Second Color", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            RgbHexColorPicker(
-                color = secondaryColor ?: Color(0xFFFFFFFF),
-                onColorChange = { onSecondaryColorChanged(it) }
+            Text(
+                text = lookupError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
             )
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(16.dp))'''
+results.append(guarded_replace(MODERATION_SCREEN, old, new, "ModerationScreen.kt lookupError param + display"))
 
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(text = "Text Outline", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))'''
-new = '''        Text(text = "Text Color", style = MaterialTheme.typography.titleMedium)
+old = '''        Text(text = "Grant Gems", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
-        val customColorUnlocked = unlockedPresets.contains("unlock_custom_color")
-        if (customColorUnlocked) {
-            RgbHexColorPicker(
-                color = textColorOverride ?: Color(0xFFEDE8DD),
-                onColorChange = { onTextColorChanged(it) }
-            )
-        } else {
-            val customColorPreset = PremiumPresetCatalog.presets.first { it.isColorUnlockOnly }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(text = "Fully custom color - pick any color, recreates any preset look", style = MaterialTheme.typography.bodyMedium)
-                    Text(text = customColorPreset.gemCost.toString() + " Gems", style = MaterialTheme.typography.bodySmall)
-                }
-                Button(onClick = { onPurchasePreset(customColorPreset.id) }, enabled = premiumCurrency >= customColorPreset.gemCost) {
-                    Text("Unlock")
-                }
-            }
-        }
+        OutlinedTextField(
+            value = characterId,
+            onValueChange = { characterId = it },
+            label = { Text(text = "Character ID") },
+            modifier = Modifier.fillMaxWidth()
+        )'''
+new = '''        Text(text = "Grant Gems", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { onTextColorChanged(null) }) {
-            Text("Reset to Default")
-        }
+        OutlinedTextField(
+            value = characterId,
+            onValueChange = { characterId = it },
+            label = { Text(text = "Character Name") },
+            modifier = Modifier.fillMaxWidth()
+        )'''
+results.append(guarded_replace(MODERATION_SCREEN, old, new, "ModerationScreen.kt relabel Grant Gems field"))
 
-        Spacer(modifier = Modifier.height(28.dp))
-
-        Text(text = "Text Effect", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = "Applies once you've set a custom Text Color above.", style = MaterialTheme.typography.labelSmall)
+old = '''        Text(text = "Manual Mute", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
-        com.yourname.idlerpg.ui.theme.TextEffectMode.entries.forEach { mode ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = textEffectModeLabel(mode), style = MaterialTheme.typography.bodyMedium)
-                if (mode == effectMode) {
-                    Text(text = "Selected", style = MaterialTheme.typography.labelSmall)
-                } else {
-                    Button(onClick = { onEffectModeChanged(mode) }) {
-                        Text("Select")
-                    }
-                }
-            }
-        }
-        if (customColorUnlocked && (effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.GRADIENT || effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.WAVE)) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Second Color", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            RgbHexColorPicker(
-                color = secondaryColor ?: Color(0xFFFFFFFF),
-                onColorChange = { onSecondaryColorChanged(it) }
-            )
-        }
+        OutlinedTextField(
+            value = characterId,
+            onValueChange = { characterId = it },
+            label = { Text(text = "Character ID") },
+            modifier = Modifier.fillMaxWidth()
+        )'''
+new = '''        Text(text = "Manual Mute", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = characterId,
+            onValueChange = { characterId = it },
+            label = { Text(text = "Character Name") },
+            modifier = Modifier.fillMaxWidth()
+        )'''
+results.append(guarded_replace(MODERATION_SCREEN, old, new, "ModerationScreen.kt relabel Manual Mute field"))
 
-        Spacer(modifier = Modifier.height(28.dp))
-
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(text = "Text Outline", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))'''
-results.append(guarded_replace(SETTINGS, old, new, "SettingsScreen.kt gate custom color pickers behind paywall"))
+# ===========================================================
+# 4. MainActivity.kt - rewire callbacks to by-name functions, pass lookupError
+# ===========================================================
+old = '''                                ModerationScreen(
+                                    state = moderation,
+                                    onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
+                                    onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
+                                    onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
+                                    onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) },
+                                    onGrantGems = { id, amount, reason -> gameViewModel.grantGemsAsModerator(id, amount, reason) }
+                                )'''
+new = '''                                val moderationLookupError by gameViewModel.moderationLookupError.collectAsState()
+                                ModerationScreen(
+                                    state = moderation,
+                                    onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
+                                    onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
+                                    onMuteCharacter = { name, dur, reason -> gameViewModel.muteCharacterByNameAsModerator(name, dur, reason) },
+                                    onUnmuteCharacter = { name -> gameViewModel.unmuteCharacterByNameAsModerator(name) },
+                                    onGrantGems = { name, amount, reason -> gameViewModel.grantGemsByNameAsModerator(name, amount, reason) },
+                                    lookupError = moderationLookupError
+                                )'''
+results.append(guarded_replace(MAIN_ACTIVITY, old, new, "MainActivity.kt rewire moderation callbacks to by-name"))
 
 print()
 print("=== Brace balance check ===")
-for p in [THEME, MONETIZATION, SETTINGS]:
+for p in [MODERATION_REPO, GAME_VIEW_MODEL, MODERATION_SCREEN, MAIN_ACTIVITY]:
     check_braces(p)
 
 if not all(results):
