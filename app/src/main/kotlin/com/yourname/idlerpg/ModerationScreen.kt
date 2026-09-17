@@ -40,6 +40,7 @@ fun ModerationScreen(
     onMuteCharacter: (characterId: String, durationSeconds: Int, reason: String) -> Unit,
     onUnmuteCharacter: (characterId: String) -> Unit,
     onGrantGems: (String, Long, String) -> Unit = { _, _, _ -> },
+    lookupError: String? = null,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -56,6 +57,15 @@ fun ModerationScreen(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
+
+        if (lookupError != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = lookupError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -200,7 +210,7 @@ private fun ManualGrantGemsSection(
         OutlinedTextField(
             value = characterId,
             onValueChange = { characterId = it },
-            label = { Text(text = "Character ID") },
+            label = { Text(text = "Character Name") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -252,7 +262,7 @@ private fun ManualMuteSection(
         OutlinedTextField(
             value = characterId,
             onValueChange = { characterId = it },
-            label = { Text(text = "Character ID") },
+            label = { Text(text = "Character Name") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))

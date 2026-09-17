@@ -209,4 +209,18 @@ object SupabaseModerationRepository {
             put("p_reason", reason)
         }).decodeAs<Long>()
     }
+
+    // ---------------------------------------------------------
+    // CHARACTER LOOKUP BY DISPLAY NAME
+    // Moderators only ever see a player's display_name (the name
+    // shown in chat), never their raw character id - this resolves
+    // one to the other so the manual mute/grant tools can take the
+    // name a moderator actually has.
+    // ---------------------------------------------------------
+
+    suspend fun findCharacterIdByName(displayName: String): Result<String> = runCatching {
+        client.postgrest.rpc("admin_find_character_id", buildJsonObject {
+            put("p_display_name", displayName)
+        }).decodeAs<String>()
+    }
 }

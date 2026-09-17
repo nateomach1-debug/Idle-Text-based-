@@ -614,6 +614,47 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val _moderationLookupError = MutableStateFlow<String?>(null)
+    val moderationLookupError: StateFlow<String?> = _moderationLookupError.asStateFlow()
+
+    // Moderator convenience - resolves a display name (the name shown in
+    // chat) to its Supabase character id via admin_find_character_id, then
+    // delegates to the existing mute/unmute/grant RPCs directly. A failed
+    // lookup (typo, no such name) surfaces in moderationLookupError instead
+    // of silently doing nothing.
+    fun muteCharacterByNameAsModerator(displayName: String, durationSeconds: Int, reason: String) {
+        viewModelScope.launch {
+            _moderationLookupError.value = null
+            val idResult = SupabaseModerationRepository.findCharacterIdByName(displayName)
+            idResult.onFailure { _moderationLookupError.value = it.message ?: it.toString() }
+            idResult.onSuccess { characterId ->
+                SupabaseModerationRepository.muteCharacter(characterId, durationSeconds, reason)
+            }
+        }
+    }
+
+    fun unmuteCharacterByNameAsModerator(displayName: String) {
+        viewModelScope.launch {
+            _moderationLookupError.value = null
+            val idResult = SupabaseModerationRepository.findCharacterIdByName(displayName)
+            idResult.onFailure { _moderationLookupError.value = it.message ?: it.toString() }
+            idResult.onSuccess { characterId ->
+                SupabaseModerationRepository.unmuteCharacter(characterId)
+            }
+        }
+    }
+
+    fun grantGemsByNameAsModerator(displayName: String, amount: Long, reason: String) {
+        viewModelScope.launch {
+            _moderationLookupError.value = null
+            val idResult = SupabaseModerationRepository.findCharacterIdByName(displayName)
+            idResult.onFailure { _moderationLookupError.value = it.message ?: it.toString() }
+            idResult.onSuccess { characterId ->
+                SupabaseModerationRepository.grantGems(characterId, amount, reason)
+            }
+        }
+    }
+
     fun resolveReport(reportId: String, actionTaken: Boolean) {
         viewModelScope.launch {
             SupabaseModerationRepository.resolveReport(reportId, actionTaken)

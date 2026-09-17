@@ -1148,13 +1148,15 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                             AppDestination.MODERATION -> {
                                 val moderation by gameViewModel.moderationState.collectAsState()
                                 LaunchedEffect(Unit) { gameViewModel.refreshModeration() }
+                                val moderationLookupError by gameViewModel.moderationLookupError.collectAsState()
                                 ModerationScreen(
                                     state = moderation,
                                     onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
                                     onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
-                                    onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
-                                    onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) },
-                                    onGrantGems = { id, amount, reason -> gameViewModel.grantGemsAsModerator(id, amount, reason) }
+                                    onMuteCharacter = { name, dur, reason -> gameViewModel.muteCharacterByNameAsModerator(name, dur, reason) },
+                                    onUnmuteCharacter = { name -> gameViewModel.unmuteCharacterByNameAsModerator(name) },
+                                    onGrantGems = { name, amount, reason -> gameViewModel.grantGemsByNameAsModerator(name, amount, reason) },
+                                    lookupError = moderationLookupError
                                 )
                             }
 
