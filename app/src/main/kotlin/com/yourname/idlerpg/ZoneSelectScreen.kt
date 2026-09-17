@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
@@ -78,19 +79,15 @@ private fun ZoneCard(zone: ZoneSummary, isUnlocked: Boolean, onClick: () -> Unit
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(modifier = Modifier.alpha(contentAlpha)) {
             Text(
                 text = zone.name,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    color = MaterialTheme.typography.titleMedium.color.copy(alpha = contentAlpha)
-                )
+                style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = zone.monsterNames.joinToString(", "),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = MaterialTheme.typography.labelSmall.color.copy(alpha = contentAlpha)
-                )
+                style = MaterialTheme.typography.labelSmall
             )
         }
 
