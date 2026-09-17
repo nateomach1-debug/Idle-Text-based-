@@ -77,7 +77,7 @@ fun SettingsScreen(
         Text(text = "Premium Text Presets", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
 
-        PremiumPresetCatalog.presets.forEach { preset ->
+        PremiumPresetCatalog.presets.filterNot { it.isColorUnlockOnly }.forEach { preset ->
             PresetCard(
                 preset = preset,
                 isUnlocked = preset.id in unlockedPresets,
@@ -98,10 +98,27 @@ fun SettingsScreen(
 
         Text(text = "Text Color", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
-        RgbHexColorPicker(
-            color = textColorOverride ?: Color(0xFFEDE8DD),
-            onColorChange = { onTextColorChanged(it) }
-        )
+        val customColorUnlocked = unlockedPresets.contains("unlock_custom_color")
+        if (customColorUnlocked) {
+            RgbHexColorPicker(
+                color = textColorOverride ?: Color(0xFFEDE8DD),
+                onColorChange = { onTextColorChanged(it) }
+            )
+        } else {
+            val customColorPreset = PremiumPresetCatalog.presets.first { it.isColorUnlockOnly }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(text = "Fully custom color - pick any color, recreates any preset look", style = MaterialTheme.typography.bodyMedium)
+                    Text(text = customColorPreset.gemCost.toString() + " Gems", style = MaterialTheme.typography.bodySmall)
+                }
+                Button(onClick = { onPurchasePreset(customColorPreset.id) }, enabled = premiumCurrency >= customColorPreset.gemCost) {
+                    Text("Unlock")
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { onTextColorChanged(null) }) {
             Text("Reset to Default")
@@ -130,7 +147,7 @@ fun SettingsScreen(
                 }
             }
         }
-        if (effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.GRADIENT || effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.WAVE) {
+        if (customColorUnlocked && (effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.GRADIENT || effectMode == com.yourname.idlerpg.ui.theme.TextEffectMode.WAVE)) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Second Color", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(4.dp))

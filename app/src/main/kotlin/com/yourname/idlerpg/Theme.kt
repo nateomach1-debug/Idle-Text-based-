@@ -152,30 +152,30 @@ private fun resolvedTextColorAndBrush(
     TextEffectMode.SOLID -> base to null
     TextEffectMode.GRADIENT -> base to Brush.linearGradient(listOf(base, secondary ?: base))
     TextEffectMode.PULSE -> {
-        val alpha = 0.55f + 0.45f * ((kotlin.math.sin(animationPhase * 2 * Math.PI).toFloat() + 1f) / 2f)
+        val alpha = 0.12f + 0.88f * ((kotlin.math.sin(animationPhase * 2 * Math.PI).toFloat() + 1f) / 2f)
         base.copy(alpha = alpha) to null
     }
     TextEffectMode.SHIMMER -> {
-        val highlight = lerpTowardWhite(base, 0.85f)
-        val sweep = (animationPhase % 1f) * 600f - 300f
+        val highlight = lerpTowardWhite(base, 1f)
+        val sweep = (animationPhase % 1f) * 3000f - 1000f
         base to Brush.linearGradient(
             colors = listOf(base, highlight, base),
-            start = Offset(sweep - 150f, 0f),
-            end = Offset(sweep + 150f, 0f)
+            start = Offset(sweep - 500f, 0f),
+            end = Offset(sweep + 500f, 0f)
         )
     }
     TextEffectMode.COLOR_CYCLE -> {
         val hsv = FloatArray(3)
         android.graphics.Color.colorToHSV(base.toArgb(), hsv)
         val cycledHue = (hsv[0] + animationPhase * 360f) % 360f
-        Color(android.graphics.Color.HSVToColor(floatArrayOf(cycledHue, hsv[1].coerceAtLeast(0.5f), hsv[2].coerceAtLeast(0.7f)))) to null
+        Color(android.graphics.Color.HSVToColor(floatArrayOf(cycledHue, 1f, 1f))) to null
     }
     TextEffectMode.WAVE -> {
-        val sweep = (animationPhase % 1f) * 400f
+        val sweep = (animationPhase % 1f) * 2000f
         base to Brush.linearGradient(
             colors = listOf(base, secondary ?: base, base),
-            start = Offset(sweep - 200f, 0f),
-            end = Offset(sweep + 200f, 0f),
+            start = Offset(sweep - 600f, 0f),
+            end = Offset(sweep + 600f, 0f),
             tileMode = TileMode.Repeated
         )
     }
