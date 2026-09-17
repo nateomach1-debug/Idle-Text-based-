@@ -26,14 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output209.txt
-          echo "=== Find combat zone selection screen file ===" > $OUT
-          find . -iname "*Zone*.kt" -o -iname "*CombatSelect*.kt" -o -iname "*CombatZone*.kt" >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== overrideColor usage across all kotlin files (file:line) ===" >> $OUT
-          grep -rn "overrideColor(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT 2>/dev/null || true
+          OUT=discovery_output210.txt
+          echo "=== ZoneSelectScreen.kt FULL ===" > $OUT
+          cat ./app/src/main/kotlin/com/yourname/idlerpg/ZoneSelectScreen.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output209.txt
+      - discovery_output210.txt
       
   apply-patch:
     name: Apply Patch Script
