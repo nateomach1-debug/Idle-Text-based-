@@ -1,10 +1,7 @@
 import sys
 
 BASE = "app/src/main/kotlin/com/yourname/idlerpg/"
-MODERATION_REPO = BASE + "SupabaseModerationRepository.kt"
-GAME_VIEW_MODEL = BASE + "GameViewModel.kt"
-MODERATION_SCREEN = BASE + "ModerationScreen.kt"
-MAIN_ACTIVITY = BASE + "MainActivity.kt"
+ZONE_SELECT = BASE + "ZoneSelectScreen.kt"
 
 
 def guarded_replace(path, old, new, label):
@@ -43,246 +40,51 @@ def check_braces(path):
 results = []
 
 # ===========================================================
-# 1. SupabaseModerationRepository.kt - add findCharacterIdByName
+# ZoneSelectScreen.kt - locked-zone dimming was mutating TextStyle.color
+# directly, which clobbers any brush (gradient/pulse/shimmer/wave/color
+# cycle) the style was carrying. Move the dimming to Modifier.alpha on
+# the container instead, so whatever the style actually renders (solid
+# color or brush) gets dimmed as a whole rather than color being
+# reconstructed from scratch.
 # ===========================================================
-old = '''    // ---------------------------------------------------------
-    // PREMIUM CURRENCY (GEMS) - MODERATOR GRANT
-    // ---------------------------------------------------------
+old = '''import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp'''
+new = '''import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp'''
+results.append(guarded_replace(ZONE_SELECT, old, new, "ZoneSelectScreen.kt import Modifier.alpha"))
 
-    suspend fun grantGems(characterId: String, amount: Long, reason: String): Result<Long> = runCatching {
-        client.postgrest.rpc("admin_grant_gems", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_amount", amount)
-            put("p_reason", reason)
-        }).decodeAs<Long>()
-    }
-}'''
-new = '''    // ---------------------------------------------------------
-    // PREMIUM CURRENCY (GEMS) - MODERATOR GRANT
-    // ---------------------------------------------------------
-
-    suspend fun grantGems(characterId: String, amount: Long, reason: String): Result<Long> = runCatching {
-        client.postgrest.rpc("admin_grant_gems", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_amount", amount)
-            put("p_reason", reason)
-        }).decodeAs<Long>()
-    }
-
-    // ---------------------------------------------------------
-    // CHARACTER LOOKUP BY DISPLAY NAME
-    // Moderators only ever see a player's display_name (the name
-    // shown in chat), never their raw character id - this resolves
-    // one to the other so the manual mute/grant tools can take the
-    // name a moderator actually has.
-    // ---------------------------------------------------------
-
-    suspend fun findCharacterIdByName(displayName: String): Result<String> = runCatching {
-        client.postgrest.rpc("admin_find_character_id", buildJsonObject {
-            put("p_display_name", displayName)
-        }).decodeAs<String>()
-    }
-}'''
-results.append(guarded_replace(MODERATION_REPO, old, new, "SupabaseModerationRepository.kt findCharacterIdByName"))
-
-# ===========================================================
-# 2. GameViewModel.kt - lookup error state + by-name moderator wrappers
-# ===========================================================
-old = '''    fun refreshModeration() {
-        if (!_isModerator.value) return
-        viewModelScope.launch {
-            _moderationState.value = _moderationState.value.copy(isLoading = true)
-            val reports = SupabaseModerationRepository.fetchPendingReports()
-            val appeals = SupabaseModerationRepository.fetchPendingAppeals()
-            _moderationState.value = ModerationState(reports, appeals, isLoading = false)
-        }
-    }
-
-    fun resolveReport(reportId: String, actionTaken: Boolean) {'''
-new = '''    fun refreshModeration() {
-        if (!_isModerator.value) return
-        viewModelScope.launch {
-            _moderationState.value = _moderationState.value.copy(isLoading = true)
-            val reports = SupabaseModerationRepository.fetchPendingReports()
-            val appeals = SupabaseModerationRepository.fetchPendingAppeals()
-            _moderationState.value = ModerationState(reports, appeals, isLoading = false)
-        }
-    }
-
-    private val _moderationLookupError = MutableStateFlow<String?>(null)
-    val moderationLookupError: StateFlow<String?> = _moderationLookupError.asStateFlow()
-
-    // Moderator convenience - resolves a display name (the name shown in
-    // chat) to its Supabase character id via admin_find_character_id, then
-    // delegates to the existing mute/unmute/grant RPCs directly. A failed
-    // lookup (typo, no such name) surfaces in moderationLookupError instead
-    // of silently doing nothing.
-    fun muteCharacterByNameAsModerator(displayName: String, durationSeconds: Int, reason: String) {
-        viewModelScope.launch {
-            _moderationLookupError.value = null
-            val idResult = SupabaseModerationRepository.findCharacterIdByName(displayName)
-            idResult.onFailure { _moderationLookupError.value = it.message ?: it.toString() }
-            idResult.onSuccess { characterId ->
-                SupabaseModerationRepository.muteCharacter(characterId, durationSeconds, reason)
-            }
-        }
-    }
-
-    fun unmuteCharacterByNameAsModerator(displayName: String) {
-        viewModelScope.launch {
-            _moderationLookupError.value = null
-            val idResult = SupabaseModerationRepository.findCharacterIdByName(displayName)
-            idResult.onFailure { _moderationLookupError.value = it.message ?: it.toString() }
-            idResult.onSuccess { characterId ->
-                SupabaseModerationRepository.unmuteCharacter(characterId)
-            }
-        }
-    }
-
-    fun grantGemsByNameAsModerator(displayName: String, amount: Long, reason: String) {
-        viewModelScope.launch {
-            _moderationLookupError.value = null
-            val idResult = SupabaseModerationRepository.findCharacterIdByName(displayName)
-            idResult.onFailure { _moderationLookupError.value = it.message ?: it.toString() }
-            idResult.onSuccess { characterId ->
-                SupabaseModerationRepository.grantGems(characterId, amount, reason)
-            }
-        }
-    }
-
-    fun resolveReport(reportId: String, actionTaken: Boolean) {'''
-results.append(guarded_replace(GAME_VIEW_MODEL, old, new, "GameViewModel.kt by-name moderator wrappers + lookup error state"))
-
-# ===========================================================
-# 3. ModerationScreen.kt - lookupError param + display, relabel fields
-# ===========================================================
-old = '''@Composable
-fun ModerationScreen(
-    state: ModerationState,
-    onResolveReport: (reportId: String, actionTaken: Boolean) -> Unit,
-    onResolveAppeal: (appealId: String, grant: Boolean, notes: String) -> Unit,
-    onMuteCharacter: (characterId: String, durationSeconds: Int, reason: String) -> Unit,
-    onUnmuteCharacter: (characterId: String) -> Unit,
-    onGrantGems: (String, Long, String) -> Unit = { _, _, _ -> },
-    modifier: Modifier = Modifier
-) {
-    val scrollState = rememberScrollState()
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(20.dp)
-            .verticalScroll(scrollState)
-    ) {
-        Text(
-            text = "Moderation",
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))'''
-new = '''@Composable
-fun ModerationScreen(
-    state: ModerationState,
-    onResolveReport: (reportId: String, actionTaken: Boolean) -> Unit,
-    onResolveAppeal: (appealId: String, grant: Boolean, notes: String) -> Unit,
-    onMuteCharacter: (characterId: String, durationSeconds: Int, reason: String) -> Unit,
-    onUnmuteCharacter: (characterId: String) -> Unit,
-    onGrantGems: (String, Long, String) -> Unit = { _, _, _ -> },
-    lookupError: String? = null,
-    modifier: Modifier = Modifier
-) {
-    val scrollState = rememberScrollState()
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(20.dp)
-            .verticalScroll(scrollState)
-    ) {
-        Text(
-            text = "Moderation",
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        if (lookupError != null) {
-            Spacer(modifier = Modifier.height(8.dp))
+old = '''        Column {
             Text(
-                text = lookupError,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
+                text = zone.name,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = MaterialTheme.typography.titleMedium.color.copy(alpha = contentAlpha)
+                )
             )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))'''
-results.append(guarded_replace(MODERATION_SCREEN, old, new, "ModerationScreen.kt lookupError param + display"))
-
-old = '''        Text(text = "Grant Gems", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = characterId,
-            onValueChange = { characterId = it },
-            label = { Text(text = "Character ID") },
-            modifier = Modifier.fillMaxWidth()
-        )'''
-new = '''        Text(text = "Grant Gems", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = characterId,
-            onValueChange = { characterId = it },
-            label = { Text(text = "Character Name") },
-            modifier = Modifier.fillMaxWidth()
-        )'''
-results.append(guarded_replace(MODERATION_SCREEN, old, new, "ModerationScreen.kt relabel Grant Gems field"))
-
-old = '''        Text(text = "Manual Mute", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = characterId,
-            onValueChange = { characterId = it },
-            label = { Text(text = "Character ID") },
-            modifier = Modifier.fillMaxWidth()
-        )'''
-new = '''        Text(text = "Manual Mute", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = characterId,
-            onValueChange = { characterId = it },
-            label = { Text(text = "Character Name") },
-            modifier = Modifier.fillMaxWidth()
-        )'''
-results.append(guarded_replace(MODERATION_SCREEN, old, new, "ModerationScreen.kt relabel Manual Mute field"))
-
-# ===========================================================
-# 4. MainActivity.kt - rewire callbacks to by-name functions, pass lookupError
-# ===========================================================
-old = '''                                ModerationScreen(
-                                    state = moderation,
-                                    onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
-                                    onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
-                                    onMuteCharacter = { id, dur, reason -> gameViewModel.muteCharacterAsModerator(id, dur, reason) },
-                                    onUnmuteCharacter = { id -> gameViewModel.unmuteCharacterAsModerator(id) },
-                                    onGrantGems = { id, amount, reason -> gameViewModel.grantGemsAsModerator(id, amount, reason) }
-                                )'''
-new = '''                                val moderationLookupError by gameViewModel.moderationLookupError.collectAsState()
-                                ModerationScreen(
-                                    state = moderation,
-                                    onResolveReport = { id, action -> gameViewModel.resolveReport(id, action) },
-                                    onResolveAppeal = { id, grant, notes -> gameViewModel.resolveAppeal(id, grant, notes) },
-                                    onMuteCharacter = { name, dur, reason -> gameViewModel.muteCharacterByNameAsModerator(name, dur, reason) },
-                                    onUnmuteCharacter = { name -> gameViewModel.unmuteCharacterByNameAsModerator(name) },
-                                    onGrantGems = { name, amount, reason -> gameViewModel.grantGemsByNameAsModerator(name, amount, reason) },
-                                    lookupError = moderationLookupError
-                                )'''
-results.append(guarded_replace(MAIN_ACTIVITY, old, new, "MainActivity.kt rewire moderation callbacks to by-name"))
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = zone.monsterNames.joinToString(", "),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = MaterialTheme.typography.labelSmall.color.copy(alpha = contentAlpha)
+                )
+            )
+        }'''
+new = '''        Column(modifier = Modifier.alpha(contentAlpha)) {
+            Text(
+                text = zone.name,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = zone.monsterNames.joinToString(", "),
+                style = MaterialTheme.typography.labelSmall
+            )
+        }'''
+results.append(guarded_replace(ZONE_SELECT, old, new, "ZoneSelectScreen.kt dim via Modifier.alpha instead of mutating color"))
 
 print()
 print("=== Brace balance check ===")
-for p in [MODERATION_REPO, GAME_VIEW_MODEL, MODERATION_SCREEN, MAIN_ACTIVITY]:
-    check_braces(p)
+check_braces(ZONE_SELECT)
 
 if not all(results):
     print()
