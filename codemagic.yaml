@@ -26,29 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output211.txt
-          echo "=== Monster data class + catalog (names, stats) ===" > $OUT
-          grep -n "data class Monster\|object MonsterCatalog\|val monsters = listOf" -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== Full monster catalog listing (find the file first) ===" >> $OUT
-          grep -rln "data class Monster(" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== ItemDefinition + ItemStats data classes ===" >> $OUT
-          grep -n "data class ItemDefinition\|data class ItemStats" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== The 13 elemental magic weapon item definitions (Staff/Battlestaff/Mystic) ===" >> $OUT
-          grep -n "Elemental Staff\|Elemental Battlestaff\|Mystic Staff\|Fire Staff\|Earth Staff\|Water Staff\|Wind Staff" -B 2 -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT 2>/dev/null || true
+          OUT=discovery_output212.txt
+          echo "=== Monster catalog full listing (names/stats) ===" > $OUT
+          grep -n "Monster(" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
           echo "=== equippedWeapon function full body ===" >> $OUT
-          grep -n "fun equippedWeapon" -A 30 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT 2>/dev/null || true
+          grep -n "fun equippedWeapon" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== tickCombat accuracy/damage calculation section ===" >> $OUT
-          grep -n "fun tickCombat" -A 80 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
+          echo "=== tickCombat function full body ===" >> $OUT
+          grep -n "fun tickCombat" -A 90 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== combatStyle field/enum ===" >> $OUT
-          grep -n "combatStyle\|CombatStyle" -B 2 -A 5 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT 2>/dev/null || true
+          echo "=== The 13 elemental magic weapon ids/names only (compact) ===" >> $OUT
+          grep -n "id = \"fire_\|id = \"earth_\|id = \"water_\|id = \"wind_" ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output211.txt
+      - discovery_output212.txt
       
   apply-patch:
     name: Apply Patch Script
