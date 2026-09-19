@@ -26,20 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output213.txt
-          echo "=== equippedWeapon function full body (GameViewModel.kt) ===" > $OUT
-          grep -n "fun equippedWeapon" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
+          OUT=discovery_output214.txt
+          echo "=== Weapon data class ===" > $OUT
+          grep -n "data class Weapon" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== CombatLoadout data class ===" >> $OUT
-          grep -n "data class CombatLoadout" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
+          echo "=== rest of resolveAttack (from line 414 onward) + AttackResult data class ===" >> $OUT
+          sed -n '414,450p' ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== resolveAttack function full body ===" >> $OUT
-          grep -n "fun resolveAttack" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
+          echo "=== data class AttackResult ===" >> $OUT
+          grep -n "data class AttackResult" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== All monster ids/names compact (whole catalog) ===" >> $OUT
-          grep -n "id = \"\|name = \"" ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
+          echo "=== Mystic Staff item ids ===" >> $OUT
+          grep -n "id = \"fire_mystic\|id = \"earth_mystic\|id = \"water_mystic\|id = \"wind_mystic\|mystic_staff" ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output213.txt
+      - discovery_output214.txt
       
   apply-patch:
     name: Apply Patch Script
