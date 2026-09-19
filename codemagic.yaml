@@ -26,20 +26,20 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output212.txt
-          echo "=== Monster catalog full listing (names/stats) ===" > $OUT
-          grep -n "Monster(" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
+          OUT=discovery_output213.txt
+          echo "=== equippedWeapon function full body (GameViewModel.kt) ===" > $OUT
+          grep -n "fun equippedWeapon" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== equippedWeapon function full body ===" >> $OUT
-          grep -n "fun equippedWeapon" -A 25 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
+          echo "=== CombatLoadout data class ===" >> $OUT
+          grep -n "data class CombatLoadout" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== tickCombat function full body ===" >> $OUT
-          grep -n "fun tickCombat" -A 90 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
+          echo "=== resolveAttack function full body ===" >> $OUT
+          grep -n "fun resolveAttack" -A 40 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== The 13 elemental magic weapon ids/names only (compact) ===" >> $OUT
-          grep -n "id = \"fire_\|id = \"earth_\|id = \"water_\|id = \"wind_" ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT 2>/dev/null || true
+          echo "=== All monster ids/names compact (whole catalog) ===" >> $OUT
+          grep -n "id = \"\|name = \"" ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output212.txt
+      - discovery_output213.txt
       
   apply-patch:
     name: Apply Patch Script
