@@ -1,175 +1,325 @@
 #!/usr/bin/env python3
 """
-patch_M1_more_monsters.py
+patch_M2_monster_picker.py
 
-ADDS 18 new monsters to the 6 existing zones in CombatSystem.kt (ZoneCatalog).
-Purely additive: every existing monster block (goblin_grunt, wraith, wild_cow,
-feral_chicken, marsh_snake, gem_hoarder, green_dragon, blue_dragon) is left
-byte-for-byte untouched; new Monster(...) entries are appended after the last
-existing monster in each zone's monsters = listOf(...).
+1) Monster-selection popup: tapping an unlocked zone now opens a dialog listing
+   every monster in that zone (name, Lv., "Weak: <type>"); tapping one starts
+   fighting THAT monster. The choice is remembered per character (device-local
+   SharedPreferences) and used for live combat (every re-search after a kill) AND
+   offline combat progress. Zones entered without a pick fall back to random.
+2) Weakness display: on the popup and on each zone card of ZoneSelectScreen
+   ("Goblin Scout (Wind) • Goblin Shaman (Earth) ...").
 
-No new zones. Loot tables only use item ids that existing monsters already drop.
-Run from the repo root. Safe to re-run (idempotent). All-or-nothing: if any
-anchor is missing/ambiguous nothing is written and the script exits 1.
+Files touched: CombatSystem.kt, GameViewModel.kt, MainActivity.kt, ZoneSelectScreen.kt
+Requires patch_L (DamageType / Monster.weakness) to already be applied.
+Independent of patch_M1 (works with or without the extra monsters).
+Run from the repo root. Idempotent. All-or-nothing: if any anchor is
+missing/ambiguous, nothing is written and the script exits 1.
 """
 import os
 import sys
 
 SRC = "app/src/main/kotlin/com/yourname/idlerpg"
-CS = os.path.join(SRC, "CombatSystem.kt")
-
-
-def monster(mid, name, lvl, hp, dfn, weak, main, rare):
-    def loot(entries):
-        if not entries:
-            return "listOf()"
-        lines = ",\n".join(
-            '                        LootEntry("%s", %d, %d, %s)' % (i, a, b, c)
-            for (i, a, b, c) in entries
-        )
-        return "listOf(\n" + lines + "\n                    )"
-
-    return (
-        "                Monster(\n"
-        '                    id = "%s",\n'
-        '                    name = "%s",\n'
-        "                    levelRequirement = %d,\n"
-        "                    maxHealth = %d,\n"
-        "                    defenseRating = %d,\n"
-        "                    weakness = DamageType.%s,\n"
-        "                    mainLootTable = %s,\n"
-        "                    rareLootTable = %s\n"
-        "                )"
-    ) % (mid, name, lvl, hp, dfn, weak, loot(main), loot(rare))
-
-
-# (zone_id_after, last-lines-of-last-existing-monster, [new monsters])
-NEW = {
-    "goblin_camp": [
-        monster("goblin_scout", "Goblin Scout", 1, 20, 3, "WIND",
-                [("goblin_ear", 1, 1, "35.0")], [("rusty_dagger", 1, 1, "1.5")]),
-        monster("goblin_shaman", "Goblin Shaman", 4, 32, 7, "EARTH",
-                [("goblin_ear", 1, 2, "45.0")], [("rusty_dagger", 1, 1, "2.5")]),
-        monster("goblin_brute", "Goblin Brute", 7, 50, 12, "WATER",
-                [("goblin_ear", 2, 3, "50.0")], [("rusty_dagger", 1, 1, "4.0")]),
-    ],
-    "farmland_outskirts": [
-        monster("crop_crow", "Crop Crow", 2, 14, 2, "EARTH",
-                [("feathers", 1, 3, "70.0"), ("raw_chicken", 1, 1, "35.0")], []),
-        monster("angry_goat", "Angry Goat", 4, 30, 6, "WIND",
-                [("cowhide", 1, 1, "55.0"), ("raw_beef", 1, 2, "55.0")], []),
-        monster("haunted_scarecrow", "Haunted Scarecrow", 6, 42, 9, "FIRE",
-                [("feathers", 2, 4, "60.0"), ("cowhide", 1, 1, "30.0")], []),
-    ],
-    "serpent_marsh": [
-        monster("bog_toad", "Bog Toad", 10, 30, 8, "FIRE",
-                [("snake_hide", 1, 1, "35.0")], []),
-        monster("swamp_leech", "Swamp Leech", 12, 40, 12, "MELEE",
-                [("snake_hide", 1, 1, "45.0")], []),
-        monster("bog_lurker", "Bog Lurker", 14, 55, 16, "RANGED",
-                [("snake_hide", 1, 2, "60.0")], [("uncut_gemstone", 1, 1, "2.0")]),
-    ],
-    "gem_cavern": [
-        monster("cave_bat", "Cave Bat", 15, 32, 12, "WIND",
-                [("uncut_gemstone", 1, 1, "25.0")], []),
-        monster("gemstone_spider", "Gemstone Spider", 17, 52, 18, "FIRE",
-                [("uncut_gemstone", 1, 1, "40.0")],
-                [("uncut_opal", 1, 1, "5.0"), ("uncut_jade", 1, 1, "3.5"),
-                 ("uncut_red_topaz", 1, 1, "2.5"), ("uncut_sapphire", 1, 1, "1.5")]),
-        monster("crystal_golem", "Crystal Golem", 19, 70, 22, "MELEE",
-                [("uncut_gemstone", 1, 3, "60.0")],
-                [("uncut_sapphire", 1, 1, "3.0"), ("uncut_emerald", 1, 1, "2.0"),
-                 ("uncut_ruby", 1, 1, "1.2"), ("uncut_diamond", 1, 1, "0.6")]),
-    ],
-    "shadow_ruins": [
-        monster("restless_skeleton", "Restless Skeleton", 20, 70, 22, "MELEE",
-                [("ectoplasm", 1, 1, "30.0")],
-                [("rusty_dagger", 1, 1, "6.0"), ("wraith_essence", 1, 1, "0.2")]),
-        monster("shadow_stalker", "Shadow Stalker", 26, 100, 31, "RANGED",
-                [("ectoplasm", 1, 3, "60.0")], [("wraith_essence", 1, 1, "0.8")]),
-        monster("ruin_banshee", "Ruin Banshee", 33, 130, 40, "EARTH",
-                [("ectoplasm", 2, 4, "65.0")], [("wraith_essence", 1, 1, "1.2")]),
-    ],
-    "dragons_lair": [
-        monster("dragon_whelp", "Dragon Whelp", 60, 160, 50, "RANGED",
-                [("green_dragonhide", 1, 1, "30.0")], [("uncut_dragonstone", 1, 1, "0.4")]),
-        monster("red_dragon", "Red Dragon", 70, 300, 85, "WATER",
-                [("blue_dragonhide", 1, 1, "45.0")], [("uncut_dragonstone", 1, 1, "1.0")]),
-        monster("black_dragon", "Black Dragon", 75, 340, 95, "EARTH",
-                [("blue_dragonhide", 1, 1, "60.0")], [("uncut_dragonstone", 1, 1, "1.5")]),
-    ],
+FILES = {
+    "CombatSystem.kt": os.path.join(SRC, "CombatSystem.kt"),
+    "GameViewModel.kt": os.path.join(SRC, "GameViewModel.kt"),
+    "MainActivity.kt": os.path.join(SRC, "MainActivity.kt"),
+    "ZoneSelectScreen.kt": None,  # located below (lives under ui/screens or flat)
 }
 
-L16 = "                )"
-L12 = "            )"
-L8 = "        ),"
-
-# For each zone: the tail of the LAST EXISTING monster + what follows it. The
-# new monsters are inserted between the last monster's closing paren and the
-# closing paren of the zone's monsters = listOf(...).
-EDITS = []
+EDITS = []  # (file_key, label, old, new)
 
 
-def add(zone_id, prefix, follower, closing_zone):
-    old = prefix + "\n" + L16 + "\n" + L12 + "\n" + closing_zone + follower
-    new = (prefix + "\n" + L16 + ",\n" + ",\n".join(NEW[zone_id]) + "\n"
-           + L12 + "\n" + closing_zone + follower)
-    EDITS.append((zone_id, old, new))
+def edit(fkey, label, old, new):
+    EDITS.append((fkey, label, old, new))
 
 
-add("goblin_camp",
-    '                        LootEntry("rusty_dagger", 1, 1, 2.0)\n                    )',
-    '\n        Zone(\n            id = "shadow_ruins",', L8)
-add("shadow_ruins",
-    '                        LootEntry("wraith_essence", 1, 1, 0.5)\n                    )',
-    '\n        Zone(\n            id = "farmland_outskirts",', L8)
-add("farmland_outskirts",
-    '                        LootEntry("feathers", 1, 5, 70.0)\n                    ),\n'
-    '                    rareLootTable = listOf()',
-    '\n        Zone(\n            id = "serpent_marsh",', L8)
-add("serpent_marsh",
-    '                        LootEntry("snake_hide", 1, 1, 55.0)\n                    ),\n'
-    '                    rareLootTable = listOf()',
-    '\n        Zone(\n            id = "gem_cavern",', L8)
-add("gem_cavern",
-    '                        LootEntry("uncut_celestial_crystal", 1, 1, 0.05)\n                    )',
-    '\n        Zone(\n            id = "dragons_lair",', L8)
-add("dragons_lair",
-    '                        LootEntry("blue_dragonhide", 1, 1, 55.0)\n                    ),\n'
-    '                    rareLootTable = listOf()',
-    "\n    )", "        )")
+# ---------------------------------------------------------------- CombatSystem.kt
+edit("CombatSystem.kt", "DamageType.displayName()",
+     "enum class DamageType { MELEE, RANGED, FIRE, EARTH, WATER, WIND }",
+     "enum class DamageType { MELEE, RANGED, FIRE, EARTH, WATER, WIND }\n"
+     "\n"
+     "// Player-facing label for a damage type (zone screen + monster picker).\n"
+     "fun DamageType.displayName(): String = when (this) {\n"
+     "    DamageType.MELEE -> \"Melee\"\n"
+     "    DamageType.RANGED -> \"Ranged\"\n"
+     "    DamageType.FIRE -> \"Fire\"\n"
+     "    DamageType.EARTH -> \"Earth\"\n"
+     "    DamageType.WATER -> \"Water\"\n"
+     "    DamageType.WIND -> \"Wind\"\n"
+     "}")
+
+edit("CombatSystem.kt", "CombatService target provider",
+     "    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()",
+     "    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()\n"
+     "\n"
+     "    // Which monster the player picked to hunt (monster id), supplied per character by\n"
+     "    // GameViewModel from persisted settings. Null/unknown/not-in-this-zone -> random pick.\n"
+     "    var targetMonsterIdProvider: (String) -> String? = { null }\n"
+     "\n"
+     "    private fun targetMonsterFor(characterId: String, zone: Zone): Monster? {\n"
+     "        val targetId = targetMonsterIdProvider(characterId) ?: return null\n"
+     "        return zone.monsters.find { it.id == targetId }\n"
+     "    }")
+
+edit("CombatSystem.kt", "live search uses target",
+     "        val monster = session.zone.monsters.random()",
+     "        val monster = targetMonsterFor(characterId, session.zone) ?: session.zone.monsters.random()")
+
+edit("CombatSystem.kt", "offline averages use target",
+     "        val avgMonsterHealth = zone.monsters.map { it.maxHealth }.average()\n"
+     "        val avgMonsterDefense = zone.monsters.map { it.defenseRating }.average()",
+     "        // If the player picked a specific monster, offline progress assumes they keep\n"
+     "        // fighting only that monster; otherwise average across the zone as before.\n"
+     "        val targetMonster = targetMonsterFor(characterId, zone)\n"
+     "        val offlinePool: List<Monster> = if (targetMonster != null) listOf(targetMonster) else zone.monsters\n"
+     "        val avgMonsterHealth = offlinePool.map { it.maxHealth }.average()\n"
+     "        val avgMonsterDefense = offlinePool.map { it.defenseRating }.average()")
+
+edit("CombatSystem.kt", "offline loot uses target",
+     "            val monster = zone.monsters.random()\n"
+     "            rollLoot(state, monster, dropRateMultiplier)",
+     "            val monster = offlinePool.random()\n"
+     "            rollLoot(state, monster, dropRateMultiplier)")
+
+# ---------------------------------------------------------------- GameViewModel.kt
+edit("GameViewModel.kt", "import ZoneMonsterSummary",
+     "import com.yourname.idlerpg.ui.screens.ZoneSummary",
+     "import com.yourname.idlerpg.ui.screens.ZoneSummary\n"
+     "import com.yourname.idlerpg.ui.screens.ZoneMonsterSummary")
+
+edit("GameViewModel.kt", "persisted target provider",
+     "    private val settingsPrefs = application.getSharedPreferences(\"idlerpg_prefs\", android.content.Context.MODE_PRIVATE)",
+     "    private val settingsPrefs = application.getSharedPreferences(\"idlerpg_prefs\", android.content.Context.MODE_PRIVATE)\n"
+     "\n"
+     "    // Monster the player picked in the zone popup, stored per character (device-local).\n"
+     "    // CombatService reads it lazily whenever it picks the next monster, including when\n"
+     "    // resolving offline combat progress after a restart.\n"
+     "    private fun combatTargetKey(characterId: String): String = \"combat_target_monster_\" + characterId\n"
+     "\n"
+     "    init {\n"
+     "        combatService.targetMonsterIdProvider = { characterId ->\n"
+     "            settingsPrefs.getString(combatTargetKey(characterId), null)\n"
+     "        }\n"
+     "    }")
+
+edit("GameViewModel.kt", "zoneSummaries carries monsters",
+     "                monsterNames = zone.monsters.map { it.name }\n"
+     "            )",
+     "                monsterNames = zone.monsters.map { it.name },\n"
+     "                monsters = zone.monsters.map { monster ->\n"
+     "                    ZoneMonsterSummary(\n"
+     "                        monsterId = monster.id,\n"
+     "                        name = monster.name,\n"
+     "                        level = monster.levelRequirement,\n"
+     "                        weaknessLabel = monster.weakness?.displayName() ?: \"None\"\n"
+     "                    )\n"
+     "                }\n"
+     "            )")
+
+edit("GameViewModel.kt", "enterCombatZone signature",
+     "    fun enterCombatZone(zoneId: String): ServiceResult<CombatSession> {",
+     "    fun enterCombatZone(zoneId: String, monsterId: String? = null): ServiceResult<CombatSession> {")
+
+edit("GameViewModel.kt", "enterCombatZone persists pick",
+     "            offlineIdleService.optIntoOfflineCombat(characterId, zoneId)",
+     "            // Remember which monster was picked (or clear it -> random) so live combat and\n"
+     "            // offline progress both keep targeting it. Ignored if it isn't in this zone.\n"
+     "            val chosenMonsterId = monsterId?.takeIf { pickedId ->\n"
+     "                ZoneCatalog.zones.find { it.id == zoneId }?.monsters?.any { it.id == pickedId } == true\n"
+     "            }\n"
+     "            if (chosenMonsterId != null) {\n"
+     "                settingsPrefs.edit().putString(combatTargetKey(characterId), chosenMonsterId).apply()\n"
+     "            } else {\n"
+     "                settingsPrefs.edit().remove(combatTargetKey(characterId)).apply()\n"
+     "            }\n"
+     "            offlineIdleService.optIntoOfflineCombat(characterId, zoneId)")
+
+# ---------------------------------------------------------------- MainActivity.kt
+edit("MainActivity.kt", "call site passes monsterId",
+     "                                    onZoneSelected = { zoneId ->\n"
+     "                                        val result = gameViewModel.enterCombatZone(zoneId)",
+     "                                    onZoneSelected = { zoneId, monsterId ->\n"
+     "                                        val result = gameViewModel.enterCombatZone(zoneId, monsterId)")
+
+# ---------------------------------------------------------------- ZoneSelectScreen.kt
+edit("ZoneSelectScreen.kt", "imports",
+     "import androidx.compose.runtime.Composable",
+     "import androidx.compose.foundation.rememberScrollState\n"
+     "import androidx.compose.foundation.verticalScroll\n"
+     "import androidx.compose.runtime.Composable\n"
+     "import androidx.compose.runtime.getValue\n"
+     "import androidx.compose.runtime.mutableStateOf\n"
+     "import androidx.compose.runtime.saveable.rememberSaveable\n"
+     "import androidx.compose.runtime.setValue")
+
+edit("ZoneSelectScreen.kt", "ZoneSummary.monsters",
+     "    val monsterNames: List<String>\n)",
+     "    val monsterNames: List<String>,\n"
+     "    val monsters: List<ZoneMonsterSummary> = emptyList()\n"
+     ")\n"
+     "\n"
+     "// One selectable monster in a zone. weaknessLabel is display text (\"Fire\", \"Melee\", ...).\n"
+     "data class ZoneMonsterSummary(\n"
+     "    val monsterId: String,\n"
+     "    val name: String,\n"
+     "    val level: Int,\n"
+     "    val weaknessLabel: String\n"
+     ")")
+
+edit("ZoneSelectScreen.kt", "onZoneSelected signature",
+     "    onZoneSelected: (String) -> Unit,",
+     "    onZoneSelected: (zoneId: String, monsterId: String) -> Unit,")
+
+edit("ZoneSelectScreen.kt", "picker state",
+     "    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {",
+     "    var pickerZoneId by rememberSaveable { mutableStateOf<String?>(null) }\n"
+     "\n"
+     "    Column(modifier = modifier.fillMaxSize().padding(20.dp)) {")
+
+edit("ZoneSelectScreen.kt", "caption above list",
+     "        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {",
+     "        Text(\n"
+     "            text = \"Tap a zone to choose a monster. Brackets show each monster's weakness.\",\n"
+     "            style = MaterialTheme.typography.labelSmall,\n"
+     "            modifier = Modifier.alpha(0.7f)\n"
+     "        )\n"
+     "        Spacer(modifier = Modifier.height(10.dp))\n"
+     "\n"
+     "        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {")
+
+edit("ZoneSelectScreen.kt", "zone tap opens picker + dialog host",
+     "                    onClick = { if (playerLevel >= zone.levelRequirement) onZoneSelected(zone.zoneId) }\n"
+     "                )\n"
+     "            }\n"
+     "        }\n"
+     "    }\n"
+     "}\n",
+     "                    onClick = { if (playerLevel >= zone.levelRequirement) pickerZoneId = zone.zoneId }\n"
+     "                )\n"
+     "            }\n"
+     "        }\n"
+     "    }\n"
+     "\n"
+     "    val pickerZone = zones.find { it.zoneId == pickerZoneId }\n"
+     "    if (pickerZone != null) {\n"
+     "        MonsterPickerDialog(\n"
+     "            zone = pickerZone,\n"
+     "            onPick = { monsterId ->\n"
+     "                pickerZoneId = null\n"
+     "                onZoneSelected(pickerZone.zoneId, monsterId)\n"
+     "            },\n"
+     "            onDismiss = { pickerZoneId = null }\n"
+     "        )\n"
+     "    }\n"
+     "}\n")
+
+edit("ZoneSelectScreen.kt", "picker dialog composable",
+     "@Composable\nprivate fun ZoneCard(zone: ZoneSummary, isUnlocked: Boolean, onClick: () -> Unit) {",
+     "@Composable\n"
+     "private fun MonsterPickerDialog(\n"
+     "    zone: ZoneSummary,\n"
+     "    onPick: (String) -> Unit,\n"
+     "    onDismiss: () -> Unit\n"
+     ") {\n"
+     "    AlertDialog(\n"
+     "        onDismissRequest = onDismiss,\n"
+     "        title = { Text(text = zone.name) },\n"
+     "        text = {\n"
+     "            Column(\n"
+     "                modifier = Modifier.verticalScroll(rememberScrollState()),\n"
+     "                verticalArrangement = Arrangement.spacedBy(8.dp)\n"
+     "            ) {\n"
+     "                Text(\n"
+     "                    text = \"Choose which monster to fight:\",\n"
+     "                    style = MaterialTheme.typography.bodyMedium\n"
+     "                )\n"
+     "                zone.monsters.forEach { monster ->\n"
+     "                    Row(\n"
+     "                        modifier = Modifier\n"
+     "                            .fillMaxWidth()\n"
+     "                            .clip(RoundedCornerShape(10.dp))\n"
+     "                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))\n"
+     "                            .clickable { onPick(monster.monsterId) }\n"
+     "                            .padding(12.dp),\n"
+     "                        horizontalArrangement = Arrangement.SpaceBetween,\n"
+     "                        verticalAlignment = Alignment.CenterVertically\n"
+     "                    ) {\n"
+     "                        Column(modifier = Modifier.weight(1f)) {\n"
+     "                            Text(text = monster.name, style = MaterialTheme.typography.titleSmall)\n"
+     "                            Text(text = \"Lv. \" + monster.level, style = MaterialTheme.typography.labelSmall)\n"
+     "                        }\n"
+     "                        Text(\n"
+     "                            text = \"Weak: \" + monster.weaknessLabel,\n"
+     "                            style = MaterialTheme.typography.labelMedium\n"
+     "                        )\n"
+     "                    }\n"
+     "                }\n"
+     "            }\n"
+     "        },\n"
+     "        confirmButton = {},\n"
+     "        dismissButton = {\n"
+     "            TextButton(onClick = onDismiss) { Text(text = \"Cancel\") }\n"
+     "        }\n"
+     "    )\n"
+     "}\n"
+     "\n"
+     "@Composable\nprivate fun ZoneCard(zone: ZoneSummary, isUnlocked: Boolean, onClick: () -> Unit) {")
+
+edit("ZoneSelectScreen.kt", "zone card text column weight",
+     "        Column(modifier = Modifier.alpha(contentAlpha)) {",
+     "        Column(modifier = Modifier.weight(1f).padding(end = 8.dp).alpha(contentAlpha)) {")
+
+edit("ZoneSelectScreen.kt", "zone card weakness summary",
+     "                text = zone.monsterNames.joinToString(\", \"),",
+     "                text = if (zone.monsters.isNotEmpty()) {\n"
+     "                    zone.monsters.joinToString(\"  \\u2022  \") { it.name + \" (\" + it.weaknessLabel + \")\" }\n"
+     "                } else {\n"
+     "                    zone.monsterNames.joinToString(\", \")\n"
+     "                },")
+
+
+def find_zone_select():
+    for root, _dirs, files in os.walk("app/src/main"):
+        if "ZoneSelectScreen.kt" in files:
+            return os.path.join(root, "ZoneSelectScreen.kt")
+    return None
 
 
 def main():
-    if not os.path.exists(CS):
-        print("FAIL: %s not found (run from repo root)" % CS)
-        sys.exit(1)
-    with open(CS, encoding="utf-8", newline="") as f:
-        content = f.read()
+    FILES["ZoneSelectScreen.kt"] = find_zone_select()
+    contents = {}
+    for key, path in FILES.items():
+        if not path or not os.path.exists(path):
+            print("FAIL: %s not found (run from repo root)" % key)
+            sys.exit(1)
+        with open(path, encoding="utf-8", newline="") as f:
+            contents[key] = f.read()
 
-    plan, failed = [], False
-    for zone_id, old, new in EDITS:
-        if new in content:
-            print("SKIP  %-20s already applied" % zone_id)
+    original = dict(contents)
+    failed, applied, skipped = False, 0, 0
+    for fkey, label, old, new in EDITS:
+        if new in original[fkey]:
+            print("SKIP  %-16s %s (already applied)" % (fkey, label))
+            skipped += 1
             continue
-        n = content.count(old)
-        if n == 1:
-            plan.append((zone_id, old, new))
-        else:
+        n = contents[fkey].count(old)
+        if n != 1:
+            print("FAIL  %-16s %s: anchor matched %d times (expected 1)" % (fkey, label, n))
             failed = True
-            print("FAIL  %-20s anchor matched %d times (expected 1)" % (zone_id, n))
+            continue
+        contents[fkey] = contents[fkey].replace(old, new, 1)
+        print("OK    %-16s %s" % (fkey, label))
+        applied += 1
     if failed:
         print("Aborting - nothing written.")
         sys.exit(1)
 
-    for zone_id, old, new in plan:
-        content = content.replace(old, new, 1)
-        print("OK    %-20s +%d monsters" % (zone_id, len(NEW[zone_id])))
-
-    if plan:
-        with open(CS, "w", encoding="utf-8", newline="") as f:
-            f.write(content)
-    print("Done. %d zone(s) patched, %d already applied." % (len(plan), len(EDITS) - len(plan)))
+    for key, path in FILES.items():
+        if contents[key] != original[key]:
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                f.write(contents[key])
+    print("Done. %d edit(s) applied, %d already present." % (applied, skipped))
 
 
 if __name__ == "__main__":
