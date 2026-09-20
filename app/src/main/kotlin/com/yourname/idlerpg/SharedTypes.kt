@@ -46,6 +46,7 @@ data class ItemDefinition(
     val isRealMoneyPurchasable: Boolean = false,
     val equipSlot: EquipSlot? = null,
     val combatStyle: CombatStyle? = null,
+    val elementalType: DamageType? = null,
     val levelRequired: Int = 1,
     val skillRequired: String? = null,
     val stats: ItemStats = ItemStats(),

@@ -882,7 +882,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             style = style,
             attackSpeedSeconds = 2.4,
             baseAccuracy = 5 + def.stats.accuracyBonus,
-            baseMaxHit = 1 + def.stats.maxHitBonus
+            baseMaxHit = 1 + def.stats.maxHitBonus,
+            elementalType = def.elementalType
         )
     }
 
@@ -1067,6 +1068,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
+        // Elemental/style weakness matching - MAGIC uses the weapon's specific
+        // element (null for the non-elemental starter Staff, matching nothing),
+        // RANGED/MELEE match monsters weak to those whole combat styles.
+        val damageType: DamageType? = when (weapon?.style) {
+            CombatStyle.MAGIC -> weapon.elementalType
+            CombatStyle.RANGED -> DamageType.RANGED
+            else -> DamageType.MELEE
+        }
+
         combatActionProgressSeconds += elapsedSeconds
         if (combatActionProgressSeconds < attackSpeedSeconds) {
             refreshCombatView()
@@ -1085,7 +1095,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 equippedWeapon = weapon,
                 equippedSpell = null,
                 autoHealThresholdPercent = inventoryService.inventoryFor(characterId).autoHealThresholdPercent,
-                autoFleeThresholdPercent = inventoryService.inventoryFor(characterId).autoFleeThresholdPercent
+                autoFleeThresholdPercent = inventoryService.inventoryFor(characterId).autoFleeThresholdPercent,
+                damageType = damageType
             )
 
             val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit, minHit)
@@ -1097,7 +1108,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 lastDamageDealt = attack.damageDealt
 
                 if (attack.didHit) {
-                    log.add(CombatLogEntry("You hit for " + attack.damageDealt + "."))
+                    val weaknessNote = if (attack.wasWeaknessHit) " Super effective!" else ""
+                    log.add(CombatLogEntry("You hit for " + attack.damageDealt + "." + weaknessNote))
                     val xpGrant = progressionService.grantXp(characterId, trainingSkill, (attack.damageDealt * 4 + 5).toLong(), guildXpBonusEffects() + capeBonusEffects(characterId))
                     if (xpGrant is ServiceResult.Success) refreshSkills()
                 } else {

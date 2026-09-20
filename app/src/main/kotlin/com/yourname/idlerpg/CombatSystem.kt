@@ -4,12 +4,15 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.random.Random
 
+enum class DamageType { MELEE, RANGED, FIRE, EARTH, WATER, WIND }
+
 data class Weapon(
     val name: String,
     val style: CombatStyle,
     val attackSpeedSeconds: Double,
     val baseAccuracy: Int,
-    val baseMaxHit: Int
+    val baseMaxHit: Int,
+    val elementalType: DamageType? = null
 )
 
 data class Spell(
@@ -50,7 +53,8 @@ data class Monster(
     val maxHealth: Int,
     val defenseRating: Int,
     val mainLootTable: List<LootEntry>,
-    val rareLootTable: List<LootEntry>
+    val rareLootTable: List<LootEntry>,
+    val weakness: DamageType? = null
 )
 
 data class Zone(
@@ -73,6 +77,7 @@ object ZoneCatalog {
                     levelRequirement = 1,
                     maxHealth = 25,
                     defenseRating = 5,
+                    weakness = DamageType.RANGED,
                     mainLootTable = listOf(
                         LootEntry("goblin_ear", 1, 2, 40.0)
                     ),
@@ -93,6 +98,7 @@ object ZoneCatalog {
                     levelRequirement = 20,
                     maxHealth = 80,
                     defenseRating = 25,
+                    weakness = DamageType.FIRE,
                     mainLootTable = listOf(
                         LootEntry("ectoplasm", 1, 3, 55.0)
                     ),
@@ -113,6 +119,7 @@ object ZoneCatalog {
                     levelRequirement = 1,
                     maxHealth = 20,
                     defenseRating = 3,
+                    weakness = DamageType.MELEE,
                     mainLootTable = listOf(
                         LootEntry("cowhide", 1, 1, 65.0),
                         LootEntry("raw_beef", 1, 2, 65.0)
@@ -125,6 +132,7 @@ object ZoneCatalog {
                     levelRequirement = 1,
                     maxHealth = 12,
                     defenseRating = 1,
+                    weakness = DamageType.RANGED,
                     mainLootTable = listOf(
                         LootEntry("raw_chicken", 1, 1, 65.0),
                         LootEntry("feathers", 1, 5, 70.0)
@@ -144,6 +152,7 @@ object ZoneCatalog {
                     levelRequirement = 10,
                     maxHealth = 35,
                     defenseRating = 10,
+                    weakness = DamageType.EARTH,
                     mainLootTable = listOf(
                         LootEntry("snake_hide", 1, 1, 55.0)
                     ),
@@ -162,6 +171,7 @@ object ZoneCatalog {
                     levelRequirement = 15,
                     maxHealth = 45,
                     defenseRating = 15,
+                    weakness = DamageType.WATER,
                     mainLootTable = listOf(
                         LootEntry("uncut_gemstone", 1, 2, 45.0)
                     ),
@@ -192,6 +202,7 @@ object ZoneCatalog {
                     levelRequirement = 60,
                     maxHealth = 220,
                     defenseRating = 65,
+                    weakness = DamageType.WIND,
                     mainLootTable = listOf(
                         LootEntry("green_dragonhide", 1, 1, 60.0)
                     ),
@@ -203,6 +214,7 @@ object ZoneCatalog {
                     levelRequirement = 65,
                     maxHealth = 260,
                     defenseRating = 75,
+                    weakness = DamageType.FIRE,
                     mainLootTable = listOf(
                         LootEntry("blue_dragonhide", 1, 1, 55.0)
                     ),
@@ -222,7 +234,8 @@ data class CombatLoadout(
     val equippedSpell: Spell?,
     val autoHealThresholdPercent: Int,
     val autoFleeThresholdPercent: Int,
-    val selectedPrayerId: String? = null
+    val selectedPrayerId: String? = null,
+    val damageType: DamageType? = null
 )
 
 enum class SessionState { SEARCHING, PAUSED, IN_COMBAT }
@@ -266,7 +279,8 @@ data class AttackResult(
     val didHit: Boolean,
     val damageDealt: Int,
     val monsterHpRemaining: Int,
-    val monsterDefeated: Boolean
+    val monsterDefeated: Boolean,
+    val wasWeaknessHit: Boolean = false
 )
 
 data class CombatSessionExport(
@@ -408,7 +422,12 @@ class CombatService {
         // Guard against minHit exceeding maxHit (e.g. from prayer rounding at low
         // levels) - Random.nextInt(from, until) throws if from > until.
         val safeMinHit = effectiveMinHit.coerceIn(0, effectiveMaxHit)
-        val damage = Random.nextInt(safeMinHit, effectiveMaxHit + 1)
+        val rawDamage = Random.nextInt(safeMinHit, effectiveMaxHit + 1)
+        // Elemental/style weakness: 50% bonus damage when the attacker's
+        // damage type matches the monster's weakness. Damage-only (doesn't
+        // affect hit chance), same convention as the prayer bonuses above.
+        val isWeaknessHit = monster.weakness != null && monster.weakness == loadout.damageType
+        val damage = if (isWeaknessHit) (rawDamage * 1.5).toInt().coerceAtLeast(rawDamage) else rawDamage
         session.currentMonsterHealth = (session.currentMonsterHealth - damage).coerceAtLeast(0)
         val defeated = session.currentMonsterHealth <= 0
 
@@ -420,7 +439,7 @@ class CombatService {
         }
 
         return ServiceResult.Success(
-            AttackResult(didHit = true, damageDealt = damage, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = defeated)
+            AttackResult(didHit = true, damageDealt = damage, monsterHpRemaining = session.currentMonsterHealth, monsterDefeated = defeated, wasWeaknessHit = isWeaknessHit)
         )
     }
 

@@ -2493,6 +2493,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.FIRE,
         levelRequired = 10,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 15, strengthBonus = 0, accuracyBonus = 25, maxHitBonus = 15)
@@ -2505,6 +2506,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.EARTH,
         levelRequired = 10,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 15, strengthBonus = 0, accuracyBonus = 25, maxHitBonus = 15)
@@ -2517,6 +2519,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.WATER,
         levelRequired = 10,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 15, strengthBonus = 0, accuracyBonus = 25, maxHitBonus = 15)
@@ -2529,6 +2532,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.WIND,
         levelRequired = 10,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 15, strengthBonus = 0, accuracyBonus = 25, maxHitBonus = 15)
@@ -2541,6 +2545,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.FIRE,
         levelRequired = 50,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 50, strengthBonus = 0, accuracyBonus = 85, maxHitBonus = 55)
@@ -2553,6 +2558,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.EARTH,
         levelRequired = 50,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 50, strengthBonus = 0, accuracyBonus = 85, maxHitBonus = 55)
@@ -2565,6 +2571,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.WATER,
         levelRequired = 50,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 50, strengthBonus = 0, accuracyBonus = 85, maxHitBonus = 55)
@@ -2577,6 +2584,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.WIND,
         levelRequired = 50,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 50, strengthBonus = 0, accuracyBonus = 85, maxHitBonus = 55)
@@ -2589,6 +2597,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.FIRE,
         levelRequired = 75,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 70, strengthBonus = 0, accuracyBonus = 120, maxHitBonus = 75)
@@ -2601,6 +2610,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.EARTH,
         levelRequired = 75,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 70, strengthBonus = 0, accuracyBonus = 120, maxHitBonus = 75)
@@ -2613,6 +2623,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.WATER,
         levelRequired = 75,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 70, strengthBonus = 0, accuracyBonus = 120, maxHitBonus = 75)
@@ -2625,6 +2636,7 @@ object GeneratedItemCatalog {
         isStackable = false,
         equipSlot = EquipSlot.WEAPON,
         combatStyle = CombatStyle.MAGIC,
+        elementalType = DamageType.WIND,
         levelRequired = 75,
         skillRequired = "MAGIC",
         stats = ItemStats(attackBonus = 70, strengthBonus = 0, accuracyBonus = 120, maxHitBonus = 75)
