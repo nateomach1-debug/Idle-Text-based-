@@ -26,20 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output214.txt
-          echo "=== Weapon data class ===" > $OUT
-          grep -n "data class Weapon" -A 10 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
+          OUT=discovery_output215.txt
+          echo "=== Mystic Staff entries (lines 2573-2660) ===" > $OUT
+          sed -n '2573,2660p' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== rest of resolveAttack (from line 414 onward) + AttackResult data class ===" >> $OUT
-          sed -n '414,450p' ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
+          echo "=== ItemDefinition data class ===" >> $OUT
+          grep -n "data class ItemDefinition" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT 2>/dev/null || true
           echo "" >> $OUT
-          echo "=== data class AttackResult ===" >> $OUT
-          grep -n "data class AttackResult" -A 8 ./app/src/main/kotlin/com/yourname/idlerpg/CombatSystem.kt >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== Mystic Staff item ids ===" >> $OUT
-          grep -n "id = \"fire_mystic\|id = \"earth_mystic\|id = \"water_mystic\|id = \"wind_mystic\|mystic_staff" ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT 2>/dev/null || true
+          echo "=== CombatLoadout construction remainder (lines 1081-1100 GameViewModel.kt) ===" >> $OUT
+          sed -n '1081,1100p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output214.txt
+      - discovery_output215.txt
       
   apply-patch:
     name: Apply Patch Script
