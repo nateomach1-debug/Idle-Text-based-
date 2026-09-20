@@ -26,17 +26,11 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output215.txt
-          echo "=== Mystic Staff entries (lines 2573-2660) ===" > $OUT
-          sed -n '2573,2660p' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== ItemDefinition data class ===" >> $OUT
-          grep -n "data class ItemDefinition" -A 20 ./app/src/main/kotlin/com/yourname/idlerpg/*.kt >> $OUT 2>/dev/null || true
-          echo "" >> $OUT
-          echo "=== CombatLoadout construction remainder (lines 1081-1100 GameViewModel.kt) ===" >> $OUT
-          sed -n '1081,1100p' ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT 2>/dev/null || true
+          OUT=discovery_output216.txt
+          echo "=== fire_staff through water_battlestaff full blocks (lines 2485-2573) ===" > $OUT
+          sed -n '2485,2573p' ./app/src/main/kotlin/com/yourname/idlerpg/GeneratedItemCatalog.kt >> $OUT 2>/dev/null || true
     artifacts:
-      - discovery_output215.txt
+      - discovery_output216.txt
       
   apply-patch:
     name: Apply Patch Script
