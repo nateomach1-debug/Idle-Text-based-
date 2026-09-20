@@ -41,7 +41,7 @@ workflows:
     scripts:
       - name: Run patch scripts
         script: |
-          python3 patch_G_gradient_animated_text.py
+          python3 patch_L_elemental_weakness.py
       - name: Commit and push
         script: |
           git config user.email "codemagic@example.com"
