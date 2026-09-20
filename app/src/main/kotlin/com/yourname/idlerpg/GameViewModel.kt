@@ -24,6 +24,7 @@ import com.yourname.idlerpg.ui.screens.CombatViewState
 import com.yourname.idlerpg.ui.screens.CombatLogEntry
 import com.yourname.idlerpg.ui.screens.SessionDropEntry
 import com.yourname.idlerpg.ui.screens.ZoneSummary
+import com.yourname.idlerpg.ui.screens.ZoneMonsterSummary
 import com.yourname.idlerpg.ui.screens.GuildHomeState
 import com.yourname.idlerpg.ui.screens.GuildLeaderboardEntry
 import kotlinx.coroutines.Dispatchers
@@ -192,6 +193,17 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     // convention as inventory/skills view-mode prefs).
     // =========================================================
     private val settingsPrefs = application.getSharedPreferences("idlerpg_prefs", android.content.Context.MODE_PRIVATE)
+
+    // Monster the player picked in the zone popup, stored per character (device-local).
+    // CombatService reads it lazily whenever it picks the next monster, including when
+    // resolving offline combat progress after a restart.
+    private fun combatTargetKey(characterId: String): String = "combat_target_monster_" + characterId
+
+    init {
+        combatService.targetMonsterIdProvider = { characterId ->
+            settingsPrefs.getString(combatTargetKey(characterId), null)
+        }
+    }
 
     private val _textColorOverride = MutableStateFlow<Color?>(
         if (settingsPrefs.contains("text_color_override")) Color(settingsPrefs.getInt("text_color_override", 0)) else null
@@ -855,7 +867,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 zoneId = zone.id,
                 name = zone.name,
                 levelRequirement = zone.levelRequirement,
-                monsterNames = zone.monsters.map { it.name }
+                monsterNames = zone.monsters.map { it.name },
+                monsters = zone.monsters.map { monster ->
+                    ZoneMonsterSummary(
+                        monsterId = monster.id,
+                        name = monster.name,
+                        level = monster.levelRequirement,
+                        weaknessLabel = monster.weakness?.displayName() ?: "None"
+                    )
+                }
             )
         }
 
@@ -933,7 +953,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _combatHp.value = state.currentHp to state.maxHp
     }
 
-    fun enterCombatZone(zoneId: String): ServiceResult<CombatSession> {
+    fun enterCombatZone(zoneId: String, monsterId: String? = null): ServiceResult<CombatSession> {
         val characterId = _currentCharacterId.value ?: return ServiceResult.Failure("No character selected.")
         // Entering combat stops any active skilling/crafting queue - only one
         // activity can run at a time.
@@ -952,6 +972,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             // Registers an offline-progress queue so combat keeps advancing while
             // the app is closed, mirroring skilling/crafting queues. Mutual
             // exclusion is already guaranteed by the stopQueue() call above.
+            // Remember which monster was picked (or clear it -> random) so live combat and
+            // offline progress both keep targeting it. Ignored if it isn't in this zone.
+            val chosenMonsterId = monsterId?.takeIf { pickedId ->
+                ZoneCatalog.zones.find { it.id == zoneId }?.monsters?.any { it.id == pickedId } == true
+            }
+            if (chosenMonsterId != null) {
+                settingsPrefs.edit().putString(combatTargetKey(characterId), chosenMonsterId).apply()
+            } else {
+                settingsPrefs.edit().remove(combatTargetKey(characterId)).apply()
+            }
             offlineIdleService.optIntoOfflineCombat(characterId, zoneId)
             refreshCombatView()
         }

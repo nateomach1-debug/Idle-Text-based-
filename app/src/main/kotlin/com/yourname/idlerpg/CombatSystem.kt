@@ -6,6 +6,16 @@ import kotlin.random.Random
 
 enum class DamageType { MELEE, RANGED, FIRE, EARTH, WATER, WIND }
 
+// Player-facing label for a damage type (zone screen + monster picker).
+fun DamageType.displayName(): String = when (this) {
+    DamageType.MELEE -> "Melee"
+    DamageType.RANGED -> "Ranged"
+    DamageType.FIRE -> "Fire"
+    DamageType.EARTH -> "Earth"
+    DamageType.WATER -> "Water"
+    DamageType.WIND -> "Wind"
+}
+
 data class Weapon(
     val name: String,
     val style: CombatStyle,
@@ -554,6 +564,15 @@ class CombatService {
     private val recoveryDuration: Duration = Duration.ofSeconds(600)
     private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()
 
+    // Which monster the player picked to hunt (monster id), supplied per character by
+    // GameViewModel from persisted settings. Null/unknown/not-in-this-zone -> random pick.
+    var targetMonsterIdProvider: (String) -> String? = { null }
+
+    private fun targetMonsterFor(characterId: String, zone: Zone): Monster? {
+        val targetId = targetMonsterIdProvider(characterId) ?: return null
+        return zone.monsters.find { it.id == targetId }
+    }
+
     fun stateFor(characterId: String, maxHp: Int = 100): CharacterCombatState =
         states.getOrPut(characterId) { CharacterCombatState(currentHp = maxHp, maxHp = maxHp) }
 
@@ -611,7 +630,7 @@ class CombatService {
             return ServiceResult.Failure("Search still in progress.")
         }
 
-        val monster = session.zone.monsters.random()
+        val monster = targetMonsterFor(characterId, session.zone) ?: session.zone.monsters.random()
         session.currentMonster = monster
         session.currentMonsterHealth = monster.maxHealth
         session.state = SessionState.IN_COMBAT
@@ -830,8 +849,12 @@ class CombatService {
             return ServiceResult.Success(OfflineCombatOutcome(estimatedKills = 0, xpEarned = 0L))
         }
 
-        val avgMonsterHealth = zone.monsters.map { it.maxHealth }.average()
-        val avgMonsterDefense = zone.monsters.map { it.defenseRating }.average()
+        // If the player picked a specific monster, offline progress assumes they keep
+        // fighting only that monster; otherwise average across the zone as before.
+        val targetMonster = targetMonsterFor(characterId, zone)
+        val offlinePool: List<Monster> = if (targetMonster != null) listOf(targetMonster) else zone.monsters
+        val avgMonsterHealth = offlinePool.map { it.maxHealth }.average()
+        val avgMonsterDefense = offlinePool.map { it.defenseRating }.average()
 
         val hitChance = (attackerAccuracy.toDouble() / (attackerAccuracy + avgMonsterDefense)).coerceIn(0.0, 1.0)
         val avgDamagePerHit = attackerMaxHit / 2.0
@@ -854,7 +877,7 @@ class CombatService {
         val estimatedKills = (elapsedSeconds / avgTimeToKillSeconds).toInt().coerceAtLeast(0)
 
         repeat(estimatedKills) {
-            val monster = zone.monsters.random()
+            val monster = offlinePool.random()
             rollLoot(state, monster, dropRateMultiplier)
         }
 

@@ -853,8 +853,8 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                 when (combatScreenState) {
                                 CombatScreenState.ZoneSelect -> ZoneSelectScreen(
                                     zones = zones, playerLevel = trainingSkillLevel,
-                                    onZoneSelected = { zoneId ->
-                                        val result = gameViewModel.enterCombatZone(zoneId)
+                                    onZoneSelected = { zoneId, monsterId ->
+                                        val result = gameViewModel.enterCombatZone(zoneId, monsterId)
                                         if (result is ServiceResult.Success) {
                                             combatScreenState = CombatScreenState.InZone
                                         }
