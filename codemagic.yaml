@@ -26,48 +26,57 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output300.txt
+          OUT=discovery_output301.txt
           SRC=./app/src/main/kotlin/com/yourname/idlerpg
-          echo "=== patch_L landed? DamageType ===" > $OUT
-          grep -rn "DamageType" $SRC --include=*.kt | head -60 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Zone headers ===" > $OUT
+          grep -n "^ *Zone($" -A 5 $SRC/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== patch_L: wasWeaknessHit / Super effective ===" >> $OUT
-          grep -rn "wasWeaknessHit\|Super effective" $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== CombatSystem.kt 160-200 (Gem Hoarder tail) ===" >> $OUT
+          sed -n '160,200p' $SRC/CombatSystem.kt >> $OUT
           echo "" >> $OUT
-          echo "=== patch scripts in repo root ===" >> $OUT
-          ls ./*.py >> $OUT 2>&1 || echo "NOT FOUND" >> $OUT
+          echo "=== CombatSystem.kt 225-312 (loadout/session/state classes) ===" >> $OUT
+          sed -n '225,312p' $SRC/CombatSystem.kt >> $OUT
           echo "" >> $OUT
-          echo "=== ZoneSelectScreen.kt path ===" >> $OUT
-          find ./app -name "ZoneSelectScreen.kt" >> $OUT
+          echo "=== CombatSystem.kt 343-370 (pause/resume/find monster) ===" >> $OUT
+          sed -n '343,370p' $SRC/CombatSystem.kt >> $OUT
           echo "" >> $OUT
-          echo "=== ZoneSelectScreen.kt full ===" >> $OUT
-          cat $(find ./app -name "ZoneSelectScreen.kt" | head -1) >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== CombatSystem.kt 540-615 (offline estimate) ===" >> $OUT
+          sed -n '540,615p' $SRC/CombatSystem.kt >> $OUT
           echo "" >> $OUT
-          echo "=== package lines ===" >> $OUT
-          grep -n "^package" $SRC/CombatSystem.kt $SRC/GameViewModel.kt $SRC/SharedTypes.kt >> $OUT
+          echo "=== offline combat queue: usages ===" >> $OUT
+          grep -rn "optIntoOfflineCombat\|OfflineCombatQueue\|class .*OfflineCombat\|enterZone(\|\.startSearching(\|restoreCombat\|restoreSession" $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== data class Monster + zone class ===" >> $OUT
-          grep -rn "data class Monster\|data class CombatZone\|data class Zone" -A 22 $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== optIntoOfflineCombat def ===" >> $OUT
+          grep -rn "fun optIntoOfflineCombat" -B 2 -A 25 $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== zone catalog (monsterNames) ===" >> $OUT
-          grep -rn "monsterNames" -B 12 -A 6 $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== OfflineCombat data classes ===" >> $OUT
+          grep -rn "class .*OfflineCombat" -A 15 $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Monster( catalog entries ===" >> $OUT
-          grep -n "Monster(" -A 16 $SRC/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== refreshCombatView ===" >> $OUT
+          grep -n "fun refreshCombatView" -A 45 $SRC/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== zone entry / random pick logic ===" >> $OUT
-          grep -rn "startSearching\|enterCombatZone\|enterZone\|selectZone\|randomOrNull\|\.random()\|findMonster\|pickMonster" -B 4 -A 14 $SRC/GameViewModel.kt $SRC/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== CombatViewData class ===" >> $OUT
+          grep -rn "class CombatViewData" -A 20 $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== state/UI files referencing zones ===" >> $OUT
-          grep -rln "ZoneSelect\|InZone\|CombatUiState\|leaveCombatZone" $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== GameViewModel imports ===" >> $OUT
+          grep -n "^import" $SRC/GameViewModel.kt >> $OUT
           echo "" >> $OUT
-          echo "=== ZoneSelectScreen call site + InZone state ===" >> $OUT
-          grep -rn "ZoneSelectScreen(\|InZone" -B 3 -A 10 $SRC/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== ZoneSummary usages ===" >> $OUT
+          grep -rn "ZoneSummary\|zoneSummaries" $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== files referencing monsters (id/name/catalog) ===" >> $OUT
-          grep -rln "monsterId\|MonsterCatalog\|monsters\b" $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== MainActivity zones/imports ===" >> $OUT
+          grep -n "^import.*idlerpg\|val zones" $SRC/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== monster refs in other files ===" >> $OUT
+          grep -n -i "monster" $SRC/QuestsContentSystem.kt $SRC/SkillsScreen.kt $SRC/ActionCatalog.kt | head -60 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== levelRequirement usage (combat) ===" >> $OUT
+          grep -n "\.levelRequirement" $SRC/GameViewModel.kt $SRC/CombatSystem.kt | head -30 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "" >> $OUT
+          echo "=== candidate loot item ids ===" >> $OUT
+          grep -rhoE 'id = "[a-z0-9_]*(hide|bone|fang|scale|claw|egg|ear|ecto|essence|gem|feather|leather|tooth|horn|wing|venom|ash|ember|silk|dust|shard|dragon|meat|beef|chicken|fur|slime|dagger)[a-z0-9_]*"' $SRC --include=*.kt | sort -u | head -200 >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output300.txt
+      - discovery_output301.txt
       
   apply-patch:
     name: Apply Patch Script
