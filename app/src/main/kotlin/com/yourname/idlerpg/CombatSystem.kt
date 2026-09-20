@@ -84,6 +84,48 @@ object ZoneCatalog {
                     rareLootTable = listOf(
                         LootEntry("rusty_dagger", 1, 1, 2.0)
                     )
+                ),
+                Monster(
+                    id = "goblin_scout",
+                    name = "Goblin Scout",
+                    levelRequirement = 1,
+                    maxHealth = 20,
+                    defenseRating = 3,
+                    weakness = DamageType.WIND,
+                    mainLootTable = listOf(
+                        LootEntry("goblin_ear", 1, 1, 35.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("rusty_dagger", 1, 1, 1.5)
+                    )
+                ),
+                Monster(
+                    id = "goblin_shaman",
+                    name = "Goblin Shaman",
+                    levelRequirement = 4,
+                    maxHealth = 32,
+                    defenseRating = 7,
+                    weakness = DamageType.EARTH,
+                    mainLootTable = listOf(
+                        LootEntry("goblin_ear", 1, 2, 45.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("rusty_dagger", 1, 1, 2.5)
+                    )
+                ),
+                Monster(
+                    id = "goblin_brute",
+                    name = "Goblin Brute",
+                    levelRequirement = 7,
+                    maxHealth = 50,
+                    defenseRating = 12,
+                    weakness = DamageType.WATER,
+                    mainLootTable = listOf(
+                        LootEntry("goblin_ear", 2, 3, 50.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("rusty_dagger", 1, 1, 4.0)
+                    )
                 )
             )
         ),
@@ -104,6 +146,49 @@ object ZoneCatalog {
                     ),
                     rareLootTable = listOf(
                         LootEntry("wraith_essence", 1, 1, 0.5)
+                    )
+                ),
+                Monster(
+                    id = "restless_skeleton",
+                    name = "Restless Skeleton",
+                    levelRequirement = 20,
+                    maxHealth = 70,
+                    defenseRating = 22,
+                    weakness = DamageType.MELEE,
+                    mainLootTable = listOf(
+                        LootEntry("ectoplasm", 1, 1, 30.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("rusty_dagger", 1, 1, 6.0),
+                        LootEntry("wraith_essence", 1, 1, 0.2)
+                    )
+                ),
+                Monster(
+                    id = "shadow_stalker",
+                    name = "Shadow Stalker",
+                    levelRequirement = 26,
+                    maxHealth = 100,
+                    defenseRating = 31,
+                    weakness = DamageType.RANGED,
+                    mainLootTable = listOf(
+                        LootEntry("ectoplasm", 1, 3, 60.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("wraith_essence", 1, 1, 0.8)
+                    )
+                ),
+                Monster(
+                    id = "ruin_banshee",
+                    name = "Ruin Banshee",
+                    levelRequirement = 33,
+                    maxHealth = 130,
+                    defenseRating = 40,
+                    weakness = DamageType.EARTH,
+                    mainLootTable = listOf(
+                        LootEntry("ectoplasm", 2, 4, 65.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("wraith_essence", 1, 1, 1.2)
                     )
                 )
             )
@@ -138,6 +223,45 @@ object ZoneCatalog {
                         LootEntry("feathers", 1, 5, 70.0)
                     ),
                     rareLootTable = listOf()
+                ),
+                Monster(
+                    id = "crop_crow",
+                    name = "Crop Crow",
+                    levelRequirement = 2,
+                    maxHealth = 14,
+                    defenseRating = 2,
+                    weakness = DamageType.EARTH,
+                    mainLootTable = listOf(
+                        LootEntry("feathers", 1, 3, 70.0),
+                        LootEntry("raw_chicken", 1, 1, 35.0)
+                    ),
+                    rareLootTable = listOf()
+                ),
+                Monster(
+                    id = "angry_goat",
+                    name = "Angry Goat",
+                    levelRequirement = 4,
+                    maxHealth = 30,
+                    defenseRating = 6,
+                    weakness = DamageType.WIND,
+                    mainLootTable = listOf(
+                        LootEntry("cowhide", 1, 1, 55.0),
+                        LootEntry("raw_beef", 1, 2, 55.0)
+                    ),
+                    rareLootTable = listOf()
+                ),
+                Monster(
+                    id = "haunted_scarecrow",
+                    name = "Haunted Scarecrow",
+                    levelRequirement = 6,
+                    maxHealth = 42,
+                    defenseRating = 9,
+                    weakness = DamageType.FIRE,
+                    mainLootTable = listOf(
+                        LootEntry("feathers", 2, 4, 60.0),
+                        LootEntry("cowhide", 1, 1, 30.0)
+                    ),
+                    rareLootTable = listOf()
                 )
             )
         ),
@@ -157,6 +281,44 @@ object ZoneCatalog {
                         LootEntry("snake_hide", 1, 1, 55.0)
                     ),
                     rareLootTable = listOf()
+                ),
+                Monster(
+                    id = "bog_toad",
+                    name = "Bog Toad",
+                    levelRequirement = 10,
+                    maxHealth = 30,
+                    defenseRating = 8,
+                    weakness = DamageType.FIRE,
+                    mainLootTable = listOf(
+                        LootEntry("snake_hide", 1, 1, 35.0)
+                    ),
+                    rareLootTable = listOf()
+                ),
+                Monster(
+                    id = "swamp_leech",
+                    name = "Swamp Leech",
+                    levelRequirement = 12,
+                    maxHealth = 40,
+                    defenseRating = 12,
+                    weakness = DamageType.MELEE,
+                    mainLootTable = listOf(
+                        LootEntry("snake_hide", 1, 1, 45.0)
+                    ),
+                    rareLootTable = listOf()
+                ),
+                Monster(
+                    id = "bog_lurker",
+                    name = "Bog Lurker",
+                    levelRequirement = 14,
+                    maxHealth = 55,
+                    defenseRating = 16,
+                    weakness = DamageType.RANGED,
+                    mainLootTable = listOf(
+                        LootEntry("snake_hide", 1, 2, 60.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("uncut_gemstone", 1, 1, 2.0)
+                    )
                 )
             )
         ),
@@ -187,6 +349,52 @@ object ZoneCatalog {
                         LootEntry("uncut_onyx", 1, 1, 0.3),
                         LootEntry("uncut_zenyte", 1, 1, 0.15),
                         LootEntry("uncut_celestial_crystal", 1, 1, 0.05)
+                    )
+                ),
+                Monster(
+                    id = "cave_bat",
+                    name = "Cave Bat",
+                    levelRequirement = 15,
+                    maxHealth = 32,
+                    defenseRating = 12,
+                    weakness = DamageType.WIND,
+                    mainLootTable = listOf(
+                        LootEntry("uncut_gemstone", 1, 1, 25.0)
+                    ),
+                    rareLootTable = listOf()
+                ),
+                Monster(
+                    id = "gemstone_spider",
+                    name = "Gemstone Spider",
+                    levelRequirement = 17,
+                    maxHealth = 52,
+                    defenseRating = 18,
+                    weakness = DamageType.FIRE,
+                    mainLootTable = listOf(
+                        LootEntry("uncut_gemstone", 1, 1, 40.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("uncut_opal", 1, 1, 5.0),
+                        LootEntry("uncut_jade", 1, 1, 3.5),
+                        LootEntry("uncut_red_topaz", 1, 1, 2.5),
+                        LootEntry("uncut_sapphire", 1, 1, 1.5)
+                    )
+                ),
+                Monster(
+                    id = "crystal_golem",
+                    name = "Crystal Golem",
+                    levelRequirement = 19,
+                    maxHealth = 70,
+                    defenseRating = 22,
+                    weakness = DamageType.MELEE,
+                    mainLootTable = listOf(
+                        LootEntry("uncut_gemstone", 1, 3, 60.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("uncut_sapphire", 1, 1, 3.0),
+                        LootEntry("uncut_emerald", 1, 1, 2.0),
+                        LootEntry("uncut_ruby", 1, 1, 1.2),
+                        LootEntry("uncut_diamond", 1, 1, 0.6)
                     )
                 )
             )
@@ -219,6 +427,48 @@ object ZoneCatalog {
                         LootEntry("blue_dragonhide", 1, 1, 55.0)
                     ),
                     rareLootTable = listOf()
+                ),
+                Monster(
+                    id = "dragon_whelp",
+                    name = "Dragon Whelp",
+                    levelRequirement = 60,
+                    maxHealth = 160,
+                    defenseRating = 50,
+                    weakness = DamageType.RANGED,
+                    mainLootTable = listOf(
+                        LootEntry("green_dragonhide", 1, 1, 30.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("uncut_dragonstone", 1, 1, 0.4)
+                    )
+                ),
+                Monster(
+                    id = "red_dragon",
+                    name = "Red Dragon",
+                    levelRequirement = 70,
+                    maxHealth = 300,
+                    defenseRating = 85,
+                    weakness = DamageType.WATER,
+                    mainLootTable = listOf(
+                        LootEntry("blue_dragonhide", 1, 1, 45.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("uncut_dragonstone", 1, 1, 1.0)
+                    )
+                ),
+                Monster(
+                    id = "black_dragon",
+                    name = "Black Dragon",
+                    levelRequirement = 75,
+                    maxHealth = 340,
+                    defenseRating = 95,
+                    weakness = DamageType.EARTH,
+                    mainLootTable = listOf(
+                        LootEntry("blue_dragonhide", 1, 1, 60.0)
+                    ),
+                    rareLootTable = listOf(
+                        LootEntry("uncut_dragonstone", 1, 1, 1.5)
+                    )
                 )
             )
         )
