@@ -26,52 +26,57 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output303.txt
+          OUT=discovery_output304.txt
           SRC=./app/src/main/kotlin/com/yourname/idlerpg
-          echo "=== chat-related files ===" > $OUT
-          find ./app -name "*Chat*" >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== package lines ===" > $OUT
+          grep -n "^package" $SRC/ChatBanner.kt $SRC/SettingsScreen.kt $SRC/ReportMessageDialog.kt $SRC/MonetizationSystem.kt $SRC/AccountCharacterSystem.kt $SRC/SupabaseMarketRepository.kt $SRC/SupabaseLeaderboardRepository.kt >> $OUT
           echo "" >> $OUT
-          echo "=== chat data classes ===" >> $OUT
-          grep -rn "class ChatMessageUi\|class ChatChannelUi\|class DmConversationSummary\|class ChatMessage\|class ChatMessageRow" -A 18 $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== ChatBanner.kt imports + message rendering ===" >> $OUT
+          sed -n '1,28p;120,142p;205,260p' $SRC/ChatBanner.kt >> $OUT
           echo "" >> $OUT
-          echo "=== Supabase chat repository (full) ===" >> $OUT
-          for f in $(find ./app -name "Supabase*Chat*.kt"); do echo "--- $f" >> $OUT; cat "$f" >> $OUT; done
+          echo "=== SkillType enum + skillLevel ===" >> $OUT
+          grep -rn "enum class SkillType" -A 24 $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          grep -n "fun skillLevel" -B 1 -A 12 $SRC/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== ChatMessageUi usages ===" >> $OUT
-          grep -rn "ChatMessageUi" $SRC --include=*.kt | head -40 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== capes / level-99 detection ===" >> $OUT
+          grep -rn -i "cape" $SRC --include=*.kt | head -40 >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== sender name usages ===" >> $OUT
-          grep -rn -i "sendername\|authorname\|sender_name\|characterName" $SRC ./*.sql --include=*.kt --include=*.sql | head -70 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== kill tracking ===" >> $OUT
+          grep -rn -i "reportKillProgress\|killCount\|totalKills\|monsterKills" $SRC --include=*.kt | head -60 >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== chat SQL lines ===" >> $OUT
-          grep -n -i "chat\|dm_" ./*.sql | head -150 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== tickCombat kill branch ===" >> $OUT
+          grep -n "reportKillProgress" -B 12 -A 10 $SRC/GameViewModel.kt | head -120 >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== chat SQL function bodies ===" >> $OUT
-          grep -n -i "function.*chat\|function.*dm" -A 45 ./*.sql | head -350 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== offline combat outcome use ===" >> $OUT
+          grep -n "resolveOfflineCombat" -B 8 -A 25 $SRC/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== characters table SQL ===" >> $OUT
-          grep -n -i "table.*characters" -A 25 ./*.sql | head -100 >> $OUT || echo "NOT FOUND" >> $OUT
-          grep -n -i "alter table.*characters" ./*.sql >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== Character classes ===" >> $OUT
+          grep -n "class Character" -A 30 $SRC/AccountCharacterSystem.kt | head -150 >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== moderator indicators ===" >> $OUT
-          grep -rn "isModerator" $SRC --include=*.kt | head -30 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== GameStateRepository loadoutSettings save/load ===" >> $OUT
+          grep -n "loadoutSettings" -B 4 -A 14 $SRC/GameStateRepository.kt | head -150 >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== purchasePreset (gem purchase pattern) ===" >> $OUT
-          grep -n "fun purchasePreset" -A 45 $SRC/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== leaderboard categories + repo functions ===" >> $OUT
+          grep -rn "enum class LeaderboardCategory" -A 30 $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          grep -n "fun " $SRC/SupabaseLeaderboardRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== unlockedPresets usages ===" >> $OUT
-          grep -rn "unlockedPresets" $SRC --include=*.kt | head -40 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== spendGems / gemsBalance repo code ===" >> $OUT
+          grep -n "fun spendGems\|fun gemsBalance\|fun creditGems" -B 1 -A 14 $SRC/SupabaseMarketRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== PremiumPreset catalog ===" >> $OUT
-          grep -n "class PremiumPreset\|object PremiumPresetCatalog" -A 30 $SRC/MonetizationSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== spend_gems SQL ===" >> $OUT
+          grep -n -i "spend_gems" -B 2 -A 35 ./*.sql | head -120 >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== Theme effect code ===" >> $OUT
-          grep -n "enum class TextEffectMode\|fun resolvedTextColorAndBrush\|fun styledText\|rememberInfiniteTransition" -A 30 $SRC/Theme.kt | head -220 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== RLS policy style + ownership helpers ===" >> $OUT
+          grep -n -i "create policy" ./*.sql | head -20 >> $OUT || echo "NOT FOUND" >> $OUT
+          grep -n -i "function.*character_owned_by_caller" -A 12 ./*.sql | head -40 >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== GameViewModel chat functions ===" >> $OUT
-          grep -n "chat\|Chat" $SRC/GameViewModel.kt | head -80 >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== SettingsScreen head ===" >> $OUT
+          sed -n '1,110p' $SRC/SettingsScreen.kt >> $OUT
+          echo "" >> $OUT
+          echo "=== SettingsScreen call site ===" >> $OUT
+          grep -n "SettingsScreen(" -B 6 -A 32 $SRC/MainActivity.kt >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output303.txt
+      - discovery_output304.txt
       
   apply-patch:
     name: Apply Patch Script
