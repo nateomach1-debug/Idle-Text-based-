@@ -1181,6 +1181,12 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                 val settingsSecondaryColor by gameViewModel.textSecondaryColor.collectAsState()
                                 val premiumCurrencyBalance by gameViewModel.currency.collectAsState()
                                 val ownedPresets by gameViewModel.unlockedPresets.collectAsState()
+                                val ownedCosmetics by gameViewModel.ownedCosmetics.collectAsState()
+                                val equippedTitleId by gameViewModel.equippedTitleId.collectAsState()
+                                val equippedBadgeId by gameViewModel.equippedBadgeId.collectAsState()
+                                val monsterKillTotals by gameViewModel.monsterKillTotals.collectAsState()
+                                val cosmeticSkillLevels by gameViewModel.cosmeticSkillLevels.collectAsState()
+                                val cosmeticActionError by gameViewModel.cosmeticActionError.collectAsState()
                                 SettingsScreen(
                                     textColorOverride = settingsTextColorOverride,
                                     outlineEnabled = settingsOutlineEnabled,
@@ -1195,7 +1201,21 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                     effectMode = settingsEffectMode,
                                     secondaryColor = settingsSecondaryColor,
                                     onEffectModeChanged = { gameViewModel.setTextEffectMode(it) },
-                                    onSecondaryColorChanged = { gameViewModel.setTextSecondaryColor(it) }
+                                    onSecondaryColorChanged = { gameViewModel.setTextSecondaryColor(it) },
+                                    cosmeticsContent = {
+                                        CosmeticsEntry(
+                                            gems = premiumCurrencyBalance.second,
+                                            owned = ownedCosmetics,
+                                            equippedTitleId = equippedTitleId,
+                                            equippedBadgeId = equippedBadgeId,
+                                            monsterKills = monsterKillTotals,
+                                            skillLevels = cosmeticSkillLevels,
+                                            errorText = cosmeticActionError,
+                                            onBuy = { gameViewModel.purchaseCosmetic(it) },
+                                            onEquipTitle = { gameViewModel.equipTitle(it) },
+                                            onEquipBadge = { gameViewModel.equipBadge(it) }
+                                        )
+                                    }
                                 )
                             }
 

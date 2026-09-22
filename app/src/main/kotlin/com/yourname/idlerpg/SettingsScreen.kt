@@ -50,6 +50,7 @@ fun SettingsScreen(
     secondaryColor: Color? = null,
     onEffectModeChanged: (com.yourname.idlerpg.ui.theme.TextEffectMode) -> Unit = {},
     onSecondaryColorChanged: (Color?) -> Unit = {},
+    cosmeticsContent: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showGemShop by remember { mutableStateOf(false) }
@@ -73,6 +74,8 @@ fun SettingsScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+        cosmeticsContent()
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = "Premium Text Presets", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
