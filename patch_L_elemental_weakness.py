@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 """
-patch_N1_cosmetics_core.py
+patch_N2_cosmetics_ui.py
 
-Chat TITLES + BADGES - data plumbing and rendering (no settings UI yet - that is N2).
-Requires cosmetics_schema.sql to have been run in Supabase first.
+Chat TITLES + BADGES - the equip/shop UI. Requires patch_N1 (and cosmetics_schema.sql).
 
-New files: ChatCosmeticsSystem.kt (catalog: earned Master <Skill> / Master <Monster>
-Slayer titles, gem titles, gem badges), SupabaseCosmeticRepository.kt (RPC/table access),
-ChatNameStyling.kt ("[Title] Name: message" rendering + the 10 badge name effects).
-Edits: CombatSystem.kt (kill hook, live + offline), SupabaseChatRepository.kt (attach each
-sender's equipped title/badge), ChatBanner.kt (ChatMessageUi fields, both message lines now
-render through chatLineText), GameViewModel.kt (kill tally, server sync loop, earned-title
-claims, purchase/equip functions).
+New file: CosmeticsScreen.kt - "Titles & Badges" card in Settings (live preview of your chat
+line + Customize button). Customize opens a full-screen dialog: Titles tab (Owned / Gem Shop /
+Earn These with progress like "Defeat 10,000 Goblin Grunt (1,234 so far)") and Badges tab
+(animated previews, all gem-priced, Buy / Equip / Unequip).
+Edits: SettingsScreen.kt (optional cosmeticsContent slot, shown above Premium Text Presets),
+MainActivity.kt (collects the new view-model state and passes CosmeticsEntry into the slot).
 
 Purely additive. Run from the repo root. Idempotent. All-or-nothing: if any anchor is
 missing/ambiguous nothing is written and the script exits 1.
@@ -22,469 +20,404 @@ import sys
 SRC = "app/src/main/kotlin/com/yourname/idlerpg"
 
 NEW_FILES = {
-    'ChatCosmeticsSystem.kt': r'''package com.yourname.idlerpg
+    'CosmeticsScreen.kt': r'''package com.yourname.idlerpg.ui.screens
 
-// =========================================================
-// CHAT COSMETICS CATALOG - TITLES + BADGES
-// Titles show as "[Title] " before a character's name in chat.
-//   - Earned titles: "Master <Skill>" (reach level 99) and
-//     "Master <Monster> Slayer" (defeat 10,000 of that monster).
-//     One per skill / per monster in ZoneCatalog - new monsters
-//     get their Slayer title automatically.
-//   - Gem titles: extra titles bought with Gems.
-// Badges are name-only visual effects layered over the viewer's
-// normal text effect. ALL badges cost Gems.
-// Ownership and equipped state live server-side (see the
-// character_owned_cosmetics / character_cosmetics tables) so other
-// players see them; this file only supplies display data and the
-// earn rules the client checks before claiming an earned title.
-// Gem prices here MUST match the chat_cosmetics seed rows in
-// cosmetics_schema.sql - the server is the source of truth for
-// what a purchase actually charges.
-// =========================================================
-
-enum class CosmeticKind { TITLE, BADGE }
-
-enum class BadgeEffect {
-    RAINBOW, GILDED, INFERNO, FROSTBITE, NEON_PULSE,
-    AURORA, STORMCALL, BLOOD_MOON, TOXIC, VOID
-}
-
-data class ChatCosmetic(
-    val id: String,
-    val kind: CosmeticKind,
-    val displayName: String,
-    val gemCost: Long = 0L,
-    val colorArgb: Long = 0xFFFFFFFFL,
-    val badgeEffect: BadgeEffect? = null,
-    val earnedSkill: SkillType? = null,
-    val earnedMonsterId: String? = null
-) {
-    val isEarned: Boolean
-        get() = earnedSkill != null || earnedMonsterId != null
-}
-
-object ChatCosmeticCatalog {
-    const val MASTER_SKILL_LEVEL = 99
-    const val SLAYER_KILLS_REQUIRED = 10000L
-
-    private fun skillTitleColor(skill: SkillType): Long = when (skill) {
-        SkillType.MINING -> 0xFFB0B4BCL
-        SkillType.WOODCUTTING -> 0xFF7FB069L
-        SkillType.FISHING -> 0xFF5DA9E9L
-        SkillType.FARMING -> 0xFFD4B95EL
-        SkillType.THIEVING -> 0xFFA678D6L
-        SkillType.SMITHING -> 0xFFE8873AL
-        SkillType.COOKING -> 0xFFE0674FL
-        SkillType.CRAFTING -> 0xFFB18AD8L
-        SkillType.FLETCHING -> 0xFF9BCB6BL
-        SkillType.ALCHEMY -> 0xFF4FD1A5L
-        SkillType.MAGIC -> 0xFF6EA8FFL
-        SkillType.ATTACK -> 0xFFE05252L
-        SkillType.STRENGTH -> 0xFFF08A3CL
-        SkillType.DEFENSE -> 0xFF6FA3D9L
-        SkillType.PRAYER -> 0xFFF3E9B5L
-        SkillType.ARCHERY -> 0xFF8FCB5AL
-    }
-
-    // One "Master <Skill>" title per skill, earned at level 99.
-    val skillTitles: List<ChatCosmetic> = SkillType.values().map { skill ->
-        ChatCosmetic(
-            id = "title_master_" + skill.name.lowercase(),
-            kind = CosmeticKind.TITLE,
-            displayName = "Master " + skill.name.lowercase().replaceFirstChar { it.uppercase() },
-            colorArgb = skillTitleColor(skill),
-            earnedSkill = skill
-        )
-    }
-
-    // One "Master <Monster> Slayer" title per monster currently in ZoneCatalog.
-    val slayerTitles: List<ChatCosmetic> by lazy {
-        ZoneCatalog.zones.flatMap { it.monsters }.map { monster ->
-            ChatCosmetic(
-                id = "title_slayer_" + monster.id,
-                kind = CosmeticKind.TITLE,
-                displayName = "Master " + monster.name + " Slayer",
-                colorArgb = 0xFFFF6B4AL,
-                earnedMonsterId = monster.id
-            )
-        }
-    }
-
-    // Titles bought with Gems.
-    val gemTitles: List<ChatCosmetic> = listOf(
-        ChatCosmetic(id = "title_wanderer", kind = CosmeticKind.TITLE, displayName = "Wanderer", gemCost = 100L, colorArgb = 0xFFB8C4D0L),
-        ChatCosmetic(id = "title_adventurer", kind = CosmeticKind.TITLE, displayName = "Adventurer", gemCost = 100L, colorArgb = 0xFF9ED08AL),
-        ChatCosmetic(id = "title_ranger", kind = CosmeticKind.TITLE, displayName = "Ranger", gemCost = 200L, colorArgb = 0xFF6FCF97L),
-        ChatCosmetic(id = "title_ironclad", kind = CosmeticKind.TITLE, displayName = "Ironclad", gemCost = 250L, colorArgb = 0xFFAEB6BFL),
-        ChatCosmetic(id = "title_sage", kind = CosmeticKind.TITLE, displayName = "Sage", gemCost = 250L, colorArgb = 0xFF8AB4F8L),
-        ChatCosmetic(id = "title_champion", kind = CosmeticKind.TITLE, displayName = "Champion", gemCost = 300L, colorArgb = 0xFFF2C94CL),
-        ChatCosmetic(id = "title_shadowwalker", kind = CosmeticKind.TITLE, displayName = "Shadowwalker", gemCost = 300L, colorArgb = 0xFFB388FFL),
-        ChatCosmetic(id = "title_dreadnought", kind = CosmeticKind.TITLE, displayName = "Dreadnought", gemCost = 350L, colorArgb = 0xFFE57373L),
-        ChatCosmetic(id = "title_stormbringer", kind = CosmeticKind.TITLE, displayName = "Stormbringer", gemCost = 350L, colorArgb = 0xFF64B5F6L),
-        ChatCosmetic(id = "title_legend", kind = CosmeticKind.TITLE, displayName = "Legend", gemCost = 500L, colorArgb = 0xFFFFD54FL),
-        ChatCosmetic(id = "title_grand_champion", kind = CosmeticKind.TITLE, displayName = "Grand Champion", gemCost = 800L, colorArgb = 0xFFFFA726L),
-        ChatCosmetic(id = "title_sovereign", kind = CosmeticKind.TITLE, displayName = "Sovereign", gemCost = 1000L, colorArgb = 0xFFFF80ABL)
-    )
-
-    // Name effects. Every badge costs Gems.
-    val badges: List<ChatCosmetic> = listOf(
-        ChatCosmetic(id = "badge_neon_pulse", kind = CosmeticKind.BADGE, displayName = "Neon Pulse", gemCost = 200L, colorArgb = 0xFF00F5FFL, badgeEffect = BadgeEffect.NEON_PULSE),
-        ChatCosmetic(id = "badge_toxic", kind = CosmeticKind.BADGE, displayName = "Toxic", gemCost = 200L, colorArgb = 0xFF7CFF3AL, badgeEffect = BadgeEffect.TOXIC),
-        ChatCosmetic(id = "badge_frostbite", kind = CosmeticKind.BADGE, displayName = "Frostbite", gemCost = 300L, colorArgb = 0xFF9BE7FFL, badgeEffect = BadgeEffect.FROSTBITE),
-        ChatCosmetic(id = "badge_gilded", kind = CosmeticKind.BADGE, displayName = "Gilded", gemCost = 300L, colorArgb = 0xFFFFD54FL, badgeEffect = BadgeEffect.GILDED),
-        ChatCosmetic(id = "badge_inferno", kind = CosmeticKind.BADGE, displayName = "Inferno", gemCost = 350L, colorArgb = 0xFFFF7A1AL, badgeEffect = BadgeEffect.INFERNO),
-        ChatCosmetic(id = "badge_blood_moon", kind = CosmeticKind.BADGE, displayName = "Blood Moon", gemCost = 350L, colorArgb = 0xFFE01B1BL, badgeEffect = BadgeEffect.BLOOD_MOON),
-        ChatCosmetic(id = "badge_void", kind = CosmeticKind.BADGE, displayName = "Void", gemCost = 400L, colorArgb = 0xFFB14CFFL, badgeEffect = BadgeEffect.VOID),
-        ChatCosmetic(id = "badge_aurora", kind = CosmeticKind.BADGE, displayName = "Aurora", gemCost = 450L, colorArgb = 0xFF00FFA3L, badgeEffect = BadgeEffect.AURORA),
-        ChatCosmetic(id = "badge_stormcall", kind = CosmeticKind.BADGE, displayName = "Stormcall", gemCost = 450L, colorArgb = 0xFF8EA8FFL, badgeEffect = BadgeEffect.STORMCALL),
-        ChatCosmetic(id = "badge_rainbow", kind = CosmeticKind.BADGE, displayName = "Rainbow", gemCost = 500L, colorArgb = 0xFFFF4D4DL, badgeEffect = BadgeEffect.RAINBOW)
-    )
-
-    val earnedTitles: List<ChatCosmetic>
-        get() = skillTitles + slayerTitles
-
-    val allTitles: List<ChatCosmetic>
-        get() = earnedTitles + gemTitles
-
-    private val byId: Map<String, ChatCosmetic> by lazy {
-        (skillTitles + slayerTitles + gemTitles + badges).associateBy { it.id }
-    }
-
-    fun find(id: String): ChatCosmetic? = byId[id]
-
-    fun monsterName(monsterId: String): String =
-        ZoneCatalog.zones.flatMap { it.monsters }.find { it.id == monsterId }?.name ?: monsterId
-}
-''',
-    'SupabaseCosmeticRepository.kt': r'''package com.yourname.idlerpg
-
-import io.github.jan.supabase.postgrest.postgrest
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-
-// =========================================================
-// SERVER ACCESS FOR CHAT COSMETICS (titles + badges) AND
-// PER-MONSTER KILL COUNTS
-// Ownership, equipped state and kill totals live in Supabase so
-// other players see the same title/badge and so kills survive
-// device changes. Gem purchases go through purchase_cosmetic,
-// which spends via the server-authoritative spend_gems RPC in the
-// same transaction. Every call is best-effort: failures surface as
-// Result.failure / empty maps, never crashes, since local
-// gameplay must never depend on any of this succeeding.
-// =========================================================
-
-@Serializable
-private data class EquippedCosmeticRow(
-    @SerialName("character_id") val characterId: String,
-    @SerialName("equipped_title_id") val equippedTitleId: String? = null,
-    @SerialName("equipped_badge_id") val equippedBadgeId: String? = null
-)
-
-data class EquippedCosmetics(val titleId: String?, val badgeId: String?)
-
-object SupabaseCosmeticRepository {
-
-    private val client get() = SupabaseClientProvider.client
-
-    // Equipped title/badge for a set of characters (used to decorate chat lines).
-    suspend fun fetchEquipped(characterIds: List<String>): Map<String, EquippedCosmetics> {
-        if (characterIds.isEmpty()) return emptyMap()
-        return try {
-            client.postgrest.from("character_cosmetics")
-                .select { filter { isIn("character_id", characterIds) } }
-                .decodeList<EquippedCosmeticRow>()
-                .associateBy({ it.characterId }, { EquippedCosmetics(it.equippedTitleId, it.equippedBadgeId) })
-        } catch (e: Exception) {
-            emptyMap()
-        }
-    }
-
-    suspend fun myCosmetics(characterId: String): Result<List<String>> = runCatching {
-        client.postgrest.rpc("my_cosmetics", buildJsonObject {
-            put("p_character_id", characterId)
-        }).decodeAs<List<String>>()
-    }
-
-    suspend fun monsterKills(characterId: String): Result<Map<String, Long>> = runCatching {
-        client.postgrest.rpc("get_monster_kills", buildJsonObject {
-            put("p_character_id", characterId)
-        }).decodeAs<Map<String, Long>>()
-    }
-
-    suspend fun recordKills(characterId: String, kills: Map<String, Int>): Result<Unit> = runCatching {
-        client.postgrest.rpc("record_monster_kills", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_kills", buildJsonObject {
-                kills.forEach { (monsterId, count) -> put(monsterId, count) }
-            })
-        })
-        Unit
-    }
-
-    suspend fun purchaseCosmetic(characterId: String, cosmeticId: String): Result<Long> = runCatching {
-        client.postgrest.rpc("purchase_cosmetic", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_cosmetic_id", cosmeticId)
-        }).decodeAs<Long>()
-    }
-
-    suspend fun claimEarnedTitle(characterId: String, cosmeticId: String): Result<Unit> = runCatching {
-        client.postgrest.rpc("claim_earned_title", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_cosmetic_id", cosmeticId)
-        })
-        Unit
-    }
-
-    suspend fun setEquipped(characterId: String, titleId: String?, badgeId: String?): Result<Unit> = runCatching {
-        client.postgrest.rpc("set_equipped_cosmetics", buildJsonObject {
-            put("p_character_id", characterId)
-            put("p_title_id", titleId)
-            put("p_badge_id", badgeId)
-        })
-        Unit
-    }
-}
-''',
-    'ChatNameStyling.kt': r'''package com.yourname.idlerpg.ui.components
-
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
-import com.yourname.idlerpg.BadgeEffect
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.yourname.idlerpg.ChatCosmetic
 import com.yourname.idlerpg.ChatCosmeticCatalog
-import kotlin.math.sin
+import com.yourname.idlerpg.ui.components.ChatChannelUi
+import com.yourname.idlerpg.ui.components.ChatMessageUi
+import com.yourname.idlerpg.ui.components.badgePreviewText
+import com.yourname.idlerpg.ui.components.chatLineText
 
 // =========================================================
-// CHAT NAME STYLING - titles + badge effects
-// A chat line renders as:  [Title] Name: message
-//   - Title: bold, single flat color (no animation).
-//   - Name: optionally painted with a badge effect. The effect is a
-//     SpanStyle applied to the NAME ONLY, so it layers over whatever
-//     global text effect the viewer has chosen without touching the
-//     app-wide Typography. Every badge effect is separate from (and
-//     never reuses) the Settings text-effect modes.
-// Gradients use absolute pixel offsets with a repeating tile, so the
-// pattern flows across the name regardless of where it sits in the line.
+// TITLES & BADGES (Settings)
+// Entry card shows a live preview of what your chat line looks
+// like; "Customize" opens a full-screen dialog with a Titles tab
+// and a Badges tab. Titles: owned / gem shop / earn-these (with
+// progress). Badges: all gem-priced, animated previews.
 // =========================================================
-
-private const val BADGE_LOOP_MS = 3200
 
 @Composable
-fun rememberBadgePhase(): Float {
-    val transition = rememberInfiniteTransition(label = "chatBadgePhase")
-    val phase by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = BADGE_LOOP_MS, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "chatBadgePhaseValue"
+fun CosmeticsEntry(
+    gems: Long,
+    owned: Set<String>,
+    equippedTitleId: String?,
+    equippedBadgeId: String?,
+    monsterKills: Map<String, Long>,
+    skillLevels: Map<String, Int>,
+    errorText: String?,
+    onBuy: (String) -> Unit,
+    onEquipTitle: (String?) -> Unit,
+    onEquipBadge: (String?) -> Unit
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    val previewMessage = ChatMessageUi(
+        id = "cosmetics-preview",
+        senderCharacterId = "cosmetics-preview",
+        senderName = "Your Name",
+        content = "looking good!",
+        channel = ChatChannelUi.GLOBAL,
+        senderTitleId = equippedTitleId,
+        senderBadgeId = equippedBadgeId
     )
-    return phase
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(text = "Titles & Badges", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = chatLineText(previewMessage), style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = { showDialog = true }) {
+            Text(text = "Customize")
+        }
+    }
+
+    if (showDialog) {
+        CosmeticsDialog(
+            gems = gems,
+            owned = owned,
+            equippedTitleId = equippedTitleId,
+            equippedBadgeId = equippedBadgeId,
+            monsterKills = monsterKills,
+            skillLevels = skillLevels,
+            errorText = errorText,
+            onBuy = onBuy,
+            onEquipTitle = onEquipTitle,
+            onEquipBadge = onEquipBadge,
+            onDismiss = { showDialog = false }
+        )
+    }
 }
 
-// A repeating horizontal gradient that scrolls as phase goes 0 -> 1. The first
-// color is appended at the end so the tile loops seamlessly.
-private fun flowingBrush(colors: List<Color>, phase: Float, period: Float): Brush {
-    val shift = (phase % 1f) * period
-    return Brush.linearGradient(
-        colors = colors + colors.first(),
-        start = Offset(shift, 0f),
-        end = Offset(shift + period, 0f),
-        tileMode = TileMode.Repeated
+@Composable
+private fun CosmeticsDialog(
+    gems: Long,
+    owned: Set<String>,
+    equippedTitleId: String?,
+    equippedBadgeId: String?,
+    monsterKills: Map<String, Long>,
+    skillLevels: Map<String, Int>,
+    errorText: String?,
+    onBuy: (String) -> Unit,
+    onEquipTitle: (String?) -> Unit,
+    onEquipBadge: (String?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var tab by remember { mutableStateOf(0) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize().padding(12.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "Titles & Badges", style = MaterialTheme.typography.titleLarge)
+                    TextButton(onClick = onDismiss) {
+                        Text(text = "Close")
+                    }
+                }
+                Text(text = "Gems: " + gems, style = MaterialTheme.typography.titleSmall)
+                if (errorText != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = errorText,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TabChip(label = "Titles", selected = tab == 0, onClick = { tab = 0 })
+                    TabChip(label = "Badges", selected = tab == 1, onClick = { tab = 1 })
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+
+                if (tab == 0) {
+                    TitlesList(
+                        gems = gems,
+                        owned = owned,
+                        equippedTitleId = equippedTitleId,
+                        monsterKills = monsterKills,
+                        skillLevels = skillLevels,
+                        onBuy = onBuy,
+                        onEquipTitle = onEquipTitle
+                    )
+                } else {
+                    BadgesList(
+                        gems = gems,
+                        owned = owned,
+                        equippedBadgeId = equippedBadgeId,
+                        onBuy = onBuy,
+                        onEquipBadge = onEquipBadge
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TabChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    if (selected) {
+        Button(onClick = onClick) { Text(text = label) }
+    } else {
+        OutlinedButton(onClick = onClick) { Text(text = label) }
+    }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.padding(top = 8.dp)
     )
 }
 
-fun badgeSpanStyle(effect: BadgeEffect, phase: Float): SpanStyle {
-    val twoPi = (2.0 * Math.PI).toFloat()
-    val pulse = (sin(phase * twoPi) + 1f) / 2f
-    return when (effect) {
-        BadgeEffect.RAINBOW -> SpanStyle(
-            brush = flowingBrush(
-                listOf(
-                    Color(0xFFFF3B3B), Color(0xFFFF9F1C), Color(0xFFFFEC3D), Color(0xFF3DDC84),
-                    Color(0xFF29B6F6), Color(0xFF7C4DFF), Color(0xFFE040FB)
-                ),
-                phase, 420f
-            ),
-            fontWeight = FontWeight.Bold
-        )
-        BadgeEffect.GILDED -> SpanStyle(
-            brush = flowingBrush(
-                listOf(Color(0xFFB8860B), Color(0xFFFFE27A), Color(0xFFFFF8DC), Color(0xFFFFE27A), Color(0xFFB8860B)),
-                phase, 360f
-            ),
-            fontWeight = FontWeight.Bold
-        )
-        BadgeEffect.INFERNO -> {
-            val flicker = (sin(phase * twoPi * 3f) + 1f) / 2f
-            SpanStyle(
-                brush = flowingBrush(
-                    listOf(Color(0xFFFF3B00), Color(0xFFFF9A00), Color(0xFFFFE066), Color(0xFFFF9A00)),
-                    (phase * 2f) % 1f, 300f
-                ),
-                fontWeight = FontWeight.Bold,
-                shadow = Shadow(color = Color(0xFFFF3B00), blurRadius = 6f + 8f * flicker)
+@Composable
+private fun CosmeticRowFrame(
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f))
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun TitlesList(
+    gems: Long,
+    owned: Set<String>,
+    equippedTitleId: String?,
+    monsterKills: Map<String, Long>,
+    skillLevels: Map<String, Int>,
+    onBuy: (String) -> Unit,
+    onEquipTitle: (String?) -> Unit
+) {
+    val allTitles = ChatCosmeticCatalog.allTitles
+    val ownedTitles = allTitles.filter { it.id in owned }
+    val shopTitles = allTitles.filter { !it.isEarned && it.id !in owned }
+    val lockedEarned = allTitles.filter { it.isEarned && it.id !in owned }
+
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        item { SectionHeader("Owned (" + ownedTitles.size + ")") }
+        if (ownedTitles.isEmpty()) {
+            item {
+                Text(
+                    text = "You don't own any titles yet. Earn them in-game or buy them below.",
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
+        items(ownedTitles) { title ->
+            TitleRow(
+                title = title,
+                subtitle = if (title.isEarned) "Earned" else "Purchased",
+                trailing = {
+                    EquipButton(
+                        equipped = title.id == equippedTitleId,
+                        onEquip = { onEquipTitle(title.id) },
+                        onUnequip = { onEquipTitle(null) }
+                    )
+                }
             )
         }
-        BadgeEffect.FROSTBITE -> SpanStyle(
-            brush = flowingBrush(
-                listOf(Color(0xFF9BE7FF), Color(0xFFFFFFFF), Color(0xFF4FC3F7), Color(0xFFFFFFFF), Color(0xFF9BE7FF)),
-                phase, 380f
-            ),
-            fontWeight = FontWeight.Bold,
-            shadow = Shadow(color = Color(0xFF00B8D4), blurRadius = 6f)
-        )
-        BadgeEffect.NEON_PULSE -> SpanStyle(
-            color = Color(0xFF00F5FF),
-            fontWeight = FontWeight.Bold,
-            shadow = Shadow(color = Color(0xFF00F5FF), blurRadius = 4f + 14f * pulse)
-        )
-        BadgeEffect.AURORA -> SpanStyle(
-            brush = flowingBrush(
-                listOf(Color(0xFF00FFA3), Color(0xFF03E1FF), Color(0xFFB388FF)),
-                phase, 600f
-            ),
-            fontWeight = FontWeight.Bold
-        )
-        BadgeEffect.STORMCALL -> {
-            val flash = ((phase * 2f) % 1f) < 0.08f
-            if (flash) {
-                SpanStyle(
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    shadow = Shadow(color = Color(0xFFBFD7FF), blurRadius = 16f)
-                )
-            } else {
-                SpanStyle(
-                    color = Color(0xFF8EA8FF),
-                    fontWeight = FontWeight.Bold,
-                    shadow = Shadow(color = Color(0xFF3D5AFE), blurRadius = 4f)
-                )
-            }
+
+        item { SectionHeader("Gem Shop") }
+        items(shopTitles) { title ->
+            TitleRow(
+                title = title,
+                subtitle = "Costs " + title.gemCost + " Gems",
+                trailing = {
+                    Button(onClick = { onBuy(title.id) }, enabled = gems >= title.gemCost) {
+                        Text(text = "Buy (" + title.gemCost + ")")
+                    }
+                }
+            )
         }
-        BadgeEffect.BLOOD_MOON -> SpanStyle(
-            brush = flowingBrush(
-                listOf(Color(0xFF9E1B1B), Color(0xFFE01B1B), Color(0xFFFF5A5A), Color(0xFFE01B1B)),
-                phase, 400f
-            ),
-            fontWeight = FontWeight.Bold,
-            shadow = Shadow(color = Color(0xFF8B0000), blurRadius = 4f + 8f * pulse)
-        )
-        BadgeEffect.TOXIC -> SpanStyle(
-            brush = flowingBrush(
-                listOf(Color(0xFF39FF14), Color(0xFFB6FF00), Color(0xFF39FF14)),
-                (phase * 2f) % 1f, 300f
-            ),
-            fontWeight = FontWeight.Bold,
-            shadow = Shadow(color = Color(0xFF1B5E20), blurRadius = 6f)
-        )
-        BadgeEffect.VOID -> SpanStyle(
-            brush = flowingBrush(
-                listOf(Color(0xFF7B2CBF), Color(0xFFC77DFF), Color(0xFFE0AAFF), Color(0xFFC77DFF)),
-                phase, 500f
-            ),
-            fontWeight = FontWeight.Bold,
-            shadow = Shadow(color = Color(0xFF5A189A), blurRadius = 4f + 8f * pulse)
-        )
+
+        item { SectionHeader("Earn These (" + lockedEarned.size + ")") }
+        items(lockedEarned) { title ->
+            TitleRow(
+                title = title,
+                subtitle = earnRequirementText(title, monsterKills, skillLevels),
+                trailing = {
+                    Text(text = "Locked", style = MaterialTheme.typography.labelMedium)
+                }
+            )
+        }
     }
 }
 
-// The full rendered chat line: "[Title] Name: message". Used by both the
-// collapsed banner preview and the expanded message rows.
 @Composable
-fun chatLineText(message: ChatMessageUi): AnnotatedString {
-    val title = message.senderTitleId?.let { ChatCosmeticCatalog.find(it) }
-    val effect = message.senderBadgeId?.let { ChatCosmeticCatalog.find(it) }?.badgeEffect
-    val phase = if (effect != null) rememberBadgePhase() else 0f
-    return buildAnnotatedString {
-        if (title != null) {
-            withStyle(SpanStyle(color = Color(title.colorArgb), fontWeight = FontWeight.Bold)) {
-                append("[" + title.displayName + "] ")
-            }
+private fun TitleRow(
+    title: ChatCosmetic,
+    subtitle: String,
+    trailing: @Composable () -> Unit
+) {
+    CosmeticRowFrame {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "[" + title.displayName + "]",
+                color = Color(title.colorArgb),
+                style = MaterialTheme.typography.titleSmall
+            )
+            Text(text = subtitle, style = MaterialTheme.typography.labelSmall)
         }
-        if (effect != null) {
-            withStyle(badgeSpanStyle(effect, phase)) {
-                append(message.senderName)
-            }
-        } else {
-            append(message.senderName)
-        }
-        append(": " + message.content)
+        Spacer(modifier = Modifier.width(8.dp))
+        trailing()
     }
 }
 
-// Just a styled name, for previews in the badge shop.
 @Composable
-fun badgePreviewText(name: String, effect: BadgeEffect): AnnotatedString {
-    val phase = rememberBadgePhase()
-    return buildAnnotatedString {
-        withStyle(badgeSpanStyle(effect, phase)) {
-            append(name)
+private fun EquipButton(equipped: Boolean, onEquip: () -> Unit, onUnequip: () -> Unit) {
+    if (equipped) {
+        OutlinedButton(onClick = onUnequip) { Text(text = "Unequip") }
+    } else {
+        Button(onClick = onEquip) { Text(text = "Equip") }
+    }
+}
+
+private fun earnRequirementText(
+    title: ChatCosmetic,
+    monsterKills: Map<String, Long>,
+    skillLevels: Map<String, Int>
+): String {
+    val skill = title.earnedSkill
+    val monsterId = title.earnedMonsterId
+    return when {
+        skill != null -> {
+            val current = skillLevels[skill.name] ?: 0
+            val label = skill.name.lowercase().replaceFirstChar { it.uppercase() }
+            "Reach level " + ChatCosmeticCatalog.MASTER_SKILL_LEVEL + " in " + label + " (now " + current + ")"
+        }
+        monsterId != null -> {
+            val kills = monsterKills[monsterId] ?: 0L
+            val name = ChatCosmeticCatalog.monsterName(monsterId)
+            "Defeat " + "%,d".format(ChatCosmeticCatalog.SLAYER_KILLS_REQUIRED) + " " + name +
+                " (" + "%,d".format(kills) + " so far)"
+        }
+        else -> ""
+    }
+}
+
+@Composable
+private fun BadgesList(
+    gems: Long,
+    owned: Set<String>,
+    equippedBadgeId: String?,
+    onBuy: (String) -> Unit,
+    onEquipBadge: (String?) -> Unit
+) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        item {
+            Text(
+                text = "Badges change how your name looks in chat. They layer over your normal text style.",
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+        items(ChatCosmeticCatalog.badges) { badge ->
+            val effect = badge.badgeEffect
+            val isOwned = badge.id in owned
+            CosmeticRowFrame {
+                Column(modifier = Modifier.weight(1f)) {
+                    if (effect != null) {
+                        Text(
+                            text = badgePreviewText("Your Name", effect),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+                    Text(
+                        text = badge.displayName + if (isOwned) " (owned)" else " - " + badge.gemCost + " Gems",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                if (isOwned) {
+                    EquipButton(
+                        equipped = badge.id == equippedBadgeId,
+                        onEquip = { onEquipBadge(badge.id) },
+                        onUnequip = { onEquipBadge(null) }
+                    )
+                } else {
+                    Button(onClick = { onBuy(badge.id) }, enabled = gems >= badge.gemCost) {
+                        Text(text = "Buy (" + badge.gemCost + ")")
+                    }
+                }
+            }
         }
     }
 }
 ''',
 }
 
+REQUIRES = [('GameViewModel.kt', 'val ownedCosmetics: StateFlow<Set<String>>'), ('ChatNameStyling.kt', 'fun chatLineText(')]
+
 EDITS = [
-    ('CombatSystem.kt',
-     'kill hook property',
-     '    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()',
-     '    private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()\n\n    // Fired once per monster kill - live combat AND offline-progress kills alike.\n    // GameViewModel uses it to keep per-monster kill counts (Slayer titles).\n    var onMonsterKilled: (String, Monster) -> Unit = { _, _ -> }'),
-    ('CombatSystem.kt',
-     'live kill fires hook',
-     '            rollLoot(state, monster, dropRateMultiplier)\n            session.currentMonster = null',
-     '            rollLoot(state, monster, dropRateMultiplier)\n            onMonsterKilled(characterId, monster)\n            session.currentMonster = null'),
-    ('CombatSystem.kt',
-     'offline kills fire hook',
-     '            rollLoot(state, monster, dropRateMultiplier)\n        }',
-     '            rollLoot(state, monster, dropRateMultiplier)\n            onMonsterKilled(characterId, monster)\n        }'),
-    ('SupabaseChatRepository.kt',
-     'fetch equipped cosmetics for senders',
-     '            rows.sortedBy { it.sentAt }.map {\n                ChatMessageUi(',
-     '            val cosmeticsBySender = SupabaseCosmeticRepository.fetchEquipped(senderIds)\n\n            rows.sortedBy { it.sentAt }.map {\n                ChatMessageUi('),
-    ('SupabaseChatRepository.kt',
-     'attach title/badge ids to messages',
-     '                    content = it.content,\n                    channel = channel\n                )',
-     '                    content = it.content,\n                    channel = channel,\n                    senderTitleId = cosmeticsBySender[it.senderCharacterId]?.titleId,\n                    senderBadgeId = cosmeticsBySender[it.senderCharacterId]?.badgeId\n                )'),
-    ('ChatBanner.kt',
-     'ChatMessageUi title/badge fields',
-     '    val content: String,\n    val channel: ChatChannelUi\n)',
-     '    val content: String,\n    val channel: ChatChannelUi,\n    val senderTitleId: String? = null,\n    val senderBadgeId: String? = null\n)'),
-    ('ChatBanner.kt',
-     'collapsed preview line',
-     'text = msg.senderName + ": " + msg.content,',
-     'text = chatLineText(msg),'),
-    ('ChatBanner.kt',
-     'message row line',
-     'text = message.senderName + ": " + message.content,',
-     'text = chatLineText(message),'),
-    ('GameViewModel.kt',
-     'cosmetics state, kill tally, claim loop',
-     '    private val _premiumActionError = MutableStateFlow<String?>(null)\n    val premiumActionError: StateFlow<String?> = _premiumActionError.asStateFlow()',
-     '    private val _premiumActionError = MutableStateFlow<String?>(null)\n    val premiumActionError: StateFlow<String?> = _premiumActionError.asStateFlow()\n\n    // =========================================================\n    // CHAT COSMETICS (titles + badges) + PER-MONSTER KILL COUNTS\n    // Ownership / equipped state / kill totals are server-side\n    // (see cosmetics_schema.sql). This block keeps a local tally of\n    // kills (live AND offline kills both fire combatService.onMonsterKilled),\n    // flushes it to the server every ~30s, loads owned/equipped state\n    // once per character, and claims earned titles (Master <Skill> at\n    // level 99, Master <Monster> Slayer at 10,000 kills) as they qualify.\n    // Everything runs in its own background loop and is best-effort -\n    // gameplay never waits on it.\n    // =========================================================\n    private val cosmeticKillTally: MutableMap<String, Int> = mutableMapOf() // key = localCharacterId + "|" + monsterId\n    private var cosmeticServerKills: Map<String, Long> = emptyMap()\n    private var cosmeticsLoadedFor: String? = null\n\n    private val _ownedCosmetics = MutableStateFlow<Set<String>>(emptySet())\n    val ownedCosmetics: StateFlow<Set<String>> = _ownedCosmetics.asStateFlow()\n\n    private val _equippedTitleId = MutableStateFlow<String?>(null)\n    val equippedTitleId: StateFlow<String?> = _equippedTitleId.asStateFlow()\n\n    private val _equippedBadgeId = MutableStateFlow<String?>(null)\n    val equippedBadgeId: StateFlow<String?> = _equippedBadgeId.asStateFlow()\n\n    private val _monsterKillTotals = MutableStateFlow<Map<String, Long>>(emptyMap())\n    val monsterKillTotals: StateFlow<Map<String, Long>> = _monsterKillTotals.asStateFlow()\n\n    private val _cosmeticSkillLevels = MutableStateFlow<Map<String, Int>>(emptyMap())\n    val cosmeticSkillLevels: StateFlow<Map<String, Int>> = _cosmeticSkillLevels.asStateFlow()\n\n    private val _cosmeticActionError = MutableStateFlow<String?>(null)\n    val cosmeticActionError: StateFlow<String?> = _cosmeticActionError.asStateFlow()\n\n    init {\n        combatService.onMonsterKilled = { killerCharacterId, monster ->\n            if (killerCharacterId == _currentCharacterId.value) {\n                synchronized(cosmeticKillTally) {\n                    val key = killerCharacterId + "|" + monster.id\n                    cosmeticKillTally[key] = (cosmeticKillTally[key] ?: 0) + 1\n                }\n            }\n        }\n        viewModelScope.launch(Dispatchers.Default) {\n            // Delay first: the constructor may still be running when this coroutine starts.\n            delay(3000L)\n            while (true) {\n                val supabaseId = _currentSupabaseCharacterId.value\n                val localId = _currentCharacterId.value\n                if (supabaseId != null && localId != null) {\n                    runCatching { cosmeticsTick(localId, supabaseId) }\n                }\n                delay(if (cosmeticsLoadedFor == supabaseId) 30_000L else 3_000L)\n            }\n        }\n    }\n\n    private suspend fun cosmeticsTick(localId: String, supabaseId: String) {\n        if (cosmeticsLoadedFor != supabaseId) {\n            val owned = SupabaseCosmeticRepository.myCosmetics(supabaseId).getOrNull() ?: return\n            val kills = SupabaseCosmeticRepository.monsterKills(supabaseId).getOrNull() ?: return\n            val equipped = SupabaseCosmeticRepository.fetchEquipped(listOf(supabaseId))[supabaseId]\n            _ownedCosmetics.value = owned.toSet()\n            _equippedTitleId.value = equipped?.titleId\n            _equippedBadgeId.value = equipped?.badgeId\n            cosmeticServerKills = kills\n            cosmeticsLoadedFor = supabaseId\n        }\n\n        val prefix = localId + "|"\n        val toSend: Map<String, Int> = synchronized(cosmeticKillTally) {\n            val mine = cosmeticKillTally.filterKeys { it.startsWith(prefix) }\n            mine.keys.forEach { cosmeticKillTally.remove(it) }\n            mine.mapKeys { it.key.removePrefix(prefix) }\n        }\n        if (toSend.isNotEmpty()) {\n            val sent = SupabaseCosmeticRepository.recordKills(supabaseId, toSend)\n            if (sent.isSuccess) {\n                val merged = cosmeticServerKills.toMutableMap()\n                toSend.forEach { (monsterId, count) -> merged[monsterId] = (merged[monsterId] ?: 0L) + count }\n                cosmeticServerKills = merged\n            } else {\n                // Put them back so the next pass retries.\n                synchronized(cosmeticKillTally) {\n                    toSend.forEach { (monsterId, count) ->\n                        val key = prefix + monsterId\n                        cosmeticKillTally[key] = (cosmeticKillTally[key] ?: 0) + count\n                    }\n                }\n            }\n        }\n\n        val pendingNow: Map<String, Int> = synchronized(cosmeticKillTally) {\n            cosmeticKillTally.filterKeys { it.startsWith(prefix) }.mapKeys { it.key.removePrefix(prefix) }\n        }\n        val totals = cosmeticServerKills.toMutableMap()\n        pendingNow.forEach { (monsterId, count) -> totals[monsterId] = (totals[monsterId] ?: 0L) + count }\n        _monsterKillTotals.value = totals\n        _cosmeticSkillLevels.value = SkillType.values().associate { it.name to skillLevel(localId, it) }\n\n        claimEarnedTitles(supabaseId)\n    }\n\n    private suspend fun claimEarnedTitles(supabaseId: String) {\n        val owned = _ownedCosmetics.value\n        val levels = _cosmeticSkillLevels.value\n        for (title in ChatCosmeticCatalog.earnedTitles) {\n            if (title.id in owned) continue\n            val skill = title.earnedSkill\n            val monsterId = title.earnedMonsterId\n            val qualifies = when {\n                skill != null -> (levels[skill.name] ?: 0) >= ChatCosmeticCatalog.MASTER_SKILL_LEVEL\n                monsterId != null -> (cosmeticServerKills[monsterId] ?: 0L) >= ChatCosmeticCatalog.SLAYER_KILLS_REQUIRED\n                else -> false\n            }\n            if (!qualifies) continue\n            val claimed = SupabaseCosmeticRepository.claimEarnedTitle(supabaseId, title.id)\n            if (claimed.isSuccess) {\n                _ownedCosmetics.value = _ownedCosmetics.value + title.id\n            }\n        }\n    }\n\n    fun purchaseCosmetic(cosmeticId: String) {\n        val supabaseId = _currentSupabaseCharacterId.value ?: return\n        val cosmetic = ChatCosmeticCatalog.find(cosmeticId) ?: return\n        if (cosmetic.isEarned) {\n            _cosmeticActionError.value = "That one is earned in-game, not bought."\n            return\n        }\n        if (cosmeticId in _ownedCosmetics.value) {\n            _cosmeticActionError.value = "You already own that."\n            return\n        }\n        viewModelScope.launch {\n            val result = SupabaseCosmeticRepository.purchaseCosmetic(supabaseId, cosmeticId)\n            result.onFailure { _cosmeticActionError.value = it.message ?: it.toString() }\n            result.onSuccess {\n                _cosmeticActionError.value = null\n                _ownedCosmetics.value = _ownedCosmetics.value + cosmeticId\n                refreshCurrency()\n            }\n        }\n    }\n\n    fun equipTitle(titleId: String?) = saveEquippedCosmetics(titleId, _equippedBadgeId.value)\n\n    fun equipBadge(badgeId: String?) = saveEquippedCosmetics(_equippedTitleId.value, badgeId)\n\n    private fun saveEquippedCosmetics(titleId: String?, badgeId: String?) {\n        val supabaseId = _currentSupabaseCharacterId.value ?: return\n        viewModelScope.launch {\n            val result = SupabaseCosmeticRepository.setEquipped(supabaseId, titleId, badgeId)\n            result.onFailure { _cosmeticActionError.value = it.message ?: it.toString() }\n            result.onSuccess {\n                _cosmeticActionError.value = null\n                _equippedTitleId.value = titleId\n                _equippedBadgeId.value = badgeId\n                refreshChatMessages()\n            }\n        }\n    }'),
+    ('SettingsScreen.kt',
+     'cosmeticsContent slot param',
+     '    onSecondaryColorChanged: (Color?) -> Unit = {},\n    modifier: Modifier = Modifier\n) {',
+     '    onSecondaryColorChanged: (Color?) -> Unit = {},\n    cosmeticsContent: @Composable () -> Unit = {},\n    modifier: Modifier = Modifier\n) {'),
+    ('SettingsScreen.kt',
+     'cosmetics slot above presets',
+     '        Spacer(modifier = Modifier.height(16.dp))\n        Text(text = "Premium Text Presets", style = MaterialTheme.typography.titleMedium)',
+     '        Spacer(modifier = Modifier.height(16.dp))\n        cosmeticsContent()\n        Spacer(modifier = Modifier.height(16.dp))\n        Text(text = "Premium Text Presets", style = MaterialTheme.typography.titleMedium)'),
+    ('MainActivity.kt',
+     'collect cosmetics state',
+     '                                val ownedPresets by gameViewModel.unlockedPresets.collectAsState()',
+     '                                val ownedPresets by gameViewModel.unlockedPresets.collectAsState()\n                                val ownedCosmetics by gameViewModel.ownedCosmetics.collectAsState()\n                                val equippedTitleId by gameViewModel.equippedTitleId.collectAsState()\n                                val equippedBadgeId by gameViewModel.equippedBadgeId.collectAsState()\n                                val monsterKillTotals by gameViewModel.monsterKillTotals.collectAsState()\n                                val cosmeticSkillLevels by gameViewModel.cosmeticSkillLevels.collectAsState()\n                                val cosmeticActionError by gameViewModel.cosmeticActionError.collectAsState()'),
+    ('MainActivity.kt',
+     'pass cosmetics slot to SettingsScreen',
+     '                                    onSecondaryColorChanged = { gameViewModel.setTextSecondaryColor(it) }\n                                )',
+     '                                    onSecondaryColorChanged = { gameViewModel.setTextSecondaryColor(it) },\n                                    cosmeticsContent = {\n                                        CosmeticsEntry(\n                                            gems = premiumCurrencyBalance.second,\n                                            owned = ownedCosmetics,\n                                            equippedTitleId = equippedTitleId,\n                                            equippedBadgeId = equippedBadgeId,\n                                            monsterKills = monsterKillTotals,\n                                            skillLevels = cosmeticSkillLevels,\n                                            errorText = cosmeticActionError,\n                                            onBuy = { gameViewModel.purchaseCosmetic(it) },\n                                            onEquipTitle = { gameViewModel.equipTitle(it) },\n                                            onEquipBadge = { gameViewModel.equipBadge(it) }\n                                        )\n                                    }\n                                )'),
 ]
 
 
