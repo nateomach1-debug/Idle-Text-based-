@@ -1414,6 +1414,168 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _premiumActionError = MutableStateFlow<String?>(null)
     val premiumActionError: StateFlow<String?> = _premiumActionError.asStateFlow()
 
+    // =========================================================
+    // CHAT COSMETICS (titles + badges) + PER-MONSTER KILL COUNTS
+    // Ownership / equipped state / kill totals are server-side
+    // (see cosmetics_schema.sql). This block keeps a local tally of
+    // kills (live AND offline kills both fire combatService.onMonsterKilled),
+    // flushes it to the server every ~30s, loads owned/equipped state
+    // once per character, and claims earned titles (Master <Skill> at
+    // level 99, Master <Monster> Slayer at 10,000 kills) as they qualify.
+    // Everything runs in its own background loop and is best-effort -
+    // gameplay never waits on it.
+    // =========================================================
+    private val cosmeticKillTally: MutableMap<String, Int> = mutableMapOf() // key = localCharacterId + "|" + monsterId
+    private var cosmeticServerKills: Map<String, Long> = emptyMap()
+    private var cosmeticsLoadedFor: String? = null
+
+    private val _ownedCosmetics = MutableStateFlow<Set<String>>(emptySet())
+    val ownedCosmetics: StateFlow<Set<String>> = _ownedCosmetics.asStateFlow()
+
+    private val _equippedTitleId = MutableStateFlow<String?>(null)
+    val equippedTitleId: StateFlow<String?> = _equippedTitleId.asStateFlow()
+
+    private val _equippedBadgeId = MutableStateFlow<String?>(null)
+    val equippedBadgeId: StateFlow<String?> = _equippedBadgeId.asStateFlow()
+
+    private val _monsterKillTotals = MutableStateFlow<Map<String, Long>>(emptyMap())
+    val monsterKillTotals: StateFlow<Map<String, Long>> = _monsterKillTotals.asStateFlow()
+
+    private val _cosmeticSkillLevels = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val cosmeticSkillLevels: StateFlow<Map<String, Int>> = _cosmeticSkillLevels.asStateFlow()
+
+    private val _cosmeticActionError = MutableStateFlow<String?>(null)
+    val cosmeticActionError: StateFlow<String?> = _cosmeticActionError.asStateFlow()
+
+    init {
+        combatService.onMonsterKilled = { killerCharacterId, monster ->
+            if (killerCharacterId == _currentCharacterId.value) {
+                synchronized(cosmeticKillTally) {
+                    val key = killerCharacterId + "|" + monster.id
+                    cosmeticKillTally[key] = (cosmeticKillTally[key] ?: 0) + 1
+                }
+            }
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            // Delay first: the constructor may still be running when this coroutine starts.
+            delay(3000L)
+            while (true) {
+                val supabaseId = _currentSupabaseCharacterId.value
+                val localId = _currentCharacterId.value
+                if (supabaseId != null && localId != null) {
+                    runCatching { cosmeticsTick(localId, supabaseId) }
+                }
+                delay(if (cosmeticsLoadedFor == supabaseId) 30_000L else 3_000L)
+            }
+        }
+    }
+
+    private suspend fun cosmeticsTick(localId: String, supabaseId: String) {
+        if (cosmeticsLoadedFor != supabaseId) {
+            val owned = SupabaseCosmeticRepository.myCosmetics(supabaseId).getOrNull() ?: return
+            val kills = SupabaseCosmeticRepository.monsterKills(supabaseId).getOrNull() ?: return
+            val equipped = SupabaseCosmeticRepository.fetchEquipped(listOf(supabaseId))[supabaseId]
+            _ownedCosmetics.value = owned.toSet()
+            _equippedTitleId.value = equipped?.titleId
+            _equippedBadgeId.value = equipped?.badgeId
+            cosmeticServerKills = kills
+            cosmeticsLoadedFor = supabaseId
+        }
+
+        val prefix = localId + "|"
+        val toSend: Map<String, Int> = synchronized(cosmeticKillTally) {
+            val mine = cosmeticKillTally.filterKeys { it.startsWith(prefix) }
+            mine.keys.forEach { cosmeticKillTally.remove(it) }
+            mine.mapKeys { it.key.removePrefix(prefix) }
+        }
+        if (toSend.isNotEmpty()) {
+            val sent = SupabaseCosmeticRepository.recordKills(supabaseId, toSend)
+            if (sent.isSuccess) {
+                val merged = cosmeticServerKills.toMutableMap()
+                toSend.forEach { (monsterId, count) -> merged[monsterId] = (merged[monsterId] ?: 0L) + count }
+                cosmeticServerKills = merged
+            } else {
+                // Put them back so the next pass retries.
+                synchronized(cosmeticKillTally) {
+                    toSend.forEach { (monsterId, count) ->
+                        val key = prefix + monsterId
+                        cosmeticKillTally[key] = (cosmeticKillTally[key] ?: 0) + count
+                    }
+                }
+            }
+        }
+
+        val pendingNow: Map<String, Int> = synchronized(cosmeticKillTally) {
+            cosmeticKillTally.filterKeys { it.startsWith(prefix) }.mapKeys { it.key.removePrefix(prefix) }
+        }
+        val totals = cosmeticServerKills.toMutableMap()
+        pendingNow.forEach { (monsterId, count) -> totals[monsterId] = (totals[monsterId] ?: 0L) + count }
+        _monsterKillTotals.value = totals
+        _cosmeticSkillLevels.value = SkillType.values().associate { it.name to skillLevel(localId, it) }
+
+        claimEarnedTitles(supabaseId)
+    }
+
+    private suspend fun claimEarnedTitles(supabaseId: String) {
+        val owned = _ownedCosmetics.value
+        val levels = _cosmeticSkillLevels.value
+        for (title in ChatCosmeticCatalog.earnedTitles) {
+            if (title.id in owned) continue
+            val skill = title.earnedSkill
+            val monsterId = title.earnedMonsterId
+            val qualifies = when {
+                skill != null -> (levels[skill.name] ?: 0) >= ChatCosmeticCatalog.MASTER_SKILL_LEVEL
+                monsterId != null -> (cosmeticServerKills[monsterId] ?: 0L) >= ChatCosmeticCatalog.SLAYER_KILLS_REQUIRED
+                else -> false
+            }
+            if (!qualifies) continue
+            val claimed = SupabaseCosmeticRepository.claimEarnedTitle(supabaseId, title.id)
+            if (claimed.isSuccess) {
+                _ownedCosmetics.value = _ownedCosmetics.value + title.id
+            }
+        }
+    }
+
+    fun purchaseCosmetic(cosmeticId: String) {
+        val supabaseId = _currentSupabaseCharacterId.value ?: return
+        val cosmetic = ChatCosmeticCatalog.find(cosmeticId) ?: return
+        if (cosmetic.isEarned) {
+            _cosmeticActionError.value = "That one is earned in-game, not bought."
+            return
+        }
+        if (cosmeticId in _ownedCosmetics.value) {
+            _cosmeticActionError.value = "You already own that."
+            return
+        }
+        viewModelScope.launch {
+            val result = SupabaseCosmeticRepository.purchaseCosmetic(supabaseId, cosmeticId)
+            result.onFailure { _cosmeticActionError.value = it.message ?: it.toString() }
+            result.onSuccess {
+                _cosmeticActionError.value = null
+                _ownedCosmetics.value = _ownedCosmetics.value + cosmeticId
+                refreshCurrency()
+            }
+        }
+    }
+
+    fun equipTitle(titleId: String?) = saveEquippedCosmetics(titleId, _equippedBadgeId.value)
+
+    fun equipBadge(badgeId: String?) = saveEquippedCosmetics(_equippedTitleId.value, badgeId)
+
+    private fun saveEquippedCosmetics(titleId: String?, badgeId: String?) {
+        val supabaseId = _currentSupabaseCharacterId.value ?: return
+        viewModelScope.launch {
+            val result = SupabaseCosmeticRepository.setEquipped(supabaseId, titleId, badgeId)
+            result.onFailure { _cosmeticActionError.value = it.message ?: it.toString() }
+            result.onSuccess {
+                _cosmeticActionError.value = null
+                _equippedTitleId.value = titleId
+                _equippedBadgeId.value = badgeId
+                refreshChatMessages()
+            }
+        }
+    }
+
     init {
         viewModelScope.launch(Dispatchers.Default) {
             var lastTickMillis = System.currentTimeMillis()

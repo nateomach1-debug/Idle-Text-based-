@@ -128,13 +128,17 @@ object SupabaseChatRepository {
                 .decodeList<ChatCharacterNameRow>()
             val nameById = names.associateBy({ it.id }, { it.displayName })
 
+            val cosmeticsBySender = SupabaseCosmeticRepository.fetchEquipped(senderIds)
+
             rows.sortedBy { it.sentAt }.map {
                 ChatMessageUi(
                     id = it.id,
                     senderCharacterId = it.senderCharacterId,
                     senderName = nameById[it.senderCharacterId] ?: "Unknown",
                     content = it.content,
-                    channel = channel
+                    channel = channel,
+                    senderTitleId = cosmeticsBySender[it.senderCharacterId]?.titleId,
+                    senderBadgeId = cosmeticsBySender[it.senderCharacterId]?.badgeId
                 )
             }
         } catch (e: Exception) {

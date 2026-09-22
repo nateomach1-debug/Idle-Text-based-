@@ -564,6 +564,10 @@ class CombatService {
     private val recoveryDuration: Duration = Duration.ofSeconds(600)
     private val states: MutableMap<String, CharacterCombatState> = mutableMapOf()
 
+    // Fired once per monster kill - live combat AND offline-progress kills alike.
+    // GameViewModel uses it to keep per-monster kill counts (Slayer titles).
+    var onMonsterKilled: (String, Monster) -> Unit = { _, _ -> }
+
     // Which monster the player picked to hunt (monster id), supplied per character by
     // GameViewModel from persisted settings. Null/unknown/not-in-this-zone -> random pick.
     var targetMonsterIdProvider: (String) -> String? = { null }
@@ -703,6 +707,7 @@ class CombatService {
         if (defeated) {
             val dropRateMultiplier = if (loadout.selectedPrayerId == "fortunes_favor") 1.15 else 1.0
             rollLoot(state, monster, dropRateMultiplier)
+            onMonsterKilled(characterId, monster)
             session.currentMonster = null
             startSearching(characterId)
         }
@@ -879,6 +884,7 @@ class CombatService {
         repeat(estimatedKills) {
             val monster = offlinePool.random()
             rollLoot(state, monster, dropRateMultiplier)
+            onMonsterKilled(characterId, monster)
         }
 
         return ServiceResult.Success(OfflineCombatOutcome(estimatedKills = estimatedKills, xpEarned = xpEarned))

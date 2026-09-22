@@ -33,7 +33,9 @@ data class ChatMessageUi(
     val senderCharacterId: String,
     val senderName: String,
     val content: String,
-    val channel: ChatChannelUi
+    val channel: ChatChannelUi,
+    val senderTitleId: String? = null,
+    val senderBadgeId: String? = null
 )
 
 data class DmConversationSummary(
@@ -131,7 +133,7 @@ private fun CollapsedMessagePreview(lastThree: List<ChatMessageUi>) {
         }
         lastThree.forEach { msg ->
             Text(
-                text = msg.senderName + ": " + msg.content,
+                text = chatLineText(msg),
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1
             )
@@ -216,7 +218,7 @@ private fun ChatMessageRow(message: ChatMessageUi, onAction: (ChatMessageUi, Cha
 
     Box {
         Text(
-            text = message.senderName + ": " + message.content,
+            text = chatLineText(message),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier
                 .fillMaxWidth()
