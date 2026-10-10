@@ -900,7 +900,8 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
 
                             AppDestination.INVENTORY -> {
                                 BackHandler(enabled = inventoryScreenState != InventoryScreenState.Items) {
-                                    inventoryScreenState = InventoryScreenState.Items
+                                    InventoryScreenState.Items -> InventoryScreen(
+                                    capacity = gameViewModel.inventoryCapacity.collectAsState().value,
                                 }
                                 when (inventoryScreenState) {
                                 InventoryScreenState.Items -> InventoryScreen(
