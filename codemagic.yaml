@@ -26,41 +26,17 @@ workflows:
     scripts:
       - name: Run discovery grep
         script: |
-          OUT=discovery_output305.txt
-          SRC=./app/src/main/kotlin/com/yourname/idlerpg
-          echo "=== resolveAttack ===" > $OUT
-          grep -n "fun resolveAttack" -B 2 -A 80 $SRC/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          OUT=discovery_output260.txt
+          echo "=== steel_bar / mithril_bar defs ===" > $OUT
+          grep -rn "steel_bar\|mithril_bar" ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== rollLoot ===" >> $OUT
-          grep -n "fun rollLoot" -A 32 $SRC/CombatSystem.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== tickCrafting ===" >> $OUT
+          grep -n "fun tickCrafting" -A 60 ./app/src/main/kotlin/com/yourname/idlerpg/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
           echo "" >> $OUT
-          echo "=== tickCombat ===" >> $OUT
-          grep -n "fun tickCombat" -A 190 $SRC/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== monsterDefeated usages ===" >> $OUT
-          grep -rn "monsterDefeated" $SRC --include=*.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== login / session load hooks ===" >> $OUT
-          sed -n '1736,1780p' $SRC/GameViewModel.kt >> $OUT
-          echo "" >> $OUT
-          echo "=== refreshCurrency + supabase character id ===" >> $OUT
-          grep -n "fun refreshCurrency" -B 2 -A 25 $SRC/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          grep -n "_currentSupabaseCharacterId" $SRC/GameViewModel.kt | head -12 >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== sql files + leaderboard SQL ===" >> $OUT
-          ls ./*.sql >> $OUT
-          grep -n -i "leaderboard" ./*.sql | head -40 >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== skill stat sync (client to server) ===" >> $OUT
-          grep -rn -i "leaderboard\|skill_stats\|character_skills\|upsertSkill\|syncSkill\|pushSkill\|updateSkillLevel" $SRC --include=*.kt | head -60 >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== SupabaseLeaderboardRepository (full) ===" >> $OUT
-          cat $SRC/SupabaseLeaderboardRepository.kt >> $OUT || echo "NOT FOUND" >> $OUT
-          echo "" >> $OUT
-          echo "=== main tick loop ===" >> $OUT
-          grep -n "delay(1000L)" -B 8 -A 14 $SRC/GameViewModel.kt >> $OUT || echo "NOT FOUND" >> $OUT
+          echo "=== inventory add/remove fns ===" >> $OUT
+          grep -rn "fun addItem\|fun addToInventory\|fun removeItem\|fun consumeItem\|fun grantItem" -A 15 ./app/src/main/kotlin/com/yourname/idlerpg/ >> $OUT || echo "NOT FOUND" >> $OUT
     artifacts:
-      - discovery_output305.txt
+      - discovery_output260.txt
       
   apply-patch:
     name: Apply Patch Script
