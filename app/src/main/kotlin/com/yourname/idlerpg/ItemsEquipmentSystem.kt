@@ -2212,6 +2212,10 @@ class CraftingService {
             }
         }
 
+        if (inventory.quantityOf(recipe.outputItemId) == 0 && inventory.usedSlots() >= inventory.maxSlots) {
+            return ServiceResult.Failure("Inventory is full.")
+        }
+
         // Mastery Perk (Smithing/Crafting/Fletching/Alchemy): each ingredient
         // independently has a chance to not be consumed, rather than one
         // all-or-nothing roll for the whole craft.
