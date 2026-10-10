@@ -95,6 +95,7 @@ private fun sortedInventoryItems(items: List<InventoryItemSummary>, mode: Invent
 @Composable
 fun InventoryScreen(
     items: List<InventoryItemSummary>,
+    capacity: Int = 100,
     onOpenEquipment: () -> Unit,
     onOpenLoadout: () -> Unit,
     onUseItem: (String) -> Unit,
@@ -124,7 +125,10 @@ fun InventoryScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Inventory", style = MaterialTheme.typography.headlineMedium)
+            Column {
+                Text(text = "Inventory", style = MaterialTheme.typography.headlineMedium)
+                Text(text = "Slots: " + items.size + " / " + capacity, style = MaterialTheme.typography.bodyMedium)
+            }
             Row {
                 IconButton(onClick = {
                     viewMode = InventoryViewMode.LIST
