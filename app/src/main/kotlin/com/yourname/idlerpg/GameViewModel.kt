@@ -991,6 +991,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun leaveCombatZone() {
+        val cid = _currentCharacterId.value ?: return
+        combatService.leaveZone(cid)
+        if (offlineIdleService.activeQueueFor(cid) is ActiveQueue.OfflineCombatQueue) {
+            offlineIdleService.stopQueue(cid)
+        }
+        _combatViewData.value = null
+    }
+
+    private fun leaveCombatZoneOld() {
         val characterId = _currentCharacterId.value ?: return
         combatService.leaveZone(characterId)
         offlineIdleService.stopQueue(characterId)
@@ -1996,6 +2005,12 @@ fun logout() {
             val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
             if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
                 val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
+                batch.stoppedReason?.let { reason ->
+                    _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
+                        itemName = formatItemName(craftingQueue.itemId),
+                        reason = reason
+                    )
+                }
                 if (batch.xpGranted > 0) {
                     _offlineSummary.value = OfflineSummary(
                         awaySeconds = craftResult.value.claimedElapsed.seconds,
