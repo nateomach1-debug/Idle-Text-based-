@@ -1780,7 +1780,12 @@ fun logout() {
             }
         }
     }
+    private var offlineResolvedThisSession = false
+
     fun saveGame() {
+        if (offlineResolvedThisSession) {
+            _currentCharacterId.value?.let { offlineIdleService.recordLastSeen(it) }
+        }
         _currentCharacterId.value?.let { characterId ->
             inventoryService.inventoryFor(characterId).trainingSkillId = _trainingSkill.value.name
         }
@@ -2097,6 +2102,7 @@ fun logout() {
         refreshInventory()
         refreshActiveQueue()
 
+        offlineResolvedThisSession = true
         if (marketService.accountFor(characterId) == null) {
             val character = accountService.charactersFor(_currentAccountId.value ?: "")
                 .find { it.id == characterId }
