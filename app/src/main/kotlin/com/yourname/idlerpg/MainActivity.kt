@@ -902,6 +902,14 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                 BackHandler(enabled = inventoryScreenState != InventoryScreenState.Items) {
                                     InventoryScreenState.Items -> InventoryScreen(
                                     capacity = gameViewModel.inventoryCapacity.collectAsState().value,
+                                    coinPacks = gameViewModel.slotPacks.collectAsState().value.first,
+                                    gemPacks = gameViewModel.slotPacks.collectAsState().value.second,
+                                    coinBalance = gameViewModel.currency.collectAsState().value.first,
+                                    gemBalance = gameViewModel.currency.collectAsState().value.second,
+                                    slotError = gameViewModel.slotPurchaseError.collectAsState().value,
+                                    onBuyCoinSlots = { gameViewModel.buyCoinSlotPack() },
+                                    onBuyGemSlots = { gameViewModel.buyGemSlotPack() },
+                                    onClearSlotError = { gameViewModel.clearSlotPurchaseError() },
                                 }
                                 when (inventoryScreenState) {
                                 InventoryScreenState.Items -> InventoryScreen(
