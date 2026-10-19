@@ -96,6 +96,14 @@ private fun sortedInventoryItems(items: List<InventoryItemSummary>, mode: Invent
 fun InventoryScreen(
     items: List<InventoryItemSummary>,
     capacity: Int = 100,
+    coinPacks: Int = 0,
+    gemPacks: Int = 0,
+    coinBalance: Long = 0L,
+    gemBalance: Long = 0L,
+    slotError: String? = null,
+    onBuyCoinSlots: () -> Unit = {},
+    onBuyGemSlots: () -> Unit = {},
+    onClearSlotError: () -> Unit = {},
     onOpenEquipment: () -> Unit,
     onOpenLoadout: () -> Unit,
     onUseItem: (String) -> Unit,
@@ -110,6 +118,7 @@ fun InventoryScreen(
     var viewMode by remember { mutableStateOf(loadSavedInventoryViewMode(context)) }
     var sortMode by remember { mutableStateOf(loadSavedInventorySortMode(context)) }
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    var showSlotShop by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
 
     val grouped = remember(items, sortMode) {
@@ -128,6 +137,41 @@ fun InventoryScreen(
             Column {
                 Text(text = "Inventory", style = MaterialTheme.typography.headlineMedium)
                 Text(text = "Slots: " + items.size + " / " + capacity, style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = { showSlotShop = true }) { Text(text = "Buy slots") }
+                if (showSlotShop) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { showSlotShop = false; onClearSlotError() },
+                        title = { Text(text = "Buy inventory slots") },
+                        text = {
+                            Column {
+                                val coinPrice = InventorySlotShop.nextCoinPackPrice(coinPacks)
+                                val gemPrice = InventorySlotShop.nextGemPackPrice(gemPacks)
+                                Text(text = "Coins: " + coinBalance + "   Gems: " + gemBalance)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(text = "Coin slots: " + (coinPacks * InventorySlotShop.COIN_PACK_SLOTS) + " / " + InventorySlotShop.COIN_SLOTS_TOTAL)
+                                if (coinPrice != null) {
+                                    androidx.compose.material3.Button(onClick = onBuyCoinSlots, enabled = coinBalance >= coinPrice) {
+                                        Text(text = "Buy " + InventorySlotShop.COIN_PACK_SLOTS + " slots - " + coinPrice + " coins")
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(text = "Premium slots: " + (gemPacks * InventorySlotShop.GEM_PACK_SLOTS) + " / " + InventorySlotShop.GEM_SLOTS_TOTAL)
+                                if (gemPrice != null) {
+                                    androidx.compose.material3.Button(onClick = onBuyGemSlots, enabled = gemBalance >= gemPrice) {
+                                        Text(text = "Buy " + InventorySlotShop.GEM_PACK_SLOTS + " slots - " + gemPrice + " gems")
+                                    }
+                                }
+                                if (slotError != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(text = slotError, color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showSlotShop = false; onClearSlotError() }) { Text(text = "Close") }
+                        }
+                    )
+                }
             }
             Row {
                 IconButton(onClick = {
