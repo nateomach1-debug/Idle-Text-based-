@@ -160,6 +160,8 @@ class GameStateRepository(private val context: Context) {
             obj.put("autoFleeThresholdPercent", entry.autoFleeThresholdPercent)
             obj.put("selectedPrayerId", entry.selectedPrayerId ?: JSONObject.NULL)
             obj.put("trainingSkillId", entry.trainingSkillId ?: JSONObject.NULL)
+            obj.put("coinSlotPacks", entry.coinSlotPacks)
+            obj.put("gemSlotPacks", entry.gemSlotPacks)
             loadoutSettingsArray.put(obj)
         }
         root.put("loadoutSettings", loadoutSettingsArray)
@@ -486,6 +488,8 @@ class GameStateRepository(private val context: Context) {
                     selectedPotionId = if (obj.isNull("selectedPotionId")) null else obj.getString("selectedPotionId"),
                     selectedPrayerId = if (obj.isNull("selectedPrayerId")) null else obj.getString("selectedPrayerId"),
                     trainingSkillId = if (obj.isNull("trainingSkillId")) null else obj.getString("trainingSkillId"),
+                    coinSlotPacks = obj.optInt("coinSlotPacks", 0),
+                    gemSlotPacks = obj.optInt("gemSlotPacks", 0),
                     potionTimerRemainingSeconds = obj.getInt("potionTimerRemainingSeconds"),
                     autoHealThresholdPercent = obj.getInt("autoHealThresholdPercent"),
                     autoFleeThresholdPercent = obj.getInt("autoFleeThresholdPercent")
