@@ -2044,7 +2044,9 @@ class Inventory(
     var autoHealThresholdPercent: Int = 30,
     var autoFleeThresholdPercent: Int = 10,
     var selectedPrayerId: String? = null,
-    var trainingSkillId: String? = null
+    var trainingSkillId: String? = null,
+    var coinSlotPacks: Int = 0,
+    var gemSlotPacks: Int = 0
 ) {
     fun usedSlots(): Int = entries.size
 
@@ -2080,6 +2082,10 @@ class Inventory(
     }
 
     fun quantityOf(itemId: String): Int = entries[itemId]?.quantity ?: 0
+
+    fun recalcMaxSlots() {
+        maxSlots = 100 + coinSlotPacks * InventorySlotShop.COIN_PACK_SLOTS + gemSlotPacks * InventorySlotShop.GEM_PACK_SLOTS
+    }
 
     fun expandCapacity(additionalSlots: Int) {
         maxSlots += additionalSlots
@@ -2250,7 +2256,9 @@ data class LoadoutSettingsExport(
     val autoHealThresholdPercent: Int,
     val autoFleeThresholdPercent: Int,
     val selectedPrayerId: String? = null,
-    val trainingSkillId: String? = null
+    val trainingSkillId: String? = null,
+    val coinSlotPacks: Int = 0,
+    val gemSlotPacks: Int = 0
 )
 
 class InventoryService {
@@ -2287,9 +2295,13 @@ class InventoryService {
         inv.selectedFoodId = export.selectedFoodId
         inv.selectedPotionId = export.selectedPotionId
         inv.potionTimerRemainingSeconds = export.potionTimerRemainingSeconds
-        inv.autoHealThresholdPercent = export.autoHealThresholdPercent
+        inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId, inv.trainingSkillId,
+            inv.coinSlotPacks, inv.gemSlotPacks
         inv.autoFleeThresholdPercent = export.autoFleeThresholdPercent
         inv.selectedPrayerId = export.selectedPrayerId
         inv.trainingSkillId = export.trainingSkillId
+        inv.coinSlotPacks = export.coinSlotPacks
+        inv.gemSlotPacks = export.gemSlotPacks
+        inv.recalcMaxSlots()
     }
 }
