@@ -900,7 +900,10 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
 
                             AppDestination.INVENTORY -> {
                                 BackHandler(enabled = inventoryScreenState != InventoryScreenState.Items) {
-                                    InventoryScreenState.Items -> InventoryScreen(
+                                    inventoryScreenState = InventoryScreenState.Items
+                                }
+                                when (inventoryScreenState) {
+                                InventoryScreenState.Items -> InventoryScreen(
                                     capacity = gameViewModel.inventoryCapacity.collectAsState().value,
                                     coinPacks = gameViewModel.slotPacks.collectAsState().value.first,
                                     gemPacks = gameViewModel.slotPacks.collectAsState().value.second,
@@ -910,9 +913,6 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                     onBuyCoinSlots = { gameViewModel.buyCoinSlotPack() },
                                     onBuyGemSlots = { gameViewModel.buyGemSlotPack() },
                                     onClearSlotError = { gameViewModel.clearSlotPurchaseError() },
-                                }
-                                when (inventoryScreenState) {
-                                InventoryScreenState.Items -> InventoryScreen(
                                     items = inventoryItems,
                                     onOpenEquipment = { inventoryScreenState = InventoryScreenState.Equipment },
                                     onOpenLoadout = { inventoryScreenState = InventoryScreenState.Loadout },
