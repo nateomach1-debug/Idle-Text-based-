@@ -95,6 +95,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
     val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
     private val _inventoryCapacity = MutableStateFlow(100)
+    private val _slotPacks = MutableStateFlow(0 to 0)
+    val slotPacks: StateFlow<Pair<Int, Int>> = _slotPacks.asStateFlow()
+    private val _slotPurchaseError = MutableStateFlow<String?>(null)
+    val slotPurchaseError: StateFlow<String?> = _slotPurchaseError.asStateFlow()
+    private var slotPurchaseInFlight = false
     val inventoryCapacity: StateFlow<Int> = _inventoryCapacity.asStateFlow()
 
     private val _equippedItems = MutableStateFlow<Map<EquipSlot, String>>(emptyMap())
@@ -2363,10 +2368,67 @@ fun logout() {
         _trainingSkillLevel.value = _skills.value[_trainingSkill.value.name]?.level ?: 1
     }
 
+    fun clearSlotPurchaseError() {
+        _slotPurchaseError.value = null
+    }
+
+    fun buyCoinSlotPack() {
+        if (slotPurchaseInFlight) return
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val inv = inventoryService.inventoryFor(characterId)
+        val price = InventorySlotShop.nextCoinPackPrice(inv.coinSlotPacks)
+        if (price == null) {
+            _slotPurchaseError.value = "No more coin slot packs available."
+            return
+        }
+        slotPurchaseInFlight = true
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.spendCoins(supabaseCharacterId, price)
+            result.onFailure { _slotPurchaseError.value = it.message ?: it.toString() }
+            result.onSuccess {
+                inv.coinSlotPacks += 1
+                inv.recalcMaxSlots()
+                _slotPurchaseError.value = null
+                refreshInventory()
+                refreshCurrency()
+                saveGame()
+            }
+            slotPurchaseInFlight = false
+        }
+    }
+
+    fun buyGemSlotPack() {
+        if (slotPurchaseInFlight) return
+        val characterId = _currentCharacterId.value ?: return
+        val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
+        val inv = inventoryService.inventoryFor(characterId)
+        val price = InventorySlotShop.nextGemPackPrice(inv.gemSlotPacks)
+        if (price == null) {
+            _slotPurchaseError.value = "No more gem slot packs available."
+            return
+        }
+        slotPurchaseInFlight = true
+        viewModelScope.launch {
+            val result = SupabaseMarketRepository.spendGems(supabaseCharacterId, price)
+            result.onFailure { _slotPurchaseError.value = it.message ?: it.toString() }
+            result.onSuccess {
+                inv.gemSlotPacks += 1
+                inv.recalcMaxSlots()
+                _slotPurchaseError.value = null
+                refreshInventory()
+                refreshCurrency()
+                saveGame()
+            }
+            slotPurchaseInFlight = false
+        }
+    }
+
     fun refreshInventory() {
         val characterId = _currentCharacterId.value ?: return
         val inv = inventoryService.inventoryFor(characterId)
-        _inventoryItems.value = inv.allItems()
+        _inventoryCapacity.value = inv.maxSlots
+        _slotPacks.value = inv.coinSlotPacks to inv.gemSlotPacks
         _inventoryCapacity.value = inv.maxSlots
         _equippedItems.value = inv.allEquipped()
         _loadoutSettings.value = LoadoutSettingsSnapshot(
