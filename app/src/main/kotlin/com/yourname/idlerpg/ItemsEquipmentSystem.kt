@@ -2286,7 +2286,8 @@ class InventoryService {
     fun exportAllLoadoutSettings(): List<LoadoutSettingsExport> = inventories.map { (characterId, inv) ->
         LoadoutSettingsExport(
             characterId, inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
-            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId, inv.trainingSkillId
+            inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId, inv.trainingSkillId,
+            inv.coinSlotPacks, inv.gemSlotPacks
         )
     }
 
@@ -2295,8 +2296,7 @@ class InventoryService {
         inv.selectedFoodId = export.selectedFoodId
         inv.selectedPotionId = export.selectedPotionId
         inv.potionTimerRemainingSeconds = export.potionTimerRemainingSeconds
-        inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId, inv.trainingSkillId,
-            inv.coinSlotPacks, inv.gemSlotPacks
+        inv.autoHealThresholdPercent = export.autoHealThresholdPercent
         inv.autoFleeThresholdPercent = export.autoFleeThresholdPercent
         inv.selectedPrayerId = export.selectedPrayerId
         inv.trainingSkillId = export.trainingSkillId

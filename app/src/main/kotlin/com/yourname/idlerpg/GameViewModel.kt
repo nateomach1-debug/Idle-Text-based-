@@ -2429,6 +2429,7 @@ fun logout() {
         val inv = inventoryService.inventoryFor(characterId)
         _inventoryCapacity.value = inv.maxSlots
         _slotPacks.value = inv.coinSlotPacks to inv.gemSlotPacks
+        _inventoryItems.value = inv.allItems()
         _inventoryCapacity.value = inv.maxSlots
         _equippedItems.value = inv.allEquipped()
         _loadoutSettings.value = LoadoutSettingsSnapshot(
