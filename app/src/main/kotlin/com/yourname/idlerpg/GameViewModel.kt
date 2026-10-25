@@ -2301,19 +2301,22 @@ fun logout() {
                         }
                     }
                 }
-            if (requiredSeedId != null && effectiveActions < actionsCompleted) {
-                // Ran out of seeds mid-batch - stop the queue instead of spinning uselessly.
-                offlineIdleService.stopQueue(characterId)
-                skillActionProgressSeconds = 0
-                _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
-                    itemName = formatItemName(queue.itemId),
-                    reason = "Out of " + formatItemName(requiredSeedId) + "."
-                )
+                
+                if (requiredSeedId != null && effectiveActions < actionsCompleted) {
+                    // Ran out of seeds mid-batch - stop the queue instead of spinning uselessly.
+                    offlineIdleService.stopQueue(characterId)
+                    skillActionProgressSeconds = 0
+                    _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
+                        itemName = formatItemName(queue.itemId),
+                        reason = "Out of " + formatItemName(requiredSeedId) + "."
+                    )
+                }
             }
             refreshSkills()
             refreshInventory()
         }
     }
+
 
     // =========================================================
     // CRAFTING -- mirrors the SkillingQueue flow above. Recipe.levelRequired
