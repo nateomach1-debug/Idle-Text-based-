@@ -1720,6 +1720,20 @@ object RecipeCatalog {
             levelRequired = 55
         ),
         Recipe(
+            outputItemId = "uncut_dragonstone",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("dragonstone_ore", 100)),
+            skillRequired = "CRAFTING",
+            levelRequired = 55
+        ),
+        Recipe(
+            outputItemId = "uncut_onyx",
+            outputQuantity = 1,
+            ingredients = listOf(RecipeIngredient("onyx_fragment", 100)),
+            skillRequired = "CRAFTING",
+            levelRequired = 67
+        ),
+        Recipe(
             outputItemId = "onyx",
             outputQuantity = 1,
             ingredients = listOf(RecipeIngredient("uncut_onyx", 1)),
