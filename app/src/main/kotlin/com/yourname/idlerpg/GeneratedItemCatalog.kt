@@ -867,20 +867,6 @@ object GeneratedItemCatalog {
         isStackable = true
     ),
     ItemDefinition(
-        id = "copper_bar",
-        name = "Copper Bar",
-        category = ItemCategory.MATERIAL,
-        isTradeable = true,
-        isStackable = true
-    ),
-    ItemDefinition(
-        id = "tin_bar",
-        name = "Tin Bar",
-        category = ItemCategory.MATERIAL,
-        isTradeable = true,
-        isStackable = true
-    ),
-    ItemDefinition(
         id = "bronze_bar",
         name = "Bronze Bar",
         category = ItemCategory.MATERIAL,
@@ -961,13 +947,6 @@ object GeneratedItemCatalog {
         skillRequired = "ATTACK",
             stats = ItemStats(attackBonus = 6, strengthBonus = 1, accuracyBonus = 13, maxHitBonus = 4)
         ),
-    ItemDefinition(
-        id = "iron_nails",
-        name = "Iron Nails",
-        category = ItemCategory.MATERIAL,
-        isTradeable = true,
-        isStackable = true
-    ),
     ItemDefinition(
         id = "bronze_sword",
         name = "Bronze Sword",
@@ -3058,8 +3037,6 @@ object GeneratedItemCatalog {
     "celestial_herb_seed" to 150L,
     "celestial_herb" to 260L,
     "world_tree_sapling" to 300L,
-    "copper_bar" to 6L,
-    "tin_bar" to 6L,
     "bronze_bar" to 12L,
     "iron_bar" to 20L,
     "silver_bar" to 30L,
@@ -3071,7 +3048,6 @@ object GeneratedItemCatalog {
     "orichalcum_bar" to 700L,
     "celestial_alloy_bar" to 1400L,
     "bronze_dagger" to 15L,
-    "iron_nails" to 2L,
     "bronze_sword" to 25L,
     "bronze_mace" to 28L,
     "bronze_warhammer" to 40L,
