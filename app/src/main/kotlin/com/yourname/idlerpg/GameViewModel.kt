@@ -346,26 +346,56 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         itemId: String,
         quantity: Int
     ) {
-        if (itemId != "uncut_gemstone") {
+        val randomRewardIds = when (itemId) {
+            "uncut_gemstone" -> listOf(
+                "uncut_jade",
+                "uncut_red_topaz",
+                "uncut_sapphire",
+                "uncut_emerald",
+                "uncut_ruby",
+                "uncut_diamond",
+                "uncut_dragonstone",
+                "uncut_onyx",
+                "uncut_zenyte",
+                "uncut_celestial_crystal"
+            )
+            "vegetables" -> listOf(
+                "onion",
+                "potato",
+                "sweetcorn",
+                "cabbage",
+                "tomato"
+            )
+            "baked_goods" -> listOf(
+                "bread",
+                "meat_pie",
+                "apple_pie"
+            )
+            "loose_gems" -> listOf(
+                "uncut_opal",
+                "uncut_jade",
+                "uncut_red_topaz",
+                "uncut_sapphire",
+                "uncut_emerald",
+                "uncut_ruby",
+                "uncut_diamond"
+            )
+            "wizards_purse" -> listOf(
+                "water_essence",
+                "fire_essence",
+                "earth_essence",
+                "wind_essence"
+            )
+            else -> null
+        }
+
+        if (randomRewardIds == null) {
             inventory.addItem(itemId, quantity)
             return
         }
 
-        val gemIds = listOf(
-            "uncut_jade",
-            "uncut_red_topaz",
-            "uncut_sapphire",
-            "uncut_emerald",
-            "uncut_ruby",
-            "uncut_diamond",
-            "uncut_dragonstone",
-            "uncut_onyx",
-            "uncut_zenyte",
-            "uncut_celestial_crystal"
-        )
-
         repeat(quantity) {
-            inventory.addItem(gemIds.random(), 1)
+            inventory.addItem(randomRewardIds.random(), 1)
         }
     }
     
