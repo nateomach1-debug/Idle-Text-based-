@@ -368,6 +368,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             inventory.addItem(gemIds.random(), 1)
         }
     }
+    
     // Per-member base quantity by rarity - rarer items require far fewer units
     // to reach the same milestone. Guild-coin reward per milestone is keyed
     // off rarity directly (not off requiredQuantity) so rarer-item events
