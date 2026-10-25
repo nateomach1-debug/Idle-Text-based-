@@ -2301,6 +2301,7 @@ fun logout() {
                         }
                     }
                 }    
+            }
             if (requiredSeedId != null && effectiveActions < actionsCompleted) {
                 // Ran out of seeds mid-batch - stop the queue instead of spinning uselessly.
                 offlineIdleService.stopQueue(characterId)
@@ -2310,7 +2311,6 @@ fun logout() {
                     reason = "Out of " + formatItemName(requiredSeedId) + "."
                 )
             }
-        }
             refreshSkills()
             refreshInventory()
         }
