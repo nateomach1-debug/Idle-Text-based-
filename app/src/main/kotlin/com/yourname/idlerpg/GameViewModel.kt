@@ -2017,7 +2017,7 @@ fun logout() {
                 if (action != null) {
                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
                     progressionService.grantXp(characterId, skillType, xpEarned, guildXpBonusEffects())
-                                        grantSkillActionItems(
+                    grantSkillActionItems(
                         inventoryService.inventoryFor(characterId),
                         queue.itemId,
                         result.value.actionsCompleted.toInt()
@@ -2227,7 +2227,7 @@ fun logout() {
                     inventory.removeItem(requiredSeedId, effectiveActions.toInt())
                 }
                 progressionService.grantXp(characterId, skillType, action.xpPerAction * effectiveActions, guildXpBonusEffects() + capeBonusEffects(characterId))
-                                grantSkillActionItems(
+                grantSkillActionItems(
                     inventory,
                     queue.itemId,
                     effectiveActions.toInt()
