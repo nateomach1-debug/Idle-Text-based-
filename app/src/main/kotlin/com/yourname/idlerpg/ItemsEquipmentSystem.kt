@@ -894,20 +894,6 @@ object RecipeCatalog {
             levelRequired = 90
         ),
         Recipe(
-            outputItemId = "copper_bar",
-            outputQuantity = 1,
-            ingredients = listOf(RecipeIngredient("copper_ore", 1)),
-            skillRequired = "SMITHING",
-            levelRequired = 1
-        ),
-        Recipe(
-            outputItemId = "tin_bar",
-            outputQuantity = 1,
-            ingredients = listOf(RecipeIngredient("tin_ore", 1)),
-            skillRequired = "SMITHING",
-            levelRequired = 1
-        ),
-        Recipe(
             outputItemId = "bronze_bar",
             outputQuantity = 1,
             ingredients = listOf(RecipeIngredient("copper_ore", 1), RecipeIngredient("tin_ore", 1)),
@@ -976,13 +962,6 @@ object RecipeCatalog {
             ingredients = listOf(RecipeIngredient("celestial_silver", 1), RecipeIngredient("coal", 6)),
             skillRequired = "SMITHING",
             levelRequired = 90
-        ),
-        Recipe(
-            outputItemId = "iron_nails",
-            outputQuantity = 15,
-            ingredients = listOf(RecipeIngredient("copper_bar", 1)),
-            skillRequired = "SMITHING",
-            levelRequired = 1
         ),
         Recipe(
             outputItemId = "cooked_shrimp",
