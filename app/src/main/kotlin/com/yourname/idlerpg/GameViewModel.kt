@@ -2051,22 +2051,56 @@ fun logout() {
                 val skillType = SkillType.valueOf(queue.skillId)
                 val action = ActionCatalog.find(skillType, queue.itemId)
                 if (action != null) {
-                    val xpEarned = action.xpPerAction * result.value.actionsCompleted
-                    progressionService.grantXp(characterId, skillType, xpEarned, guildXpBonusEffects())
+                    
+                    val inventory = inventoryService.inventoryFor(characterId)
+                    val inventoryBefore = ItemCatalog.items.associate {
+                        it.id to inventory.quantityOf(it.id)
+                    }
+
+                    val xpEarned =
+                        action.xpPerAction * result.value.actionsCompleted
+
+                    progressionService.grantXp(
+                        characterId,
+                        skillType,
+                        xpEarned,
+                        guildXpBonusEffects()
+                    )
+
                     grantSkillActionItems(
-                        inventoryService.inventoryFor(characterId),
+                        inventory,
                         queue.itemId,
                         result.value.actionsCompleted.toInt()
                     )
+
                     if (skillType == SkillType.MINING) {
-                        MiningBonusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), result.value.actionsCompleted)
+                        MiningBonusGemTable.rollAndGrant(
+                            inventory,
+                            result.value.actionsCompleted
+                        )
                     }
+
+                    val itemsGained = ItemCatalog.items.mapNotNull { item ->
+                        val gained = inventory.quantityOf(item.id) -
+                            (inventoryBefore[item.id] ?: 0)
+
+                        if (gained > 0) {
+                            OfflineGainedItem(
+                                itemName = item.name,
+                                quantity = gained
+                            )
+                        } else {
+                            null
+                        }
+                    }
+
                     _offlineSummary.value = OfflineSummary(
                         awaySeconds = result.value.claimedElapsed.seconds,
                         skillActionName = action.displayName,
                         itemName = formatItemName(queue.itemId),
                         quantity = result.value.actionsCompleted,
-                        xpEarned = xpEarned
+                        xpEarned = xpEarned,
+                        itemsGained = itemsGained
                     )
                 }
             }
