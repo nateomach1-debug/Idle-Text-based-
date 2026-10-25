@@ -40,12 +40,17 @@ import com.yourname.idlerpg.ui.components.ChatChannelUi
 import com.yourname.idlerpg.ui.components.ChatMessageUi
 import com.yourname.idlerpg.ui.components.DmConversationSummary
 
+data class OfflineGainedItem(
+    val itemName: String,
+    val quantity: Int
+)
 data class OfflineSummary(
     val awaySeconds: Long,
     val skillActionName: String,
     val itemName: String,
     val quantity: Int,
-    val xpEarned: Long
+    val xpEarned: Long,
+    val itemsGained: List<OfflineGainedItem>? = null
 )
 
 data class SaleNotification(
