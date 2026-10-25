@@ -2272,13 +2272,36 @@ fun logout() {
                 val gatherActiveEffects = UnlockTable.allActiveEffects(gatherBook) + capeBonusEffects(characterId)
                 val dropRateBoostPercent = EffectStacker.totalDropRateBoostPercent(gatherActiveEffects, skillType)
                 if (dropRateBoostPercent > 0.0) {
-                    var bonusCount = 0
-                    repeat(effectiveActions.toInt()) {
-                        if (Random.nextDouble(0.0, 100.0) < dropRateBoostPercent) bonusCount++
+                        val randomRewardIds = when (queue.itemId) {
+                            "vegetables" -> listOf(
+                                "onion", "potato", "sweetcorn", "cabbage", "tomato"
+                            )
+                            "baked_goods" -> listOf(
+                                "bread", "meat_pie", "apple_pie"
+                            )
+                            "loose_gems" -> listOf(
+                                "uncut_opal", "uncut_jade", "uncut_red_topaz",
+                                "uncut_sapphire", "uncut_emerald", "uncut_ruby",
+                                "uncut_diamond"
+                            )
+                            "wizards_purse" -> listOf(
+                                "water_essence", "fire_essence",
+                                "earth_essence", "wind_essence"
+                            )
+                            else -> null
+                        }
+
+                        repeat(effectiveActions.toInt()) {
+                            if (Random.nextDouble(0.0, 100.0) < dropRateBoostPercent) {
+                                if (randomRewardIds != null) {
+                                    inventory.addItem(randomRewardIds.random(), 1)
+                                } else {
+                                    inventory.addItem(queue.itemId, 1)
+                                }
+                            }
+                        }
                     }
-                    if (bonusCount > 0) inventory.addItem(queue.itemId, bonusCount)
-                }
-            }
+
             if (requiredSeedId != null && effectiveActions < actionsCompleted) {
                 // Ran out of seeds mid-batch - stop the queue instead of spinning uselessly.
                 offlineIdleService.stopQueue(characterId)
