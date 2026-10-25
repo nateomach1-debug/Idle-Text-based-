@@ -480,7 +480,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
             onDismissRequest = { gameViewModel.clearOfflineSummary() },
             title = { androidx.compose.material3.Text("Welcome back!") },
             text = {
-                                val minutes = summary.awaySeconds / 60
+                val minutes = summary.awaySeconds / 60
                 val awayText = if (minutes < 1) {
                     "under a minute"
                 } else {
