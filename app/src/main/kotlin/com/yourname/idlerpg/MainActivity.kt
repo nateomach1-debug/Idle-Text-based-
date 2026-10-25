@@ -232,7 +232,9 @@ private fun buildSkillDetailState(
 private val SMITHING_METALS = listOf(
     Triple("bronze", "Bronze", "bronze_bar"),
     Triple("iron", "Iron", "iron_bar"),
+    Triple("silver", "Silver", "silver_bar"),
     Triple("steel", "Steel", "steel_bar"),
+    Triple("gold", "Gold", "gold_bar"),
     Triple("mithril", "Mithril", "mithril_bar"),
     Triple("adamant", "Adamant", "adamantite_bar"),
     Triple("rune", "Rune", "runite_bar"),
