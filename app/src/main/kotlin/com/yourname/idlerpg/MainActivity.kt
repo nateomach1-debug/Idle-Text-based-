@@ -480,13 +480,31 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
             onDismissRequest = { gameViewModel.clearOfflineSummary() },
             title = { androidx.compose.material3.Text("Welcome back!") },
             text = {
-                val minutes = summary.awaySeconds / 60
-                val awayText = if (minutes < 1) "under a minute" else minutes.toString() + " minute(s)"
+                                val minutes = summary.awaySeconds / 60
+                val awayText = if (minutes < 1) {
+                    "under a minute"
+                } else {
+                    "$minutes minute(s)"
+                }
+
+                val rewardText = if (summary.itemsGained != null) {
+                    if (summary.itemsGained.isEmpty()) {
+                        "No items were added to your inventory."
+                    } else {
+                        "Items gained:\n" +
+                            summary.itemsGained.joinToString("\n") {
+                                "+${it.quantity}x ${it.itemName}"
+                            }
+                    }
+                } else {
+                    "Gathered ${summary.quantity}x ${summary.itemName}"
+                }
+
                 androidx.compose.material3.Text(
-                    "You were away for " + awayText + ".\n\n" +
-                    "While gone, you were " + summary.skillActionName + ":\n" +
-                    "+" + summary.xpEarned + " XP\n" +
-                    "Gathered " + summary.quantity + "x " + summary.itemName
+                    "You were away for $awayText.\n\n" +
+                        "While gone, you were ${summary.skillActionName}:\n" +
+                        "+${summary.xpEarned} XP\n\n" +
+                        rewardText
                 )
             },
             confirmButton = {
