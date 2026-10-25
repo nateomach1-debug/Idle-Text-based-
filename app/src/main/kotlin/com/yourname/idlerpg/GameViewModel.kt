@@ -2271,8 +2271,8 @@ fun logout() {
                 val gatherBook = progressionService.skillBookFor(characterId)
                 val gatherActiveEffects = UnlockTable.allActiveEffects(gatherBook) + capeBonusEffects(characterId)
                 val dropRateBoostPercent = EffectStacker.totalDropRateBoostPercent(gatherActiveEffects, skillType)
-                if (dropRateBoostPercent > 0.0) {
-                    val randomRewardIds = when (queue.itemId) {
+                                if (dropRateBoostPercent > 0.0) {
+                                        val randomRewardIds = when (queue.itemId) {
                         "vegetables" -> listOf(
                             "onion", "potato", "sweetcorn", "cabbage", "tomato"
                         )
