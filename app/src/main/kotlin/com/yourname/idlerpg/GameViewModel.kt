@@ -341,34 +341,33 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-private fun grantSkillActionItems(
-    inventory: Inventory,
-    itemId: String,
-    quantity: Int
-) {
-    if (itemId != "uncut_gemstone") {
-        inventory.addItem(itemId, quantity)
-        return
-    }
+    private fun grantSkillActionItems(
+        inventory: Inventory,
+        itemId: String,
+        quantity: Int
+    ) {
+        if (itemId != "uncut_gemstone") {
+            inventory.addItem(itemId, quantity)
+            return
+        }
 
-    val gemIds = listOf(
-        "uncut_jade",
-        "uncut_red_topaz",
-        "uncut_sapphire",
-        "uncut_emerald",
-        "uncut_ruby",
-        "uncut_diamond",
-        "uncut_dragonstone",
-        "uncut_onyx",
-        "uncut_zenyte",
-        "uncut_celestial_crystal"
-    )
+        val gemIds = listOf(
+            "uncut_jade",
+            "uncut_red_topaz",
+            "uncut_sapphire",
+            "uncut_emerald",
+            "uncut_ruby",
+            "uncut_diamond",
+            "uncut_dragonstone",
+            "uncut_onyx",
+            "uncut_zenyte",
+            "uncut_celestial_crystal"
+        )
 
-    repeat(quantity) {
-        inventory.addItem(gemIds.random(), 1)
-    
+        repeat(quantity) {
+            inventory.addItem(gemIds.random(), 1)
+        }
     }
-}
     // Per-member base quantity by rarity - rarer items require far fewer units
     // to reach the same milestone. Guild-coin reward per milestone is keyed
     // off rarity directly (not off requiredQuantity) so rarer-item events
@@ -2018,8 +2017,11 @@ fun logout() {
                 if (action != null) {
                     val xpEarned = action.xpPerAction * result.value.actionsCompleted
                     progressionService.grantXp(characterId, skillType, xpEarned, guildXpBonusEffects())
-                    grantSkillActionItems(
-                        inventoryService.inventoryFor(characterId),queue.itemId,result.value.actionsCompleted.toInt())
+                                        grantSkillActionItems(
+                        inventoryService.inventoryFor(characterId),
+                        queue.itemId,
+                        result.value.actionsCompleted.toInt()
+                    )
                     if (skillType == SkillType.MINING) {
                         MiningBonusGemTable.rollAndGrant(inventoryService.inventoryFor(characterId), result.value.actionsCompleted)
                     }
@@ -2225,8 +2227,11 @@ fun logout() {
                     inventory.removeItem(requiredSeedId, effectiveActions.toInt())
                 }
                 progressionService.grantXp(characterId, skillType, action.xpPerAction * effectiveActions, guildXpBonusEffects() + capeBonusEffects(characterId))
-                grantSkillActionItems(
-                    inventory, queue.itemId, effectiveActions.toInt())
+                                grantSkillActionItems(
+                    inventory,
+                    queue.itemId,
+                    effectiveActions.toInt()
+                )
                 if (skillType == SkillType.MINING) {
                     MiningBonusGemTable.rollAndGrant(inventory, effectiveActions.toInt())
                 }
