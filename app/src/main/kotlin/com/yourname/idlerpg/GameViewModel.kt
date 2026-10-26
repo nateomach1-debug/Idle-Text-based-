@@ -2863,6 +2863,44 @@ fun logout() {
         val realInventory = inventoryService.inventoryFor(characterId)
         val pricePerUnit = VendorBuyCatalog.items.find { it.itemId == itemId }?.pricePerUnit ?: return
         if (quantity <= 0) return
+        
+        if (itemId == "premium_membership_token") {
+            if (quantity > 100) {
+                _marketActionError.value = "You can buy at most 100 tokens at once."
+                return
+            }
+
+            // Add optimistically, but do not save until the purchase succeeds.
+            val addResult = realInventory.addItem(itemId, quantity)
+            if (addResult is ServiceResult.Failure) {
+                _marketActionError.value = addResult.reason
+                return
+            }
+
+            refreshInventory()
+
+            viewModelScope.launch {
+                val result = SupabaseMarketRepository.purchaseMembershipTokens(
+                    supabaseCharacterId,
+                    quantity
+                )
+
+                result.onFailure {
+                    // The gem transaction failed: undo the temporary inventory addition.
+                    realInventory.removeItem(itemId, quantity)
+                    refreshInventory()
+                    _marketActionError.value = it.message ?: it.toString()
+                }
+
+                result.onSuccess {
+                    _marketActionError.value = null
+                    refreshCurrency()
+                    saveGame()
+                }
+            }
+            return
+    
+        }
 
         realInventory.addItem(itemId, quantity)
         refreshInventory()
