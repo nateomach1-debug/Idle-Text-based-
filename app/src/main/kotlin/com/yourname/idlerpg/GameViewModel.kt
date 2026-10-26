@@ -100,6 +100,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _inventoryItems = MutableStateFlow<List<InventorySlotEntry>>(emptyList())
     val inventoryItems: StateFlow<List<InventorySlotEntry>> = _inventoryItems.asStateFlow()
     private val _inventoryCapacity = MutableStateFlow(100)
+    private val _membershipUntilMillis = MutableStateFlow(0L)
+    val membershipUntilMillis: StateFlow<Long> = _membershipUntilMillis.asStateFlow()
     private val _slotPacks = MutableStateFlow(0 to 0)
     val slotPacks: StateFlow<Pair<Int, Int>> = _slotPacks.asStateFlow()
     private val _slotPurchaseError = MutableStateFlow<String?>(null)
@@ -2582,6 +2584,7 @@ fun logout() {
         val characterId = _currentCharacterId.value ?: return
         val inv = inventoryService.inventoryFor(characterId)
         inv.recalcMaxSlots()
+        _membershipUntilMillis.value = inv.membershipUntilMillis
         _inventoryCapacity.value = inv.maxSlots
         _slotPacks.value = inv.coinSlotPacks to inv.gemSlotPacks
         _inventoryItems.value = inv.allItems()
