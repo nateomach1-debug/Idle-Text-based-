@@ -70,13 +70,19 @@ fun interface MaterialAvailabilityCheck {
 // =========================================================
 
 object OfflineEfficiencyCurve {
-    private val fullRateWindow: Duration = Duration.ofHours(12)
-    private val reducedRateWindow: Duration = Duration.ofHours(24)
     private const val FULL_RATE_PERCENT = 100.0
     private const val REDUCED_RATE_PERCENT = 50.0
     private const val FLOOR_RATE_PERCENT = 0.0
 
-    fun efficiencyAt(elapsed: Duration): Double {
+    fun efficiencyAt(
+        elapsed: Duration,
+        premiumMembershipActive: Boolean = false
+    ): Double {
+        val fullRateWindow =
+            Duration.ofHours(if (premiumMembershipActive) 24 else 12)
+        val reducedRateWindow =
+            Duration.ofHours(if (premiumMembershipActive) 48 else 24)
+
         return when {
             elapsed <= fullRateWindow -> FULL_RATE_PERCENT
             elapsed <= reducedRateWindow -> REDUCED_RATE_PERCENT
@@ -84,13 +90,27 @@ object OfflineEfficiencyCurve {
         }
     }
 
-    fun effectiveElapsed(elapsed: Duration): Duration {
+    fun effectiveElapsed(
+        elapsed: Duration,
+        premiumMembershipActive: Boolean = false
+    ): Duration {
+        val fullRateWindow =
+            Duration.ofHours(if (premiumMembershipActive) 24 else 12)
+        val reducedRateWindow =
+            Duration.ofHours(if (premiumMembershipActive) 48 else 24)
+
         if (elapsed <= fullRateWindow) return elapsed
 
         val fullMillis = fullRateWindow.toMillis()
-        val reducedEndMillis = minOf(elapsed.toMillis(), reducedRateWindow.toMillis())
-        val reducedMillis = (reducedEndMillis - fullMillis).coerceAtLeast(0)
-        val floorMillis = (elapsed.toMillis() - reducedRateWindow.toMillis()).coerceAtLeast(0)
+        val reducedEndMillis =
+            minOf(elapsed.toMillis(), reducedRateWindow.toMillis())
+
+        val reducedMillis =
+            (reducedEndMillis - fullMillis).coerceAtLeast(0)
+
+        val floorMillis =
+            (elapsed.toMillis() - reducedRateWindow.toMillis())
+                .coerceAtLeast(0)
 
         val effectiveMillis =
             (fullMillis * (FULL_RATE_PERCENT / 100.0)) +
@@ -232,11 +252,13 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
 
     fun lastSaleCheckFor(characterId: String): Instant? = lastSaleCheckAt[characterId]
 
+    fun lastSeenFor(characterId: String): Instant? = lastSeenAt[characterId]
+    
     fun recordSaleCheckAt(characterId: String, serverTimestamp: String) {
         lastSaleCheckAt[characterId] = java.time.OffsetDateTime.parse(serverTimestamp).toInstant()
     }
 
-    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now()): ServiceResult<OfflineResolution> {
+        fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now(), premiumMembershipActive: Boolean = false ): ServiceResult<OfflineResolution> {
         val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
         val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
 
@@ -247,7 +269,7 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
         if (flag != null) flaggedAccounts.add(flag)
 
         val combatPenaltyMultiplier = if (queue.type == QueueType.OFFLINE_COMBAT) 0.8 else 1.0
-        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed)
+        val effectiveElapsed = OfflineEfficiencyCurve.effectiveElapsed(cappedElapsed, premiumMembershipActive)
         val penalizedEffectiveMillis = (effectiveElapsed.toMillis() * combatPenaltyMultiplier).toLong()
         val finalEffectiveElapsed = Duration.ofMillis(penalizedEffectiveMillis)
 
