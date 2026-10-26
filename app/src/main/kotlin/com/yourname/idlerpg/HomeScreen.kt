@@ -37,7 +37,7 @@ data class HomeScreenState(
     val currentHp: Int?,              // null if not in/near combat -- hides the HP bar entirely
     val maxHp: Int?,
     val isRecovering: Boolean,
-    val unreadNotificationCount: Int
+    val unreadNotificationCount: Int,
     val membershipUntilMillis: Long = 0L
 )
 
