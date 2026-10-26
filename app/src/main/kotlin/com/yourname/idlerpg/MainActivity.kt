@@ -619,7 +619,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
         currentHp = combatHp?.first,
         maxHp = combatHp?.second,
         isRecovering = false,
-        unreadNotificationCount = 0
+        unreadNotificationCount = 0,
         membershipUntilMillis = membershipUntilMillis
     )
 
