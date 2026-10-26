@@ -1347,14 +1347,39 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         refreshInventory()
     }
 
-    fun useInventoryItem(itemId: String) {
+        fun useInventoryItem(itemId: String) {
         val characterId = _currentCharacterId.value ?: return
         val definition = ItemCatalog.find(itemId) ?: return
-        if (definition.consumableType != ConsumableType.FOOD) return
         val inventory = inventoryService.inventoryFor(characterId)
+
+        if (itemId == "premium_membership_token") {
+            val removed = inventory.removeItem(itemId, 1)
+
+            if (removed is ServiceResult.Failure) {
+                _marketActionError.value = removed.reason
+                return
+            }
+
+            val now = System.currentTimeMillis()
+            inventory.membershipUntilMillis =
+                maxOf(inventory.membershipUntilMillis, now) +
+                    java.time.Duration.ofDays(30).toMillis()
+
+            inventory.recalcMaxSlots(now)
+            _marketActionError.value = null
+            refreshInventory()
+            saveGame()
+            return
+        }
+
+        if (definition.consumableType != ConsumableType.FOOD) return
+
         val removed = inventory.removeItem(itemId, 1)
         if (removed is ServiceResult.Success) {
-            combatService.healCharacter(characterId, definition.healAmount ?: 0)
+            combatService.healCharacter(
+                characterId,
+                definition.healAmount ?: 0
+            )
             refreshInventory()
         }
     }
@@ -2046,7 +2071,7 @@ fun logout() {
     private fun resolveOfflineRewardsAndSync(characterId: String) {
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
         if (queue != null) {
-            val result = offlineIdleService.resolveOfflineProgress(characterId)
+            val result = offlineIdleService.resolveOfflineProgress(characterId, premiumMembershipActive = hasMembershipForOfflineProgress(characterId))
             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
                 val skillType = SkillType.valueOf(queue.skillId)
                 val action = ActionCatalog.find(skillType, queue.itemId)
@@ -2108,7 +2133,7 @@ fun logout() {
 
         val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
         if (craftingQueue != null) {
-            val craftResult = offlineIdleService.resolveOfflineProgress(characterId)
+            val craftResult = offlineIdleService.resolveOfflineProgress(characterId, premiumMembershipActive = hasMembershipForOfflineProgress(characterId))
             if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
                 val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
                 batch.stoppedReason?.let { reason ->
@@ -2131,7 +2156,7 @@ fun logout() {
 
         val buryQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.BuryQueue
         if (buryQueue != null) {
-            val buryResult = offlineIdleService.resolveOfflineProgress(characterId)
+            val buryResult = offlineIdleService.resolveOfflineProgress(characterId, premiumMembershipActive = hasMembershipForOfflineProgress(characterId))
             if (buryResult is ServiceResult.Success && buryResult.value.actionsCompleted > 0) {
                 val boneInfo = PrayerBoneRequirements[buryQueue.itemId]
                 if (boneInfo != null) {
@@ -2156,7 +2181,7 @@ fun logout() {
 
         val combatQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.OfflineCombatQueue
         if (combatQueue != null) {
-            val combatResult = offlineIdleService.resolveOfflineProgress(characterId)
+            val combatResult = offlineIdleService.resolveOfflineProgress(characterId, premiumMembershipActive = hasMembershipForOfflineProgress(characterId))
             if (combatResult is ServiceResult.Success) {
                 val elapsedSeconds = combatResult.value.effectiveElapsed.seconds
                 if (elapsedSeconds > 0) {
@@ -2555,7 +2580,7 @@ fun logout() {
 
     fun refreshInventory() {
         val characterId = _currentCharacterId.value ?: return
-        val inv = inventoryService.inventoryFor(characterId)
+        val inv = inventoryService.inventoryFor(characterId)inv.recalcMaxSlots()
         _inventoryCapacity.value = inv.maxSlots
         _slotPacks.value = inv.coinSlotPacks to inv.gemSlotPacks
         _inventoryItems.value = inv.allItems()
@@ -2566,7 +2591,18 @@ fun logout() {
             inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId
         )
     }
+    
+    private fun hasMembershipForOfflineProgress(
+        characterId: String
+    ): Boolean {
+        val inventory = inventoryService.inventoryFor(characterId)
+        val lastSeen = offlineIdleService.lastSeenFor(characterId)
+        val referenceTime =
+            lastSeen?.toEpochMilli() ?: System.currentTimeMillis()
 
+        return inventory.membershipUntilMillis > referenceTime
+    }
+    
     private fun grantCombatCoins(characterId: String, amount: Long) {
         val supabaseCharacterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
