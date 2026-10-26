@@ -34,6 +34,7 @@ data class VendorBuyableItem(
 
 object VendorBuyCatalog {
     val items = listOf(
+        VendorBuyableItem("premium_membership_token", "Premium Membership Token (30 Days)", 500L),
         VendorBuyableItem("flour", "Flour", 2L),
         VendorBuyableItem("vial_of_water", "Vial of Water", 2L),
         VendorBuyableItem("mining_cape", "Mining Cape", 10000L),
@@ -486,7 +487,12 @@ private fun VendorBuyItemRow(item: VendorBuyableItem, onBuy: (String, Int) -> Un
             overflow = TextOverflow.Ellipsis
         )
         Text(
-            text = item.pricePerUnit.toString() + " gold each (unlimited stock)",
+            text = item.pricePerUnit.toString() +
+                if (item.itemId == "premium_membership_token") {
+                    " gems each (unlimited stock)"
+                } else {
+                    " gold each (unlimited stock)"
+                },
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
             softWrap = false,
