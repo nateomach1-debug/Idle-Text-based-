@@ -2039,7 +2039,8 @@ class Inventory(
     var selectedPrayerId: String? = null,
     var trainingSkillId: String? = null,
     var coinSlotPacks: Int = 0,
-    var gemSlotPacks: Int = 0
+    var gemSlotPacks: Int = 0,
+    var membershipUntilMillis: Long = 0L
 ) {
     fun usedSlots(): Int = entries.size
 
@@ -2076,8 +2077,19 @@ class Inventory(
 
     fun quantityOf(itemId: String): Int = entries[itemId]?.quantity ?: 0
 
-    fun recalcMaxSlots() {
-        maxSlots = 100 + coinSlotPacks * InventorySlotShop.COIN_PACK_SLOTS + gemSlotPacks * InventorySlotShop.GEM_PACK_SLOTS
+        
+    fun hasActiveMembership(
+        nowMillis: Long = System.currentTimeMillis()
+    ): Boolean = membershipUntilMillis > nowMillis
+
+    fun recalcMaxSlots(nowMillis: Long = System.currentTimeMillis()) {
+        val membershipSlots =
+            if (hasActiveMembership(nowMillis)) 25 else 0
+
+        maxSlots = 100 +
+            coinSlotPacks * InventorySlotShop.COIN_PACK_SLOTS +
+            gemSlotPacks * InventorySlotShop.GEM_PACK_SLOTS +
+            membershipSlots
     }
 
     fun expandCapacity(additionalSlots: Int) {
@@ -2251,7 +2263,8 @@ data class LoadoutSettingsExport(
     val selectedPrayerId: String? = null,
     val trainingSkillId: String? = null,
     val coinSlotPacks: Int = 0,
-    val gemSlotPacks: Int = 0
+    val gemSlotPacks: Int = 0,
+    val membershipUntilMillis: Long = 0L
 )
 
 class InventoryService {
@@ -2280,7 +2293,7 @@ class InventoryService {
         LoadoutSettingsExport(
             characterId, inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
             inv.autoHealThresholdPercent, inv.autoFleeThresholdPercent, inv.selectedPrayerId, inv.trainingSkillId,
-            inv.coinSlotPacks, inv.gemSlotPacks
+            inv.coinSlotPacks, inv.gemSlotPacks, inv.membershipUntilMillis
         )
     }
 
@@ -2295,6 +2308,7 @@ class InventoryService {
         inv.trainingSkillId = export.trainingSkillId
         inv.coinSlotPacks = export.coinSlotPacks
         inv.gemSlotPacks = export.gemSlotPacks
+        inv.membershipUntilMillis = export.membershipUntilMillis
         inv.recalcMaxSlots()
     }
 }
