@@ -1347,7 +1347,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         refreshInventory()
     }
 
-        fun useInventoryItem(itemId: String) {
+    fun useInventoryItem(itemId: String) {
         val characterId = _currentCharacterId.value ?: return
         val definition = ItemCatalog.find(itemId) ?: return
         val inventory = inventoryService.inventoryFor(characterId)
@@ -2580,11 +2580,11 @@ fun logout() {
 
     fun refreshInventory() {
         val characterId = _currentCharacterId.value ?: return
-        val inv = inventoryService.inventoryFor(characterId)inv.recalcMaxSlots()
+        val inv = inventoryService.inventoryFor(characterId)
+        inv.recalcMaxSlots()
         _inventoryCapacity.value = inv.maxSlots
         _slotPacks.value = inv.coinSlotPacks to inv.gemSlotPacks
         _inventoryItems.value = inv.allItems()
-        _inventoryCapacity.value = inv.maxSlots
         _equippedItems.value = inv.allEquipped()
         _loadoutSettings.value = LoadoutSettingsSnapshot(
             inv.selectedFoodId, inv.selectedPotionId, inv.potionTimerRemainingSeconds,
