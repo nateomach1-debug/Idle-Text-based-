@@ -609,6 +609,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
     val currency by gameViewModel.currency.collectAsState()
     val combatHp by gameViewModel.combatHp.collectAsState()
     val homeCombatViewData by gameViewModel.combatViewData.collectAsState()
+    val membershipUntilMillis by gameViewModel.membershipUntilMillis.collectAsState()
     val homeState = HomeScreenState(
         activeQueue = activeQueue,
         activeCombat = homeCombatViewData,
@@ -619,6 +620,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
         maxHp = combatHp?.second,
         isRecovering = false,
         unreadNotificationCount = 0
+        membershipUntilMillis = membershipUntilMillis
     )
 
     val recoveringUntil = remember { mutableStateOf<Instant?>(null) }
