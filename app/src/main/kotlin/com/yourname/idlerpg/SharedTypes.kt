@@ -177,7 +177,7 @@ object ItemCatalog {
             isStackable = true,
             consumableType = ConsumableType.POTION
         )
-   ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
+    ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
 
     fun find(itemId: String): ItemDefinition? = items.find { it.id == itemId }
     fun findByNameAndRarity(name: String, rarity: Rarity): ItemDefinition? =
