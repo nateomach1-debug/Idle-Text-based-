@@ -162,6 +162,7 @@ class GameStateRepository(private val context: Context) {
             obj.put("trainingSkillId", entry.trainingSkillId ?: JSONObject.NULL)
             obj.put("coinSlotPacks", entry.coinSlotPacks)
             obj.put("gemSlotPacks", entry.gemSlotPacks)
+            obj.put("membershipUntilMillis", entry.membershipUntilMillis)
             loadoutSettingsArray.put(obj)
         }
         root.put("loadoutSettings", loadoutSettingsArray)
@@ -490,6 +491,7 @@ class GameStateRepository(private val context: Context) {
                     trainingSkillId = if (obj.isNull("trainingSkillId")) null else obj.getString("trainingSkillId"),
                     coinSlotPacks = obj.optInt("coinSlotPacks", 0),
                     gemSlotPacks = obj.optInt("gemSlotPacks", 0),
+                    membershipUntilMillis = obj.optLong("membershipUntilMillis", 0L),
                     potionTimerRemainingSeconds = obj.getInt("potionTimerRemainingSeconds"),
                     autoHealThresholdPercent = obj.getInt("autoHealThresholdPercent"),
                     autoFleeThresholdPercent = obj.getInt("autoFleeThresholdPercent")
