@@ -38,6 +38,7 @@ data class HomeScreenState(
     val maxHp: Int?,
     val isRecovering: Boolean,
     val unreadNotificationCount: Int
+    val membershipUntilMillis: Long = 0L
 )
 
 @Composable
@@ -59,6 +60,12 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         CurrencyRow(soft = state.softCurrency, premium = state.premiumCurrency)
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        MembershipStatusCard(
+            membershipUntilMillis = state.membershipUntilMillis
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -215,4 +222,89 @@ private fun NotificationSummary(count: Int) {
         style = MaterialTheme.typography.labelSmall,
         textAlign = TextAlign.Start
     )
+}
+
+@Composable
+private fun MembershipStatusCard(membershipUntilMillis: Long) {
+    var nowMillis by remember {
+        mutableLongStateOf(System.currentTimeMillis())
+    }
+
+    LaunchedEffect(membershipUntilMillis) {
+        while (true) {
+            nowMillis = System.currentTimeMillis()
+            delay(1_000)
+        }
+    }
+
+    val remainingMillis =
+        (membershipUntilMillis - nowMillis).coerceAtLeast(0L)
+
+    val isActive = remainingMillis > 0L
+
+    val totalSeconds = remainingMillis / 1_000L
+    val days = totalSeconds / 86_400L
+    val hours = (totalSeconds % 86_400L) / 3_600L
+    val minutes = (totalSeconds % 3_600L) / 60L
+    val seconds = totalSeconds % 60L
+
+    val durationText = when {
+        days > 0L -> "${days}d ${hours}h ${minutes}m remaining"
+        hours > 0L -> "${hours}h ${minutes}m ${seconds}s remaining"
+        minutes > 0L -> "${minutes}m ${seconds}s remaining"
+        else -> "${seconds}s remaining"
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Membership",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = if (isActive) {
+                    "Status: Active"
+                } else {
+                    "Status: Inactive"
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (isActive) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = if (isActive) {
+                    durationText
+                } else {
+                    "Purchase a Premium Membership Token to activate membership."
+                },
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            if (isActive) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Includes +25 inventory slots and extended offline progress.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
 }
