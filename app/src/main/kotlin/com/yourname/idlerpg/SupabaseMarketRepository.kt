@@ -153,4 +153,14 @@ object SupabaseMarketRepository {
             put("p_price_per_unit", pricePerUnit)
         }).decodeAs<Long>()
     }
+    
+    suspend fun purchaseMembershipTokens(
+        characterId: String,
+        quantity: Int
+    ): Result<Long> = runCatching {
+        client.postgrest.rpc("purchase_membership_tokens", buildJsonObject {
+            put("p_character_id", characterId)
+            put("p_quantity", quantity)
+        }).decodeAs<Long>()
+    }
 }
