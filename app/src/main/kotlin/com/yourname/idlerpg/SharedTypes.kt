@@ -167,6 +167,15 @@ object ItemCatalog {
             id = "archery_cape", name = "Archery Cape", category = ItemCategory.ARMOR,
             rarity = Rarity.LEGENDARY, isTradeable = false, isStackable = false,
             equipSlot = EquipSlot.CAPE, levelRequired = 99, skillRequired = "ARCHERY"
+        ),
+        ItemDefinition(
+            id = "premium_membership_token",
+            name = "Premium Membership Token",
+            category = ItemCategory.CONSUMABLE,
+            rarity = Rarity.EPIC,
+            isTradeable = true,
+            isStackable = true,
+            consumableType = ConsumableType.POTION
         )
    ) + GeneratedItemCatalog.definitions + MetalTierItemCatalog.definitions
 
