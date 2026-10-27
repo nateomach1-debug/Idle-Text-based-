@@ -123,6 +123,7 @@ fun InventoryScreen(
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var showSlotShop by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
+    var showItemInfo by remember { mutableStateOf(false) }
     var equipRequirementError by remember { mutableStateOf<String?>(null) }
     
     val grouped = remember(items, sortMode) {
@@ -247,6 +248,7 @@ fun InventoryScreen(
             canBury = canBury(item),
             onUse = { onUseItem(item.itemId); selectedItem = null },
             onSell = { onSellOnMarket(item.itemId); selectedItem = null },
+            onShowInfo = { showItemInfo = true },
             onEquip = {
                 val result = onEquipItem(item.itemId)
                 selectedItem = null
@@ -261,7 +263,16 @@ fun InventoryScreen(
                 onBuryItem(item.itemId, qty)
                 selectedItem = null
             },
-            onDismiss = { selectedItem = null }
+            onDismiss = { selectedItem = null },
+            onShowInfo: () -> Unit,
+            Spacer(modifier = Modifier.height(8.dp))
+
+OutlinedButton(
+    onClick = onShowInfo,
+    modifier = Modifier.fillMaxWidth()
+) {
+    Text(text = "Info & Sources")
+}
         )
     }
 
