@@ -298,18 +298,20 @@ is ActiveQueue.CraftingQueue -> {
 }
 
             is ActiveQueue.OfflineCombatQueue -> {
-                actionsCompleted = 0
-            }
-            is ActiveQueue.OfflineCombatQueue -> {
-                actionsCompleted = 0
-            }
-            is ActiveQueue.BuryQueue -> {
-                var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
-                val remaining = queue.targetQuantity - queue.quantityCompleted
-                possibleActions = possibleActions.coerceAtMost(remaining)
-                queue.quantityCompleted += possibleActions
-                actionsCompleted = possibleActions
-                if (queue.isTargetReached()) queueExhausted = true
+    actionsCompleted = 0
+}
+
+is ActiveQueue.BuryQueue -> {
+    val possibleActions =
+        (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+
+    val remaining =
+        (queue.targetQuantity - queue.quantityCompleted).coerceAtLeast(0)
+
+    // Report potential actions only. GameViewModel updates completed
+    // progress after checking and consuming the available bones.
+    actionsCompleted = possibleActions.coerceAtMost(remaining)
+}
             }
         }
 
