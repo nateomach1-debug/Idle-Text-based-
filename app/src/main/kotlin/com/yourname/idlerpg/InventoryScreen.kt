@@ -241,19 +241,29 @@ fun InventoryScreen(
         }
     }
 
-        selectedItem?.let { item ->
+        
+    selectedItem?.let { item ->
         ItemActionSheet(
             item = item,
             canEquip = canEquip(item),
             canBury = canBury(item),
-            onUse = { onUseItem(item.itemId); selectedItem = null },
-            onSell = { onSellOnMarket(item.itemId); selectedItem = null },
-            onShowInfo = { showItemInfo = true },
+            onUse = {
+                onUseItem(item.itemId)
+                selectedItem = null
+            },
+            onSell = {
+                onSellOnMarket(item.itemId)
+                selectedItem = null
+            },
+            onShowInfo = {
+                showItemInfo = true
+            },
             onEquip = {
                 val result = onEquipItem(item.itemId)
                 selectedItem = null
 
-                if (result is ServiceResult.Failure &&
+                if (
+                    result is ServiceResult.Failure &&
                     result.reason.contains("level", ignoreCase = true)
                 ) {
                     equipRequirementError = result.reason
@@ -263,16 +273,31 @@ fun InventoryScreen(
                 onBuryItem(item.itemId, qty)
                 selectedItem = null
             },
-            onDismiss = { selectedItem = null },
-            onShowInfo: () -> Unit,
-            Spacer(modifier = Modifier.height(8.dp))
+            onDismiss = {
+                selectedItem = null
+            }
+        )
+    }
 
-OutlinedButton(
-    onClick = onShowInfo,
-    modifier = Modifier.fillMaxWidth()
-) {
-    Text(text = "Info & Sources")
-}
+    if (showItemInfo) {
+        AlertDialog(
+            onDismissRequest = { showItemInfo = false },
+            title = {
+                Text(text = "Item Info & Sources")
+            },
+            text = {
+                Text(
+                    text = selectedItem?.displayName
+                        ?: "No item selected"
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { showItemInfo = false }
+                ) {
+                    Text(text = "Close")
+                }
+            }
         )
     }
 
@@ -309,8 +334,8 @@ private fun InventoryListView(
             }
         }
     }
-} 
-    
+}
+
 @Composable
 private fun InventoryGridView(
     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
@@ -322,7 +347,9 @@ private fun InventoryGridView(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         grouped.forEach { (category, categoryItems) ->
-            item(span = { GridItemSpan(maxLineSpan) }) { CategoryHeader(category.name) }
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                CategoryHeader(category.name)
+            }
             items(categoryItems) { invItem ->
                 ItemGridTile(invItem, onClick = { onItemSelected(invItem) })
             }
@@ -340,7 +367,10 @@ private fun CategoryHeader(title: String) {
 }
 
 @Composable
-private fun ItemListRow(item: InventoryItemSummary, onClick: () -> Unit) {
+private fun ItemListRow(
+    item: InventoryItemSummary,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -357,7 +387,10 @@ private fun ItemListRow(item: InventoryItemSummary, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ItemGridTile(item: InventoryItemSummary, onClick: () -> Unit) {
+private fun ItemGridTile(
+    item: InventoryItemSummary,
+    onClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
@@ -380,32 +413,57 @@ private fun ItemActionSheet(
     canBury: Pair<Boolean, String?>,
     onUse: () -> Unit,
     onSell: () -> Unit,
+    onShowInfo: () -> Unit,
     onEquip: () -> Unit,
     onBury: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = item.displayName, style = MaterialTheme.typography.headlineMedium) },
+        title = {
+            Text(
+                text = item.displayName,
+                style = MaterialTheme.typography.headlineMedium
+            )
+        },
         text = {
             Column {
-                Text(text = "Quantity: " + item.quantity, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = "Quantity: " + item.quantity,
+                    style = MaterialTheme.typography.bodyMedium
+                )
 
                 val stackValue = item.npcValuePerUnit * item.quantity
                 Text(
-                    text = "NPC value: " + item.npcValuePerUnit + " each (" + stackValue + " for full stack)",
+                    text = "NPC value: " + item.npcValuePerUnit +
+                        " each (" + stackValue + " for full stack)",
                     style = MaterialTheme.typography.bodyMedium
                 )
 
                 item.statsDescription?.let {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Stats: " + it, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = "Stats: " + it,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = onShowInfo,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Info & Sources")
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (item.isConsumable) {
-                    Button(onClick = onUse, modifier = Modifier.fillMaxWidth()) {
+                    Button(
+                        onClick = onUse,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Text(text = "Use")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -420,6 +478,7 @@ private fun ItemActionSheet(
                     ) {
                         Text(text = "Equip")
                     }
+
                     if (!canEquipNow && lockReason != null) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -430,7 +489,10 @@ private fun ItemActionSheet(
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = lockReason, style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                text = lockReason,
+                                style = MaterialTheme.typography.labelSmall
+                            )
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -438,37 +500,48 @@ private fun ItemActionSheet(
 
                 if (item.isBuryable) {
                     val (canBuryNow, buryLockReason) = canBury
-                    var buryQuantity by remember(item.itemId) { mutableStateOf(1) }
+                    var buryQuantity by remember(item.itemId) {
+                        mutableStateOf(1)
+                    }
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         IconButton(
-                            onClick = { if (buryQuantity > 1) buryQuantity -= 1 },
+                            onClick = {
+                                if (buryQuantity > 1) buryQuantity -= 1
+                            },
                             enabled = canBuryNow
                         ) {
                             Text(text = "-", style = MaterialTheme.typography.titleLarge)
                         }
+
                         OutlinedTextField(
                             value = buryQuantity.toString(),
                             onValueChange = { newValue ->
                                 val digitsOnly = newValue.filter { it.isDigit() }
                                 buryQuantity = when {
                                     digitsOnly.isEmpty() -> 1
-                                    else -> (digitsOnly.toIntOrNull() ?: 1).coerceIn(1, item.quantity)
+                                    else -> (digitsOnly.toIntOrNull() ?: 1)
+                                        .coerceIn(1, item.quantity)
                                 }
                             },
                             singleLine = true,
                             enabled = canBuryNow,
                             modifier = Modifier.width(90.dp)
                         )
+
                         IconButton(
-                            onClick = { if (buryQuantity < item.quantity) buryQuantity += 1 },
+                            onClick = {
+                                if (buryQuantity < item.quantity) buryQuantity += 1
+                            },
                             enabled = canBuryNow
                         ) {
                             Text(text = "+", style = MaterialTheme.typography.titleLarge)
                         }
+
                         TextButton(
                             onClick = { buryQuantity = item.quantity },
                             enabled = canBuryNow
@@ -476,7 +549,9 @@ private fun ItemActionSheet(
                             Text(text = "Max")
                         }
                     }
+
                     Spacer(modifier = Modifier.height(4.dp))
+
                     Button(
                         onClick = { onBury(buryQuantity) },
                         enabled = canBuryNow,
@@ -484,6 +559,7 @@ private fun ItemActionSheet(
                     ) {
                         Text(text = "Bury " + buryQuantity)
                     }
+
                     if (!canBuryNow && buryLockReason != null) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -494,13 +570,20 @@ private fun ItemActionSheet(
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = buryLockReason, style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                text = buryLockReason,
+                                style = MaterialTheme.typography.labelSmall
+                            )
                         }
                     }
+
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                OutlinedButton(onClick = onSell, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = onSell,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(text = "Sell on Market")
                 }
             }
