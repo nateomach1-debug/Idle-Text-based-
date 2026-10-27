@@ -2098,13 +2098,13 @@ if (requiredSeedId != null && effectiveActions > 0) {
 }
 
 if (effectiveActions > 0) {
-    val xpEarned = action.xpPerAction * effectiveActions
+    val xpEarned = action.xpPerAction * effectiveActions.toLong()
 
     progressionService.grantXp(
         characterId,
         skillType,
         xpEarned,
-        guildXpBonusEffects()
+        guildXpBonusEffects() + capeBonusEffects(characterId)
     )
 
     grantSkillActionItems(
@@ -2118,6 +2118,44 @@ if (effectiveActions > 0) {
             inventory,
             effectiveActions
         )
+    }
+
+    // Match live gathering mastery and skill-cape bonus-item rolls.
+    val gatherBook = progressionService.skillBookFor(characterId)
+    val gatherActiveEffects =
+        UnlockTable.allActiveEffects(gatherBook) + capeBonusEffects(characterId)
+    val dropRateBoostPercent =
+        EffectStacker.totalDropRateBoostPercent(gatherActiveEffects, skillType)
+
+    if (dropRateBoostPercent > 0.0) {
+        val randomRewardIds = when (queue.itemId) {
+            "vegetables" -> listOf(
+                "onion", "potato", "sweetcorn", "cabbage", "tomato"
+            )
+            "baked_goods" -> listOf(
+                "bread", "meat_pie", "apple_pie"
+            )
+            "loose_gems" -> listOf(
+                "uncut_opal", "uncut_jade", "uncut_red_topaz",
+                "uncut_sapphire", "uncut_emerald", "uncut_ruby",
+                "uncut_diamond"
+            )
+            "wizards_purse" -> listOf(
+                "water_essence", "fire_essence",
+                "earth_essence", "wind_essence"
+            )
+            else -> null
+        }
+
+        repeat(effectiveActions) {
+            if (Random.nextDouble(0.0, 100.0) < dropRateBoostPercent) {
+                if (randomRewardIds != null) {
+                    inventory.addItem(randomRewardIds.random(), 1)
+                } else {
+                    inventory.addItem(queue.itemId, 1)
+                }
+            }
+        }
     }
 
     val itemsGained = ItemCatalog.items.mapNotNull { item ->
@@ -2152,9 +2190,6 @@ if (requiredSeedId != null && effectiveActions < requestedActions) {
             reason = "Out of " + formatItemName(requiredSeedId) + "."
         )
 }
-            }
-        }
-
         val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
         
 if (craftingQueue != null) {
@@ -2203,30 +2238,80 @@ if (craftingQueue != null) {
     }
 }
 
-        val buryQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.BuryQueue
-        if (buryQueue != null) {
-            val buryResult = offlineIdleService.resolveOfflineProgress(characterId, premiumMembershipActive = hasMembershipForOfflineProgress(characterId))
-            if (buryResult is ServiceResult.Success && buryResult.value.actionsCompleted > 0) {
-                val boneInfo = PrayerBoneRequirements[buryQueue.itemId]
-                if (boneInfo != null) {
-                    val inventory = inventoryService.inventoryFor(characterId)
-                    val available = inventory.quantityOf(buryQueue.itemId)
-                    val effectiveActions = minOf(buryResult.value.actionsCompleted, available)
-                    if (effectiveActions > 0) {
-                        inventory.removeItem(buryQueue.itemId, effectiveActions)
-                        val xpGranted = boneInfo.xpAmount * effectiveActions
-                        progressionService.grantXp(characterId, SkillType.PRAYER, xpGranted, guildXpBonusEffects())
-                        _offlineSummary.value = OfflineSummary(
-                            awaySeconds = buryResult.value.claimedElapsed.seconds,
-                            skillActionName = "Bury " + formatItemName(buryQueue.itemId),
-                            itemName = formatItemName(buryQueue.itemId),
-                            quantity = effectiveActions,
-                            xpEarned = xpGranted
-                        )
-                    }
-                }
+        val buryQueue =
+    offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.BuryQueue
+
+if (buryQueue != null) {
+    val buryResult = offlineIdleService.resolveOfflineProgress(
+        characterId,
+        premiumMembershipActive = hasMembershipForOfflineProgress(characterId)
+    )
+
+    if (buryResult is ServiceResult.Success &&
+        buryResult.value.actionsCompleted > 0
+    ) {
+        val boneInfo = PrayerBoneRequirements[buryQueue.itemId]
+
+        if (boneInfo != null) {
+            val inventory = inventoryService.inventoryFor(characterId)
+            val available = inventory.quantityOf(buryQueue.itemId)
+            val remainingToTarget =
+                (buryQueue.targetQuantity - buryQueue.quantityCompleted)
+                    .coerceAtLeast(0)
+
+            val requestedActions = minOf(
+                buryResult.value.actionsCompleted,
+                remainingToTarget
+            )
+            val effectiveActions = minOf(requestedActions, available)
+
+            if (effectiveActions > 0) {
+                inventory.removeItem(buryQueue.itemId, effectiveActions)
+                buryQueue.quantityCompleted += effectiveActions
+
+                val xpGranted = boneInfo.xpAmount * effectiveActions
+
+                progressionService.grantXp(
+                    characterId,
+                    SkillType.PRAYER,
+                    xpGranted,
+                    guildXpBonusEffects() + capeBonusEffects(characterId)
+                )
+
+                _offlineSummary.value = OfflineSummary(
+                    awaySeconds = buryResult.value.claimedElapsed.seconds,
+                    skillActionName = "Bury " + formatItemName(buryQueue.itemId),
+                    itemName = formatItemName(buryQueue.itemId),
+                    quantity = effectiveActions,
+                    xpEarned = xpGranted
+                )
+            }
+
+            if (buryQueue.isTargetReached()) {
+                offlineIdleService.stopQueue(characterId)
+
+                _actionStoppedNotifications.value =
+                    _actionStoppedNotifications.value + ActionStoppedNotice(
+                        itemName = formatItemName(buryQueue.itemId),
+                        reason = "Buried " + buryQueue.quantityCompleted + "x " +
+                            formatItemName(buryQueue.itemId) + " (+" +
+                            (buryQueue.quantityCompleted * boneInfo.xpAmount) +
+                            " Prayer XP).",
+                        isCompletion = true
+                    )
+            } else if (effectiveActions < requestedActions) {
+                offlineIdleService.stopQueue(characterId)
+
+                _actionStoppedNotifications.value =
+                    _actionStoppedNotifications.value + ActionStoppedNotice(
+                        itemName = formatItemName(buryQueue.itemId),
+                        reason = "Ran out of " +
+                            formatItemName(buryQueue.itemId) + "."
+                    )
             }
         }
+    }
+}
 
         val combatQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.OfflineCombatQueue
         if (combatQueue != null) {
