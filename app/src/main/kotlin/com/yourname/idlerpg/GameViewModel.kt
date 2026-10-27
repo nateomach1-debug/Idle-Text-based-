@@ -2181,8 +2181,6 @@ if (craftingQueue != null) {
     }
 }
 
-        }
-
         val buryQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.BuryQueue
         if (buryQueue != null) {
             val buryResult = offlineIdleService.resolveOfflineProgress(characterId, premiumMembershipActive = hasMembershipForOfflineProgress(characterId))
