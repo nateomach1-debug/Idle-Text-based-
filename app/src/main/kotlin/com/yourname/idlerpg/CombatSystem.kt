@@ -908,6 +908,8 @@ class CombatService {
 
         val estimatedKills =
             (elapsedSeconds / avgTimeToKillSeconds).toInt().coerceAtLeast(0)
+
+        repeat(estimatedKills) {
             val monster = offlinePool.random()
             rollLoot(state, monster, dropRateMultiplier)
             onMonsterKilled(characterId, monster)
