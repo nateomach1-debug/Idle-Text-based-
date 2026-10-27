@@ -240,14 +240,14 @@ fun InventoryScreen(
         }
     }
 
-    selectedItem?.let { item ->
+        selectedItem?.let { item ->
         ItemActionSheet(
             item = item,
             canEquip = canEquip(item),
             canBury = canBury(item),
             onUse = { onUseItem(item.itemId); selectedItem = null },
             onSell = { onSellOnMarket(item.itemId); selectedItem = null },
-                        onEquip = {
+            onEquip = {
                 val result = onEquipItem(item.itemId)
                 selectedItem = null
 
@@ -257,9 +257,15 @@ fun InventoryScreen(
                     equipRequirementError = result.reason
                 }
             },
-            onBury = { qty -> onBuryItem(item.itemId, qty); selectedItem = null },
-            onDismiss = { selectedItem = null 
-                equipRequirementError?.let { errorMessage ->
+            onBury = { qty ->
+                onBuryItem(item.itemId, qty)
+                selectedItem = null
+            },
+            onDismiss = { selectedItem = null }
+        )
+    }
+
+    equipRequirementError?.let { errorMessage ->
         AlertDialog(
             onDismissRequest = { equipRequirementError = null },
             title = {
@@ -275,8 +281,6 @@ fun InventoryScreen(
                     Text(text = "OK")
                 }
             }
-        )
-                }
         )
     }
 }
