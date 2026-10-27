@@ -2403,8 +2403,13 @@ fun logout() {
         _actionStoppedNotifications.value = _actionStoppedNotifications.value.drop(1)
     }
 
-    private data class CraftBatchResult(val successfulCrafts: Int, val itemsProduced: Int, val xpGranted: Long, val stoppedReason: String? = null)
-
+    private data class CraftBatchResult(
+        val successfulCrafts: Int,
+        val itemsProduced: Int,
+        val xpGranted: Long,
+        val stoppedReason: String? = null,
+        val attemptsMade: Int = 0
+    )
     private fun craftItems(characterId: String, itemId: String, attempts: Int): CraftBatchResult {
         val recipe = RecipeCatalog.forOutput(itemId) ?: return CraftBatchResult(0, 0, 0)
         val skillType = SkillType.valueOf(recipe.skillRequired)
@@ -2422,9 +2427,11 @@ fun logout() {
         var totalProduced = 0
         var xpGranted = 0L
         var stoppedReason: String? = null
+        var attemptsMade = 0
         for (i in 0 until attempts) {
             val result = craftingService.craftOnce(inventory, itemId, playerLevel, materialSaveChancePercent, successBonusPercent)
             if (result is ServiceResult.Success) {
+                attemptsMade++
                 xpGranted += xpPerAttempt
                 if (result.value.succeeded) {
                     successes += 1
@@ -2438,7 +2445,13 @@ fun logout() {
         if (xpGranted > 0) {
             progressionService.grantXp(characterId, skillType, xpGranted, guildXpBonusEffects() + capeBonusEffects(characterId))
         }
-        return CraftBatchResult(successes, totalProduced, xpGranted, stoppedReason)
+        return CraftBatchResult(
+            successfulCrafts = successes,
+            itemsProduced = totalProduced,
+            xpGranted = xpGranted,
+            stoppedReason = stoppedReason,
+            attemptsMade = attemptsMade
+        )
     }
 
 /**
@@ -2525,7 +2538,7 @@ fun maxCraftableQuantity(itemId: String): Int {
         if (cappedAttempts <= 0) return
 
         val batch = craftItems(characterId, queue.itemId, cappedAttempts)
-        queue.quantityCompleted += batch.successfulCrafts
+        queue.quantityCompleted += batch.attemptsMade
         refreshSkills()
         refreshInventory()
 
