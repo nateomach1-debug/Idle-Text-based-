@@ -2134,26 +2134,53 @@ fun logout() {
         }
 
         val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
-        if (craftingQueue != null) {
-            val craftResult = offlineIdleService.resolveOfflineProgress(characterId, premiumMembershipActive = hasMembershipForOfflineProgress(characterId))
-            if (craftResult is ServiceResult.Success && craftResult.value.actionsCompleted > 0) {
-                val batch = craftItems(characterId, craftingQueue.itemId, craftResult.value.actionsCompleted)
-                batch.stoppedReason?.let { reason ->
-                    _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
-                        itemName = formatItemName(craftingQueue.itemId),
-                        reason = reason
-                    )
-                }
-                if (batch.xpGranted > 0) {
-                    _offlineSummary.value = OfflineSummary(
-                        awaySeconds = craftResult.value.claimedElapsed.seconds,
-                        skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
-                        itemName = formatItemName(craftingQueue.itemId),
-                        quantity = batch.itemsProduced,
-                        xpEarned = batch.xpGranted
-                    )
-                }
-            }
+        
+if (craftingQueue != null) {
+    val craftResult = offlineIdleService.resolveOfflineProgress(
+        characterId,
+        premiumMembershipActive = hasMembershipForOfflineProgress(characterId)
+    )
+
+    if (craftResult is ServiceResult.Success &&
+        craftResult.value.actionsCompleted > 0
+    ) {
+        val batch = craftItems(
+            characterId,
+            craftingQueue.itemId,
+            craftResult.value.actionsCompleted
+        )
+
+        // Count actual attempts, not successful item outputs.
+        craftingQueue.quantityCompleted += batch.attemptsMade
+
+        batch.stoppedReason?.let { reason ->
+            _actionStoppedNotifications.value =
+                _actionStoppedNotifications.value + ActionStoppedNotice(
+                    itemName = formatItemName(craftingQueue.itemId),
+                    reason = reason
+                )
+        }
+
+        if (batch.xpGranted > 0) {
+            _offlineSummary.value = OfflineSummary(
+                awaySeconds = craftResult.value.claimedElapsed.seconds,
+                skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
+                itemName = formatItemName(craftingQueue.itemId),
+                quantity = batch.itemsProduced,
+                xpEarned = batch.xpGranted
+            )
+        }
+
+        // Stop when the selected attempt count is reached or
+        // when crafting cannot continue due to missing materials.
+        if (craftingQueue.isTargetReached() || batch.stoppedReason != null) {
+            offlineIdleService.stopQueue(characterId)
+            craftActionProgressSeconds = 0
+            refreshActiveQueue()
+        }
+    }
+}
+
         }
 
         val buryQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.BuryQueue
