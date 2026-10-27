@@ -26,6 +26,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.unit.dp
+import com.yourname.idlerpg.ActionCatalog
+import com.yourname.idlerpg.ItemCatalog
+import com.yourname.idlerpg.Recipe
+import com.yourname.idlerpg.RecipeCatalog
+import com.yourname.idlerpg.SkillType
+import com.yourname.idlerpg.ZoneCatalog
 
 // =========================================================
 // INVENTORY SCREEN
@@ -242,30 +251,179 @@ fun InventoryScreen(
     }
 
         
-    selectedItem?.let { item ->
-        ItemActionSheet(
-            item = item,
-            canEquip = canEquip(item),
-            canBury = canBury(item),
-            onUse = {
-                onUseItem(item.itemId)
-                selectedItem = null
-            },
-            onSell = {
-                onSellOnMarket(item.itemId)
-                selectedItem = null
-            },
-            onShowInfo = {
-                showItemInfo = true
-            },
-            onEquip = {
-                val result = onEquipItem(item.itemId)
-                selectedItem = null
+    
+    if (!showItemInfo) {
+        selectedItem?.let { item ->
+            ItemActionSheet(
+                item = item,
+                canEquip = canEquip(item),
+                canBury = canBury(item),
+                onUse = {
+                    onUseItem(item.itemId)
+                    selectedItem = null
+                },
+                onSell = {
+                    onSellOnMarket(item.itemId)
+                    selectedItem = null
+                },
+                onShowInfo = {
+                    showItemInfo = true
+                },
+                onEquip = {
+                    val result = onEquipItem(item.itemId)
+                    selectedItem = null
 
-                if (
-                    result is ServiceResult.Failure &&
-                    result.reason.contains("level", ignoreCase = true)
-                ) {
+                    if (
+                        result is ServiceResult.Failure &&
+                        result.reason.contains("level", ignoreCase = true)
+                    ) {
+                        equipRequirementError = result.reason
+                    }
+                },
+                onBury = { qty ->
+                    onBuryItem(item.itemId, qty)
+                    selectedItem = null
+                },
+                onDismiss = {
+                    selectedItem = null
+                }
+            )
+        }
+    }
+
+    if (showItemInfo) {
+        val infoItem = selectedItem
+
+        if (infoItem != null) {
+            val info = remember(infoItem.itemId) {
+                buildItemInfoDetails(infoItem.itemId)
+            }
+
+            AlertDialog(
+                onDismissRequest = {
+                    showItemInfo = false
+                },
+                title = {
+                    Text(text = "${infoItem.displayName}: Info & Sources")
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 440.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "RECIPES USING THIS ITEM",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+
+                        if (info.recipesUsing.isEmpty()) {
+                            Text("This item is not listed as an ingredient in any recipe.")
+                        } else {
+                            info.recipesUsing.forEach { recipe ->
+                                Text(
+                                    text = "• ${itemInfoName(recipe.outputItemId)} " +
+                                        "(uses ${recipe.ingredients.firstOrNull {
+                                            it.itemId == infoItem.itemId
+                                        }?.quantity ?: 0})"
+                                )
+                                Text(
+                                    text = "  Makes ${recipe.outputQuantity}; " +
+                                        "${recipe.skillRequired.lowercase().replaceFirstChar {
+                                            it.uppercase()
+                                        }} level ${recipe.levelRequired}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+
+                        HorizontalDivider()
+
+                        Text(
+                            text = "RECIPES PRODUCING THIS ITEM",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+
+                        if (info.recipesProducing.isEmpty()) {
+                            Text("No recipe producing this item is listed.")
+                        } else {
+                            info.recipesProducing.forEach { recipe ->
+                                Text(
+                                    text = "• Makes ${recipe.outputQuantity} " +
+                                        itemInfoName(recipe.outputItemId)
+                                )
+
+                                Text(
+                                    text = recipe.ingredients.joinToString(
+                                        separator = ", "
+                                    ) { ingredient ->
+                                        "${itemInfoName(ingredient.itemId)} × ${ingredient.quantity}"
+                                    }
+                                )
+
+                                Text(
+                                    text = "Requires ${recipe.skillRequired.lowercase().replaceFirstChar {
+                                        it.uppercase()
+                                    }} level ${recipe.levelRequired}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+
+                        HorizontalDivider()
+
+                        Text(
+                            text = "ACQUISITION SOURCES",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+
+                        if (info.sources.isEmpty()) {
+                            Text(
+                                "No source is currently listed in the skilling, " +
+                                    "combat-drop, vendor, or crafting catalogs."
+                            )
+                        } else {
+                            info.sources.forEach { source ->
+                                Text(text = "• $source")
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showItemInfo = false
+                        }
+                    ) {
+                        Text(text = "Close")
+                    }
+                }
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = {
+                    showItemInfo = false
+                },
+                title = {
+                    Text(text = "Item Info & Sources")
+                },
+                text = {
+                    Text(text = "No item is selected.")
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showItemInfo = false
+                        }
+                    ) {
+                        Text(text = "Close")
+                    }
+                }
+            )
+        }
+    }
                     equipRequirementError = result.reason
                 }
             },
@@ -591,7 +749,129 @@ private fun ItemActionSheet(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text(text = "Close")
+
+                
+private data class ItemInfoDetails(
+    val recipesUsing: List<Recipe>,
+    val recipesProducing: List<Recipe>,
+    val sources: List<String>
+)
+
+private fun itemInfoName(itemId: String): String {
+    return ItemCatalog.find(itemId)?.name
+        ?: itemId
+            .split('_')
+            .joinToString(" ") { word ->
+                word.replaceFirstChar { it.uppercase() }
+            }
+}
+
+private fun buildItemInfoDetails(itemId: String): ItemInfoDetails {
+    val recipesUsing = RecipeCatalog.recipes.filter { recipe ->
+        recipe.ingredients.any { ingredient ->
+            ingredient.itemId == itemId
+        }
+    }
+
+    val recipesProducing = RecipeCatalog.recipes.filter { recipe ->
+        recipe.outputItemId == itemId
+    }
+
+    val sources = linkedSetOf<String>()
+
+    // Skilling actions that directly produce this item.
+    SkillType.values().forEach { skill ->
+        ActionCatalog.allFor(skill)
+            .filter { action -> action.itemId == itemId }
+            .forEach { action ->
+                sources.add(
+                    "Skilling — ${action.displayName} " +
+                        "(${skill.name.lowercase().replaceFirstChar {
+                            it.uppercase()
+                        }}, level ${action.levelRequired})"
+                )
+            }
+    }
+
+    // Crafting recipes that create the item.
+    recipesProducing.forEach { recipe ->
+        sources.add(
+            "Crafting — ${recipe.skillRequired.lowercase().replaceFirstChar {
+                it.uppercase()
+            }} level ${recipe.levelRequired}; produces ${recipe.outputQuantity}"
+        )
+    }
+
+    // Items sold by the in-game vendor.
+    VendorBuyCatalog.items
+        .filter { it.itemId == itemId }
+        .forEach { vendorItem ->
+            sources.add(
+                "Vendor — ${vendorItem.displayName}, " +
+                    "${vendorItem.pricePerUnit} coins each"
+            )
+        }
+
+    // Items obtained from monster loot tables.
+    ZoneCatalog.zones.forEach { zone ->
+        zone.monsters.forEach { monster ->
+            (monster.mainLootTable + monster.rareLootTable)
+                .filter { loot -> loot.itemId == itemId }
+                .forEach { loot ->
+                    sources.add(
+                        "Combat — ${monster.name} in ${zone.name}: " +
+                            "${loot.dropChancePercent}% chance, " +
+                            "${loot.minQty}–${loot.maxQty} per drop"
+                    )
+                }
+
+            // Bones are granted separately from each monster's loot table.
+            val guaranteedBoneType = when {
+                monster.levelRequirement >= 60 -> "dragon_bones"
+                monster.levelRequirement >= 20 -> "big_bones"
+                monster.levelRequirement >= 15 -> "gem_bones"
+                else -> "bone"
+            }
+
+            if (itemId == guaranteedBoneType) {
+                sources.add(
+                    "Combat — ${monster.name} in ${zone.name}: " +
+                        "1 guaranteed bone per kill"
+                )
+            }
+
+            // Each kill has a 15% chance of granting one randomly selected
+            // elemental essence from the four essence types.
+            if (
+                itemId in setOf(
+                    "fire_essence",
+                    "earth_essence",
+                    "water_essence",
+                    "wind_essence"
+                )
+            ) {
+                sources.add(
+                    "Combat — any monster: approximately 3.75% chance " +
+                        "per kill for this specific elemental essence"
+                )
+            }
+        }
+    }
+
+    // A tradeable item may also be acquired from another player.
+    val itemDefinition = ItemCatalog.find(itemId)
+    if (itemDefinition?.isTradeable == true) {
+        sources.add("Player market — can be purchased from another player")
+    }
+
+    return ItemInfoDetails(
+        recipesUsing = recipesUsing,
+        recipesProducing = recipesProducing,
+        sources = sources.toList()
+    )
+}
             }
         }
     )
 }
+
