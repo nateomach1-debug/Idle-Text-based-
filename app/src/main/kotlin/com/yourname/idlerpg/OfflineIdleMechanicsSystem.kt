@@ -277,6 +277,10 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
         var queueExhausted = false
 
         when (queue) {
+            is ActiveQueue.SkillingQueue -> {
+                actionsCompleted =
+                    (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+            }
             
 is ActiveQueue.CraftingQueue -> {
     var possibleActions =
