@@ -2079,57 +2079,79 @@ fun logout() {
                 val action = ActionCatalog.find(skillType, queue.itemId)
                 if (action != null) {
                     
-                    val inventory = inventoryService.inventoryFor(characterId)
-                    val inventoryBefore = ItemCatalog.items.associate {
-                        it.id to inventory.quantityOf(it.id)
-                    }
+                    
+val inventory = inventoryService.inventoryFor(characterId)
+val inventoryBefore = ItemCatalog.items.associate {
+    it.id to inventory.quantityOf(it.id)
+}
 
-                    val xpEarned =
-                        action.xpPerAction * result.value.actionsCompleted
+val requiredSeedId = FarmingSeedRequirements[queue.itemId]
+val requestedActions = result.value.actionsCompleted.toInt()
+val effectiveActions = if (requiredSeedId != null) {
+    minOf(requestedActions, inventory.quantityOf(requiredSeedId))
+} else {
+    requestedActions
+}
 
-                    progressionService.grantXp(
-                        characterId,
-                        skillType,
-                        xpEarned,
-                        guildXpBonusEffects()
-                    )
+if (requiredSeedId != null && effectiveActions > 0) {
+    inventory.removeItem(requiredSeedId, effectiveActions)
+}
 
-                    grantSkillActionItems(
-                        inventory,
-                        queue.itemId,
-                        result.value.actionsCompleted.toInt()
-                    )
+if (effectiveActions > 0) {
+    val xpEarned = action.xpPerAction * effectiveActions
 
-                    if (skillType == SkillType.MINING) {
-                        MiningBonusGemTable.rollAndGrant(
-                            inventory,
-                            result.value.actionsCompleted
-                        )
-                    }
+    progressionService.grantXp(
+        characterId,
+        skillType,
+        xpEarned,
+        guildXpBonusEffects()
+    )
 
-                    val itemsGained = ItemCatalog.items.mapNotNull { item ->
-                        val gained = inventory.quantityOf(item.id) -
-                            (inventoryBefore[item.id] ?: 0)
+    grantSkillActionItems(
+        inventory,
+        queue.itemId,
+        effectiveActions
+    )
 
-                        if (gained > 0) {
-                            OfflineGainedItem(
-                                itemName = item.name,
-                                quantity = gained
-                            )
-                        } else {
-                            null
-                        }
-                    }
+    if (skillType == SkillType.MINING) {
+        MiningBonusGemTable.rollAndGrant(
+            inventory,
+            effectiveActions
+        )
+    }
 
-                    _offlineSummary.value = OfflineSummary(
-                        awaySeconds = result.value.claimedElapsed.seconds,
-                        skillActionName = action.displayName,
-                        itemName = formatItemName(queue.itemId),
-                        quantity = result.value.actionsCompleted,
-                        xpEarned = xpEarned,
-                        itemsGained = itemsGained
-                    )
-                }
+    val itemsGained = ItemCatalog.items.mapNotNull { item ->
+        val gained = inventory.quantityOf(item.id) -
+            (inventoryBefore[item.id] ?: 0)
+
+        if (gained > 0) {
+            OfflineGainedItem(
+                itemName = item.name,
+                quantity = gained
+            )
+        } else {
+            null
+        }
+    }
+
+    _offlineSummary.value = OfflineSummary(
+        awaySeconds = result.value.claimedElapsed.seconds,
+        skillActionName = action.displayName,
+        itemName = formatItemName(queue.itemId),
+        quantity = effectiveActions,
+        xpEarned = xpEarned,
+        itemsGained = itemsGained
+    )
+}
+
+if (requiredSeedId != null && effectiveActions < requestedActions) {
+    offlineIdleService.stopQueue(characterId)
+    _actionStoppedNotifications.value =
+        _actionStoppedNotifications.value + ActionStoppedNotice(
+            itemName = formatItemName(queue.itemId),
+            reason = "Out of " + formatItemName(requiredSeedId) + "."
+        )
+}
             }
         }
 
