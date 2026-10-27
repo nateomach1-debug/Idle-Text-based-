@@ -912,7 +912,12 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                                 { skillsScreenState = SkillsScreenState.List },
                                                 { itemId -> gameViewModel.startCraftingAction(itemId) },
                                                 startButtonLabel = RECIPE_BASED_SKILL_LABELS.getValue(screen.skillId),
-                                                activeQueue = activeQueue
+                                                activeQueue = activeQueue,
+                                                onStartCraftingAction = { itemId, quantity -> gameViewModel.startCraftingAction(itemId, quantity)
+                                                },
+                                                maxCraftableQuantity = { itemId ->
+                                                    gameViewModel.maxCraftableQuantity(itemId)
+                                                }
                                             )
                                             else -> SkillDetailScreen(
                                                 buildSkillDetailState(
