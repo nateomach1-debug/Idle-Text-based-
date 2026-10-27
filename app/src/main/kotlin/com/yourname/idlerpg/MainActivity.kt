@@ -324,26 +324,41 @@ private fun buildSmithingState(summary: SkillSummary, inventoryQuantities: Map<S
             )
         }
 
+    
     val materials = SMITHING_METALS.map { (materialId, displayName, barItemId) ->
-        val barRecipe = RecipeCatalog.forOutput(barItemId)?.let {
-            recipeToSmithingSummary(it).copy(
-                missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+        val barRecipe = RecipeCatalog.forOutput(barItemId)?.let { recipe ->
+            recipeToSmithingSummary(recipe).copy(
+                requiredIngredients = ingredientSummariesFor(
+                    recipe.ingredients,
+                    inventoryQuantities
+                )
             )
         }
+
         val gearRecipes = RecipeCatalog.recipes
-            .filter { it.skillRequired == "SMITHING" && it.ingredients.any { ing -> ing.itemId == barItemId } }
-            .map {
-                recipeToSmithingSummary(it).copy(
-                    missingIngredients = missingIngredientsFor(it.ingredients, inventoryQuantities)
+            .filter {
+                it.skillRequired == "SMITHING" &&
+                    it.ingredients.any { ingredient ->
+                        ingredient.itemId == barItemId
+                    }
+            }
+            .map { recipe ->
+                recipeToSmithingSummary(recipe).copy(
+                    requiredIngredients = ingredientSummariesFor(
+                        recipe.ingredients,
+                        inventoryQuantities
+                    )
                 )
             }
             .sortedBy { it.levelRequired }
+
         SmithingMaterialCatalogEntry(
             material = SmithingMaterialOption(materialId, displayName),
             bar = barRecipe,
             gear = gearRecipes
         )
     }
+
     return SmithingState(
         displayName = summary.displayName,
         level = summary.level,
