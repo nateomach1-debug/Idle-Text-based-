@@ -277,27 +277,22 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
         var queueExhausted = false
 
         when (queue) {
-            is ActiveQueue.SkillingQueue -> {
-                actionsCompleted = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
-            }
-            is ActiveQueue.CraftingQueue -> {
-                var possibleActions = (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
-                if (queue.targetQuantity != null) {
-                    val remaining = queue.targetQuantity - queue.quantityCompleted
-                    possibleActions = possibleActions.coerceAtMost(remaining)
-                }
-                var completed = 0
-                for (i in 0 until possibleActions) {
-                    if (!materialCheck.hasMaterialsFor(characterId, queue.itemId)) {
-                        queueExhausted = true
-                        break
-                    }
-                    completed++
-                }
-                queue.quantityCompleted += completed
-                actionsCompleted = completed
-                if (queue.isTargetReached()) queueExhausted = true
-            }
+            
+is ActiveQueue.CraftingQueue -> {
+    var possibleActions =
+        (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+
+    if (queue.targetQuantity != null) {
+        val remaining = (queue.targetQuantity - queue.quantityCompleted)
+            .coerceAtLeast(0)
+        possibleActions = possibleActions.coerceAtMost(remaining)
+    }
+
+    // Report the potential attempts only.
+    // GameViewModel will perform the crafts and record actual attempts.
+    actionsCompleted = possibleActions
+}
+
             is ActiveQueue.OfflineCombatQueue -> {
                 actionsCompleted = 0
             }
