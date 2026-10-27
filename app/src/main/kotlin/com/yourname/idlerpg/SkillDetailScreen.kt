@@ -128,17 +128,144 @@ fun SkillDetailScreen(
         }
     }
 
-    if (showActionPicker) {
+        if (showActionPicker) {
         ActionPickerSheet(
             actions = state.availableActions,
-            onActionSelected = {
+            onActionSelected = { itemId ->
                 showActionPicker = false
-                onStartAction(it)
+
+                if (onStartCraftingAction != null) {
+                    pendingCraftItemId = itemId
+                    selectedCraftQuantity = 1
+                    customCraftQuantity = "1"
+                } else {
+                    onStartAction(itemId)
+                }
             },
             onDismiss = { showActionPicker = false }
         )
     }
-}
+
+    val craftItemId = pendingCraftItemId
+    if (craftItemId != null && onStartCraftingAction != null) {
+        val maxQuantity = maxCraftableQuantity(craftItemId)
+        val customQuantity = customCraftQuantity.toIntOrNull() ?: 0
+        val selectedQuantity = when (selectedCraftQuantity) {
+            -1 -> customQuantity.coerceIn(1, maxQuantity.coerceAtLeast(1))
+            -2 -> maxQuantity
+            else -> selectedCraftQuantity
+        }
+
+        AlertDialog(
+            onDismissRequest = { pendingCraftItemId = null },
+            title = { Text("Choose quantity") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("Maximum craftable: $maxQuantity")
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(1, 5, 10).forEach { quantity ->
+                            TextButton(
+                                enabled = maxQuantity >= quantity,
+                                onClick = {
+                                    selectedCraftQuantity = quantity
+                                }
+                            ) {
+                                Text(
+                                    text = if (selectedCraftQuantity == quantity) {
+                                        "[$quantity]"
+                                    } else {
+                                        quantity.toString()
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        TextButton(
+                            enabled = maxQuantity > 0,
+                            onClick = { selectedCraftQuantity = -1 }
+                        ) {
+                            Text(
+                                if (selectedCraftQuantity == -1) {
+                                    "[Custom]"
+                                } else {
+                                    "Custom"
+                                }
+                            )
+                        }
+
+                        TextButton(
+                            enabled = maxQuantity > 0,
+                            onClick = { selectedCraftQuantity = -2 }
+                        ) {
+                            Text(
+                                if (selectedCraftQuantity == -2) {
+                                    "[Craft All]"
+                                } else {
+                                    "Craft All"
+                                }
+                            )
+                        }
+                    }
+
+                    if (selectedCraftQuantity == -1) {
+                        OutlinedTextField(
+                            value = customCraftQuantity,
+                            onValueChange = { value ->
+                                if (value.all { it.isDigit() }) {
+                                    customCraftQuantity = value
+                                }
+                            },
+                            label = { Text("Custom quantity") },
+                            singleLine = true
+                        )
+                    }
+
+                    if (maxQuantity == 0) {
+                        Text(
+                            "You don't have enough materials to craft this recipe.",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    } else if (selectedQuantity > maxQuantity) {
+                        Text(
+                            "Quantity will be limited to $maxQuantity.",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = maxQuantity > 0 &&
+                        selectedQuantity in 1..maxQuantity,
+                    onClick = {
+                        onStartCraftingAction(
+                            craftItemId,
+                            selectedQuantity
+                        )
+                        pendingCraftItemId = null
+                    }
+                ) {
+                    Text("Start crafting")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { pendingCraftItemId = null }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
