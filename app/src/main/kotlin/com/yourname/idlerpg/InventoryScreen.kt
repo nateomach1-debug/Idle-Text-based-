@@ -247,17 +247,36 @@ fun InventoryScreen(
             canBury = canBury(item),
             onUse = { onUseItem(item.itemId); selectedItem = null },
             onSell = { onSellOnMarket(item.itemId); selectedItem = null },
-            onEquip = {
-    val result = onEquipItem(item.itemId) selectedItem = null
+                        onEquip = {
+                val result = onEquipItem(item.itemId)
+                selectedItem = null
 
-    if (result is ServiceResult.Failure &&
-        result.reason.contains("level", ignoreCase = true)
-    ) {
-        equipRequirementError = result.reason
-    }
-},
+                if (result is ServiceResult.Failure &&
+                    result.reason.contains("level", ignoreCase = true)
+                ) {
+                    equipRequirementError = result.reason
+                }
+            },
             onBury = { qty -> onBuryItem(item.itemId, qty); selectedItem = null },
-            onDismiss = { selectedItem = null }
+            onDismiss = { selectedItem = null 
+                equipRequirementError?.let { errorMessage ->
+        AlertDialog(
+            onDismissRequest = { equipRequirementError = null },
+            title = {
+                Text(text = "Level Requirement Not Met")
+            },
+            text = {
+                Text(text = errorMessage)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { equipRequirementError = null }
+                ) {
+                    Text(text = "OK")
+                }
+            }
+        )
+                }
         )
     }
 }
@@ -275,25 +294,7 @@ private fun InventoryListView(
             }
         }
     }
-}
-    equipRequirementError?.let { errorMessage ->
-        AlertDialog(
-            onDismissRequest = { equipRequirementError = null },
-            title = {
-                Text(text = "Level Requirement Not Met")
-            },
-            text = {
-                Text(text = errorMessage)
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { equipRequirementError = null }
-                ) {
-                    Text(text = "OK")
-                }
-            }
-        )
-    }
+} 
     
 @Composable
 private fun InventoryGridView(
