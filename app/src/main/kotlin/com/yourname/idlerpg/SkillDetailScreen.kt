@@ -271,6 +271,7 @@ fun SkillDetailScreen(
             }
         )
     }
+}
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
