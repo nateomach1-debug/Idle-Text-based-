@@ -2441,6 +2441,44 @@ fun logout() {
         return CraftBatchResult(successes, totalProduced, xpGranted, stoppedReason)
     }
 
+/**
+ * Returns the maximum number of times this recipe can currently
+ * be attempted, based on the player's skill level and inventory.
+ *
+ * This only calculates a limit. It does not consume materials
+ * or start a crafting queue.
+ */
+fun maxCraftableQuantity(itemId: String): Int {
+    val characterId = _currentCharacterId.value ?: return 0
+    val recipe = RecipeCatalog.forOutput(itemId) ?: return 0
+
+    val skillType = runCatching {
+        SkillType.valueOf(recipe.skillRequired)
+    }.getOrNull() ?: return 0
+
+    // Do not allow crafting when the required level is not met.
+    if (skillLevel(characterId, skillType) < recipe.levelRequired) {
+        return 0
+    }
+
+    // Recipes without ingredients are not eligible for this
+    // material-based quantity calculation.
+    if (recipe.ingredients.isEmpty()) {
+        return 0
+    }
+
+    val inventory = inventoryService.inventoryFor(characterId)
+
+    // Every ingredient limits the number of possible attempts.
+    // The scarcest ingredient determines the final quantity.
+    return recipe.ingredients.minOf { ingredient ->
+        if (ingredient.quantity <= 0) {
+            0
+        } else {
+            inventory.quantityOf(ingredient.itemId) / ingredient.quantity
+        }
+    }.coerceAtLeast(0)
+}
     fun startCraftingAction(itemId: String, targetQuantity: Int? = null) {
         val characterId = _currentCharacterId.value ?: return
         val recipe = RecipeCatalog.forOutput(itemId) ?: return
