@@ -35,9 +35,10 @@ data class SkillActionSummary(
     val actionId: String,
     val displayName: String,
     val levelRequired: Int,
-    val missingIngredients: List<MissingIngredientSummary> = emptyList(),
+    val requiredIngredients: List<MissingIngredientSummary> = emptyList(),
     val isLocked: Boolean = false
 )
+
 
 data class SkillDetailState(
     val skillId: String,
@@ -171,56 +172,138 @@ private fun ActionPickerSheet(
 }
 
 @Composable
-private fun ActionRow(action: SkillActionSummary, onActionSelected: (String) -> Unit) {
-    var showMissingDialog by remember { mutableStateOf(false) }
-    var showLockedDialog by remember { mutableStateOf(false) }
-    val affordable = !action.isLocked && action.missingIngredients.isEmpty()
-    val contentColor = if (affordable) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+private fun ActionRow(
+    action: SkillActionSummary,
+    onActionSelected: (String) -> Unit
+) {
+    var showDetails by remember { mutableStateOf(false) }
+
+    val hasMaterials = action.requiredIngredients.all {
+        it.have >= it.required
     }
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .clickable {
-                when {
-                    action.isLocked -> showLockedDialog = true
-                    affordable -> onActionSelected(action.actionId)
-                    else -> showMissingDialog = true
-                }
-            }
-            .padding(vertical = 12.dp, horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .clickable { showDetails = true }
+            .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = (if (action.isLocked) "🔒 " else "") +
+                    action.displayName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (action.isLocked) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                text = "Lv. ${action.levelRequired}",
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+
         Text(
-            text = (if (action.isLocked) "\uD83D\uDD12 " else "") + action.displayName,
-            style = MaterialTheme.typography.bodyMedium,
-            color = overrideColor(contentColor)
+            text = if (action.requiredIngredients.isEmpty()) {
+                "Materials: None required"
+            } else {
+                "Requires: " + action.requiredIngredients.joinToString(", ") {
+                    "${it.displayName} ×${it.required}"
+                }
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Text(text = "Lv. " + action.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(contentColor))
+
+        if (action.isLocked) {
+            Text(
+                text = "Requires level ${action.levelRequired}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        } else if (!hasMaterials) {
+            Text(
+                text = "Missing required materials",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
     }
 
-    if (showMissingDialog) {
-        MissingIngredientsDialog(
-            itemName = action.displayName,
-            missing = action.missingIngredients,
-            onDismiss = { showMissingDialog = false }
-        )
-    }
-
-    if (showLockedDialog) {
+    if (showDetails) {
         AlertDialog(
-            onDismissRequest = { showLockedDialog = false },
-            title = { Text(text = "Not yet unlocked", style = MaterialTheme.typography.titleMedium) },
+            onDismissRequest = { showDetails = false },
+            title = {
+                Text(action.displayName)
+            },
             text = {
-                Text(text = action.displayName + " requires level " + action.levelRequired + ".")
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Required skill level: ${action.levelRequired}")
+
+                    if (action.isLocked) {
+                        Text(
+                            "Your current level is too low to start this action.",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    HorizontalDivider()
+
+                    Text(
+                        "Required items",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+
+                    if (action.requiredIngredients.isEmpty()) {
+                        Text("No inventory items are required.")
+                    } else {
+                        action.requiredIngredients.forEach { ingredient ->
+                            Text(
+                                "${ingredient.displayName}: " +
+                                    "have ${ingredient.have} / " +
+                                    "need ${ingredient.required}",
+                                color = if (ingredient.have >= ingredient.required) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.error
+                                }
+                            )
+                        }
+                    }
+                }
             },
             confirmButton = {
-                TextButton(onClick = { showLockedDialog = false }) {
-                    Text(text = "OK")
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = { showDetails = false }
+                    ) {
+                        Text("Close")
+                    }
+
+                    Button(
+                        enabled = !action.isLocked && hasMaterials,
+                        onClick = {
+                            showDetails = false
+                            onActionSelected(action.actionId)
+                        }
+                    ) {
+                        Text("Start")
+                    }
                 }
             }
         )
