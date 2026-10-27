@@ -57,8 +57,9 @@ data class SmithingRecipeSummary(
     val displayName: String,
     val levelRequired: Int,
     val ingredients: List<SmithingIngredientSummary>,
-    val missingIngredients: List<MissingIngredientSummary> = emptyList()
+    val requiredIngredients: List<MissingIngredientSummary> = emptyList()
 )
+
 
 data class SmithingMaterialCatalogEntry(
     val material: SmithingMaterialOption,
@@ -311,48 +312,131 @@ private fun SmithingRecipeRow(
     showIngredients: Boolean,
     onClick: () -> Unit
 ) {
-    var showMissingDialog by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
+
     val levelOk = playerLevel >= recipe.levelRequired
-    val ingredientsOk = recipe.missingIngredients.isEmpty()
-    val eligible = levelOk && ingredientsOk
-    val contentColor = if (eligible) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+    val ingredientsOk = recipe.requiredIngredients.all {
+        it.have >= it.required
     }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .clickable {
-                if (!levelOk) return@clickable
-                if (!ingredientsOk) showMissingDialog = true else onClick()
-            }
+            .clickable { showDetails = true }
             .padding(vertical = 10.dp, horizontal = 8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = recipe.displayName, style = MaterialTheme.typography.bodyMedium, color = overrideColor(contentColor))
-            Text(text = "Lv. " + recipe.levelRequired, style = MaterialTheme.typography.labelSmall, color = overrideColor(contentColor))
+            Text(
+                text = (if (!levelOk) "🔒 " else "") + recipe.displayName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = overrideColor(
+                    if (levelOk && ingredientsOk) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+                    }
+                ),
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                text = "Lv. ${recipe.levelRequired}",
+                style = MaterialTheme.typography.labelSmall
+            )
         }
+
         if (showIngredients && recipe.ingredients.isNotEmpty()) {
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = recipe.ingredients.joinToString(", ") { it.quantity.toString() + "x " + it.displayName },
+                text = recipe.ingredients.joinToString(", ") {
+                    "${it.quantity}x ${it.displayName}"
+                },
                 style = MaterialTheme.typography.labelSmall,
-                color = overrideColor(contentColor)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        if (!levelOk) {
+            Text(
+                text = "Requires Smithing level ${recipe.levelRequired}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        } else if (!ingredientsOk) {
+            Text(
+                text = "Missing required materials",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error
             )
         }
     }
 
-    if (showMissingDialog) {
-        MissingIngredientsDialog(
-            itemName = recipe.displayName,
-            missing = recipe.missingIngredients,
-            onDismiss = { showMissingDialog = false }
+    if (showDetails) {
+        AlertDialog(
+            onDismissRequest = { showDetails = false },
+            title = { Text(recipe.displayName) },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Required Smithing level: ${recipe.levelRequired}")
+
+                    if (!levelOk) {
+                        Text(
+                            "Your current level is too low to start this recipe.",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    HorizontalDivider()
+
+                    Text(
+                        "Required items",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+
+                    if (recipe.requiredIngredients.isEmpty()) {
+                        Text("No inventory items are required.")
+                    } else {
+                        recipe.requiredIngredients.forEach { ingredient ->
+                            Text(
+                                "${ingredient.displayName}: have " +
+                                    "${ingredient.have} / need ${ingredient.required}",
+                                color = if (ingredient.have >= ingredient.required) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.error
+                                }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(onClick = { showDetails = false }) {
+                        Text("Close")
+                    }
+
+                    Button(
+                        enabled = levelOk && ingredientsOk,
+                        onClick = {
+                            showDetails = false
+                            onClick()
+                        }
+                    ) {
+                        Text("Start")
+                    }
+                }
+            }
         )
     }
 }
+
