@@ -1,6 +1,7 @@
 package com.yourname.idlerpg.ui.screens
 
 import com.yourname.idlerpg.InventorySlotShop
+import com.yourname.idlerpg.ServiceResult
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -110,7 +111,7 @@ fun InventoryScreen(
     onOpenLoadout: () -> Unit,
     onUseItem: (String) -> Unit,
     onSellOnMarket: (String) -> Unit,
-    onEquipItem: (String) -> Unit,
+    onEquipItem: (String) -> ServiceResult<Unit>,
     onBuryItem: (String, Int) -> Unit,
     canEquip: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canEquip, lockReasonIfNot)
     canBury: (InventoryItemSummary) -> Pair<Boolean, String?>, // (canBury, lockReasonIfNot)
@@ -122,7 +123,8 @@ fun InventoryScreen(
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var showSlotShop by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
-
+    var equipRequirementError by remember { mutableStateOf<String?>(null) }
+    
     val grouped = remember(items, sortMode) {
         InventoryCategory.values().mapNotNull { category ->
             val categoryItems = sortedInventoryItems(items.filter { it.category == category }, sortMode)
@@ -245,7 +247,15 @@ fun InventoryScreen(
             canBury = canBury(item),
             onUse = { onUseItem(item.itemId); selectedItem = null },
             onSell = { onSellOnMarket(item.itemId); selectedItem = null },
-            onEquip = { onEquipItem(item.itemId); selectedItem = null },
+            onEquip = {
+    val result = onEquipItem(item.itemId) selectedItem = null
+
+    if (result is ServiceResult.Failure &&
+        result.reason.contains("level", ignoreCase = true)
+    ) {
+        equipRequirementError = result.reason
+    }
+},
             onBury = { qty -> onBuryItem(item.itemId, qty); selectedItem = null },
             onDismiss = { selectedItem = null }
         )
@@ -266,7 +276,25 @@ private fun InventoryListView(
         }
     }
 }
-
+    equipRequirementError?.let { errorMessage ->
+        AlertDialog(
+            onDismissRequest = { equipRequirementError = null },
+            title = {
+                Text(text = "Level Requirement Not Met")
+            },
+            text = {
+                Text(text = errorMessage)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { equipRequirementError = null }
+                ) {
+                    Text(text = "OK")
+                }
+            }
+        )
+    }
+    
 @Composable
 private fun InventoryGridView(
     grouped: List<Pair<InventoryCategory, List<InventoryItemSummary>>>,
