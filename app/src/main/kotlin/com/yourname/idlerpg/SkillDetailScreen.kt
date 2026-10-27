@@ -58,11 +58,16 @@ fun SkillDetailScreen(
     onStartAction: (String) -> Unit,
     modifier: Modifier = Modifier,
     startButtonLabel: String = "Start " + state.displayName,
-    activeQueue: ActiveQueueInfo? = null
+    activeQueue: ActiveQueueInfo? = null,
+    onStartCraftingAction: ((String, Int?) -> Unit)? = null,
+    maxCraftableQuantity: (String) -> Int = { 0 }
 ) {
     var showAdvanced by remember { mutableStateOf(false) }
     var showActionPicker by remember { mutableStateOf(false) }
-
+    var pendingCraftItemId by remember { mutableStateOf<String?>(null) }
+    var selectedCraftQuantity by remember { mutableStateOf(1) }
+    var customCraftQuantity by remember { mutableStateOf("1") }
+    
     Column(modifier = modifier.fillMaxSize().padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
@@ -151,7 +156,7 @@ fun SkillDetailScreen(
         val maxQuantity = maxCraftableQuantity(craftItemId)
         val customQuantity = customCraftQuantity.toIntOrNull() ?: 0
         val selectedQuantity = when (selectedCraftQuantity) {
-            -1 -> customQuantity.coerceIn(1, maxQuantity.coerceAtLeast(1))
+            -1 -> customQuantity
             -2 -> maxQuantity
             else -> selectedCraftQuantity
         }
