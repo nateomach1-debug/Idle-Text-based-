@@ -2190,6 +2190,9 @@ if (requiredSeedId != null && effectiveActions < requestedActions) {
             reason = "Out of " + formatItemName(requiredSeedId) + "."
         )
 }
+                }
+            }
+        }
         val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
         
 if (craftingQueue != null) {
