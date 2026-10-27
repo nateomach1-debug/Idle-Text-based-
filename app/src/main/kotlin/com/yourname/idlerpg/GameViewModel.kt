@@ -2315,53 +2315,157 @@ if (buryQueue != null) {
 
         val combatQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.OfflineCombatQueue
         if (combatQueue != null) {
-            val combatResult = offlineIdleService.resolveOfflineProgress(characterId, premiumMembershipActive = hasMembershipForOfflineProgress(characterId))
+            val combatResult = offlineIdleService.resolveOfflineProgress(
+                characterId,
+                premiumMembershipActive = hasMembershipForOfflineProgress(characterId)
+            )
+
             if (combatResult is ServiceResult.Success) {
                 val elapsedSeconds = combatResult.value.effectiveElapsed.seconds
+
                 if (elapsedSeconds > 0) {
-                    // Mirrors tickCombat()'s per-style accuracy/max-hit computation exactly,
-                    // using the character's live gear/levels at resolution time.
+                    // Estimate offline combat using current gear, mastery,
+                    // prayer bonuses, damage type, and weapon attack speed.
                     val weapon = equippedWeapon(characterId)
                     val trainingSkill = _trainingSkill.value
+
                     val accuracy: Int
                     val maxHit: Int
+                    val minHit: Int
+                    val attackSpeedSeconds: Double
+
                     when (weapon?.style) {
                         CombatStyle.MAGIC -> {
-                            val magicLevel = skillLevel(characterId, SkillType.MAGIC)
-                            accuracy = magicLevel * 2 + weapon.baseAccuracy
-                            maxHit = (magicLevel / 3) + weapon.baseMaxHit
+                            val level = skillLevel(characterId, SkillType.MAGIC)
+                            val mastery = masteryBonusPercent(
+                                level,
+                                hasSkillCapeEquipped(characterId, SkillType.MAGIC),
+                                5.0,
+                                10.0
+                            )
+
+                            accuracy = ((level * 2 + weapon.baseAccuracy) *
+                                (1.0 + mastery / 100.0)).toInt()
+                            maxHit = level / 3 + weapon.baseMaxHit
+                            minHit = level / 10
+                            attackSpeedSeconds = weapon.attackSpeedSeconds
                         }
+
                         CombatStyle.RANGED -> {
-                            val archeryLevel = skillLevel(characterId, SkillType.ARCHERY)
-                            accuracy = archeryLevel * 2 + weapon.baseAccuracy
-                            maxHit = (archeryLevel / 3) + weapon.baseMaxHit
+                            val level = skillLevel(characterId, SkillType.ARCHERY)
+                            val mastery = masteryBonusPercent(
+                                level,
+                                hasSkillCapeEquipped(characterId, SkillType.ARCHERY),
+                                5.0,
+                                10.0
+                            )
+
+                            accuracy = ((level * 2 + weapon.baseAccuracy) *
+                                (1.0 + mastery / 100.0)).toInt()
+                            maxHit = level / 3 + weapon.baseMaxHit
+                            minHit = level / 10
+                            attackSpeedSeconds = weapon.attackSpeedSeconds
                         }
+
                         else -> {
                             val attackLevel = skillLevel(characterId, SkillType.ATTACK)
                             val strengthLevel = skillLevel(characterId, SkillType.STRENGTH)
-                            accuracy = attackLevel * 2 + (weapon?.baseAccuracy ?: 5)
-                            maxHit = (strengthLevel / 3) + (weapon?.baseMaxHit ?: 1)
+
+                            val attackMastery = masteryBonusPercent(
+                                attackLevel,
+                                hasSkillCapeEquipped(characterId, SkillType.ATTACK),
+                                5.0,
+                                10.0
+                            )
+                            val strengthMastery = masteryBonusPercent(
+                                strengthLevel,
+                                hasSkillCapeEquipped(characterId, SkillType.STRENGTH),
+                                5.0,
+                                10.0
+                            )
+
+                            accuracy = ((attackLevel * 2 +
+                                (weapon?.baseAccuracy ?: 5)) *
+                                (1.0 + attackMastery / 100.0)).toInt()
+                            maxHit = (((strengthLevel / 3) +
+                                (weapon?.baseMaxHit ?: 1)) *
+                                (1.0 + strengthMastery / 100.0)).toInt()
+                            minHit = ((strengthLevel / 10) *
+                                (1.0 + strengthMastery / 100.0)).toInt()
+                            attackSpeedSeconds = weapon?.attackSpeedSeconds ?: 2.4
                         }
                     }
-                    val selectedPrayerId = inventoryService.inventoryFor(characterId).selectedPrayerId
-                    val prayerAccuracy = if (selectedPrayerId == "clarity_of_thought") (accuracy * 1.1).toInt() else accuracy
-                    val prayerMaxHit = if (selectedPrayerId == "burst_of_strength") (maxHit * 1.1).toInt() else maxHit
-                    val prayerDropRateMultiplier = if (selectedPrayerId == "fortunes_favor") 1.15 else 1.0
-                    val outcome = combatService.resolveOfflineCombat(characterId, combatQueue.zoneId, elapsedSeconds, prayerAccuracy, prayerMaxHit, prayerDropRateMultiplier)
-                    if (outcome is ServiceResult.Success && outcome.value.estimatedKills > 0) {
-                        if (outcome.value.xpEarned > 0) {
-                            progressionService.grantXp(characterId, trainingSkill, outcome.value.xpEarned, guildXpBonusEffects())
+
+                    val damageType: DamageType? = when (weapon?.style) {
+                        CombatStyle.MAGIC -> weapon.elementalType
+                        CombatStyle.RANGED -> DamageType.RANGED
+                        else -> DamageType.MELEE
+                    }
+
+                    val selectedPrayerId =
+                        inventoryService.inventoryFor(characterId).selectedPrayerId
+
+                    val prayerAccuracy =
+                        if (selectedPrayerId == "clarity_of_thought") {
+                            (accuracy * 1.1).toInt()
+                        } else {
+                            accuracy
                         }
-                        val loot = combatService.collectLoot(characterId)
-                        if (loot is ServiceResult.Success) {
-                            loot.value.forEach { entry ->
-                                inventoryService.inventoryFor(characterId).addItem(entry.itemId, entry.minQty)
+
+                    val prayerMaxHit =
+                        if (selectedPrayerId == "burst_of_strength") {
+                            (maxHit * 1.1).toInt()
+                        } else {
+                            maxHit
+                        }
+
+                    val prayerMinHit =
+                        if (selectedPrayerId == "burst_of_strength") {
+                            (minHit * 1.1).toInt()
+                        } else {
+                            minHit
+                        }
+
+                    val prayerDropRateMultiplier =
+                        if (selectedPrayerId == "fortunes_favor") 1.15 else 1.0
+
+                    val outcome = combatService.resolveOfflineCombat(
+                        characterId = characterId,
+                        zoneId = combatQueue.zoneId,
+                        elapsedSeconds = elapsedSeconds,
+                        attackerAccuracy = prayerAccuracy,
+                        attackerMaxHit = prayerMaxHit,
+                        dropRateMultiplier = prayerDropRateMultiplier,
+                        attackerMinHit = prayerMinHit,
+                        damageType = damageType,
+                        attackSpeedSeconds = attackSpeedSeconds
+                    )
+
+                    if (outcome is ServiceResult.Success) {
+                        if (outcome.value.xpEarned > 0) {
+                            progressionService.grantXp(
+                                characterId,
+                                trainingSkill,
+                                outcome.value.xpEarned,
+                                guildXpBonusEffects() + capeBonusEffects(characterId)
+                            )
+                        }
+
+                        if (outcome.value.estimatedKills > 0) {
+                            val loot = combatService.collectLoot(characterId)
+                            if (loot is ServiceResult.Success) {
+                                loot.value.forEach { entry ->
+                                    inventoryService.inventoryFor(characterId)
+                                        .addItem(entry.itemId, entry.minQty)
+                                }
+                            }
+
+                            val coinsEarned = combatService.collectCoins(characterId)
+                            if (coinsEarned > 0) {
+                                grantCombatCoins(characterId, coinsEarned)
                             }
                         }
-                        val coinsEarned = combatService.collectCoins(characterId)
-                        if (coinsEarned > 0) {
-                            grantCombatCoins(characterId, coinsEarned)
-                        }
+
                         _offlineSummary.value = OfflineSummary(
                             awaySeconds = combatResult.value.claimedElapsed.seconds,
                             skillActionName = "Combat",
