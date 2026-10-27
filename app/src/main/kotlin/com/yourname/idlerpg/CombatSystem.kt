@@ -842,7 +842,10 @@ class CombatService {
         elapsedSeconds: Long,
         attackerAccuracy: Int,
         attackerMaxHit: Int,
-        dropRateMultiplier: Double = 1.0
+        dropRateMultiplier: Double = 1.0,
+        attackerMinHit: Int = 0,
+        damageType: DamageType? = null,
+        attackSpeedSeconds: Double = 1.0
     ): ServiceResult<OfflineCombatOutcome> {
         val state = stateFor(characterId)
         val zone = ZoneCatalog.zones.find { it.id == zoneId }
@@ -861,27 +864,50 @@ class CombatService {
         val avgMonsterHealth = offlinePool.map { it.maxHealth }.average()
         val avgMonsterDefense = offlinePool.map { it.defenseRating }.average()
 
-        val hitChance = (attackerAccuracy.toDouble() / (attackerAccuracy + avgMonsterDefense)).coerceIn(0.0, 1.0)
-        val avgDamagePerHit = attackerMaxHit / 2.0
+        val hitChance = (
+            attackerAccuracy.toDouble() /
+                (attackerAccuracy + avgMonsterDefense)
+        ).coerceIn(0.0, 1.0)
+
+        val safeMinHit = attackerMinHit.coerceIn(
+            0,
+            attackerMaxHit.coerceAtLeast(0)
+        )
+        val safeMaxHit = attackerMaxHit.coerceAtLeast(safeMinHit)
+        val rawAverageDamage = (safeMinHit + safeMaxHit) / 2.0
+
+        val avgDamageMultiplier = offlinePool.map { monster ->
+            if (monster.weakness != null && monster.weakness == damageType) {
+                1.5
+            } else {
+                1.0
+            }
+        }.average()
+
+        val avgDamagePerHit = rawAverageDamage * avgDamageMultiplier
+        val safeAttackSpeed =
+            attackSpeedSeconds.takeIf { it.isFinite() && it > 0.0 } ?: 1.0
 
         if (hitChance <= 0.0 || avgDamagePerHit <= 0.0) {
-            return ServiceResult.Success(OfflineCombatOutcome(estimatedKills = 0, xpEarned = 0L))
+            return ServiceResult.Success(
+                OfflineCombatOutcome(estimatedKills = 0, xpEarned = 0L)
+            )
         }
 
-        // Matches the live per-hit XP formula (damageDealt * 4 + 5), scaled by
-        // hit chance and elapsed time at one attack attempt per second.
-        val xpPerSecond = hitChance * (avgDamagePerHit * 4 + 5)
-        val xpEarned = (xpPerSecond * elapsedSeconds).toLong()
+        // Estimate XP using the expected damage per attack and weapon speed.
+        val attacksAttempted = elapsedSeconds / safeAttackSpeed
+        val xpPerAttack = hitChance * (avgDamagePerHit * 4 + 5)
+        val xpEarned = (xpPerAttack * attacksAttempted).toLong()
 
-        // Average search window is Random.nextInt(3, 11) in startSearching(), i.e. 3..10 inclusive.
+        // Live combat averages a 3–10 second search window between encounters.
         val avgSearchSeconds = 6.5
         val avgHitsToKill = avgMonsterHealth / avgDamagePerHit
         val avgAttacksToKill = avgHitsToKill / hitChance
-        val avgTimeToKillSeconds = avgSearchSeconds + avgAttacksToKill
+        val avgTimeToKillSeconds =
+            avgSearchSeconds + avgAttacksToKill * safeAttackSpeed
 
-        val estimatedKills = (elapsedSeconds / avgTimeToKillSeconds).toInt().coerceAtLeast(0)
-
-        repeat(estimatedKills) {
+        val estimatedKills =
+            (elapsedSeconds / avgTimeToKillSeconds).toInt().coerceAtLeast(0)
             val monster = offlinePool.random()
             rollLoot(state, monster, dropRateMultiplier)
             onMonsterKilled(characterId, monster)
