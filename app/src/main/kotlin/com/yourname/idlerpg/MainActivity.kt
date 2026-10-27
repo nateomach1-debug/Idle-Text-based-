@@ -164,6 +164,21 @@ private fun missingIngredientsFor(
     }
 }
 
+private fun ingredientSummariesFor(
+    ingredients: List<RecipeIngredient>,
+    inventoryQuantities: Map<String, Int>
+): List<MissingIngredientSummary> {
+    return ingredients.map { ingredient ->
+        MissingIngredientSummary(
+            displayName = ItemCatalog.find(ingredient.itemId)?.name
+                ?: ingredient.itemId,
+            required = ingredient.quantity,
+            have = inventoryQuantities[ingredient.itemId] ?: 0
+        )
+    }
+
+}
+
 private fun buildSkillDetailState(
     skillId: String,
     summary: SkillSummary,
@@ -193,33 +208,69 @@ private fun buildSkillDetailState(
             )
         }
 
+    
     val actions = if (skillId in RECIPE_BASED_SKILL_LABELS) {
         RecipeCatalog.recipes
             .filter { it.skillRequired == skillId }
-            .map {
+            .map { recipe ->
                 SkillActionSummary(
-                    actionId = it.outputItemId,
-                    displayName = ItemCatalog.find(it.outputItemId)?.name ?: it.outputItemId,
-                    levelRequired = it.levelRequired,
-                    missingIngredients = if (it.levelRequired <= summary.level) missingIngredientsFor(it.ingredients, inventoryQuantities) else emptyList(),
-                    isLocked = it.levelRequired > summary.level
+                    actionId = recipe.outputItemId,
+                    displayName = ItemCatalog.find(recipe.outputItemId)?.name
+                        ?: recipe.outputItemId,
+                    levelRequired = recipe.levelRequired,
+                    requiredIngredients = ingredientSummariesFor(
+                        recipe.ingredients,
+                        inventoryQuantities
+                    ),
+                    isLocked = recipe.levelRequired > summary.level
                 )
             }
-            .sortedBy { it.levelRequired }
+            .sortedWith(
+                compareBy<SkillActionSummary> { it.levelRequired }
+                    .thenBy { it.displayName }
+            )
     } else {
         ActionCatalog.allFor(skillType)
-            .filter { it.levelRequired <= summary.level }
             .map { action ->
-                val requiredSeedId = if (skillId == "FARMING") FarmingSeedRequirements[action.itemId] else null
-                val missing = if (requiredSeedId != null) {
-                    missingIngredientsFor(listOf(RecipeIngredient(requiredSeedId, 1)), inventoryQuantities)
-                } else {
-                    emptyList()
-                }
-                SkillActionSummary(action.itemId, action.displayName, action.levelRequired, missing)
-            }
-    }
+                val recipeIngredients = RecipeCatalog.recipes
+                    .find {
+                        it.outputItemId == action.itemId &&
+                            it.skillRequired == skillId
+                    }
+                    ?.ingredients
+                    .orEmpty()
 
+                val requiredSeedId =
+                    if (skillId == "FARMING") {
+                        FarmingSeedRequirements[action.itemId]
+                    } else {
+                        null
+                    }
+
+                val ingredients = when {
+                    recipeIngredients.isNotEmpty() -> recipeIngredients
+                    requiredSeedId != null ->
+                        listOf(RecipeIngredient(requiredSeedId, 1))
+                    else -> emptyList()
+                }
+
+                SkillActionSummary(
+                    actionId = action.itemId,
+                    displayName = action.displayName,
+                    levelRequired = action.levelRequired,
+                    requiredIngredients = ingredientSummariesFor(
+                        ingredients,
+                        inventoryQuantities
+                    ),
+                    isLocked = action.levelRequired > summary.level
+                )
+            }
+            .sortedWith(
+                compareBy<SkillActionSummary> { it.levelRequired }
+                    .thenBy { it.displayName }
+            )
+    }
+    
     return SkillDetailState(
         skillId = summary.skillId, displayName = summary.displayName, level = summary.level,
         currentXp = summary.currentXp, xpToNextLevel = summary.xpToNextLevel,
