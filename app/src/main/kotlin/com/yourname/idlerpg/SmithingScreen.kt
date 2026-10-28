@@ -326,7 +326,13 @@ private fun SmithingRecipeRow(
             .padding(vertical = 8.dp, horizontal = 8.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    enabled = levelOk && ingredientsOk
+                ) {
+                    onClick()
+                },
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
