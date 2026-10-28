@@ -308,11 +308,10 @@ is ActiveQueue.BuryQueue -> {
     val remaining =
         (queue.targetQuantity - queue.quantityCompleted).coerceAtLeast(0)
 
-    // Report potential actions only. GameViewModel updates completed
+        // Report potential actions only. GameViewModel updates completed
     // progress after checking and consuming the available bones.
     actionsCompleted = possibleActions.coerceAtMost(remaining)
 }
-            }
         }
 
         if (queueExhausted) {
