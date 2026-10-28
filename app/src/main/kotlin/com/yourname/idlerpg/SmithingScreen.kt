@@ -270,13 +270,12 @@ private fun SmithingMaterialPickerDialog(
                         )
                     } else {
                         LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
-                            item {                                
-SmithingRecipeRow(
-    recipe = bar,
-    playerLevel = playerLevel,
-    onClick = { onItemSelected(bar.itemId) }
-)
-
+                            item {
+                                SmithingRecipeRow(
+                                    recipe = bar,
+                                    playerLevel = playerLevel,
+                                    onClick = { onItemSelected(bar.itemId) }
+                                )
                             }
                         }
                     }
@@ -289,13 +288,11 @@ SmithingRecipeRow(
                     } else {
                         LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
                             items(entry.gear) { recipe ->
-                                
-SmithingRecipeRow(
-    recipe = recipe,
-    playerLevel = playerLevel,
-    onClick = { onItemSelected(recipe.itemId) }
-)
-
+                                SmithingRecipeRow(
+                                    recipe = recipe,
+                                    playerLevel = playerLevel,
+                                    onClick = { onItemSelected(recipe.itemId) }
+                                )
                             }
                         }
                     }
