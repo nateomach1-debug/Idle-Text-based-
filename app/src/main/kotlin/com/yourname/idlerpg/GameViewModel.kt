@@ -2193,53 +2193,78 @@ if (requiredSeedId != null && effectiveActions < requestedActions) {
                 }
             }
         }
-        val craftingQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
-        
-if (craftingQueue != null) {
-    val craftResult = offlineIdleService.resolveOfflineProgress(
-        characterId,
-        premiumMembershipActive = hasMembershipForOfflineProgress(characterId)
-    )
+        val craftingQueue =
+            offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
 
-    if (craftResult is ServiceResult.Success &&
-        craftResult.value.actionsCompleted > 0
-    ) {
-        val batch = craftItems(
-            characterId,
-            craftingQueue.itemId,
-            craftResult.value.actionsCompleted
-        )
-
-        // Count actual attempts, not successful item outputs.
-        craftingQueue.quantityCompleted += batch.attemptsMade
-
-        batch.stoppedReason?.let { reason ->
-            _actionStoppedNotifications.value =
-                _actionStoppedNotifications.value + ActionStoppedNotice(
-                    itemName = formatItemName(craftingQueue.itemId),
-                    reason = reason
-                )
-        }
-
-        if (batch.xpGranted > 0) {
-            _offlineSummary.value = OfflineSummary(
-                awaySeconds = craftResult.value.claimedElapsed.seconds,
-                skillActionName = "Craft " + formatItemName(craftingQueue.itemId),
-                itemName = formatItemName(craftingQueue.itemId),
-                quantity = batch.itemsProduced,
-                xpEarned = batch.xpGranted
+        if (craftingQueue != null) {
+            val craftResult = offlineIdleService.resolveOfflineProgress(
+                characterId,
+                premiumMembershipActive = hasMembershipForOfflineProgress(characterId)
             )
-        }
 
-        // Stop when the selected attempt count is reached or
-        // when crafting cannot continue due to missing materials.
-        if (craftingQueue.isTargetReached() || batch.stoppedReason != null) {
-            offlineIdleService.stopQueue(characterId)
-            craftActionProgressSeconds = 0
-            refreshActiveQueue()
+            if (craftResult is ServiceResult.Success &&
+                craftResult.value.actionsCompleted > 0
+            ) {
+                val inventory = inventoryService.inventoryFor(characterId)
+                val inventoryBefore = ItemCatalog.items.associate {
+                    it.id to inventory.quantityOf(it.id)
+                }
+
+                val batch = craftItems(
+                    characterId,
+                    craftingQueue.itemId,
+                    craftResult.value.actionsCompleted
+                )
+
+                // Count actual attempts, not successful item outputs.
+                craftingQueue.quantityCompleted += batch.attemptsMade
+
+                batch.stoppedReason?.let { reason ->
+                    _actionStoppedNotifications.value =
+                        _actionStoppedNotifications.value + ActionStoppedNotice(
+                            itemName = formatItemName(craftingQueue.itemId),
+                            reason = reason
+                        )
+                }
+
+                // Report only items that were actually added to inventory.
+                val itemsGained = ItemCatalog.items.mapNotNull { item ->
+                    val gained = inventory.quantityOf(item.id) -
+                        (inventoryBefore[item.id] ?: 0)
+
+                    if (gained > 0) {
+                        OfflineGainedItem(
+                            itemName = item.name,
+                            quantity = gained
+                        )
+                    } else {
+                        null
+                    }
+                }
+
+                if (batch.attemptsMade > 0) {
+                    _offlineSummary.value = OfflineSummary(
+                        awaySeconds = craftResult.value.claimedElapsed.seconds,
+                        skillActionName = "Craft " +
+                            formatItemName(craftingQueue.itemId),
+                        itemName = formatItemName(craftingQueue.itemId),
+                        quantity = batch.itemsProduced,
+                        xpEarned = batch.xpGranted,
+                        itemsGained = itemsGained
+                    )
+                }
+
+                // Stop when the selected attempt count is reached or
+                // when crafting cannot continue due to missing materials.
+                if (craftingQueue.isTargetReached() ||
+                    batch.stoppedReason != null
+                ) {
+                    offlineIdleService.stopQueue(characterId)
+                    craftActionProgressSeconds = 0
+                    refreshActiveQueue()
+                }
+            }
         }
-    }
-}
 
         val buryQueue =
     offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.BuryQueue
@@ -2316,7 +2341,9 @@ if (buryQueue != null) {
     }
 }
 
-        val combatQueue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.OfflineCombatQueue
+        val combatQueue =
+            offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.OfflineCombatQueue
+
         if (combatQueue != null) {
             val combatResult = offlineIdleService.resolveOfflineProgress(
                 characterId,
@@ -2327,6 +2354,11 @@ if (buryQueue != null) {
                 val elapsedSeconds = combatResult.value.effectiveElapsed.seconds
 
                 if (elapsedSeconds > 0) {
+                    val inventory = inventoryService.inventoryFor(characterId)
+                    val inventoryBefore = ItemCatalog.items.associate {
+                        it.id to inventory.quantityOf(it.id)
+                    }
+
                     // Estimate offline combat using current gear, mastery,
                     // prayer bonuses, damage type, and weapon attack speed.
                     val weapon = equippedWeapon(characterId)
@@ -2406,7 +2438,7 @@ if (buryQueue != null) {
                     }
 
                     val selectedPrayerId =
-                        inventoryService.inventoryFor(characterId).selectedPrayerId
+                        inventory.selectedPrayerId
 
                     val prayerAccuracy =
                         if (selectedPrayerId == "clarity_of_thought") {
@@ -2454,19 +2486,49 @@ if (buryQueue != null) {
                             )
                         }
 
+                        var coinsEarned = 0L
+
                         if (outcome.value.estimatedKills > 0) {
                             val loot = combatService.collectLoot(characterId)
                             if (loot is ServiceResult.Success) {
                                 loot.value.forEach { entry ->
-                                    inventoryService.inventoryFor(characterId)
-                                        .addItem(entry.itemId, entry.minQty)
+                                    inventory.addItem(entry.itemId, entry.minQty)
                                 }
                             }
 
-                            val coinsEarned = combatService.collectCoins(characterId)
+                            coinsEarned = combatService.collectCoins(characterId)
                             if (coinsEarned > 0) {
                                 grantCombatCoins(characterId, coinsEarned)
                             }
+                        }
+
+                        // Collect the actual inventory gains after combat loot
+                        // has been added, including any drops from killed monsters.
+                        val itemsGained = ItemCatalog.items.mapNotNull { item ->
+                            val gained = inventory.quantityOf(item.id) -
+                                (inventoryBefore[item.id] ?: 0)
+
+                            if (gained > 0) {
+                                OfflineGainedItem(
+                                    itemName = item.name,
+                                    quantity = gained
+                                )
+                            } else {
+                                null
+                            }
+                        }.toMutableList()
+
+                        // Coins use the currency system rather than inventory slots,
+                        // so add them separately to the resource summary.
+                        if (coinsEarned > 0) {
+                            itemsGained.add(
+                                OfflineGainedItem(
+                                    itemName = "Coins",
+                                    quantity = coinsEarned
+                                        .coerceAtMost(Int.MAX_VALUE.toLong())
+                                        .toInt()
+                                )
+                            )
                         }
 
                         _offlineSummary.value = OfflineSummary(
@@ -2474,7 +2536,8 @@ if (buryQueue != null) {
                             skillActionName = "Combat",
                             itemName = "kills",
                             quantity = outcome.value.estimatedKills,
-                            xpEarned = outcome.value.xpEarned
+                            xpEarned = outcome.value.xpEarned,
+                            itemsGained = itemsGained
                         )
                     }
                 }
