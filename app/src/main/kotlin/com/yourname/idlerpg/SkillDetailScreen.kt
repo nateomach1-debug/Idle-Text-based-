@@ -323,13 +323,15 @@ private fun ActionRow(
             .clip(RoundedCornerShape(10.dp))
             .padding(vertical = 8.dp, horizontal = 8.dp)
     ) {
-        Row(
+                Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(
-                    enabled = !action.isLocked && hasMaterials
-                ) {
-                    onActionSelected(action.actionId)
+                .clickable {
+                    if (!action.isLocked && hasMaterials) {
+                        onActionSelected(action.actionId)
+                    } else {
+                        showDetails = true
+                    }
                 },
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
