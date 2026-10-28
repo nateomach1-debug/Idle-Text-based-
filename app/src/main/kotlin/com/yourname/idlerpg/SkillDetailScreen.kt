@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -274,6 +275,7 @@ fun SkillDetailScreen(
 }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 @Composable
 private fun ActionPickerSheet(
     actions: List<SkillActionSummary>,
@@ -304,6 +306,7 @@ private fun ActionPickerSheet(
     )
 }
 
+@
 @Composable
 private fun ActionRow(
     action: SkillActionSummary,
@@ -319,12 +322,11 @@ private fun ActionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .clickable { showDetails = true }
-            .padding(vertical = 12.dp, horizontal = 8.dp)
+            .padding(vertical = 8.dp, horizontal = 8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -343,34 +345,18 @@ private fun ActionRow(
                 text = "Lv. ${action.levelRequired}",
                 style = MaterialTheme.typography.labelSmall
             )
-        }
 
-        Spacer(Modifier.height(4.dp))
-
-        Text(
-            text = if (action.requiredIngredients.isEmpty()) {
-                "Materials: None required"
-            } else {
-                "Requires: " + action.requiredIngredients.joinToString(", ") {
-                    "${it.displayName} ×${it.required}"
-                }
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        if (action.isLocked) {
-            Text(
-                text = "Requires level ${action.levelRequired}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error
-            )
-        } else if (!hasMaterials) {
-            Text(
-                text = "Missing required materials",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error
-            )
+            IconButton(
+                onClick = { showDetails = true },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Info,
+                    contentDescription =
+                        "View ${action.displayName} requirements",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 
@@ -384,7 +370,9 @@ private fun ActionRow(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Required skill level: ${action.levelRequired}")
+                    Text(
+                        "Required skill level: ${action.levelRequired}"
+                    )
 
                     if (action.isLocked) {
                         Text(
@@ -408,7 +396,9 @@ private fun ActionRow(
                                 "${ingredient.displayName}: " +
                                     "have ${ingredient.have} / " +
                                     "need ${ingredient.required}",
-                                color = if (ingredient.have >= ingredient.required) {
+                                color = if (
+                                    ingredient.have >= ingredient.required
+                                ) {
                                     MaterialTheme.colorScheme.onSurface
                                 } else {
                                     MaterialTheme.colorScheme.error
