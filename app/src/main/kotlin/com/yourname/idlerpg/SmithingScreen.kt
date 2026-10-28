@@ -325,13 +325,15 @@ private fun SmithingRecipeRow(
             .clip(RoundedCornerShape(10.dp))
             .padding(vertical = 8.dp, horizontal = 8.dp)
     ) {
-        Row(
+                Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(
-                    enabled = levelOk && ingredientsOk
-                ) {
-                    onClick()
+                .clickable {
+                    if (levelOk && ingredientsOk) {
+                        onClick()
+                    } else {
+                        showDetails = true
+                    }
                 },
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
