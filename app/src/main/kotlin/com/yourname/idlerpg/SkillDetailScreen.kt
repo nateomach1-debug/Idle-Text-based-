@@ -324,7 +324,13 @@ private fun ActionRow(
             .padding(vertical = 8.dp, horizontal = 8.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    enabled = !action.isLocked && hasMaterials
+                ) {
+                    onActionSelected(action.actionId)
+                },
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
