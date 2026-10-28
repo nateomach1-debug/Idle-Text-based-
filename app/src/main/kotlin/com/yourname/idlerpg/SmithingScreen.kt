@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -269,13 +270,13 @@ private fun SmithingMaterialPickerDialog(
                         )
                     } else {
                         LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
-                            item {
-                                SmithingRecipeRow(
-                                    recipe = bar,
-                                    playerLevel = playerLevel,
-                                    showIngredients = true,
-                                    onClick = { onItemSelected(bar.itemId) }
-                                )
+                            item {                                
+SmithingRecipeRow(
+    recipe = bar,
+    playerLevel = playerLevel,
+    onClick = { onItemSelected(bar.itemId) }
+)
+
                             }
                         }
                     }
@@ -288,12 +289,13 @@ private fun SmithingMaterialPickerDialog(
                     } else {
                         LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
                             items(entry.gear) { recipe ->
-                                SmithingRecipeRow(
-                                    recipe = recipe,
-                                    playerLevel = playerLevel,
-                                    showIngredients = false,
-                                    onClick = { onItemSelected(recipe.itemId) }
-                                )
+                                
+SmithingRecipeRow(
+    recipe = recipe,
+    playerLevel = playerLevel,
+    onClick = { onItemSelected(recipe.itemId) }
+)
+
                             }
                         }
                     }
@@ -310,7 +312,6 @@ private fun SmithingMaterialPickerDialog(
 private fun SmithingRecipeRow(
     recipe: SmithingRecipeSummary,
     playerLevel: Int,
-    showIngredients: Boolean,
     onClick: () -> Unit
 ) {
     var showDetails by remember { mutableStateOf(false) }
@@ -324,12 +325,11 @@ private fun SmithingRecipeRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .clickable { showDetails = true }
-            .padding(vertical = 10.dp, horizontal = 8.dp)
+            .padding(vertical = 8.dp, horizontal = 8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -349,31 +349,18 @@ private fun SmithingRecipeRow(
                 text = "Lv. ${recipe.levelRequired}",
                 style = MaterialTheme.typography.labelSmall
             )
-        }
 
-        if (showIngredients && recipe.ingredients.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = recipe.ingredients.joinToString(", ") {
-                    "${it.quantity}x ${it.displayName}"
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        if (!levelOk) {
-            Text(
-                text = "Requires Smithing level ${recipe.levelRequired}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error
-            )
-        } else if (!ingredientsOk) {
-            Text(
-                text = "Missing required materials",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error
-            )
+            IconButton(
+                onClick = { showDetails = true },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Info,
+                    contentDescription =
+                        "View ${recipe.displayName} requirements",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 
@@ -385,7 +372,9 @@ private fun SmithingRecipeRow(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Required Smithing level: ${recipe.levelRequired}")
+                    Text(
+                        "Required Smithing level: ${recipe.levelRequired}"
+                    )
 
                     if (!levelOk) {
                         Text(
@@ -408,7 +397,9 @@ private fun SmithingRecipeRow(
                             Text(
                                 "${ingredient.displayName}: have " +
                                     "${ingredient.have} / need ${ingredient.required}",
-                                color = if (ingredient.have >= ingredient.required) {
+                                color = if (
+                                    ingredient.have >= ingredient.required
+                                ) {
                                     MaterialTheme.colorScheme.onSurface
                                 } else {
                                     MaterialTheme.colorScheme.error
@@ -422,7 +413,9 @@ private fun SmithingRecipeRow(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    TextButton(onClick = { showDetails = false }) {
+                    TextButton(
+                        onClick = { showDetails = false }
+                    ) {
                         Text("Close")
                     }
 
@@ -440,4 +433,3 @@ private fun SmithingRecipeRow(
         )
     }
 }
-
