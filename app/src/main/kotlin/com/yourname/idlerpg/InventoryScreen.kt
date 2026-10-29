@@ -38,7 +38,7 @@ import com.yourname.idlerpg.ZoneCatalog
 enum class InventoryViewMode { LIST, GRID }
 
 enum class InventoryCategory {
-    WEAPON, ARMOR, ACCESSORY, TOOL, MATERIAL, CONSUMABLE
+    WEAPON, ARMOR, ACCESSORY, TOOL, AMMO, MATERIAL, CONSUMABLE
 }
 
 enum class InventorySortMode(val label: String) {
