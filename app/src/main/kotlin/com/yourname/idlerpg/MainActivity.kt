@@ -399,7 +399,23 @@ private fun buildInventoryItemSummaries(
             InventoryItemSummary(
                 itemId = entry.itemId,
                 displayName = definition.name,
-                category = mapItemCategory(definition.category),
+                category = if (entry.itemId in setOf(
+    "bronze_arrows",
+    "iron_arrows",
+    "steel_arrows",
+    "mithril_arrows",
+    "adamant_arrows",
+    "rune_arrows",
+    "broad_arrows",
+    "dragon_arrows",
+    "bolts",
+    "barbed_bolts",
+    "enchanted_bolts"
+)) {
+    InventoryCategory.AMMO
+} else {
+    mapItemCategory(definition.category)
+},
                 quantity = entry.quantity,
                 isEquippable = definition.equipSlot != null,
                 isConsumable = definition.category == ItemCategory.CONSUMABLE,
