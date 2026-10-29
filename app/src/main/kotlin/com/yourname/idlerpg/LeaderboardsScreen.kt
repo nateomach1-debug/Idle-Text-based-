@@ -81,7 +81,7 @@ fun LeaderboardsScreen(
             else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(rows) { row ->
                     val nameStyle = when (row.rank) {
-                        1 -> MaterialTheme.typography.headlineSmall
+                        1 -> MaterialTheme.typography.headlineLarge
                         2 -> MaterialTheme.typography.titleLarge
                         3 -> MaterialTheme.typography.titleMedium
                         else -> MaterialTheme.typography.bodyLarge
