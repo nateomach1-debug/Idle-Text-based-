@@ -38,7 +38,8 @@ data class LoadoutState(
     val selectedPotionId: String?,
     val potionTimerRemainingSeconds: Int,
     val autoHealThresholdPercent: Int,
-    val autoFleeThresholdPercent: Int
+    val autoFleeThresholdPercent: Int,
+    val isSkilling: Boolean = false
 )
 
 @Composable
