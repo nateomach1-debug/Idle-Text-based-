@@ -2579,21 +2579,7 @@ if (buryQueue != null) {
                         potionDurationSeconds = inventory.potionTimerRemainingSeconds.toLong(),
                         now = offlineStartTime
                     )
-                    val outcome = combatService.resolveOfflineCombat(
-                        characterId = characterId,
-                        zoneId = combatQueue.zoneId,
-                        elapsedSeconds = elapsedSeconds,
-                        attackerAccuracy = prayerAccuracy,
-                        attackerMaxHit = prayerMaxHit,
-                        dropRateMultiplier = prayerDropRateMultiplier,
-                        attackerMinHit = prayerMinHit,
-                        damageType = damageType,
-                        attackSpeedSeconds = attackSpeedSeconds,
-                        combatStyle = weapon?.style ?: CombatStyle.MELEE,
-                        potionItemId = inventory.selectedPotionId
-                            .takeIf { inventory.potionTimerRemainingSeconds > 0 }
-                    )
-
+                    
                     if (outcome is ServiceResult.Success) {
                         if (outcome.value.xpEarned > 0) {
                             progressionService.grantXp(
