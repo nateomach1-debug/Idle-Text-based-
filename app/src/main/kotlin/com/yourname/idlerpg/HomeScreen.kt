@@ -204,26 +204,37 @@ fun CycleCountdown(queue: ActiveQueueInfo) {
             System.currentTimeMillis() - queue.progressUpdatedAtMillis
         ).coerceAtLeast(0L) / 1000.0
 
-        val potionActiveSeconds = minOf(
+        val potionElapsedSeconds = minOf(
             elapsedSinceUpdateSeconds,
             queue.potionTimerRemainingSeconds.toDouble().coerceAtLeast(0.0)
         )
 
         val bonusProgressSeconds =
-            potionActiveSeconds * queue.skillingSpeedBonusPercent / 100.0
+            potionElapsedSeconds * queue.skillingSpeedBonusPercent / 100.0
 
-        val totalProgress = (
+        val totalProgress =
             queue.actionProgressSeconds +
                 elapsedSinceUpdateSeconds +
                 bonusProgressSeconds
-            )
 
         val progressIntoCycle = totalProgress % cycleSeconds
+        val workRemaining = cycleSeconds - progressIntoCycle
 
-        return if (progressIntoCycle < 0.001) {
-            cycleSeconds
+        val potionRemainingSeconds = (
+            queue.potionTimerRemainingSeconds - elapsedSinceUpdateSeconds
+        ).coerceAtLeast(0.0)
+
+        val potionSpeedMultiplier =
+            1.0 + queue.skillingSpeedBonusPercent / 100.0
+
+        val workDuringRemainingPotion =
+            potionRemainingSeconds * potionSpeedMultiplier
+
+        return if (workDuringRemainingPotion >= workRemaining) {
+            workRemaining / potionSpeedMultiplier
         } else {
-            cycleSeconds - progressIntoCycle
+            potionRemainingSeconds +
+                (workRemaining - workDuringRemainingPotion)
         }
     }
 
