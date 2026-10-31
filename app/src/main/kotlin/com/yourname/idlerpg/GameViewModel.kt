@@ -1538,11 +1538,31 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        val selectedPotion = inventory.selectedPotionId?.let {
+                val selectedPotionId = inventory.selectedPotionId
+        val selectedPotion = selectedPotionId?.let {
             ItemCatalog.find(it)
         }
 
-        if (selectedPotion?.buffDurationSeconds?.let { it > 0 } == true) {
+        val potionEffects = selectedPotionId?.let {
+            PotionEffectCatalog.find(it)
+        }
+
+        val isSkillingOnlyPotion = potionEffects?.let {
+            it.skillingSpeedBonusPercent > 0.0 &&
+                it.accuracyBonusPercent == 0.0 &&
+                it.damageBonusPercent == 0.0 &&
+                it.incomingDamageReductionPercent == 0.0 &&
+                it.fireDamageReductionPercent == 0.0 &&
+                it.poisonImmunitySeconds == 0
+        } == true
+
+        val canActivatePotion =
+            !isSkillingOnlyPotion ||
+                offlineIdleService.activeQueueFor(characterId) is ActiveQueue.SkillingQueue
+
+        if (selectedPotion?.buffDurationSeconds?.let { it > 0 } == true &&
+            canActivatePotion
+        ) {
             if (inventory.potionTimerRemainingSeconds > 0) {
                 inventory.potionTimerRemainingSeconds =
                     (inventory.potionTimerRemainingSeconds - elapsedSeconds.toInt())
