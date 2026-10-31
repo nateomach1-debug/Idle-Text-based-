@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yourname.idlerpg.SkillType
 import com.yourname.idlerpg.PrayerDefinition
+import com.yourname.idlerpg.PotionEffectCatalog
 
 // =========================================================
 // LOADOUT SCREEN
@@ -56,7 +57,31 @@ fun LoadoutScreen(
     prayerLevel: Int = 1,
     onPrayerSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
-) {
+) {    
+    val selectedPotionInfo = state.selectedPotionId?.let {
+        PotionEffectCatalog.effectsFor(it)
+    } ?: emptyList()
+
+    val selectedPotionEffects = selectedPotionInfo.filterNot {
+        it.startsWith("Duration:")
+    }
+
+    val selectedPotionHasTimedEffect = selectedPotionInfo.any {
+        it.startsWith("Duration:")
+    }
+
+    val selectedPotionName = state.selectedPotionId?.let { selectedId ->
+        state.availablePotions.firstOrNull {
+            it.itemId == selectedId
+        }?.displayName ?: selectedId.split("_").joinToString(" ") { word ->
+            word.replaceFirstChar { it.uppercase() }
+        }
+    } ?: "Potion"
+
+    val potionTimeText = "%d:%02d".format(
+        state.potionTimerRemainingSeconds / 60,
+        state.potionTimerRemainingSeconds % 60
+    )
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
@@ -127,12 +152,80 @@ fun LoadoutScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(text = "Potion", style = MaterialTheme.typography.titleMedium)
-        if (state.selectedPotionId != null && state.potionTimerRemainingSeconds > 0) {
+                Text(text = "Potion", style = MaterialTheme.typography.titleMedium)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (state.selectedPotionId == null) {
             Text(
-                text = "Refreshes in " + state.potionTimerRemainingSeconds + "s",
-                style = MaterialTheme.typography.labelSmall
+                "No potion selected.",
+                style = MaterialTheme.typography.bodyMedium
             )
+        } else {
+            val isActive = state.potionTimerRemainingSeconds > 0
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = if (isActive) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        if (isActive) "POTION ACTIVE" else "POTION NOT ACTIVE",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+
+                    Text(
+                        selectedPotionName,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    selectedPotionEffects.forEach { effect ->
+                        Text(
+                            "• $effect",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    if (isActive) {
+                        Text("Time remaining: $potionTimeText")
+
+                        if (selectedPotionEffects.any {
+                            it.contains("skilling", ignoreCase = true)
+                        }) {
+                            Text(
+                                "Speed bonus applies while a skilling action is running.",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    } else if (selectedPotionHasTimedEffect) {
+                        val hasCopies = state.availablePotions.any {
+                            it.itemId == state.selectedPotionId && it.quantity > 0
+                        }
+
+                        Text(
+                            if (hasCopies) {
+                                "Selected — waiting for activation."
+                            } else {
+                                "No copies remain. The potion cannot activate."
+                            },
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else {
+                        Text(
+                            "This potion does not have an active timed effect.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
         if (state.availablePotions.isEmpty()) {
