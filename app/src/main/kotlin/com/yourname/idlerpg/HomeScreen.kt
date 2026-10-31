@@ -185,18 +185,64 @@ private fun QueueCard(queue: ActiveQueueInfo?, combat: CombatViewData?, training
 @Composable
 fun CycleCountdown(queue: ActiveQueueInfo) {
     fun remainingSecondsNow(): Double {
-        val elapsedMs = Duration.between(queue.startedAt, Instant.now()).toMillis().coerceAtLeast(0)
-        val cycleMs = queue.secondsPerAction * 1000
-        if (cycleMs <= 0) return 0.0
-        val remainingMs = cycleMs - (elapsedMs % cycleMs)
-        return remainingMs / 1000.0
+        val cycleSeconds = queue.secondsPerAction.toDouble()
+        if (cycleSeconds <= 0.0) return 0.0
+
+        if (!queue.isSkilling) {
+            val elapsedMs = Duration.between(
+                queue.startedAt,
+                Instant.now()
+            ).toMillis().coerceAtLeast(0)
+
+            val cycleMs = queue.secondsPerAction * 1000L
+            val remainingMs = cycleMs - (elapsedMs % cycleMs)
+
+            return remainingMs / 1000.0
+        }
+
+        val elapsedSinceUpdateSeconds = (
+            System.currentTimeMillis() - queue.progressUpdatedAtMillis
+        ).coerceAtLeast(0L) / 1000.0
+
+        val potionActiveSeconds = minOf(
+            elapsedSinceUpdateSeconds,
+            queue.potionTimerRemainingSeconds.toDouble().coerceAtLeast(0.0)
+        )
+
+        val bonusProgressSeconds =
+            potionActiveSeconds * queue.skillingSpeedBonusPercent / 100.0
+
+        val totalProgress = (
+            queue.actionProgressSeconds +
+                elapsedSinceUpdateSeconds +
+                bonusProgressSeconds
+            )
+
+        val progressIntoCycle = totalProgress % cycleSeconds
+
+        return if (progressIntoCycle < 0.001) {
+            cycleSeconds
+        } else {
+            cycleSeconds - progressIntoCycle
+        }
     }
 
-    var remainingSeconds by remember(queue.startedAt, queue.secondsPerAction) {
+    var remainingSeconds by remember(
+        queue.startedAt,
+        queue.secondsPerAction,
+        queue.progressUpdatedAtMillis
+    ) {
         mutableStateOf(remainingSecondsNow())
     }
 
-    LaunchedEffect(queue.startedAt, queue.secondsPerAction) {
+    LaunchedEffect(
+        queue.startedAt,
+        queue.secondsPerAction,
+        queue.progressUpdatedAtMillis,
+        queue.actionProgressSeconds,
+        queue.skillingSpeedBonusPercent,
+        queue.potionTimerRemainingSeconds
+    ) {
         while (true) {
             remainingSeconds = remainingSecondsNow()
             delay(100)
