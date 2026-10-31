@@ -2523,9 +2523,62 @@ if (buryQueue != null) {
                             minHit
                         }
 
-                    val prayerDropRateMultiplier =
+                                        val prayerDropRateMultiplier =
                         if (selectedPrayerId == "fortunes_favor") 1.15 else 1.0
 
+                    val defenseLevel =
+                        skillLevel(characterId, SkillType.DEFENSE)
+
+                    val defenseMastery = masteryBonusPercent(
+                        defenseLevel,
+                        hasSkillCapeEquipped(characterId, SkillType.DEFENSE),
+                        5.0,
+                        10.0
+                    )
+
+                    val defenseReductionPercent =
+                        (defenseLevel * 0.5 + defenseMastery).coerceAtMost(50.0)
+
+                    val prayerMasteryReductionPercent =
+                        if (selectedPrayerId != null) {
+                            val prayerLevel =
+                                skillLevel(characterId, SkillType.PRAYER)
+
+                            masteryBonusPercent(
+                                prayerLevel,
+                                hasSkillCapeEquipped(characterId, SkillType.PRAYER),
+                                5.0,
+                                10.0
+                            )
+                        } else {
+                            0.0
+                        }
+
+                    val activePotionId = inventory.selectedPotionId
+                        .takeIf { inventory.potionTimerRemainingSeconds > 0 }
+
+                    val offlineStartTime =
+                        Instant.now().minusSeconds(elapsedSeconds)
+
+                    val outcome = combatService.resolveOfflineCombat(
+                        characterId = characterId,
+                        zoneId = combatQueue.zoneId,
+                        elapsedSeconds = elapsedSeconds,
+                        attackerAccuracy = prayerAccuracy,
+                        attackerMaxHit = prayerMaxHit,
+                        dropRateMultiplier = prayerDropRateMultiplier,
+                        attackerMinHit = prayerMinHit,
+                        damageType = damageType,
+                        attackSpeedSeconds = attackSpeedSeconds,
+                        combatStyle = weapon?.style ?: CombatStyle.MELEE,
+                        potionItemId = activePotionId,
+                        maxHp = maxHpFor(characterId),
+                        defenseReductionPercent = defenseReductionPercent,
+                        prayerMasteryReductionPercent = prayerMasteryReductionPercent,
+                        rockSkinActive = selectedPrayerId == "rock_skin",
+                        potionDurationSeconds = inventory.potionTimerRemainingSeconds.toLong(),
+                        now = offlineStartTime
+                    )
                     val outcome = combatService.resolveOfflineCombat(
                         characterId = characterId,
                         zoneId = combatQueue.zoneId,
