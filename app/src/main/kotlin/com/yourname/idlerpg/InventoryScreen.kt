@@ -35,6 +35,7 @@ import com.yourname.idlerpg.ServiceResult
 import com.yourname.idlerpg.SkillType
 import com.yourname.idlerpg.ZoneCatalog
 import com.yourname.idlerpg.ConsumableType
+import com.yourname.idlerpg.PotionEffectCatalog
 
 enum class InventoryViewMode { LIST, GRID }
 
