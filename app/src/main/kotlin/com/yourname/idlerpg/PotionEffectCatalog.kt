@@ -118,6 +118,46 @@ object PotionEffectCatalog {
 
     fun find(itemId: String): PotionEffectDefinition? = effects[itemId]
 
+    fun accuracyBonusFor(itemId: String, style: CombatStyle): Double {
+        val effect = find(itemId) ?: return 0.0
+
+        return when (itemId) {
+            "attack_potion",
+            "combat_potion",
+            "super_attack_potion",
+            "extreme_attack_potion" ->
+                if (style == CombatStyle.MELEE) effect.accuracyBonusPercent else 0.0
+
+            "ranging_potion" ->
+                if (style == CombatStyle.RANGED) effect.accuracyBonusPercent else 0.0
+
+            "magic_potion" ->
+                if (style == CombatStyle.MAGIC) effect.accuracyBonusPercent else 0.0
+
+            else -> effect.accuracyBonusPercent
+        }
+    }
+
+    fun damageBonusFor(itemId: String, style: CombatStyle): Double {
+        val effect = find(itemId) ?: return 0.0
+
+        return when (itemId) {
+            "strength_potion",
+            "combat_potion",
+            "super_strength_potion",
+            "extreme_strength_potion" ->
+                if (style == CombatStyle.MELEE) effect.damageBonusPercent else 0.0
+
+            "ranging_potion" ->
+                if (style == CombatStyle.RANGED) effect.damageBonusPercent else 0.0
+
+            "magic_potion" ->
+                if (style == CombatStyle.MAGIC) effect.damageBonusPercent else 0.0
+
+            else -> effect.damageBonusPercent
+        }
+    }
+    
     fun effectsFor(itemId: String): List<String> {
         val effect = find(itemId) ?: return emptyList()
 
