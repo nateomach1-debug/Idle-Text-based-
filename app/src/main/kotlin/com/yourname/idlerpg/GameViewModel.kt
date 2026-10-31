@@ -1030,7 +1030,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         // Entering combat stops any active skilling/crafting queue - only one
         // activity can run at a time.
         offlineIdleService.stopQueue(characterId)
-        skillActionProgressSeconds = 0
+        skillActionProgressSeconds = 0.0
         craftActionProgressSeconds = 0
         refreshActiveQueue()
         combatService.stateFor(characterId, maxHpFor(characterId))
@@ -2688,7 +2688,7 @@ if (buryQueue != null) {
 
         offlineIdleService.recordLastSeen(characterId)
         checkForRecentSales(characterId)
-        skillActionProgressSeconds = 0
+        skillActionProgressSeconds = 0.0
         craftActionProgressSeconds = 0
         refreshSkills()
         refreshInventory()
@@ -2733,14 +2733,14 @@ if (buryQueue != null) {
         offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, effectiveSecondsPerAction)
         offlineIdleService.recordLastSeen(characterId)
         checkForRecentSales(characterId)
-        skillActionProgressSeconds = 0
+        skillActionProgressSeconds = 0.0
         refreshActiveQueue()
     }
 
     fun stopSkillAction() {
         val characterId = _currentCharacterId.value ?: return
         offlineIdleService.stopQueue(characterId)
-        skillActionProgressSeconds = 0
+        skillActionProgressSeconds = 0.0
         refreshActiveQueue()
     }
 
@@ -2835,7 +2835,7 @@ if (buryQueue != null) {
             if (requiredSeedId != null && effectiveActions < actionsCompleted) {
                 // Ran out of seeds mid-batch - stop the queue instead of spinning uselessly.
                 offlineIdleService.stopQueue(characterId)
-                skillActionProgressSeconds = 0
+                skillActionProgressSeconds = 0.0
                 _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
                     itemName = formatItemName(queue.itemId),
                     reason = "Out of " + formatItemName(requiredSeedId) + "."
