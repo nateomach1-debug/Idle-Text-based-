@@ -2307,15 +2307,36 @@ if (requiredSeedId != null && effectiveActions < requestedActions) {
             offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue
 
         if (craftingQueue != null) {
+                        val inventory = inventoryService.inventoryFor(characterId)
+
+            val activePotionId = inventory.selectedPotionId
+                .takeIf { inventory.potionTimerRemainingSeconds > 0 }
+
+            val skillingSpeedBonus = activePotionId
+                ?.let { PotionEffectCatalog.find(it)?.skillingSpeedBonusPercent }
+                ?: 0.0
+
+            val potionDurationSeconds =
+                inventory.potionTimerRemainingSeconds.toLong()
+
             val craftResult = offlineIdleService.resolveOfflineProgress(
                 characterId,
-                premiumMembershipActive = hasMembershipForOfflineProgress(characterId)
+                premiumMembershipActive = hasMembershipForOfflineProgress(characterId),
+                skillingSpeedBonusPercent = skillingSpeedBonus,
+                skillingSpeedDurationSeconds = potionDurationSeconds
             )
+
+            if (craftResult is ServiceResult.Success && activePotionId != null) {
+                inventory.potionTimerRemainingSeconds = (
+                    inventory.potionTimerRemainingSeconds -
+                        craftResult.value.claimedElapsed.seconds
+                            .coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                    ).coerceAtLeast(0)
+            }
 
             if (craftResult is ServiceResult.Success &&
                 craftResult.value.actionsCompleted > 0
             ) {
-                val inventory = inventoryService.inventoryFor(characterId)
                 val inventoryBefore = ItemCatalog.items.associate {
                     it.id to inventory.quantityOf(it.id)
                 }
