@@ -258,7 +258,13 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
         lastSaleCheckAt[characterId] = java.time.OffsetDateTime.parse(serverTimestamp).toInstant()
     }
 
-    fun resolveOfflineProgress(characterId: String, now: Instant = Instant.now(), premiumMembershipActive: Boolean = false ): ServiceResult<OfflineResolution> {
+    fun resolveOfflineProgress(
+        characterId: String,
+        now: Instant = Instant.now(),
+        premiumMembershipActive: Boolean = false,
+        skillingSpeedBonusPercent: Double = 0.0,
+        skillingSpeedDurationSeconds: Long = 0L
+    ): ServiceResult<OfflineResolution> {
         val queue = activeQueues[characterId] ?: return ServiceResult.Failure("No active queue to resolve.")
         val lastSeen = lastSeenAt[characterId] ?: return ServiceResult.Failure("No last-seen timestamp recorded.")
 
@@ -277,9 +283,32 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
         var queueExhausted = false
 
         when (queue) {
-            is ActiveQueue.SkillingQueue -> {
-                actionsCompleted =
-                    (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+                        is ActiveQueue.SkillingQueue -> {
+                val potionDuration = minOf(
+                    skillingSpeedDurationSeconds.coerceAtLeast(0L),
+                    cappedElapsed.seconds
+                )
+
+                val potionEffectiveMillis =
+                    if (skillingSpeedBonusPercent > 0.0 && potionDuration > 0L) {
+                        OfflineEfficiencyCurve.effectiveElapsed(
+                            Duration.ofSeconds(potionDuration),
+                            premiumMembershipActive
+                        ).toMillis()
+                    } else {
+                        0L
+                    }
+
+                val bonusMillis =
+                    (potionEffectiveMillis * skillingSpeedBonusPercent / 100.0).toLong()
+
+                val totalProgressMillis =
+                    finalEffectiveElapsed.toMillis() + bonusMillis
+
+                actionsCompleted = (
+                    totalProgressMillis / (queue.secondsPerAction * 1000L)
+                ).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+            }
             }
             
 is ActiveQueue.CraftingQueue -> {
