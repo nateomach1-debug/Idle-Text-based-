@@ -557,7 +557,10 @@ data class CombatSessionExport(
 
 data class OfflineCombatOutcome(
     val estimatedKills: Int,
-    val xpEarned: Long
+    val xpEarned: Long,
+    val damageTaken: Int = 0,
+    val deaths: Int = 0,
+    val finalHp: Int = 0
 )
 
 class CombatService {
