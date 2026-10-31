@@ -62,7 +62,8 @@ data class SaleNotification(
 data class ActiveQueueInfo(
     val label: String,
     val secondsPerAction: Long,
-    val startedAt: Instant
+    val startedAt: Instant,
+    val isSkilling: Boolean = false
 )
 
 private fun formatItemName(itemId: String): String =
@@ -3182,7 +3183,8 @@ fun maxCraftableQuantity(itemId: String): Int {
                 ActiveQueueInfo(
                     label = action?.displayName ?: formatItemName(queue.itemId),
                     secondsPerAction = queue.secondsPerAction,
-                    startedAt = queue.startedAt
+                    startedAt = queue.startedAt,
+                    isSkilling = true
                 )
             }
             is ActiveQueue.CraftingQueue -> ActiveQueueInfo(
