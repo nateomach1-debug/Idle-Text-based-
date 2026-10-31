@@ -2581,6 +2581,19 @@ if (buryQueue != null) {
                     )
                     
                     if (outcome is ServiceResult.Success) {
+                        // Deduct the time spent offline from the active potion.
+                        // The offline combat calculation already limits its effects
+                        // to the potion's remaining duration.
+                        if (activePotionId != null &&
+                            inventory.potionTimerRemainingSeconds > 0
+                        ) {
+                            val offlinePotionSeconds =
+                                elapsedSeconds.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+
+                            inventory.potionTimerRemainingSeconds =
+                                (inventory.potionTimerRemainingSeconds - offlinePotionSeconds)
+                                    .coerceAtLeast(0)
+                        }
                         if (outcome.value.xpEarned > 0) {
                             progressionService.grantXp(
                                 characterId,
@@ -2655,6 +2668,7 @@ if (buryQueue != null) {
         refreshSkills()
         refreshInventory()
         refreshActiveQueue()
+        refreshCombatHp()
 
         offlineResolvedThisSession = true
         if (marketService.accountFor(characterId) == null) {
