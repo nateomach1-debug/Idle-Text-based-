@@ -80,7 +80,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     // Skilling queues don't consume materials, only crafting does, so this is unused for now.
     val offlineIdleService = OfflineIdleService(MaterialAvailabilityCheck { _, _ -> true })
 
-    private var skillActionProgressSeconds: Long = 0
+    private var skillActionProgressSeconds: Double = 0.0
 
     private val _currentAccountId = MutableStateFlow<String?>(null)
     val currentAccountId: StateFlow<String?> = _currentAccountId.asStateFlow()
@@ -2135,7 +2135,32 @@ fun logout() {
     private fun resolveOfflineRewardsAndSync(characterId: String) {
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
         if (queue != null) {
-            val result = offlineIdleService.resolveOfflineProgress(characterId, premiumMembershipActive = hasMembershipForOfflineProgress(characterId))
+            val inventory = inventoryService.inventoryFor(characterId)
+
+            val activePotionId = inventory.selectedPotionId
+                .takeIf { inventory.potionTimerRemainingSeconds > 0 }
+
+            val skillingSpeedBonus = activePotionId
+                ?.let { PotionEffectCatalog.find(it)?.skillingSpeedBonusPercent }
+                ?: 0.0
+
+            val potionDurationSeconds =
+                inventory.potionTimerRemainingSeconds.toLong()
+
+            val result = offlineIdleService.resolveOfflineProgress(
+                characterId,
+                premiumMembershipActive = hasMembershipForOfflineProgress(characterId),
+                skillingSpeedBonusPercent = skillingSpeedBonus,
+                skillingSpeedDurationSeconds = potionDurationSeconds
+            )
+
+            if (result is ServiceResult.Success && activePotionId != null) {
+                inventory.potionTimerRemainingSeconds = (
+                    inventory.potionTimerRemainingSeconds -
+                        result.value.claimedElapsed.seconds
+                            .coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                    ).coerceAtLeast(0)
+            }
             if (result is ServiceResult.Success && result.value.actionsCompleted > 0) {
                 val skillType = SkillType.valueOf(queue.skillId)
                 val action = ActionCatalog.find(skillType, queue.itemId)
@@ -2723,11 +2748,30 @@ if (buryQueue != null) {
         val characterId = _currentCharacterId.value ?: return
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue ?: return
 
-        skillActionProgressSeconds += elapsedSeconds
-        if (skillActionProgressSeconds < queue.secondsPerAction) return
+        val inventory = inventoryService.inventoryFor(characterId)
+        val activePotionId = inventory.selectedPotionId
+            .takeIf { inventory.potionTimerRemainingSeconds > 0 }
 
-        val actionsCompleted = skillActionProgressSeconds / queue.secondsPerAction
-        skillActionProgressSeconds %= queue.secondsPerAction
+        val skillingSpeedBonus = activePotionId
+            ?.let { PotionEffectCatalog.find(it)?.skillingSpeedBonusPercent }
+            ?: 0.0
+
+        val potionActiveSeconds = minOf(
+            elapsedSeconds,
+            inventory.potionTimerRemainingSeconds.toLong().coerceAtLeast(0L)
+        )
+
+        val bonusProgressSeconds =
+            potionActiveSeconds * skillingSpeedBonus / 100.0
+
+        skillActionProgressSeconds += elapsedSeconds + bonusProgressSeconds
+
+        if (skillActionProgressSeconds < queue.secondsPerAction.toDouble()) return
+
+        val actionsCompleted =
+            (skillActionProgressSeconds / queue.secondsPerAction).toLong()
+
+        skillActionProgressSeconds %= queue.secondsPerAction.toDouble()
 
         val skillType = SkillType.valueOf(queue.skillId)
         val action = ActionCatalog.find(skillType, queue.itemId)
