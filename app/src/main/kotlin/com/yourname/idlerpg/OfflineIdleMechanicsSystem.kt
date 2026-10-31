@@ -309,7 +309,6 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
                     totalProgressMillis / (queue.secondsPerAction * 1000L)
                 ).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
             }
-            }
             
 is ActiveQueue.CraftingQueue -> {
     var possibleActions =
