@@ -1300,7 +1300,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     val defenseLevel = skillLevel(characterId, SkillType.DEFENSE)
                     val defenseMastery = masteryBonusPercent(defenseLevel, hasSkillCapeEquipped(characterId, SkillType.DEFENSE), 5.0, 10.0)
                     val defenseReductionPercent = (defenseLevel * 0.5 + defenseMastery).coerceAtMost(50.0)
-                    val dmg = (prayerAdjustedDmg * (1.0 - defenseReductionPercent / 100.0)).toInt().coerceAtLeast(1)
+                    val potionReductionPercent = activePotionId?.let {
+                        PotionEffectCatalog.find(it)?.incomingDamageReductionPercent
+                    } ?: 0.0
+
+                    val dmg = (
+                        prayerAdjustedDmg *
+                            (1.0 - defenseReductionPercent / 100.0) *
+                            (1.0 - potionReductionPercent / 100.0)
+                        ).toInt().coerceAtLeast(1)
                     combatService.applyDamageToCharacter(characterId, dmg)
                     log.add(CombatLogEntry(monster.name + " hits you for " + dmg + "."))
                 }
