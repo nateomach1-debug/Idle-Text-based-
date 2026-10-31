@@ -920,7 +920,13 @@ class CombatService {
             attackerMaxHit.coerceAtLeast(0)
         )
         val safeMaxHit = attackerMaxHit.coerceAtLeast(safeMinHit)
-        val rawAverageDamage = (safeMinHit + safeMaxHit) / 2.0
+        val potionDamageBonus = potionItemId?.let {
+    PotionEffectCatalog.damageBonusFor(it, combatStyle)
+} ?: 0.0
+
+val rawAverageDamage =
+    ((safeMinHit + safeMaxHit) / 2.0) *
+        (1.0 + potionDamageBonus / 100.0)
 
         val avgDamageMultiplier = offlinePool.map { monster ->
             if (monster.weakness != null && monster.weakness == damageType) {
