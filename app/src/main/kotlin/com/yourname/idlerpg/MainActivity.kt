@@ -989,7 +989,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                         availableFoodOptions, loadoutSettings.selectedFoodId,
                                         availablePotionOptions, loadoutSettings.selectedPotionId,
                                         loadoutSettings.potionTimerRemainingSeconds,
-                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent,
                                         isSkilling = activeQueue?.isSkilling == true
                                     ),
                                     trainingSkill = trainingSkill,
@@ -1048,7 +1048,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                         availableFoodOptions, loadoutSettings.selectedFoodId,
                                         availablePotionOptions, loadoutSettings.selectedPotionId,
                                         loadoutSettings.potionTimerRemainingSeconds,
-                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent
+                                        loadoutSettings.autoHealThresholdPercent, loadoutSettings.autoFleeThresholdPercent,
                                         isSkilling = activeQueue?.isSkilling == true
                                     ),
                                     onBack = { inventoryScreenState = InventoryScreenState.Items },
