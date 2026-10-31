@@ -778,7 +778,7 @@ private fun buildItemInfoDetails(itemId: String): ItemInfoDetails {
 
     // Items directly gathered or obtained through skilling actions.
     // Crafted items are already covered by their recipe source below.
-            if (recipesProducing.isEmpty()) {
+    if (recipesProducing.isEmpty()) {
         SkillType.values().forEach { skill ->
             ActionCatalog.allFor(skill)
                 .filter { it.itemId == itemId }
