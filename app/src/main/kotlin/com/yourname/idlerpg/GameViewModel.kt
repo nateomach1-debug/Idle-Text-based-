@@ -1400,6 +1400,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
+                if (definition.consumableType == ConsumableType.POTION) {
+            val potionEffect = PotionEffectCatalog.find(itemId) ?: return
+
+            // Prayer-restoring potions will be enabled when Prayer points exist.
+            if (potionEffect.healAmount <= 0 || potionEffect.prayerRestorePoints > 0) return
+
+            val removed = inventory.removeItem(itemId, 1)
+            if (removed is ServiceResult.Success) {
+                combatService.stateFor(characterId, maxHpFor(characterId))
+                combatService.healCharacter(
+                    characterId,
+                    potionEffect.healAmount
+                )
+                refreshInventory()
+                refreshCombatHp()
+                saveGame()
+            }
+            return
+        }
+
         if (definition.consumableType != ConsumableType.FOOD) return
 
         val removed = inventory.removeItem(itemId, 1)
