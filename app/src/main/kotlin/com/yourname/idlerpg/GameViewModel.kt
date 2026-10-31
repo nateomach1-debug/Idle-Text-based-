@@ -63,7 +63,11 @@ data class ActiveQueueInfo(
     val label: String,
     val secondsPerAction: Long,
     val startedAt: Instant,
-    val isSkilling: Boolean = false
+    val isSkilling: Boolean = false,
+    val actionProgressSeconds: Double = 0.0,
+    val skillingSpeedBonusPercent: Double = 0.0,
+    val potionTimerRemainingSeconds: Int = 0,
+    val progressUpdatedAtMillis: Long = System.currentTimeMillis()
 )
 
 private fun formatItemName(itemId: String): String =
@@ -1780,6 +1784,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 tickBurying(elapsedSeconds)
                 tickConsumables(elapsedSeconds)
                 tickCombat(elapsedSeconds)
+                refreshActiveQueue()
             }
         }
     }
@@ -3215,34 +3220,63 @@ fun maxCraftableQuantity(itemId: String): Int {
         return result
     }
 
-    fun refreshActiveQueue() {
+        fun refreshActiveQueue() {
         val characterId = _currentCharacterId.value
         val queue = characterId?.let { offlineIdleService.activeQueueFor(it) }
+
+        val inventory = characterId?.let {
+            inventoryService.inventoryFor(it)
+        }
+
+        val potionTimer = inventory?.potionTimerRemainingSeconds ?: 0
+
+        val activePotionId = inventory?.selectedPotionId
+            ?.takeIf { potionTimer > 0 }
+
+        val speedBonus = activePotionId
+            ?.let { PotionEffectCatalog.find(it)?.skillingSpeedBonusPercent }
+            ?: 0.0
+
+        val updatedAt = System.currentTimeMillis()
+
         _activeQueueInfo.value = when (queue) {
             is ActiveQueue.SkillingQueue -> {
                 val skillType = SkillType.valueOf(queue.skillId)
                 val action = ActionCatalog.find(skillType, queue.itemId)
+
                 ActiveQueueInfo(
                     label = action?.displayName ?: formatItemName(queue.itemId),
                     secondsPerAction = queue.secondsPerAction,
                     startedAt = queue.startedAt,
-                    isSkilling = true
+                    isSkilling = true,
+                    actionProgressSeconds = skillActionProgressSeconds,
+                    skillingSpeedBonusPercent = speedBonus,
+                    potionTimerRemainingSeconds = potionTimer,
+                    progressUpdatedAtMillis = updatedAt
                 )
             }
+
             is ActiveQueue.CraftingQueue -> ActiveQueueInfo(
                 label = "Crafting " + formatItemName(queue.itemId),
                 secondsPerAction = queue.secondsPerAction,
                 startedAt = queue.startedAt,
-                isSkilling = true
+                isSkilling = true,
+                actionProgressSeconds = craftActionProgressSeconds,
+                skillingSpeedBonusPercent = speedBonus,
+                potionTimerRemainingSeconds = potionTimer,
+                progressUpdatedAtMillis = updatedAt
             )
+
             is ActiveQueue.BuryQueue -> {
                 val remaining = queue.targetQuantity - queue.quantityCompleted
+
                 ActiveQueueInfo(
                     label = "Burying " + formatItemName(queue.itemId) + " (" + remaining + " left)",
                     secondsPerAction = queue.secondsPerAction,
                     startedAt = queue.startedAt
                 )
             }
+
             else -> null
         }
     }
