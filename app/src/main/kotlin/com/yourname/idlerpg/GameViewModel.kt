@@ -1557,10 +1557,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 it.poisonImmunitySeconds == 0
         } == true
 
-        val canActivatePotion =
-            !isSkillingOnlyPotion ||
-                offlineIdleService.activeQueueFor(characterId) is ActiveQueue.SkillingQueue
+        val activeQueue = offlineIdleService.activeQueueFor(characterId)
+        val isSkilling =
+            activeQueue is ActiveQueue.SkillingQueue ||
+                activeQueue is ActiveQueue.CraftingQueue
 
+        val canActivatePotion = !isSkillingOnlyPotion || isSkilling
         if (selectedPotion?.buffDurationSeconds?.let { it > 0 } == true &&
             canActivatePotion
         ) {
@@ -2368,7 +2370,7 @@ if (requiredSeedId != null && effectiveActions < requestedActions) {
                     batch.stoppedReason != null
                 ) {
                     offlineIdleService.stopQueue(characterId)
-                    craftActionProgressSeconds = 0
+                    craftActionProgressSeconds = 0.0
                     refreshActiveQueue()
                 }
             }
@@ -2710,7 +2712,7 @@ if (buryQueue != null) {
         offlineIdleService.recordLastSeen(characterId)
         checkForRecentSales(characterId)
         skillActionProgressSeconds = 0.0
-        craftActionProgressSeconds = 0
+        craftActionProgressSeconds = 0.0
         refreshSkills()
         refreshInventory()
         refreshActiveQueue()
@@ -2875,7 +2877,7 @@ if (buryQueue != null) {
     // ActionCatalog's generic class-action ids (see Step 5 handoff notes).
     // =========================================================
 
-    private var craftActionProgressSeconds: Long = 0
+    private var craftActionProgressSeconds: Double = 0.0
 
     private val craftingService = CraftingService()
 
@@ -3012,11 +3014,30 @@ fun maxCraftableQuantity(itemId: String): Int {
         val characterId = _currentCharacterId.value ?: return
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.CraftingQueue ?: return
 
-        craftActionProgressSeconds += elapsedSeconds
-        if (craftActionProgressSeconds < queue.secondsPerAction) return
+        val inventory = inventoryService.inventoryFor(characterId)
+        val activePotionId = inventory.selectedPotionId
+            .takeIf { inventory.potionTimerRemainingSeconds > 0 }
 
-        val attempts = (craftActionProgressSeconds / queue.secondsPerAction).toInt()
-        craftActionProgressSeconds %= queue.secondsPerAction
+        val skillingSpeedBonus = activePotionId
+            ?.let { PotionEffectCatalog.find(it)?.skillingSpeedBonusPercent }
+            ?: 0.0
+
+        val potionActiveSeconds = minOf(
+            elapsedSeconds,
+            inventory.potionTimerRemainingSeconds.toLong().coerceAtLeast(0L)
+        )
+
+        val bonusProgressSeconds =
+            potionActiveSeconds * skillingSpeedBonus / 100.0
+
+        craftActionProgressSeconds += elapsedSeconds.toDouble() + bonusProgressSeconds
+
+        if (craftActionProgressSeconds < queue.secondsPerAction.toDouble()) return
+
+        val attempts =
+            (craftActionProgressSeconds / queue.secondsPerAction.toDouble()).toInt()
+
+        craftActionProgressSeconds %= queue.secondsPerAction.toDouble()
 
         val remainingToTarget = queue.targetQuantity?.let { it - queue.quantityCompleted }
         val cappedAttempts = if (remainingToTarget != null) minOf(attempts, remainingToTarget) else attempts
@@ -3190,7 +3211,8 @@ fun maxCraftableQuantity(itemId: String): Int {
             is ActiveQueue.CraftingQueue -> ActiveQueueInfo(
                 label = "Crafting " + formatItemName(queue.itemId),
                 secondsPerAction = queue.secondsPerAction,
-                startedAt = queue.startedAt
+                startedAt = queue.startedAt,
+                isSkilling = true
             )
             is ActiveQueue.BuryQueue -> {
                 val remaining = queue.targetQuantity - queue.quantityCompleted
