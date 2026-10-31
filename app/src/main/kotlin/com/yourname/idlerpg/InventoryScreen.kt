@@ -776,6 +776,18 @@ private fun buildItemInfoDetails(itemId: String): ItemInfoDetails {
 
     val sources = linkedSetOf<String>()
 
+    // Items directly gathered or obtained through skilling actions.
+    // Crafted items are already covered by their recipe source below.
+    SkillType.values().forEach { skill ->
+        ActionCatalog.allFor(skill)
+            .filter { it.itemId == itemId }
+            .forEach { action ->
+                sources.add(
+                    "Skilling — ${action.displayName} " +
+                        "(${formatSkillName(skill.name)}, level ${action.levelRequired})"
+                )
+            }
+    }
 
     // Recipes that create this item.
     recipesProducing.forEach { recipe ->
@@ -836,11 +848,6 @@ private fun buildItemInfoDetails(itemId: String): ItemInfoDetails {
             "Combat — any monster: 15% chance to receive one random elemental " +
                 "essence (approximately 3.75% for this type if all four are equally likely)"
         )
-    }
-
-    // Tradeable items may also be acquired from other players.
-    if (ItemCatalog.find(itemId)?.isTradeable == true) {
-        sources.add("Player market — this item is marked as tradeable")
     }
 
     return ItemInfoDetails(
