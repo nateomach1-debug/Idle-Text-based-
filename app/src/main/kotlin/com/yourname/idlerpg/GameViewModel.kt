@@ -2483,7 +2483,7 @@ if (buryQueue != null) {
                         dropRateMultiplier = prayerDropRateMultiplier,
                         attackerMinHit = prayerMinHit,
                         damageType = damageType,
-                        attackSpeedSeconds = attackSpeedSeconds
+                        attackSpeedSeconds = attackSpeedSeconds,
                         combatStyle = weapon?.style ?: CombatStyle.MELEE,
                         potionItemId = inventory.selectedPotionId
                             .takeIf { inventory.potionTimerRemainingSeconds > 0 }
