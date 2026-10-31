@@ -162,12 +162,25 @@ fun LoadoutScreen(
                 "No potion selected.",
                 style = MaterialTheme.typography.bodyMedium
             )
-        } else {
+                } else {
             val isActive = state.potionTimerRemainingSeconds > 0
+            val hasSkillingSpeedBonus = selectedPotionEffects.any {
+                it.contains("skilling", ignoreCase = true) &&
+                    it.contains("faster", ignoreCase = true)
+            }
+            val isSpeedOnlyPotion =
+                hasSkillingSpeedBonus && selectedPotionEffects.size == 1
+
+            val statusText = when {
+                !isActive -> "POTION NOT ACTIVE"
+                isSpeedOnlyPotion && !state.isSkilling -> "EFFECT PAUSED"
+                isSpeedOnlyPotion -> "EFFECT APPLYING"
+                else -> "POTION ACTIVE"
+            }
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = if (isActive) {
+                color = if (isActive && (!isSpeedOnlyPotion || state.isSkilling)) {
                     MaterialTheme.colorScheme.primaryContainer
                 } else {
                     MaterialTheme.colorScheme.surfaceVariant
@@ -179,7 +192,7 @@ fun LoadoutScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        if (isActive) "POTION ACTIVE" else "POTION NOT ACTIVE",
+                        statusText,
                         style = MaterialTheme.typography.titleSmall
                     )
 
@@ -198,13 +211,25 @@ fun LoadoutScreen(
                     if (isActive) {
                         Text("Time remaining: $potionTimeText")
 
-                        if (selectedPotionEffects.any {
-                            it.contains("skilling", ignoreCase = true)
-                        }) {
-                            Text(
-                                "Speed bonus applies while a skilling action is running.",
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                        if (hasSkillingSpeedBonus) {
+                            if (state.isSkilling) {
+                                Text(
+                                    "SKILLING SPEED BONUS IS APPLYING NOW.",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            } else {
+                                Text(
+                                    "SKILLING SPEED BONUS PAUSED — start a skilling action to use it.",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+
+                                if (!isSpeedOnlyPotion) {
+                                    Text(
+                                        "Other potion effects remain active.",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
                         }
                     } else if (selectedPotionHasTimedEffect) {
                         val hasCopies = state.availablePotions.any {
