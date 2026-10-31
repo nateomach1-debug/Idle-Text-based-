@@ -1530,7 +1530,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        if (inventory.selectedPotionId != null) {
+        val selectedPotion = inventory.selectedPotionId?.let {
+            ItemCatalog.find(it)
+        }
+
+        if (selectedPotion?.buffDurationSeconds?.let { it > 0 } == true) {
+            if (inventory.potionTimerRemainingSeconds > 0) {
+                inventory.potionTimerRemainingSeconds =
+                    (inventory.potionTimerRemainingSeconds - elapsedSeconds.toInt())
+                        .coerceAtLeast(0)
+            }
+
+            if (inventory.potionTimerRemainingSeconds <= 0) {
+                inventory.consumeSelectedPotion()?.let { potion ->
+                    inventory.potionTimerRemainingSeconds =
+                        potion.buffDurationSeconds ?: 0
+                }
+            }
+        }
             if (inventory.potionTimerRemainingSeconds > 0) {
                 inventory.potionTimerRemainingSeconds = (inventory.potionTimerRemainingSeconds - elapsedSeconds.toInt()).coerceAtLeast(0)
             }
