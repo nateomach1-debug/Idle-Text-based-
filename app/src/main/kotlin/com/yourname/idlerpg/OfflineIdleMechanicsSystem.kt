@@ -346,7 +346,10 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
                 // GameViewModel performs crafts and records actual attempts.
                 actionsCompleted = possibleActions
             }
-
+            is ActiveQueue.OfflineCombatQueue -> {
+                // Offline combat uses elapsed time, not action counts.
+                actionsCompleted = 0
+            }
 is ActiveQueue.BuryQueue -> {
     val possibleActions =
         (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
