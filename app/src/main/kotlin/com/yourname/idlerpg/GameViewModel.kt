@@ -1225,7 +1225,23 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             if (result is ServiceResult.Success) {
                 val attack = result.value
                 val monsterDefense = session.currentMonster?.defenseRating ?: 1
-                lastHitChancePercent = ((accuracy.toDouble() / (accuracy + monsterDefense)) * 100.0).coerceIn(0.0, 100.0)
+                val displayPotionAccuracyBonus = activePotionId?.let {
+                    PotionEffectCatalog.accuracyBonusFor(it, loadout.style)
+                } ?: 0.0
+
+                val displayPrayerAccuracyMultiplier =
+                    if (loadout.selectedPrayerId == "clarity_of_thought") 1.1 else 1.0
+
+                val displayAccuracy = (
+                    accuracy *
+                        displayPrayerAccuracyMultiplier *
+                        (1.0 + displayPotionAccuracyBonus / 100.0)
+                    ).toInt()
+
+                lastHitChancePercent = (
+                    displayAccuracy.toDouble() /
+                        (displayAccuracy + monsterDefense) * 100.0
+                    ).coerceIn(0.0, 100.0)
                 lastDamageDealt = attack.damageDealt
 
                 if (attack.didHit) {
