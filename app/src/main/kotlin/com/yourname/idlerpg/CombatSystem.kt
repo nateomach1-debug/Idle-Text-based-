@@ -886,17 +886,309 @@ class CombatService {
         damageType: DamageType? = null,
         attackSpeedSeconds: Double = 1.0,
         combatStyle: CombatStyle = CombatStyle.MELEE,
-        potionItemId: String? = null
+        potionItemId: String? = null,
+        maxHp: Int = 100,
+        defenseReductionPercent: Double = 0.0,
+        prayerMasteryReductionPercent: Double = 0.0,
+        rockSkinActive: Boolean = false,
+        potionDurationSeconds: Long = 0L,
+        now: Instant = Instant.now()
     ): ServiceResult<OfflineCombatOutcome> {
-        val state = stateFor(characterId)
+        val state = stateFor(characterId, maxHp)
+        state.maxHp = maxHp.coerceAtLeast(1)
+
         val zone = ZoneCatalog.zones.find { it.id == zoneId }
             ?: return ServiceResult.Failure("Zone not found.")
+
         if (zone.monsters.isEmpty()) {
             return ServiceResult.Failure("Zone has no monsters.")
         }
+
         if (elapsedSeconds <= 0) {
-            return ServiceResult.Success(OfflineCombatOutcome(estimatedKills = 0, xpEarned = 0L))
+            return ServiceResult.Success(
+                OfflineCombatOutcome(0, 0L, finalHp = state.currentHp)
+            )
         }
+
+        val targetMonster = targetMonsterFor(characterId, zone)
+        val offlinePool = if (targetMonster != null) {
+            listOf(targetMonster)
+        } else {
+            zone.monsters
+        }
+
+        val safeAttackSpeed =
+            attackSpeedSeconds.takeIf { it.isFinite() && it > 0.0 } ?: 1.0
+
+        val safeMinHit = attackerMinHit.coerceIn(
+            0,
+            attackerMaxHit.coerceAtLeast(0)
+        )
+        val safeMaxHit = attackerMaxHit.coerceAtLeast(safeMinHit)
+        val rawAverageDamage = (safeMinHit + safeMaxHit) / 2.0
+
+        val avgSearchSeconds = 6.5
+        val potionDuration = potionDurationSeconds.coerceAtLeast(0L).toDouble()
+
+        var elapsed = 0.0
+        var xpEarned = 0.0
+        var damageTaken = 0.0
+        var estimatedKills = 0
+        var deaths = 0
+        var hp = state.currentHp.toDouble().coerceIn(0.0, state.maxHp.toDouble())
+
+        // Finish any recovery that was already underway before this offline period.
+        val existingRecovery = state.recovery.recoveringUntil
+        if (existingRecovery != null) {
+            if (now.isBefore(existingRecovery)) {
+                val recoverySeconds = Duration.between(now, existingRecovery).toMillis() / 1000.0
+
+                if (recoverySeconds >= elapsedSeconds.toDouble()) {
+                    state.currentHp = 0
+                    state.session = null
+                    return ServiceResult.Success(
+                        OfflineCombatOutcome(
+                            estimatedKills = 0,
+                            xpEarned = 0L,
+                            finalHp = 0
+                        )
+                    )
+                }
+
+                elapsed = recoverySeconds
+                state.currentHp = (state.maxHp * 0.5).toInt()
+                state.recovery.recoveringUntil = null
+                hp = state.currentHp.toDouble()
+            } else {
+                resolveRecoveryIfReady(characterId, now)
+                hp = state.currentHp.toDouble()
+            }
+        }
+
+        // Ensure the offline queue has a combat session to resume after recovery.
+        if (state.session == null && state.recovery.recoveringUntil == null) {
+            state.session = CombatSession(
+                zone = zone,
+                state = SessionState.SEARCHING
+            )
+        }
+
+        while (elapsed < elapsedSeconds.toDouble()) {
+            // If recovery is active, no XP, attacks, kills, or loot are earned.
+            val recoveringUntil = state.recovery.recoveringUntil
+            if (recoveringUntil != null) {
+                val recoveryEndOffset =
+                    Duration.between(now, recoveringUntil).toMillis() / 1000.0
+
+                if (recoveryEndOffset >= elapsedSeconds.toDouble()) {
+                    elapsed = elapsedSeconds.toDouble()
+                    hp = 0.0
+                    break
+                }
+
+                elapsed = maxOf(elapsed, recoveryEndOffset)
+                state.currentHp = (state.maxHp * 0.5).toInt()
+                hp = state.currentHp.toDouble()
+                state.recovery.recoveringUntil = null
+                state.session = CombatSession(
+                    zone = zone,
+                    state = SessionState.SEARCHING
+                )
+            }
+
+            // Searching takes an average of 6.5 seconds between monsters.
+            if (elapsed + avgSearchSeconds > elapsedSeconds.toDouble()) {
+                break
+            }
+
+            elapsed += avgSearchSeconds
+
+            val monster = offlinePool.random()
+            var monsterHp = monster.maxHealth.toDouble()
+
+            val maxRawMonsterDamage =
+                (monster.defenseRating / 3).coerceAtLeast(1)
+            val averageRawMonsterDamage =
+                (maxRawMonsterDamage + 1) / 2.0
+
+            while (monsterHp > 0.0) {
+                if (elapsed + safeAttackSpeed > elapsedSeconds.toDouble()) {
+                    elapsed = elapsedSeconds.toDouble()
+                    break
+                }
+
+                val potionActive =
+                    potionItemId != null && elapsed < potionDuration
+
+                val potionAccuracyBonus = if (potionActive) {
+                    PotionEffectCatalog.damageBonusFor(
+    potionItemId!!,
+    combatStyle
+)
+                } else {
+                    0.0
+                }
+
+                val potionDamageBonus = if (potionActive) {
+                    PotionEffectCatalog.damageBonusFor(
+                        potionItemId,
+                        combatStyle
+                    )
+                } else {
+                    0.0
+                }
+
+                val effectiveAccuracy = (
+                    attackerAccuracy *
+                        (1.0 + potionAccuracyBonus / 100.0)
+                    ).toInt()
+
+                val hitChance = (
+                    effectiveAccuracy.toDouble() /
+                        (effectiveAccuracy + monster.defenseRating)
+                    ).coerceIn(0.0, 1.0)
+
+                val weaknessMultiplier =
+                    if (monster.weakness != null &&
+                        monster.weakness == damageType
+                    ) {
+                        1.5
+                    } else {
+                        1.0
+                    }
+
+                val averagePlayerDamage =
+                    rawAverageDamage *
+                        (1.0 + potionDamageBonus / 100.0) *
+                        weaknessMultiplier
+
+                val expectedDamage =
+                    hitChance * averagePlayerDamage
+
+                // Count XP for the attack that actually occurred.
+                xpEarned += hitChance * (averagePlayerDamage * 4.0 + 5.0)
+
+                monsterHp -= expectedDamage
+                elapsed += safeAttackSpeed
+
+                // A monster defeated by this attack cannot counterattack.
+                if (monsterHp <= 0.0) {
+                    estimatedKills++
+
+                    val potionLootBonus = if (potionActive) {
+                        PotionEffectCatalog.find(potionItemId!!)
+                            ?.lootChanceBonusPercent ?: 0.0
+                    } else {
+                        0.0
+                    }
+
+                    rollLoot(
+                        state,
+                        monster,
+                        dropRateMultiplier *
+                            (1.0 + potionLootBonus / 100.0)
+                    )
+                    onMonsterKilled(characterId, monster)
+                    break
+                }
+
+                // Live combat gives monsters a 40% chance to counterattack.
+                var incomingDamage = averageRawMonsterDamage
+
+                if (rockSkinActive) {
+                    incomingDamage =
+                        (incomingDamage * 0.8).coerceAtLeast(1.0)
+                }
+
+                incomingDamage = (
+                    incomingDamage *
+                        (1.0 - prayerMasteryReductionPercent / 100.0)
+                    ).coerceAtLeast(1.0)
+
+                incomingDamage = (
+                    incomingDamage *
+                        (1.0 - defenseReductionPercent.coerceIn(0.0, 50.0) / 100.0)
+                    ).coerceAtLeast(1.0)
+
+                val potionReduction = if (potionActive) {
+                    PotionEffectCatalog.find(potionItemId!!)
+                        ?.incomingDamageReductionPercent ?: 0.0
+                } else {
+                    0.0
+                }
+
+                incomingDamage = (
+                    incomingDamage *
+                        (1.0 - potionReduction / 100.0)
+                    ).coerceAtLeast(1.0)
+
+                val expectedIncomingDamage = incomingDamage * 0.4
+                damageTaken += expectedIncomingDamage
+                hp -= expectedIncomingDamage
+
+                if (hp <= 0.0) {
+                    hp = 0.0
+                    deaths++
+
+                    state.currentHp = 0
+                    state.session = null
+
+                    val estimatedDeathTime = now.plusMillis(
+                        (elapsed * 1000.0).toLong()
+                    )
+                    val recoveryEnd = estimatedDeathTime.plusSeconds(600)
+                    state.recovery.recoveringUntil = recoveryEnd
+
+                    // If recovery finishes before the offline period ends,
+                    // restore 50% HP and continue fighting.
+                    val recoveryEndOffset =
+                        Duration.between(now, recoveryEnd).toMillis() / 1000.0
+
+                    if (recoveryEndOffset >= elapsedSeconds.toDouble()) {
+                        elapsed = elapsedSeconds.toDouble()
+                        break
+                    }
+
+                    elapsed = recoveryEndOffset
+                    state.currentHp = (state.maxHp * 0.5).toInt()
+                    hp = state.currentHp.toDouble()
+                    state.recovery.recoveringUntil = null
+                    state.session = CombatSession(
+                        zone = zone,
+                        state = SessionState.SEARCHING
+                    )
+                    break
+                }
+            }
+
+            if (elapsed >= elapsedSeconds.toDouble()) {
+                break
+            }
+        }
+
+        state.currentHp = hp.toInt().coerceIn(0, state.maxHp)
+
+        if (state.recovery.recoveringUntil == null) {
+            state.session = CombatSession(
+                zone = zone,
+                state = SessionState.SEARCHING,
+                searchEndsAt = now.plusMillis(6500L)
+            )
+        } else {
+            state.session = null
+            state.currentHp = 0
+        }
+
+        return ServiceResult.Success(
+            OfflineCombatOutcome(
+                estimatedKills = estimatedKills,
+                xpEarned = xpEarned.toLong(),
+                damageTaken = damageTaken.toInt(),
+                deaths = deaths,
+                finalHp = state.currentHp
+            )
+        )
+    }
 
         // If the player picked a specific monster, offline progress assumes they keep
         // fighting only that monster; otherwise average across the zone as before.
