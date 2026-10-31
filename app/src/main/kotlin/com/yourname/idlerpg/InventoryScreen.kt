@@ -778,15 +778,17 @@ private fun buildItemInfoDetails(itemId: String): ItemInfoDetails {
 
     // Items directly gathered or obtained through skilling actions.
     // Crafted items are already covered by their recipe source below.
-    SkillType.values().forEach { skill ->
-        ActionCatalog.allFor(skill)
-            .filter { it.itemId == itemId }
-            .forEach { action ->
+        if (recipesProducing.isEmpty()) {
+        SkillType.values().forEach { skill ->
+            ActionCatalog.allFor(skill)
+                .filter { it.itemId == itemId }
+                .forEach { action ->
                 sources.add(
                     "Skilling — ${action.displayName} " +
                         "(${formatSkillName(skill.name)}, level ${action.levelRequired})"
                 )
             }
+        }      
     }
 
     // Recipes that create this item.
