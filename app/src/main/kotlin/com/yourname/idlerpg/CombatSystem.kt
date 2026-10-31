@@ -1021,17 +1021,16 @@ class CombatService {
                     potionItemId != null && elapsed < potionDuration
 
                 val potionAccuracyBonus = if (potionActive) {
-                    PotionEffectCatalog.damageBonusFor(
-    potionItemId!!,
-    combatStyle
-)
+                    PotionEffectCatalog.accuracyBonusFor(
+                        potionItemId!!,
+                        combatStyle
+                    )
                 } else {
                     0.0
                 }
-
                 val potionDamageBonus = if (potionActive) {
                     PotionEffectCatalog.damageBonusFor(
-                        potionItemId,
+                        potionItemId!!,
                         combatStyle
                     )
                 } else {
@@ -1172,7 +1171,7 @@ class CombatService {
             state.session = CombatSession(
                 zone = zone,
                 state = SessionState.SEARCHING,
-                searchEndsAt = now.plusMillis(6500L)
+                searchEndsAt = now.plusSeconds(elapsedSeconds).plusMillis(6500L)
             )
         } else {
             state.session = null
@@ -1188,88 +1187,5 @@ class CombatService {
                 finalHp = state.currentHp
             )
         )
-    }
-
-        // If the player picked a specific monster, offline progress assumes they keep
-        // fighting only that monster; otherwise average across the zone as before.
-        val targetMonster = targetMonsterFor(characterId, zone)
-        val offlinePool: List<Monster> = if (targetMonster != null) listOf(targetMonster) else zone.monsters
-        val avgMonsterHealth = offlinePool.map { it.maxHealth }.average()
-        val avgMonsterDefense = offlinePool.map { it.defenseRating }.average()
-
-        val potionAccuracyBonus = potionItemId?.let {
-            PotionEffectCatalog.accuracyBonusFor(it, combatStyle)
-        } ?: 0.0
-
-        val effectiveAccuracy = (
-            attackerAccuracy * (1.0 + potionAccuracyBonus / 100.0)
-            ).toInt()
-
-        val hitChance = (
-            effectiveAccuracy.toDouble() /
-                (effectiveAccuracy + avgMonsterDefense)
-        ).coerceIn(0.0, 1.0)
-
-        val safeMinHit = attackerMinHit.coerceIn(
-            0,
-            attackerMaxHit.coerceAtLeast(0)
-        )
-        val safeMaxHit = attackerMaxHit.coerceAtLeast(safeMinHit)
-        val potionDamageBonus = potionItemId?.let {
-    PotionEffectCatalog.damageBonusFor(it, combatStyle)
-} ?: 0.0
-
-        val rawAverageDamage =
-            ((safeMinHit + safeMaxHit) / 2.0) *
-                (1.0 + potionDamageBonus / 100.0)
-
-        val avgDamageMultiplier = offlinePool.map { monster ->
-            if (monster.weakness != null && monster.weakness == damageType) {
-                1.5
-            } else {
-                1.0
-            }
-        }.average()
-
-        val avgDamagePerHit = rawAverageDamage * avgDamageMultiplier
-        val safeAttackSpeed =
-            attackSpeedSeconds.takeIf { it.isFinite() && it > 0.0 } ?: 1.0
-
-        if (hitChance <= 0.0 || avgDamagePerHit <= 0.0) {
-            return ServiceResult.Success(
-                OfflineCombatOutcome(estimatedKills = 0, xpEarned = 0L)
-            )
-        }
-
-        // Estimate XP using the expected damage per attack and weapon speed.
-        val attacksAttempted = elapsedSeconds / safeAttackSpeed
-        val xpPerAttack = hitChance * (avgDamagePerHit * 4 + 5)
-        val xpEarned = (xpPerAttack * attacksAttempted).toLong()
-
-        // Live combat averages a 3–10 second search window between encounters.
-        val avgSearchSeconds = 6.5
-        val avgHitsToKill = avgMonsterHealth / avgDamagePerHit
-        val avgAttacksToKill = avgHitsToKill / hitChance
-        val avgTimeToKillSeconds =
-            avgSearchSeconds + avgAttacksToKill * safeAttackSpeed
-
-        val estimatedKills =
-            (elapsedSeconds / avgTimeToKillSeconds).toInt().coerceAtLeast(0)
-
-        repeat(estimatedKills) {
-            val monster = offlinePool.random()
-            val potionLootBonus = potionItemId
-                ?.let { PotionEffectCatalog.find(it)?.lootChanceBonusPercent }
-                ?: 0.0
-
-            rollLoot(
-                state,
-                monster,
-                dropRateMultiplier * (1.0 + potionLootBonus / 100.0)
-            )
-            onMonsterKilled(characterId, monster)
-        }
-
-        return ServiceResult.Success(OfflineCombatOutcome(estimatedKills = estimatedKills, xpEarned = xpEarned))
-    }
+    }  
 }
