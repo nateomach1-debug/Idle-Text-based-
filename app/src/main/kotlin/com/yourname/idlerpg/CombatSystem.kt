@@ -663,7 +663,8 @@ class CombatService {
         loadout: CombatLoadout,
         attackerAccuracy: Int,
         attackerMaxHit: Int,
-        attackerMinHit: Int = 0
+        attackerMinHit: Int = 0,
+        potionItemId: String? = null
     ): ServiceResult<AttackResult> {
         val state = stateFor(characterId)
         val session = state.session ?: return ServiceResult.Failure("Not currently in a zone.")
@@ -674,10 +675,37 @@ class CombatService {
 
         // Prayer bonuses applied here (rather than at the caller) since this is the
         // one place both live and any future callers already thread the loadout through.
-        val effectiveAccuracy = if (loadout.selectedPrayerId == "clarity_of_thought") (attackerAccuracy * 1.1).toInt() else attackerAccuracy
-        val effectiveMaxHit = if (loadout.selectedPrayerId == "burst_of_strength") (attackerMaxHit * 1.1).toInt() else attackerMaxHit
-        val effectiveMinHit = if (loadout.selectedPrayerId == "burst_of_strength") (attackerMinHit * 1.1).toInt() else attackerMinHit
+                val potionAccuracyBonus = potionItemId?.let {
+            PotionEffectCatalog.accuracyBonusFor(it, loadout.style)
+        } ?: 0.0
 
+        val potionDamageBonus = potionItemId?.let {
+            PotionEffectCatalog.damageBonusFor(it, loadout.style)
+        } ?: 0.0
+
+        val prayerAccuracyMultiplier =
+            if (loadout.selectedPrayerId == "clarity_of_thought") 1.1 else 1.0
+
+        val prayerDamageMultiplier =
+            if (loadout.selectedPrayerId == "burst_of_strength") 1.1 else 1.0
+
+        val effectiveAccuracy = (
+            attackerAccuracy *
+                prayerAccuracyMultiplier *
+                (1.0 + potionAccuracyBonus / 100.0)
+            ).toInt()
+
+        val effectiveMaxHit = (
+            attackerMaxHit *
+                prayerDamageMultiplier *
+                (1.0 + potionDamageBonus / 100.0)
+            ).toInt()
+
+        val effectiveMinHit = (
+            attackerMinHit *
+                prayerDamageMultiplier *
+                (1.0 + potionDamageBonus / 100.0)
+            ).toInt()
         // Explicit cap even though the accuracy-vs-defense ratio is already
         // mathematically bounded below 100% for any positive defenseRating -
         // this makes the "never exceeds 100% per mob" guarantee an explicit
@@ -706,7 +734,15 @@ class CombatService {
 
         if (defeated) {
             val dropRateMultiplier = if (loadout.selectedPrayerId == "fortunes_favor") 1.15 else 1.0
-            rollLoot(state, monster, dropRateMultiplier)
+            val potionLootBonus = potionItemId
+                ?.let { PotionEffectCatalog.find(it)?.lootChanceBonusPercent }
+                ?: 0.0
+
+            rollLoot(
+                state,
+                monster,
+                dropRateMultiplier * (1.0 + potionLootBonus / 100.0)
+            )
             onMonsterKilled(characterId, monster)
             session.currentMonster = null
             startSearching(characterId)
@@ -845,7 +881,9 @@ class CombatService {
         dropRateMultiplier: Double = 1.0,
         attackerMinHit: Int = 0,
         damageType: DamageType? = null,
-        attackSpeedSeconds: Double = 1.0
+        attackSpeedSeconds: Double = 1.0,
+        combatStyle: CombatStyle = CombatStyle.MELEE,
+        potionItemId: String? = null
     ): ServiceResult<OfflineCombatOutcome> {
         val state = stateFor(characterId)
         val zone = ZoneCatalog.zones.find { it.id == zoneId }
@@ -864,9 +902,17 @@ class CombatService {
         val avgMonsterHealth = offlinePool.map { it.maxHealth }.average()
         val avgMonsterDefense = offlinePool.map { it.defenseRating }.average()
 
+        val potionAccuracyBonus = potionItemId?.let {
+            PotionEffectCatalog.accuracyBonusFor(it, combatStyle)
+        } ?: 0.0
+
+        val effectiveAccuracy = (
+            attackerAccuracy * (1.0 + potionAccuracyBonus / 100.0)
+            ).toInt()
+
         val hitChance = (
-            attackerAccuracy.toDouble() /
-                (attackerAccuracy + avgMonsterDefense)
+            effectiveAccuracy.toDouble() /
+                (effectiveAccuracy + avgMonsterDefense)
         ).coerceIn(0.0, 1.0)
 
         val safeMinHit = attackerMinHit.coerceIn(
@@ -911,7 +957,15 @@ class CombatService {
 
         repeat(estimatedKills) {
             val monster = offlinePool.random()
-            rollLoot(state, monster, dropRateMultiplier)
+            val potionLootBonus = potionItemId
+                ?.let { PotionEffectCatalog.find(it)?.lootChanceBonusPercent }
+                ?: 0.0
+
+            rollLoot(
+                state,
+                monster,
+                dropRateMultiplier * (1.0 + potionLootBonus / 100.0)
+            )
             onMonsterKilled(characterId, monster)
         }
 
