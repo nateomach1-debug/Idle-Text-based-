@@ -310,24 +310,42 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
                 ).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
             }
             
-is ActiveQueue.CraftingQueue -> {
-    var possibleActions =
-        (finalEffectiveElapsed.seconds / queue.secondsPerAction).toInt()
+            is ActiveQueue.CraftingQueue -> {
+                val potionDuration = minOf(
+                    skillingSpeedDurationSeconds.coerceAtLeast(0L),
+                    cappedElapsed.seconds
+                )
 
-    if (queue.targetQuantity != null) {
-        val remaining = (queue.targetQuantity - queue.quantityCompleted)
-            .coerceAtLeast(0)
-        possibleActions = possibleActions.coerceAtMost(remaining)
-    }
+                val potionEffectiveMillis =
+                    if (skillingSpeedBonusPercent > 0.0 && potionDuration > 0L) {
+                        OfflineEfficiencyCurve.effectiveElapsed(
+                            Duration.ofSeconds(potionDuration),
+                            premiumMembershipActive
+                        ).toMillis()
+                    } else {
+                        0L
+                    }
 
-    // Report the potential attempts only.
-    // GameViewModel will perform the crafts and record actual attempts.
-    actionsCompleted = possibleActions
-}
+                val bonusMillis =
+                    (potionEffectiveMillis * skillingSpeedBonusPercent / 100.0).toLong()
 
-            is ActiveQueue.OfflineCombatQueue -> {
-    actionsCompleted = 0
-}
+                val totalProgressMillis =
+                    finalEffectiveElapsed.toMillis() + bonusMillis
+
+                var possibleActions = (
+                    totalProgressMillis / (queue.secondsPerAction * 1000L)
+                ).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+
+                if (queue.targetQuantity != null) {
+                    val remaining = (queue.targetQuantity - queue.quantityCompleted)
+                        .coerceAtLeast(0)
+                    possibleActions = possibleActions.coerceAtMost(remaining)
+                }
+
+                // Report potential attempts only.
+                // GameViewModel performs crafts and records actual attempts.
+                actionsCompleted = possibleActions
+            }
 
 is ActiveQueue.BuryQueue -> {
     val possibleActions =
