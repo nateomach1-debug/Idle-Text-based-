@@ -754,14 +754,13 @@ private fun buildConsumableEffects(itemId: String): List<String> {
         }
 
         ConsumableType.POTION -> {
-            listOf(
-                "Applies the potion effect for ${definition.buffDurationSeconds ?: 0} seconds"
-            )
+            PotionEffectCatalog.effectsFor(itemId)
         }
 
         null -> emptyList()
     }
 }
+
 
 private fun buildItemInfoDetails(itemId: String): ItemInfoDetails {
     val recipesUsing = RecipeCatalog.recipes.filter { recipe ->
