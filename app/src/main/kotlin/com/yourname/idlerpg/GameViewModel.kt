@@ -1400,7 +1400,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-                if (definition.consumableType == ConsumableType.POTION) {
+        if (definition.consumableType == ConsumableType.POTION) {
             val potionEffect = PotionEffectCatalog.find(itemId) ?: return
 
             // Prayer-restoring potions will be enabled when Prayer points exist.
@@ -1545,15 +1545,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 inventory.consumeSelectedPotion()?.let { potion ->
                     inventory.potionTimerRemainingSeconds =
                         potion.buffDurationSeconds ?: 0
-                }
-            }
-        }
-            if (inventory.potionTimerRemainingSeconds > 0) {
-                inventory.potionTimerRemainingSeconds = (inventory.potionTimerRemainingSeconds - elapsedSeconds.toInt()).coerceAtLeast(0)
-            }
-            if (inventory.potionTimerRemainingSeconds <= 0) {
-                inventory.consumeSelectedPotion()?.let { potion ->
-                    inventory.potionTimerRemainingSeconds = potion.buffDurationSeconds ?: 0
                 }
             }
         }
