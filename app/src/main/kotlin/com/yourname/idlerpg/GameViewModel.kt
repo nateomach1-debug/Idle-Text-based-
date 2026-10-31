@@ -1210,8 +1210,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 damageType = damageType
             )
 
-            val result = combatService.resolveAttack(characterId, loadout, accuracy, maxHit, minHit)
+            val inventory = inventoryService.inventoryFor(characterId)
+            val activePotionId = inventory.selectedPotionId
+                .takeIf { inventory.potionTimerRemainingSeconds > 0 }
 
+            val result = combatService.resolveAttack(
+                characterId,
+                loadout,
+                accuracy,
+                maxHit,
+                minHit,
+                activePotionId
+            )
             if (result is ServiceResult.Success) {
                 val attack = result.value
                 val monsterDefense = session.currentMonster?.defenseRating ?: 1
@@ -2474,6 +2484,9 @@ if (buryQueue != null) {
                         attackerMinHit = prayerMinHit,
                         damageType = damageType,
                         attackSpeedSeconds = attackSpeedSeconds
+                        combatStyle = weapon?.style ?: CombatStyle.MELEE,
+                        potionItemId = inventory.selectedPotionId
+                            .takeIf { inventory.potionTimerRemainingSeconds > 0 }
                     )
 
                     if (outcome is ServiceResult.Success) {
