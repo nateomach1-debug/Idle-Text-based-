@@ -34,6 +34,7 @@ import com.yourname.idlerpg.RecipeCatalog
 import com.yourname.idlerpg.ServiceResult
 import com.yourname.idlerpg.SkillType
 import com.yourname.idlerpg.ZoneCatalog
+import com.yourname.idlerpg.ConsumableType
 
 enum class InventoryViewMode { LIST, GRID }
 
@@ -366,6 +367,19 @@ fun InventoryScreen(
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        if (info.effects.isNotEmpty()) {
+                            Text(
+                                "EFFECTS",
+                                style = MaterialTheme.typography.titleSmall
+                            )
+
+                            info.effects.forEach { effect ->
+                                Text("• $effect")
+                            }
+
+                            HorizontalDivider()
+                        }
+
                         Text(
                             "RECIPES USING THIS ITEM",
                             style = MaterialTheme.typography.titleSmall
@@ -714,6 +728,7 @@ private fun LockReason(reason: String) {
 private data class ItemInfoDetails(
     val recipesUsing: List<Recipe>,
     val recipesProducing: List<Recipe>,
+    val effects: List<String>,
     val sources: List<String>
 )
 
@@ -728,6 +743,26 @@ private fun formatSkillName(skill: String): String {
     return skill.lowercase().replaceFirstChar { it.uppercase() }
 }
 
+private fun buildConsumableEffects(itemId: String): List<String> {
+    val definition = ItemCatalog.find(itemId) ?: return emptyList()
+
+    return when (definition.consumableType) {
+        ConsumableType.FOOD -> {
+            listOf(
+                "Restores ${definition.healAmount ?: 0} HP"
+            )
+        }
+
+        ConsumableType.POTION -> {
+            listOf(
+                "Applies the potion effect for ${definition.buffDurationSeconds ?: 0} seconds"
+            )
+        }
+
+        null -> emptyList()
+    }
+}
+
 private fun buildItemInfoDetails(itemId: String): ItemInfoDetails {
     val recipesUsing = RecipeCatalog.recipes.filter { recipe ->
         recipe.ingredients.any { it.itemId == itemId }
@@ -737,19 +772,10 @@ private fun buildItemInfoDetails(itemId: String): ItemInfoDetails {
         recipe.outputItemId == itemId
     }
 
+    val effects = buildConsumableEffects(itemId)
+
     val sources = linkedSetOf<String>()
 
-    // Items directly produced by skilling actions.
-    SkillType.values().forEach { skill ->
-        ActionCatalog.allFor(skill)
-            .filter { it.itemId == itemId }
-            .forEach { action ->
-                sources.add(
-                    "Skilling — ${action.displayName} " +
-                        "(${formatSkillName(skill.name)}, level ${action.levelRequired})"
-                )
-            }
-    }
 
     // Recipes that create this item.
     recipesProducing.forEach { recipe ->
@@ -820,6 +846,7 @@ private fun buildItemInfoDetails(itemId: String): ItemInfoDetails {
     return ItemInfoDetails(
         recipesUsing = recipesUsing,
         recipesProducing = recipesProducing,
+        effects = effects,
         sources = sources.toList()
     )
 }
