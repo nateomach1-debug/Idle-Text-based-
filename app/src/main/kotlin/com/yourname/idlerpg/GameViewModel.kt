@@ -1032,7 +1032,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         // activity can run at a time.
         offlineIdleService.stopQueue(characterId)
         skillActionProgressSeconds = 0.0
-        craftActionProgressSeconds = 0
+        craftActionProgressSeconds = 0.0
         refreshActiveQueue()
         combatService.stateFor(characterId, maxHpFor(characterId))
         val result = combatService.enterZone(characterId, zoneId, skillLevel(characterId, _trainingSkill.value))
@@ -2999,14 +2999,14 @@ fun maxCraftableQuantity(itemId: String): Int {
             targetQuantity
         )
         offlineIdleService.recordLastSeen(characterId)
-        craftActionProgressSeconds = 0
+        craftActionProgressSeconds = 0.0
         refreshActiveQueue()
     }
 
     fun stopCraftingAction() {
         val characterId = _currentCharacterId.value ?: return
         offlineIdleService.stopQueue(characterId)
-        craftActionProgressSeconds = 0
+        craftActionProgressSeconds = 0.0
         refreshActiveQueue()
     }
 
@@ -3053,7 +3053,7 @@ fun maxCraftableQuantity(itemId: String): Int {
             refreshActiveQueue()
         } else if (batch.stoppedReason != null) {
             offlineIdleService.stopQueue(characterId)
-            craftActionProgressSeconds = 0
+            craftActionProgressSeconds = 0.0
             refreshActiveQueue()
             _actionStoppedNotifications.value = _actionStoppedNotifications.value + ActionStoppedNotice(
                 itemName = formatItemName(queue.itemId),
