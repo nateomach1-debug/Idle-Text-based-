@@ -138,10 +138,6 @@ private fun sortedInventoryItems(
     InventorySortMode.ALPHA_ASC -> items.sortedBy { it.displayName.lowercase() }
     InventorySortMode.ALPHA_DESC -> items.sortedByDescending { it.displayName.lowercase() }
 }
-var categoryOrder by remember {
-    mutableStateOf(loadSavedInventoryCategoryOrder(context))
-}
-var showCategoryOrderDialog by remember { mutableStateOf(false) }
 
 @Composable
 fun InventoryScreen(
@@ -169,6 +165,10 @@ fun InventoryScreen(
 
     var viewMode by remember { mutableStateOf(loadSavedInventoryViewMode(context)) }
     var sortMode by remember { mutableStateOf(loadSavedInventorySortMode(context)) }
+    var categoryOrder by remember {
+    mutableStateOf(loadSavedInventoryCategoryOrder(context))
+}
+var showCategoryOrderDialog by remember { mutableStateOf(false) }
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var showSlotShop by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
@@ -239,11 +239,6 @@ fun InventoryScreen(
         }
 
         Box {
-            TextButton(
-    onClick = { showCategoryOrderDialog = true }
-) {
-    Text("Customize Categories")
-            }
             TextButton(onClick = { sortMenuExpanded = true }) {
                 Text("Sort: ${sortMode.label}")
             }
@@ -263,7 +258,11 @@ fun InventoryScreen(
                 }
             }
         }
-
+TextButton(
+    onClick = { showCategoryOrderDialog = true }
+) {
+    Text("Customize Categories")
+}
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
                 onClick = onOpenEquipment,
