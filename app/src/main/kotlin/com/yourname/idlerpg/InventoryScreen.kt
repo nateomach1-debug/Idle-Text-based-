@@ -169,7 +169,6 @@ fun InventoryScreen(
         mutableStateOf(loadSavedInventoryCategoryOrder(context))
     }
     var showCategoryOrderDialog by remember { mutableStateOf(false) }
-    var showCategoryOrderDialog by remember { mutableStateOf(false) }
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var showSlotShop by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
