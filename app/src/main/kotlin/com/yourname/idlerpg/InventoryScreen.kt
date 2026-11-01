@@ -166,9 +166,10 @@ fun InventoryScreen(
     var viewMode by remember { mutableStateOf(loadSavedInventoryViewMode(context)) }
     var sortMode by remember { mutableStateOf(loadSavedInventorySortMode(context)) }
     var categoryOrder by remember {
-    mutableStateOf(loadSavedInventoryCategoryOrder(context))
-}
-var showCategoryOrderDialog by remember { mutableStateOf(false) }
+        mutableStateOf(loadSavedInventoryCategoryOrder(context))
+    }
+    var showCategoryOrderDialog by remember { mutableStateOf(false) }
+    var showCategoryOrderDialog by remember { mutableStateOf(false) }
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var showSlotShop by remember { mutableStateOf(false) }
     var selectedItem by remember { mutableStateOf<InventoryItemSummary?>(null) }
@@ -176,14 +177,14 @@ var showCategoryOrderDialog by remember { mutableStateOf(false) }
     var equipRequirementError by remember { mutableStateOf<String?>(null) }
 
     val grouped = remember(items, sortMode, categoryOrder) {
-    categoryOrder.mapNotNull { category ->
-        val categoryItems = sortedInventoryItems(
-            items.filter { it.category == category },
-            sortMode
-        )
-        if (categoryItems.isEmpty()) null else category to categoryItems
+        categoryOrder.mapNotNull { category ->
+            val categoryItems = sortedInventoryItems(
+                items.filter { it.category == category },
+                sortMode
+            )
+            if (categoryItems.isEmpty()) null else category to categoryItems
+        }
     }
-}
 
     Column(
         modifier = modifier
