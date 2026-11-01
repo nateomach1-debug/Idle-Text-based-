@@ -66,6 +66,7 @@ data class InventoryItemSummary(
 private const val PREFS_NAME = "idlerpg_prefs"
 private const val KEY_INVENTORY_VIEW_MODE = "inventory_view_mode"
 private const val KEY_INVENTORY_SORT_MODE = "inventory_sort_mode"
+private const val KEY_INVENTORY_CATEGORY_ORDER = "inventory_category_order"
 
 private fun loadSavedInventoryViewMode(context: Context): InventoryViewMode {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -97,6 +98,37 @@ private fun saveInventorySortMode(context: Context, mode: InventorySortMode) {
         .apply()
 }
 
+private fun loadSavedInventoryCategoryOrder(
+    context: Context
+): List<InventoryCategory> {
+    val defaultOrder = InventoryCategory.values().toList()
+    val saved = context.getSharedPreferences(
+        PREFS_NAME,
+        Context.MODE_PRIVATE
+    ).getString(KEY_INVENTORY_CATEGORY_ORDER, null)
+
+    if (saved.isNullOrBlank()) return defaultOrder
+
+    val savedOrder = saved.split(",").mapNotNull { name ->
+        runCatching { InventoryCategory.valueOf(name) }.getOrNull()
+    }
+
+    return (savedOrder + defaultOrder).distinct()
+}
+
+private fun saveInventoryCategoryOrder(
+    context: Context,
+    order: List<InventoryCategory>
+) {
+    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .putString(
+            KEY_INVENTORY_CATEGORY_ORDER,
+            order.joinToString(",") { it.name }
+        )
+        .apply()
+}
+
 private fun sortedInventoryItems(
     items: List<InventoryItemSummary>,
     mode: InventorySortMode
@@ -106,6 +138,10 @@ private fun sortedInventoryItems(
     InventorySortMode.ALPHA_ASC -> items.sortedBy { it.displayName.lowercase() }
     InventorySortMode.ALPHA_DESC -> items.sortedByDescending { it.displayName.lowercase() }
 }
+var categoryOrder by remember {
+    mutableStateOf(loadSavedInventoryCategoryOrder(context))
+}
+var showCategoryOrderDialog by remember { mutableStateOf(false) }
 
 @Composable
 fun InventoryScreen(
@@ -139,15 +175,15 @@ fun InventoryScreen(
     var showItemInfo by remember { mutableStateOf(false) }
     var equipRequirementError by remember { mutableStateOf<String?>(null) }
 
-    val grouped = remember(items, sortMode) {
-        InventoryCategory.values().mapNotNull { category ->
-            val categoryItems = sortedInventoryItems(
-                items.filter { it.category == category },
-                sortMode
-            )
-            if (categoryItems.isEmpty()) null else category to categoryItems
-        }
+    val grouped = remember(items, sortMode, categoryOrder) {
+    categoryOrder.mapNotNull { category ->
+        val categoryItems = sortedInventoryItems(
+            items.filter { it.category == category },
+            sortMode
+        )
+        if (categoryItems.isEmpty()) null else category to categoryItems
     }
+}
 
     Column(
         modifier = modifier
@@ -203,6 +239,11 @@ fun InventoryScreen(
         }
 
         Box {
+            TextButton(
+    onClick = { showCategoryOrderDialog = true }
+) {
+    Text("Customize Categories")
+            }
             TextButton(onClick = { sortMenuExpanded = true }) {
                 Text("Sort: ${sortMode.label}")
             }
@@ -249,7 +290,86 @@ fun InventoryScreen(
                 InventoryGridView(grouped) { selectedItem = it }
         }
     }
+if (showCategoryOrderDialog) {
+    AlertDialog(
+        onDismissRequest = {
+            showCategoryOrderDialog = false
+        },
+        title = {
+            Text("Customize Inventory Categories")
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    "Use the arrows to change the category order.",
+                    style = MaterialTheme.typography.bodySmall
+                )
 
+                categoryOrder.forEachIndexed { index, category ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            category.name,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        TextButton(
+                            enabled = index > 0,
+                            onClick = {
+                                val updated = categoryOrder.toMutableList()
+                                val moved = updated.removeAt(index)
+                                updated.add(index - 1, moved)
+                                categoryOrder = updated
+                                saveInventoryCategoryOrder(context, updated)
+                            }
+                        ) {
+                            Text("↑")
+                        }
+
+                        TextButton(
+                            enabled = index < categoryOrder.lastIndex,
+                            onClick = {
+                                val updated = categoryOrder.toMutableList()
+                                val moved = updated.removeAt(index)
+                                updated.add(index + 1, moved)
+                                categoryOrder = updated
+                                saveInventoryCategoryOrder(context, updated)
+                            }
+                        ) {
+                            Text("↓")
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Row {
+                TextButton(
+                    onClick = {
+                        val defaultOrder = InventoryCategory.values().toList()
+                        categoryOrder = defaultOrder
+                        saveInventoryCategoryOrder(context, defaultOrder)
+                    }
+                ) {
+                    Text("Reset Order")
+                }
+
+                TextButton(
+                    onClick = {
+                        showCategoryOrderDialog = false
+                    }
+                ) {
+                    Text("Done")
+                }
+            }
+        }
+    )
+}
     if (showSlotShop) {
         AlertDialog(
             onDismissRequest = {
