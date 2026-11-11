@@ -76,7 +76,11 @@ private fun formatItemName(itemId: String): String =
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = GameStateRepository(application)
-
+    init {
+        // Resume any cloud save upload interrupted by a previous app shutdown.
+        CloudSaveUploadWorker.enqueuePending(application)
+    }
+    
     val accountService = AccountService()
     val progressionService = ProgressionService()
     val inventoryService = InventoryService()
@@ -2010,9 +2014,17 @@ fun logout() {
         )
         val supabaseCharacterId = _currentSupabaseCharacterId.value
         val json = repository.currentSaveJson()
+
         if (supabaseCharacterId != null && json != null) {
-            viewModelScope.launch {
-                SupabaseCharacterRepository.uploadCharacterSave(supabaseCharacterId, json)
+            val queued = CloudSaveUploadWorker.storeAndEnqueue(
+                getApplication(),
+                supabaseCharacterId,
+                json
+            )
+
+            if (!queued) {
+                _characterSyncError.value =
+                    "Could not save the pending cloud upload locally."
             }
         }
         val localCharacterIdForSkills = _currentCharacterId.value
