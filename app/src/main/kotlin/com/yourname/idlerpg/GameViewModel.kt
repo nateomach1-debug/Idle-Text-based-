@@ -2061,39 +2061,93 @@ fun logout() {
                 _currentSupabaseCharacterId.value = result.getOrNull()
                 val supabaseCharacterId = result.getOrNull()
                 var recoveredToRemoteId: String? = null
+
                 if (supabaseCharacterId != null) {
-                    val remoteLocalId = SupabaseCharacterRepository.getCharacterLocalId(supabaseCharacterId).getOrNull()
-                    if (remoteLocalId != null && remoteLocalId != characterId) {
-                        // The server returned an EXISTING character from a different
-                        // device/install, not the one just created locally - recover
-                        // its real save instead of keeping the throwaway new one.
-                        val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
-                        if (cloudJson != null) {
-                            repository.overwriteRawJson(cloudJson)
-                            val recovered = repository.load()
-                            if (recovered != null) {
-                                recovered.accounts.forEach { accountService.restoreAccount(it) }
-                                recovered.characters.forEach { accountService.restoreCharacter(it) }
-                                recovered.skills.forEach { progressionService.restoreSkill(it) }
-                                recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-                                recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-                                recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-                                recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
-                                recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
-                                recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
-                                recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
-                                recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
-                                recovered.marketOrders.forEach { marketService.restoreOrder(it) }
-                                recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
-                                recovered.combatSessions.forEach { combatService.restoreSession(it) }
-                                recovered.offlineCombatQueues.forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
-                                recovered.buryQueues.forEach { offlineIdleService.restoreBuryQueue(it) }
-                                _currentCharacterId.value = remoteLocalId
-                                val recoveredCharacter = recovered.characters.firstOrNull { it.id == remoteLocalId }
-                                if (recoveredCharacter != null) {
-                                    _currentAccountId.value = recoveredCharacter.accountId
-                                }
-                                recoveredToRemoteId = remoteLocalId
+                    val remoteLocalId = SupabaseCharacterRepository
+                        .getCharacterLocalId(supabaseCharacterId)
+                        .getOrNull()
+
+                    // Always restore the latest cloud save before resolving
+                    // offline progress. This is especially important after a
+                    // full app close on another device, where local data may
+                    // be older than the saved combat queue and last-seen time.
+                    val cloudJson = SupabaseCharacterRepository
+                        .downloadCharacterSave(supabaseCharacterId)
+                        .getOrNull()
+
+                    if (cloudJson != null) {
+                        repository.overwriteRawJson(cloudJson)
+                        val recovered = repository.load()
+
+                        if (recovered != null) {
+                            recovered.accounts.forEach {
+                                accountService.restoreAccount(it)
+                            }
+                            recovered.characters.forEach {
+                                accountService.restoreCharacter(it)
+                            }
+                            recovered.skills.forEach {
+                                progressionService.restoreSkill(it)
+                            }
+                            recovered.skillingQueues.forEach {
+                                offlineIdleService.restoreSkillingQueue(it)
+                            }
+                            recovered.craftingQueues.forEach {
+                                offlineIdleService.restoreCraftingQueue(it)
+                            }
+                            recovered.lastSeen.forEach {
+                                offlineIdleService.restoreLastSeen(it)
+                            }
+                            recovered.lastSaleCheck.forEach {
+                                offlineIdleService.restoreLastSaleCheck(it)
+                            }
+                            recovered.inventoryItems.forEach {
+                                inventoryService.restoreItem(it)
+                            }
+                            recovered.equippedSlots.forEach {
+                                inventoryService.restoreEquipped(it)
+                            }
+                            recovered.loadoutSettings.forEach {
+                                inventoryService.restoreLoadoutSettings(it)
+                            }
+                            recovered.marketAccounts.forEach {
+                                marketService.restoreAccount(it)
+                            }
+                            recovered.marketOrders.forEach {
+                                marketService.restoreOrder(it)
+                            }
+                            recovered.marketPriceHistory.forEach {
+                                marketService.restorePriceHistoryEntry(it)
+                            }
+                            recovered.combatSessions.forEach {
+                                combatService.restoreSession(it)
+                            }
+                            recovered.offlineCombatQueues.forEach {
+                                offlineIdleService.restoreOfflineCombatQueue(it)
+                            }
+                            recovered.buryQueues.forEach {
+                                offlineIdleService.restoreBuryQueue(it)
+                            }
+
+                            // Prefer the character ID stored in the cloud save.
+                            // Normally this is the same ID, but this also handles
+                            // recovery from another device or installation.
+                            val restoredId = remoteLocalId
+                                ?: recovered.characters
+                                    .firstOrNull { it.id == characterId }
+                                    ?.id
+
+                            if (restoredId != null) {
+                                _currentCharacterId.value = restoredId
+
+                                recovered.characters
+                                    .firstOrNull { it.id == restoredId }
+                                    ?.let { restoredCharacter ->
+                                        _currentAccountId.value =
+                                            restoredCharacter.accountId
+                                    }
+
+                                recoveredToRemoteId = restoredId
                             }
                         }
                     }
