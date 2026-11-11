@@ -1186,6 +1186,12 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                 val debugAuthError by gameViewModel.supabaseAuthError.collectAsState()
                                 val debugSupabaseCharId by gameViewModel.currentSupabaseCharacterId.collectAsState()
                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
+                                val debugCombatQueueDiagnostic by
+                                    gameViewModel.combatQueueDiagnostic.collectAsState()
+
+                                LaunchedEffect(Unit) {
+                                    gameViewModel.refreshCombatQueueDiagnostic()
+                                }
                                 val debugChatError by gameViewModel.chatActionError.collectAsState()
                                 val debugMarketError by gameViewModel.marketActionError.collectAsState()
                                 var showDebugDialog by remember { mutableStateOf(false) }
@@ -1195,17 +1201,32 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                     }
                                 }
                                 if (showDebugDialog) {
-                                    androidx.compose.material3.AlertDialog(
-                                        onDismissRequest = { showDebugDialog = false },
-                                        title = { androidx.compose.material3.Text("Debug: Supabase Sync") },
-                                        text = {
-                                            androidx.compose.foundation.layout.Column {
+                                                androidx.compose.foundation.layout.Column {
                                                 androidx.compose.material3.Text("Auth: $debugAuthState")
                                                 debugAuthError?.let { androidx.compose.material3.Text("Auth error: $it") }
                                                 androidx.compose.material3.Text("Char id: ${debugSupabaseCharId ?: "none"}")
                                                 debugCharSyncError?.let { androidx.compose.material3.Text("Char sync error: $it") }
                                                 debugChatError?.let { androidx.compose.material3.Text("Chat error: $it") }
                                                 debugMarketError?.let { androidx.compose.material3.Text("Market error: $it") }
+
+                                                androidx.compose.material3.Divider()
+
+                                                androidx.compose.material3.Text(
+                                                    "Combat Queue Diagnostic",
+                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                                )
+
+                                                androidx.compose.material3.Text(
+                                                    debugCombatQueueDiagnostic
+                                                )
+
+                                                androidx.compose.material3.TextButton(
+                                                    onClick = {
+                                                        gameViewModel.refreshCombatQueueDiagnostic()
+                                                    }
+                                                ) {
+                                                    androidx.compose.material3.Text("Refresh Diagnostic")
+                                                }
                                             }
                                         },
                                         confirmButton = {
