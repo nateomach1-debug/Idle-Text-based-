@@ -2230,9 +2230,11 @@ fun logout() {
                                     .firstOrNull { it.id == characterId }
                                     ?.id
 
-                                if (restoredId != null) {
+                                
+                            if (restoredId != null) {
                                 _currentCharacterId.value = restoredId
-                                                refreshCombatQueueDiagnostic()
+                                refreshCombatQueueDiagnostic()
+
                                 recovered.characters
                                     .firstOrNull { it.id == restoredId }
                                     ?.let { restoredCharacter ->
@@ -2258,14 +2260,7 @@ fun logout() {
                 // an offline-progress popup built from the wrong (pre-recovery)
                 // character before this corrected one silently replaced it.
                 resolveOfflineRewardsAndSync(finalCharacterId)
-                                refreshCombatQueueDiagnostic()
-                // Prefetch guild/chat data now (a live signed-in session is
-                // guaranteed at this point) instead of waiting for the user to
-                // visit the Guild tab, where these previously only started
-                // fetching on first navigation - making the network round trip
-                // visible every time instead of already being warm.
-                refreshGuildHome()
-                loadInitialChatState()
+                refreshCombatQueueDiagnostic()
                 // Prefetch guild/chat data now (a live signed-in session is
                 // guaranteed at this point) instead of waiting for the user to
                 // visit the Guild tab, where these previously only started
