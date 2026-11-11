@@ -1060,6 +1060,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 settingsPrefs.edit().remove(combatTargetKey(characterId)).apply()
             }
             offlineIdleService.optIntoOfflineCombat(characterId, zoneId)
+
+            // Save immediately so the offline combat queue survives a full
+            // app close or an aggressive device process shutdown.
+            offlineIdleService.recordLastSeen(characterId)
+            saveGame()
+
+            refreshActiveQueue()
             refreshCombatView()
         }
         return result
@@ -3273,6 +3280,19 @@ fun maxCraftableQuantity(itemId: String): Int {
                 ActiveQueueInfo(
                     label = "Burying " + formatItemName(queue.itemId) + " (" + remaining + " left)",
                     secondsPerAction = queue.secondsPerAction,
+                    startedAt = queue.startedAt
+                )
+            }
+
+            is ActiveQueue.OfflineCombatQueue -> {
+                val zoneName = ZoneCatalog.zones
+                    .find { it.id == queue.zoneId }
+                    ?.name
+                    ?: "Combat"
+
+                ActiveQueueInfo(
+                    label = "Combat: " + zoneName,
+                    secondsPerAction = 0L,
                     startedAt = queue.startedAt
                 )
             }
