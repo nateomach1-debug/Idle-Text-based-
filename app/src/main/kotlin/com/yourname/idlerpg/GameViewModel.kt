@@ -330,7 +330,77 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _characterSyncError = MutableStateFlow<String?>(null)
     val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
+    private var combatQueueLocalBeforeCloud = "Not captured"
+    private var combatQueueCloudSave = "Not downloaded"
+    private var combatQueueRemoteLocalId = "Not received"
 
+    private val _combatQueueDiagnostic = MutableStateFlow("Not refreshed")
+    val combatQueueDiagnostic: StateFlow<String> =
+        _combatQueueDiagnostic.asStateFlow()
+
+    private fun summarizeOfflineCombatQueues(json: String?): String {
+        if (json == null) return "Save unavailable"
+
+        return try {
+            val queues = org.json.JSONObject(json)
+                .optJSONArray("offlineCombatQueues")
+
+            if (queues == null || queues.length() == 0) {
+                "None"
+            } else {
+                (0 until queues.length()).joinToString("; ") { index ->
+                    val queue = queues.getJSONObject(index)
+                    "character=${queue.optString("characterId")}, zone=${queue.optString("zoneId")}"
+                }
+            }
+        } catch (e: Exception) {
+            "Could not read queue data"
+        }
+    }
+
+    fun refreshCombatQueueDiagnostic() {
+        val characterId = _currentCharacterId.value
+
+        val activeQueue = characterId?.let {
+            offlineIdleService.activeQueueFor(it)
+        }
+
+        val activeSummary = when (activeQueue) {
+            is ActiveQueue.OfflineCombatQueue ->
+                "Combat: zone=${activeQueue.zoneId}, character=${activeQueue.characterId}"
+            null -> "None"
+            else -> "${activeQueue.type} for ${activeQueue.characterId}"
+        }
+
+        val currentLocalSave =
+            summarizeOfflineCombatQueues(repository.currentSaveJson())
+
+        val pendingUpload =
+            CloudSaveUploadWorker.pendingCombatQueueDiagnostic(getApplication())
+
+        _combatQueueDiagnostic.value = """
+            Local save before cloud download:
+            $combatQueueLocalBeforeCloud
+
+            Pending cloud upload:
+            $pendingUpload
+
+            Downloaded cloud save:
+            $combatQueueCloudSave
+
+            Remote local character ID:
+            $combatQueueRemoteLocalId
+
+            Currently selected character ID:
+            ${characterId ?: "None"}
+
+            Current local save:
+            $currentLocalSave
+
+            Active queue for selected character:
+            $activeSummary
+        """.trimIndent()
+    }
     fun refreshGuildHome() {
         val characterId = _currentSupabaseCharacterId.value ?: return
         viewModelScope.launch {
@@ -2078,6 +2148,7 @@ fun logout() {
                     val remoteLocalId = SupabaseCharacterRepository
                         .getCharacterLocalId(supabaseCharacterId)
                         .getOrNull()
+                        combatQueueRemoteLocalId = remoteLocalId ?: "Not returned"
 
                     // Always restore the latest cloud save before resolving
                     // offline progress. This is especially important after a
@@ -2086,7 +2157,12 @@ fun logout() {
                     val cloudJson = SupabaseCharacterRepository
                         .downloadCharacterSave(supabaseCharacterId)
                         .getOrNull()
-
+                    combatQueueCloudSave =
+                        if (cloudJson != null) {
+                            summarizeOfflineCombatQueues(cloudJson)
+                        } else {
+                            "No cloud save returned"
+                        }
                     if (cloudJson != null) {
                         repository.overwriteRawJson(cloudJson)
                         val recovered = repository.load()
@@ -2151,7 +2227,11 @@ fun logout() {
 
                             if (restoredId != null) {
                                 _currentCharacterId.value = restoredId
-
+                                combatQueueLocalBeforeCloud =
+                                      summarizeOfflineCombatQueues(repository.currentSaveJson())
+                                combatQueueCloudSave = "Not downloaded yet"
+                                combatQueueRemoteLocalId = "Not received"
+                                refreshCombatQueueDiagnostic()
                                 recovered.characters
                                     .firstOrNull { it.id == restoredId }
                                     ?.let { restoredCharacter ->
@@ -2177,6 +2257,7 @@ fun logout() {
                 // an offline-progress popup built from the wrong (pre-recovery)
                 // character before this corrected one silently replaced it.
                 resolveOfflineRewardsAndSync(finalCharacterId)
+                                refreshCombatQueueDiagnostic()
                 // Prefetch guild/chat data now (a live signed-in session is
                 // guaranteed at this point) instead of waiting for the user to
                 // visit the Guild tab, where these previously only started
