@@ -2261,25 +2261,7 @@ fun logout() {
                 // character before this corrected one silently replaced it.
                 resolveOfflineRewardsAndSync(finalCharacterId)
                 refreshCombatQueueDiagnostic()
-                // Prefetch guild/chat data now (a live signed-in session is
-                // guaranteed at this point) instead of waiting for the user to
-                // visit the Guild tab, where these previously only started
-                // fetching on first navigation - making the network round trip
-                // visible every time instead of already being warm.
-                refreshGuildHome()
-                loadInitialChatState()
-                // Prefetch guild/chat data now (a live signed-in session is
-                // guaranteed at this point) instead of waiting for the user to
-                // visit the Guild tab, where these previously only started
-                // fetching on first navigation - making the network round trip
-                // visible every time instead of already being warm.
-                refreshGuildHome()
-                loadInitialChatState()
-                // Prefetch guild/chat data now (a live signed-in session is
-                // guaranteed at this point) instead of waiting for the user to
-                // visit the Guild tab, where these previously only started
-                // fetching on first navigation - making the network round trip
-                // visible every time instead of already being warm.
+                // Prefetch guild/chat data now that the session is available.
                 refreshGuildHome()
                 loadInitialChatState()
             }
