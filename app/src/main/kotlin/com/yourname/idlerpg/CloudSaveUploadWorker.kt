@@ -74,7 +74,37 @@ class CloudSaveUploadWorker(
         private const val UNIQUE_WORK_NAME = "idlerpg_cloud_save_upload"
 
         private val lock = Any()
+        
+        fun pendingCombatQueueDiagnostic(context: Context): String {
+            val prefs = context.applicationContext.getSharedPreferences(
+                PREFS_NAME,
+                Context.MODE_PRIVATE
+            )
 
+            val pending = synchronized(lock) {
+                val id = prefs.getString(KEY_CHARACTER_ID, null)
+                val json = prefs.getString(KEY_SAVE_JSON, null)
+                if (id == null || json == null) null else id to json
+            } ?: return "Pending upload: none"
+
+            return try {
+                val queues = org.json.JSONObject(pending.second)
+                    .optJSONArray("offlineCombatQueues")
+
+                val summary = if (queues == null || queues.length() == 0) {
+                    "none"
+                } else {
+                    (0 until queues.length()).joinToString("; ") { index ->
+                        val queue = queues.getJSONObject(index)
+                        "character=${queue.optString("characterId")}, zone=${queue.optString("zoneId")}"
+                    }
+                }
+
+                "Pending upload character=${pending.first}; combat queues=$summary"
+            } catch (e: Exception) {
+                "Pending upload exists, but its combat queue data could not be read"
+            }
+        }
         fun storeAndEnqueue(
             context: Context,
             characterId: String,
