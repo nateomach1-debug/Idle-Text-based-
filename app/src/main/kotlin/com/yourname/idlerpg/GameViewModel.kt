@@ -2305,15 +2305,28 @@ fun logout() {
     // (a character id was already cached locally) - selectCharacter() is never
     // called on this path, so nothing would otherwise trigger offline-progress
     // resolution or restore the persisted training skill for this session.
+    
     fun resumeCurrentCharacterIfNeeded() {
         val characterId = _currentCharacterId.value ?: return
-        val restoredTrainingSkillId = inventoryService.inventoryFor(characterId).trainingSkillId
+
+        combatQueueLocalBeforeCloud =
+            summarizeOfflineCombatQueues(repository.currentSaveJson())
+        combatQueueCloudSave = "Not checked on resume path"
+        combatQueueRemoteLocalId = "Not checked on resume path"
+        refreshCombatQueueDiagnostic()
+
+        val restoredTrainingSkillId =
+            inventoryService.inventoryFor(characterId).trainingSkillId
+
         val restoredTrainingSkill = restoredTrainingSkillId?.let {
             runCatching { SkillType.valueOf(it) }.getOrNull()
         } ?: SkillType.ATTACK
+
         setTrainingSkill(restoredTrainingSkill)
         resolveOfflineRewardsAndSync(characterId)
+        refreshCombatQueueDiagnostic()
     }
+
 
     private fun resolveOfflineRewardsAndSync(characterId: String) {
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
