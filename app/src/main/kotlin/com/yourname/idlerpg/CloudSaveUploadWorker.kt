@@ -22,10 +22,19 @@ class CloudSaveUploadWorker(
         )
 
         repeat(5) {
-            val characterId: String
-            val saveJson: String
+                val pending = synchronized(lock) {
+                val id = prefs.getString(KEY_CHARACTER_ID, null)
+                val json = prefs.getString(KEY_SAVE_JSON, null)
 
-            synchronized(lock) {
+                if (id == null || json == null) {
+                    null
+                } else {
+                    id to json
+                }
+            } ?: return Result.success()
+
+            val characterId = pending.first
+            val saveJson = pending.second
                 characterId = prefs.getString(KEY_CHARACTER_ID, null)
                     ?: return Result.success()
 
@@ -42,7 +51,7 @@ class CloudSaveUploadWorker(
                 return Result.retry()
             }
 
-            val finished = synchronized(lock) {
+                val finished = synchronized(lock) {
                 val latestId = prefs.getString(KEY_CHARACTER_ID, null)
                 val latestJson = prefs.getString(KEY_SAVE_JSON, null)
 
@@ -51,7 +60,6 @@ class CloudSaveUploadWorker(
                         .remove(KEY_CHARACTER_ID)
                         .remove(KEY_SAVE_JSON)
                         .commit()
-                    true
                 } else {
                     false
                 }
