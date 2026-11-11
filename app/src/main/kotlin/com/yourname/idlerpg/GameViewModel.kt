@@ -2111,6 +2111,11 @@ fun logout() {
     fun selectCharacter(characterId: String) {
         _currentCharacterId.value = characterId
 
+        combatQueueLocalBeforeCloud =
+            summarizeOfflineCombatQueues(repository.currentSaveJson())
+        combatQueueCloudSave = "Not downloaded yet"
+        combatQueueRemoteLocalId = "Not received"
+        refreshCombatQueueDiagnostic()
         // Restore the persisted training skill immediately - this is purely
         // local (no Supabase dependency), so it must run regardless of whether
         // the auth check below succeeds, fails, or times out. Previously this
@@ -2225,13 +2230,9 @@ fun logout() {
                                     .firstOrNull { it.id == characterId }
                                     ?.id
 
-                            if (restoredId != null) {
+                                if (restoredId != null) {
                                 _currentCharacterId.value = restoredId
-                                combatQueueLocalBeforeCloud =
-                                      summarizeOfflineCombatQueues(repository.currentSaveJson())
-                                combatQueueCloudSave = "Not downloaded yet"
-                                combatQueueRemoteLocalId = "Not received"
-                                refreshCombatQueueDiagnostic()
+                                                refreshCombatQueueDiagnostic()
                                 recovered.characters
                                     .firstOrNull { it.id == restoredId }
                                     ?.let { restoredCharacter ->
