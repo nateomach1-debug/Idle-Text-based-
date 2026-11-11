@@ -22,7 +22,7 @@ class CloudSaveUploadWorker(
         )
 
         repeat(5) {
-                val pending = synchronized(lock) {
+            val pending = synchronized(lock) {
                 val id = prefs.getString(KEY_CHARACTER_ID, null)
                 val json = prefs.getString(KEY_SAVE_JSON, null)
 
@@ -35,12 +35,6 @@ class CloudSaveUploadWorker(
 
             val characterId = pending.first
             val saveJson = pending.second
-                characterId = prefs.getString(KEY_CHARACTER_ID, null)
-                    ?: return Result.success()
-
-                saveJson = prefs.getString(KEY_SAVE_JSON, null)
-                    ?: return Result.success()
-            }
 
             val upload = SupabaseCharacterRepository.uploadCharacterSave(
                 characterId,
@@ -51,7 +45,7 @@ class CloudSaveUploadWorker(
                 return Result.retry()
             }
 
-                val finished = synchronized(lock) {
+            val finished = synchronized(lock) {
                 val latestId = prefs.getString(KEY_CHARACTER_ID, null)
                 val latestJson = prefs.getString(KEY_SAVE_JSON, null)
 
@@ -70,7 +64,6 @@ class CloudSaveUploadWorker(
             }
         }
 
-        // More saves arrived while uploading. Retry to process the newest one.
         return Result.retry()
     }
 
@@ -106,7 +99,8 @@ class CloudSaveUploadWorker(
         }
 
         fun enqueuePending(context: Context) {
-            val prefs = context.applicationContext.getSharedPreferences(
+            val appContext = context.applicationContext
+            val prefs = appContext.getSharedPreferences(
                 PREFS_NAME,
                 Context.MODE_PRIVATE
             )
@@ -115,7 +109,7 @@ class CloudSaveUploadWorker(
                 prefs.getString(KEY_CHARACTER_ID, null) != null &&
                 prefs.getString(KEY_SAVE_JSON, null) != null
             ) {
-                enqueue(context.applicationContext)
+                enqueue(appContext)
             }
         }
 
@@ -133,7 +127,6 @@ class CloudSaveUploadWorker(
                 UNIQUE_WORK_NAME,
                 ExistingWorkPolicy.REPLACE,
                 request
-       
             )
         }
     }
