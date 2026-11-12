@@ -1227,7 +1227,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                             androidx.compose.material3.Text("Debug: Supabase Sync")
                                         },
                                         text = {
-                                val debugScrollState =
+                                            val debugScrollState =
                                                 androidx.compose.foundation.rememberScrollState()
 
                                             androidx.compose.foundation.layout.Column(
