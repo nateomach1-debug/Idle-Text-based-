@@ -399,6 +399,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
             Active queue for selected character:
             $activeSummary
+
+            Last offline combat queue stop:
+            ${offlineIdleService.offlineCombatQueueStopDiagnostic()}
         """.trimIndent()
     }
     fun refreshGuildHome() {
