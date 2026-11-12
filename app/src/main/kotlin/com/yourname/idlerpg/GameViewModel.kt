@@ -2300,13 +2300,7 @@ fun logout() {
         combatQueueRemoteLocalId = "Not checked on resume path"
         refreshCombatQueueDiagnostic()
 
-        val restoredTrainingSkillId =
-            inventoryService.inventoryFor(characterId).trainingSkillId
-
-        val restoredTrainingSkill =
-            restoreTrainingSkillFor(characterId)
-
-        setTrainingSkill(restoredTrainingSkill)
+        restoreTrainingSkillFor(characterId)
         resolveOfflineRewardsAndSync(characterId)
         refreshCombatQueueDiagnostic()
     }
