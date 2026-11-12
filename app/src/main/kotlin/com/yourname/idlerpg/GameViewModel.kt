@@ -1063,7 +1063,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun skillLevel(characterId: String, skillType: SkillType): Int =
         LevelCurve.levelForXp(progressionService.skillBookFor(characterId).get(skillType).xp)
+        
+    private fun restoreTrainingSkillFor(characterId: String) {
+        val restoredTrainingSkillId =
+            inventoryService.inventoryFor(characterId).trainingSkillId
 
+        val restoredTrainingSkill = restoredTrainingSkillId?.let {
+            runCatching { SkillType.valueOf(it) }.getOrNull()
+        } ?: SkillType.ATTACK
+
+        _trainingSkill.value = restoredTrainingSkill
+        _trainingSkillLevel.value = skillLevel(characterId, restoredTrainingSkill)
+    }
+    
     fun setTrainingSkill(skillType: SkillType): ServiceResult<Unit> {
         val characterId = _currentCharacterId.value
 
@@ -2125,13 +2137,6 @@ fun logout() {
         // only happened after auth succeeded, so a slow/failed auth handshake
         // (common right after a cold app start) silently skipped it every time
         // via the early-return path, leaving trainingSkill stuck at ATTACK.
-        fun restoreTrainingSkillFor(id: String) {
-            val restoredTrainingSkillId = inventoryService.inventoryFor(id).trainingSkillId
-            val restoredTrainingSkill = restoredTrainingSkillId?.let {
-                runCatching { SkillType.valueOf(it) }.getOrNull()
-            } ?: SkillType.ATTACK
-            setTrainingSkill(restoredTrainingSkill)
-        }
         restoreTrainingSkillFor(characterId)
 
         val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
@@ -2298,9 +2303,8 @@ fun logout() {
         val restoredTrainingSkillId =
             inventoryService.inventoryFor(characterId).trainingSkillId
 
-        val restoredTrainingSkill = restoredTrainingSkillId?.let {
-            runCatching { SkillType.valueOf(it) }.getOrNull()
-        } ?: SkillType.ATTACK
+        val restoredTrainingSkill =
+            restoreTrainingSkillFor(characterId)
 
         setTrainingSkill(restoredTrainingSkill)
         resolveOfflineRewardsAndSync(characterId)
