@@ -195,6 +195,8 @@ data class BuryQueueExport(val characterId: String, val itemId: String, val targ
 class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
 
     private val activeQueues: MutableMap<String, ActiveQueue> = mutableMapOf()
+    private var lastOfflineCombatQueueStopDiagnostic: String =
+        "No offline combat queue stop has been recorded in this app session."
     private val lastSeenAt: MutableMap<String, Instant> = mutableMapOf()
     private val lastSaleCheckAt: MutableMap<String, Instant> = mutableMapOf()
     private val flaggedAccounts: MutableList<OfflineFlagRecord> = mutableListOf()
@@ -235,10 +237,36 @@ class OfflineIdleService(private val materialCheck: MaterialAvailabilityCheck) {
     }
 
     fun stopQueue(characterId: String): ServiceResult<Unit> {
-        if (!activeQueues.containsKey(characterId)) return ServiceResult.Failure("No active queue to stop.")
+        val queue = activeQueues[characterId]
+            ?: return ServiceResult.Failure("No active queue to stop.")
+
+        if (queue is ActiveQueue.OfflineCombatQueue) {
+            val callers = Thread.currentThread().stackTrace
+                .filter {
+                    it.className.startsWith("com.yourname.idlerpg.") &&
+                        !(it.className.endsWith("OfflineIdleService") &&
+                            it.methodName == "stopQueue")
+                }
+                .take(8)
+                .joinToString(" <- ") {
+                    it.className.substringAfterLast(".") +
+                        "." + it.methodName + ":" + it.lineNumber
+                }
+
+            lastOfflineCombatQueueStopDiagnostic =
+                "Time: ${Instant.now()}\n" +
+                "Character: $characterId\n" +
+                "Zone: ${queue.zoneId}\n" +
+                "Queue started: ${queue.startedAt}\n" +
+                "Caller path: $callers"
+        }
+
         activeQueues.remove(characterId)
         return ServiceResult.Success(Unit)
     }
+
+    fun offlineCombatQueueStopDiagnostic(): String =
+        lastOfflineCombatQueueStopDiagnostic
 
     fun activeQueueFor(characterId: String): ActiveQueue? = activeQueues[characterId]
 
