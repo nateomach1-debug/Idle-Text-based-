@@ -25,6 +25,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.verticalScroll
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yourname.idlerpg.data.GameViewModel
 import com.yourname.idlerpg.ui.components.RecoveryBar
@@ -1226,7 +1227,14 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                             androidx.compose.material3.Text("Debug: Supabase Sync")
                                         },
                                         text = {
-                                            androidx.compose.foundation.layout.Column {
+                                val debugScrollState =
+                                                androidx.compose.foundation.rememberScrollState()
+
+                                            androidx.compose.foundation.layout.Column(
+                                                modifier =
+                                                    androidx.compose.ui.Modifier
+                                                        .verticalScroll(debugScrollState)
+                                            ) {
                                                 androidx.compose.material3.Text("Auth: $debugAuthState")
                                                 debugAuthError?.let {
                                                     androidx.compose.material3.Text("Auth error: $it")
