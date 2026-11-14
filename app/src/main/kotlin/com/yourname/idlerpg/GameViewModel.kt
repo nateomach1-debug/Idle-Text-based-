@@ -425,6 +425,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val currentLocalSave =
             summarizeOfflineCombatQueues(repository.currentSaveJson())
 
+        val currentAllQueues =
+            summarizeAllOfflineQueues(repository.currentSaveJson())
+
         val pendingUpload =
             CloudSaveUploadWorker.pendingCombatQueueDiagnostic(getApplication())
 
