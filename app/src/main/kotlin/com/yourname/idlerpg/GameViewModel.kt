@@ -334,6 +334,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private var combatQueueCloudSave = "Not downloaded"
     private var combatQueueRemoteLocalId = "Not received"
 
+    private var allQueuesLocalBeforeCloud = "Not captured"
+    private var allQueuesCloudSave = "Not downloaded"
     private val _combatQueueDiagnostic = MutableStateFlow("Not refreshed")
     val combatQueueDiagnostic: StateFlow<String> =
         _combatQueueDiagnostic.asStateFlow()
@@ -432,14 +434,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             CloudSaveUploadWorker.pendingCombatQueueDiagnostic(getApplication())
 
         _combatQueueDiagnostic.value = """
-            Local save before cloud download:
+            Local save before cloud download (combat):
             $combatQueueLocalBeforeCloud
 
-            Pending cloud upload:
+            Local save before cloud download (ALL queues):
+            $allQueuesLocalBeforeCloud
+
+            Pending cloud upload (ALL queues):
             $pendingUpload
 
-            Downloaded cloud save:
+            Downloaded cloud save (combat):
             $combatQueueCloudSave
+
+            Downloaded cloud save (ALL queues):
+            $allQueuesCloudSave
 
             Remote local character ID:
             $combatQueueRemoteLocalId
@@ -2182,9 +2190,16 @@ fun logout() {
     fun selectCharacter(characterId: String) {
         _currentCharacterId.value = characterId
 
+        val localJsonBeforeCloud = repository.currentSaveJson()
+
         combatQueueLocalBeforeCloud =
-            summarizeOfflineCombatQueues(repository.currentSaveJson())
+            summarizeOfflineCombatQueues(localJsonBeforeCloud)
+
+        allQueuesLocalBeforeCloud =
+            summarizeAllOfflineQueues(localJsonBeforeCloud)
+
         combatQueueCloudSave = "Not downloaded yet"
+        allQueuesCloudSave = "Not downloaded yet"
         combatQueueRemoteLocalId = "Not received"
         refreshCombatQueueDiagnostic()
         // Restore the persisted training skill immediately - this is purely
@@ -2226,9 +2241,16 @@ fun logout() {
                     val cloudJson = SupabaseCharacterRepository
                         .downloadCharacterSave(supabaseCharacterId)
                         .getOrNull()
-                    combatQueueCloudSave =
+                        combatQueueCloudSave =
                         if (cloudJson != null) {
                             summarizeOfflineCombatQueues(cloudJson)
+                        } else {
+                            "No cloud save returned"
+                        }
+
+                    allQueuesCloudSave =
+                        if (cloudJson != null) {
+                            summarizeAllOfflineQueues(cloudJson)
                         } else {
                             "No cloud save returned"
                         }
