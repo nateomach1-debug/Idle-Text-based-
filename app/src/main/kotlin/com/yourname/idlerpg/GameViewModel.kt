@@ -357,6 +357,56 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             "Could not read queue data"
         }
     }
+    private fun summarizeAllOfflineQueues(json: String?): String {
+        if (json == null) return "Save unavailable"
+
+        return try {
+            val root = org.json.JSONObject(json)
+            val sections = mutableListOf<String>()
+
+            fun summarizeArray(
+                name: String,
+                description: (org.json.JSONObject) -> String
+            ) {
+                val queues = root.optJSONArray(name)
+                if (queues != null && queues.length() > 0) {
+                    val entries = (0 until queues.length()).joinToString("; ") { index ->
+                        description(queues.getJSONObject(index))
+                    }
+                    sections += "$name: $entries"
+                }
+            }
+
+            summarizeArray("skillingQueues") { queue ->
+                "character=${queue.optString("characterId")}, " +
+                    "skill=${queue.optString("skillId")}, " +
+                    "item=${queue.optString("itemId")}"
+            }
+
+            summarizeArray("craftingQueues") { queue ->
+                "character=${queue.optString("characterId")}, " +
+                    "recipe=${queue.optString("recipeId")}"
+            }
+
+            summarizeArray("offlineCombatQueues") { queue ->
+                "character=${queue.optString("characterId")}, " +
+                    "zone=${queue.optString("zoneId")}"
+            }
+
+            summarizeArray("buryQueues") { queue ->
+                "character=${queue.optString("characterId")}, " +
+                    "item=${queue.optString("itemId")}"
+            }
+
+            if (sections.isEmpty()) {
+                "None"
+            } else {
+                sections.joinToString("\n")
+            }
+        } catch (e: Exception) {
+            "Could not read queue data: ${e.message ?: "unknown error"}"
+        }
+    }
 
     fun refreshCombatQueueDiagnostic() {
         val characterId = _currentCharacterId.value
@@ -394,8 +444,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             Currently selected character ID:
             ${characterId ?: "None"}
 
-            Current local save:
+            Current local combat queue save:
             $currentLocalSave
+
+            Current local all queues:
+            $currentAllQueues
 
             Active queue for selected character:
             $activeSummary
