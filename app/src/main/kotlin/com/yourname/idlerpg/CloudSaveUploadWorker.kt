@@ -75,7 +75,65 @@ class CloudSaveUploadWorker(
 
         private val lock = Any()
         
-        fun pendingCombatQueueDiagnostic(context: Context): String {
+            fun pendingCombatQueueDiagnostic(context: Context): String {
+            val prefs = context.applicationContext.getSharedPreferences(
+                PREFS_NAME,
+                Context.MODE_PRIVATE
+            )
+
+            val pending = synchronized(lock) {
+                val id = prefs.getString(KEY_CHARACTER_ID, null)
+                val json = prefs.getString(KEY_SAVE_JSON, null)
+                if (id == null || json == null) null else id to json
+            } ?: return "Pending upload: none"
+
+            return try {
+                val root = org.json.JSONObject(pending.second)
+                val sections = mutableListOf<String>()
+
+                fun summarizeArray(
+                    name: String,
+                    description: (org.json.JSONObject) -> String
+                ) {
+                    val queues = root.optJSONArray(name)
+                    if (queues != null && queues.length() > 0) {
+                        val entries = (0 until queues.length()).joinToString("; ") { index ->
+                            description(queues.getJSONObject(index))
+                        }
+                        sections += "$name: $entries"
+                    } else {
+                        sections += "$name: none"
+                    }
+                }
+
+                summarizeArray("skillingQueues") { queue ->
+                    "character=${queue.optString("characterId")}, " +
+                        "skill=${queue.optString("skillId")}, " +
+                        "item=${queue.optString("itemId")}"
+                }
+
+                summarizeArray("craftingQueues") { queue ->
+                    "character=${queue.optString("characterId")}, " +
+                        "recipe=${queue.optString("recipeId")}"
+                }
+
+                summarizeArray("offlineCombatQueues") { queue ->
+                    "character=${queue.optString("characterId")}, " +
+                        "zone=${queue.optString("zoneId")}"
+                }
+
+                summarizeArray("buryQueues") { queue ->
+                    "character=${queue.optString("characterId")}, " +
+                        "item=${queue.optString("itemId")}"
+                }
+
+                "Pending upload character=${pending.first}\n" +
+                    sections.joinToString("\n")
+            } catch (e: Exception) {
+                "Pending upload exists, but its queue data could not be read: " +
+                    (e.message ?: "unknown error")
+            }
+        }
             val prefs = context.applicationContext.getSharedPreferences(
                 PREFS_NAME,
                 Context.MODE_PRIVATE
