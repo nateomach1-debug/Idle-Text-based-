@@ -75,7 +75,7 @@ class CloudSaveUploadWorker(
 
         private val lock = Any()
         
-                    fun pendingCombatQueueDiagnostic(context: Context): String {
+                            fun pendingCombatQueueDiagnostic(context: Context): String {
             val prefs = context.applicationContext.getSharedPreferences(
                 PREFS_NAME,
                 Context.MODE_PRIVATE
