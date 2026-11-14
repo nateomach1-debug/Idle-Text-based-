@@ -2981,8 +2981,18 @@ if (buryQueue != null) {
         } else {
             action.secondsPerAction
         }
-        offlineIdleService.startSkillingQueue(characterId, skillType.name, itemId, effectiveSecondsPerAction)
+        offlineIdleService.startSkillingQueue(
+            characterId,
+            skillType.name,
+            itemId,
+            effectiveSecondsPerAction
+        )
         offlineIdleService.recordLastSeen(characterId)
+
+        // Save immediately when changing activities so a force-close cannot
+        // restore the previously saved activity.
+        saveGame()
+
         checkForRecentSales(characterId)
         skillActionProgressSeconds = 0.0
         refreshActiveQueue()
