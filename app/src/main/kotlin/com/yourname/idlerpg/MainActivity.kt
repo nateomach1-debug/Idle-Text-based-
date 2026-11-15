@@ -1190,6 +1190,9 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                 val debugCombatQueueDiagnostic by
                                     gameViewModel.combatQueueDiagnostic.collectAsState()
 
+                                val debugCloudSaveInspection by
+                                    gameViewModel.cloudSaveInspection.collectAsState()
+
                                 LaunchedEffect(Unit) {
                                     gameViewModel.refreshCombatQueueDiagnostic()
                                 }
@@ -1263,13 +1266,35 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                                     debugCombatQueueDiagnostic
                                                 )
 
-                                                androidx.compose.material3.TextButton(
+                                                                                                androidx.compose.material3.TextButton(
                                                     onClick = {
                                                         gameViewModel.refreshCombatQueueDiagnostic()
                                                     }
                                                 ) {
                                                     androidx.compose.material3.Text("Refresh Diagnostic")
                                                 }
+
+                                                androidx.compose.material3.Divider()
+
+                                                androidx.compose.material3.Text(
+                                                    "Actual Supabase Save Inspection",
+                                                    fontWeight =
+                                                        androidx.compose.ui.text.font.FontWeight.Bold
+                                                )
+
+                                                androidx.compose.material3.TextButton(
+                                                    onClick = {
+                                                        gameViewModel.inspectActualSupabaseSave()
+                                                    }
+                                                ) {
+                                                    androidx.compose.material3.Text(
+                                                        "Inspect Actual Supabase Save"
+                                                    )
+                                                }
+
+                                                androidx.compose.material3.Text(
+                                                    debugCloudSaveInspection
+                                                )
                                             }
                                         },
                                         confirmButton = {
