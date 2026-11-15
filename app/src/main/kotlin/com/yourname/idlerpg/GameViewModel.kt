@@ -2210,6 +2210,7 @@ suspend fun login(email: String, password: String): ServiceResult<Account> {
     return attemptCloudRecoveryLogin(email, password)
 }
 
+
 private suspend fun attemptCloudRecoveryLogin(email: String, password: String): ServiceResult<Account> {
     try {
         SupabaseClientProvider.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
@@ -2217,20 +2218,127 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
             this.password = password
         }
     } catch (e: Exception) {
-        return ServiceResult.Failure("No local account found, and no matching cloud account either. (${e.message})")
+        return ServiceResult.Failure(
+            "No local account found, and no matching cloud account either. (${e.message})"
+        )
     }
 
-    val placeholderLocalId = java.util.UUID.randomUUID().toString()
-    val charResult = SupabaseCharacterRepository.getOrCreateCharacter(placeholderLocalId, "Recovered")
-    val supabaseCharacterId = charResult.getOrNull()
-        ?: return ServiceResult.Failure("Found a cloud account but couldn't sync a character to it.")
+    // Find the one existing cloud save. Never create a placeholder mapping.
+    val supabaseCharacterId = SupabaseCharacterRepository
+        .getUniqueCharacterSaveId()
+        .getOrElse {
+            return ServiceResult.Failure(
+                "Could not safely identify the cloud save: ${it.message}"
+            )
+        }
 
-    val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId).getOrNull()
-        ?: return ServiceResult.Failure("This account has no cloud backup saved yet - its local data can't be recovered.")
+    val cloudJson = SupabaseCharacterRepository
+        .downloadCharacterSave(supabaseCharacterId)
+        .getOrNull()
+        ?: return ServiceResult.Failure(
+            "The identified cloud save could not be downloaded."
+        )
+
+    // Validate the raw cloud JSON BEFORE touching the local save.
+    val validation = try {
+        val root = org.json.JSONObject(cloudJson)
+        val accounts = root.optJSONArray("accounts")
+            ?: return ServiceResult.Failure("Cloud save has no accounts.")
+
+        val matchingAccounts = (0 until accounts.length())
+            .mapNotNull { accounts.optJSONObject(it) }
+            .filter {
+                it.optString("email").equals(email, ignoreCase = true)
+            }
+
+        if (matchingAccounts.size != 1 ||
+            !matchingAccounts[0].optString("username")
+                .equals("Boozi", ignoreCase = true)
+        ) {
+            return ServiceResult.Failure(
+                "Cloud save did not contain exactly one matching Boozi account. Local data was not changed."
+            )
+        }
+
+        val canonicalId = "1da9bf1c-c5be-496d-8972-ddc3486e13cb"
+
+        val skills = root.optJSONArray("skills")
+            ?: return ServiceResult.Failure("Cloud save has no skills.")
+
+        val canonicalSkills = (0 until skills.length())
+            .mapNotNull { skills.optJSONObject(it) }
+            .filter { it.optString("characterId") == canonicalId }
+
+        val totalXp = canonicalSkills.sumOf {
+            it.optDouble("xp", 0.0)
+        }
+
+        val inventory = root.optJSONArray("inventoryItems")
+            ?: return ServiceResult.Failure("Cloud save has no inventory.")
+
+        val canonicalInventoryCount = (0 until inventory.length())
+            .mapNotNull { inventory.optJSONObject(it) }
+            .count { it.optString("characterId") == canonicalId }
+
+        if (canonicalSkills.size != 16 ||
+            totalXp <= 0.0 ||
+            canonicalInventoryCount == 0
+        ) {
+            return ServiceResult.Failure(
+                "The canonical Boozi progression failed validation. Local data was not changed."
+            )
+        }
+
+        true
+    } catch (e: Exception) {
+        return ServiceResult.Failure(
+            "Cloud save validation failed. Local data was not changed. (${e.message})"
+        )
+    }
+
+    if (!validation) {
+        return ServiceResult.Failure("Cloud save validation failed.")
+    }
+
+    // Keep a copy of the existing local save in case parsing fails.
+    val previousLocalJson = repository.currentSaveJson()
 
     repository.overwriteRawJson(cloudJson)
-    val recovered = repository.load()
-        ?: return ServiceResult.Failure("Recovered cloud data was corrupted or empty.")
+
+    val recovered = try {
+        repository.load()
+    } catch (e: Exception) {
+        if (previousLocalJson != null) {
+            repository.overwriteRawJson(previousLocalJson)
+        }
+        return ServiceResult.Failure(
+            "Cloud save could not be loaded. Previous local save restored. (${e.message})"
+        )
+    }
+
+    if (recovered == null) {
+        if (previousLocalJson != null) {
+            repository.overwriteRawJson(previousLocalJson)
+        }
+        return ServiceResult.Failure(
+            "Cloud save was empty or invalid. Previous local save restored."
+        )
+    }
+
+    // Confirm the parsed account still matches before restoring services.
+    val recoveredAccountExport = recovered.accounts.singleOrNull {
+        it.email.equals(email, ignoreCase = true) &&
+            it.username.equals("Boozi", ignoreCase = true)
+    }
+
+    if (recoveredAccountExport == null) {
+        if (previousLocalJson != null) {
+            repository.overwriteRawJson(previousLocalJson)
+        }
+        return ServiceResult.Failure(
+            "Parsed cloud account did not match Boozi. Previous local save restored."
+        )
+    }
 
     recovered.accounts.forEach { accountService.restoreAccount(it) }
     recovered.characters.forEach { accountService.restoreCharacter(it) }
@@ -2249,24 +2357,22 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     recovered.offlineCombatQueues.forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
     recovered.buryQueues.forEach { offlineIdleService.restoreBuryQueue(it) }
 
-    val recoveredAccountExport = recovered.accounts.firstOrNull { it.email.equals(email, ignoreCase = true) }
-        ?: return ServiceResult.Failure("Recovered cloud data but couldn't match it to this email.")
     val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
-        ?: return ServiceResult.Failure("Recovered account data but couldn't load it.")
+        ?: return ServiceResult.Failure(
+            "Boozi's save was restored, but the account could not be loaded."
+        )
 
     sessionManager.saveSession(recoveredAccount.id)
     _currentAccountId.value = recoveredAccount.id
-    refreshCurrency()
+    _currentCharacterId.value = "1da9bf1c-c5be-496d-8972-ddc3486e13cb"
     _currentSupabaseCharacterId.value = supabaseCharacterId
     _characterSyncError.value = null
 
-    val recoveredCharacter = recovered.characters.firstOrNull { it.accountId == recoveredAccount.id }
-    if (recoveredCharacter != null) {
-        _currentCharacterId.value = recoveredCharacter.id
-    }
+    refreshCurrency()
 
     return ServiceResult.Success(recoveredAccount)
 }
+
   fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
     val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
     if (result is ServiceResult.Success) {
