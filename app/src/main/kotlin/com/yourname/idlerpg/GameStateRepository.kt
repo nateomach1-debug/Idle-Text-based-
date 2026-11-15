@@ -19,6 +19,23 @@ class GameStateRepository(private val context: Context) {
         saveFile.writeText(json)
     }
 
+    // Parses cloud JSON without permanently replacing the device's save.
+    // The original file is restored even if parsing fails.
+    fun loadRawJson(json: String): SavedGameState? {
+        val previousLocalJson = currentSaveJson()
+
+        return try {
+            saveFile.writeText(json)
+            load()
+        } finally {
+            if (previousLocalJson == null) {
+                saveFile.delete()
+            } else {
+                saveFile.writeText(previousLocalJson)
+            }
+        }
+   
+    }
     fun save(
         accounts: List<AccountExport>,
         characters: List<CharacterExport>,
