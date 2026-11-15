@@ -463,7 +463,11 @@ is ActiveQueue.BuryQueue -> {
         activeQueues.values.filterIsInstance<ActiveQueue.BuryQueue>().map {
             BuryQueueExport(it.characterId, it.itemId, it.targetQuantity, it.quantityCompleted, it.secondsPerAction, it.startedAt.toString())
         }
-
+    fun clearCharacterData(characterId: String) {
+        activeQueues.remove(characterId)
+        lastSeenAt.remove(characterId)
+        lastSaleCheckAt.remove(characterId)
+    }
     fun restoreSkillingQueue(export: SkillingQueueExport) {
         activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
             characterId = export.characterId,
