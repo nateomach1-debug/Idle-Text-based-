@@ -2300,45 +2300,50 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
         return ServiceResult.Failure("Cloud save validation failed.")
     }
 
-    // Keep a copy of the existing local save in case parsing fails.
-    val previousLocalJson = repository.currentSaveJson()
-
-    repository.overwriteRawJson(cloudJson)
-
+    
+    // Parse the cloud save without permanently replacing the local file.
     val recovered = try {
-        repository.load()
+        repository.loadRawJson(cloudJson)
     } catch (e: Exception) {
-        if (previousLocalJson != null) {
-            repository.overwriteRawJson(previousLocalJson)
-        }
         return ServiceResult.Failure(
-            "Cloud save could not be loaded. Previous local save restored. (${e.message})"
+            "Cloud save could not be loaded. The original local save was preserved. (${e.message})"
         )
-    }
-
-    if (recovered == null) {
-        if (previousLocalJson != null) {
-            repository.overwriteRawJson(previousLocalJson)
-        }
-        return ServiceResult.Failure(
-            "Cloud save was empty or invalid. Previous local save restored."
-        )
-    }
+    } ?: return ServiceResult.Failure(
+        "Cloud save was empty or invalid. The original local save was preserved."
+    )
 
     // Confirm the parsed account still matches before restoring services.
     val recoveredAccountExport = recovered.accounts.singleOrNull {
         it.email.equals(email, ignoreCase = true) &&
             it.username.equals("Boozi", ignoreCase = true)
+    } ?: return ServiceResult.Failure(
+        "Parsed cloud account did not match Boozi. Local data was not changed."
+    )
+
+    // Never let recovery take over another local account's email or username.
+    val accountConflict = accountService.exportAllAccounts().any { existing ->
+        if (existing.id == recoveredAccountExport.id) {
+            !existing.email.equals(recoveredAccountExport.email, ignoreCase = true) ||
+                !existing.username.equals(recoveredAccountExport.username, ignoreCase = true)
+        } else {
+            existing.email.equals(recoveredAccountExport.email, ignoreCase = true) ||
+                existing.username.equals(recoveredAccountExport.username, ignoreCase = true)
+        }
     }
 
-    if (recoveredAccountExport == null) {
-        if (previousLocalJson != null) {
-            repository.overwriteRawJson(previousLocalJson)
-        }
+    if (accountConflict) {
         return ServiceResult.Failure(
-            "Parsed cloud account did not match Boozi. Previous local save restored."
+            "Boozi's cloud account conflicts with another local account. No account data was changed."
         )
     }
+
+    // Verify that Boozi still has a real selectable main-character entry.
+    val recoveredMainCharacter = recovered.characters.firstOrNull {
+        it.accountId == recoveredAccountExport.id && it.isMainCharacter
+    } ?: return ServiceResult.Failure(
+        "Boozi's cloud save has no main character entry. No account data was changed."
+    )
+
 
     recovered.accounts.forEach { accountService.restoreAccount(it) }
     recovered.characters.forEach { accountService.restoreCharacter(it) }
