@@ -843,7 +843,9 @@ class CombatService {
                 currentMonsterHealth = state.session?.currentMonsterHealth ?: 0
             )
         }
-
+    fun clearCharacterData(characterId: String) {
+        states.remove(characterId)
+    }
     fun restoreSession(export: CombatSessionExport) {
         val state = stateFor(export.characterId, export.maxHp)
         state.currentHp = export.currentHp
