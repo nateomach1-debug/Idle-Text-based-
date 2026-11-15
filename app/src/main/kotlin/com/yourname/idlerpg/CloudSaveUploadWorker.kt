@@ -48,14 +48,31 @@ class CloudSaveUploadWorker(
             }
 
             val containsMappedCharacter = runCatching {
-                val characters = org.json.JSONObject(saveJson)
-                    .optJSONArray("characters")
-                    ?: return@runCatching false
+                val root = org.json.JSONObject(saveJson)
 
-                (0 until characters.length()).any { index ->
-                    characters.getJSONObject(index)
-                        .optString("id") == mappedLocalId
-                }
+                val characters = root.optJSONArray("characters")
+                val hasCharacterRecord = characters != null &&
+                    (0 until characters.length()).any { index ->
+                        characters.getJSONObject(index)
+                            .optString("id") == mappedLocalId
+                    }
+
+                val skills = root.optJSONArray("skills")
+                val hasCompleteSkillRecord = skills != null &&
+                    (0 until skills.length()).count { index ->
+                        skills.getJSONObject(index)
+                            .optString("characterId") == mappedLocalId
+                    } >= 16
+
+                val inventory = root.optJSONArray("inventoryItems")
+                val hasInventoryRecord = inventory != null &&
+                    (0 until inventory.length()).any { index ->
+                        inventory.getJSONObject(index)
+                            .optString("characterId") == mappedLocalId
+                    }
+
+                hasCharacterRecord ||
+                    (hasCompleteSkillRecord && hasInventoryRecord)
             }.getOrDefault(false)
 
             if (!containsMappedCharacter) {
