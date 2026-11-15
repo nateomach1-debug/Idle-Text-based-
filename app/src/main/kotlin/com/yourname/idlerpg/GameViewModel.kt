@@ -2584,11 +2584,48 @@ fun logout() {
                         } else {
                             "No cloud save returned"
                         }
-                    if (cloudJson != null) {
-                        repository.overwriteRawJson(cloudJson)
-                        val recovered = repository.load()
+                                        if (cloudJson != null) {
+                        val recoveredResult = runCatching {
+                            repository.loadRawJson(cloudJson)
+                        }
+                        val recovered = recoveredResult.getOrNull()
 
-                        if (recovered != null) {
+                        val selectedAccountId = _currentAccountId.value
+
+                        val cloudContainsSelectedAccount =
+                            recovered?.accounts?.any {
+                                it.id == selectedAccountId
+                            } == true
+
+                        // Reject identity collisions before restoring any cloud records.
+                        val accountConflict = recovered?.accounts?.any { cloudAccount ->
+                            accountService.exportAllAccounts().any { existing ->
+                                if (existing.id == cloudAccount.id) {
+                                    !existing.email.equals(
+                                        cloudAccount.email,
+                                        ignoreCase = true
+                                    ) ||
+                                        !existing.username.equals(
+                                            cloudAccount.username,
+                                            ignoreCase = true
+                                        )
+                                } else {
+                                    existing.email.equals(
+                                        cloudAccount.email,
+                                        ignoreCase = true
+                                    ) ||
+                                        existing.username.equals(
+                                            cloudAccount.username,
+                                            ignoreCase = true
+                                        )
+                                }
+                            }
+                        } == true
+
+                        if (recovered != null &&
+                            cloudContainsSelectedAccount &&
+                            !accountConflict
+                        ) {
                             recovered.accounts.forEach {
                                 accountService.restoreAccount(it)
                             }
@@ -2656,9 +2693,44 @@ fun logout() {
                                     ?.let { restoredCharacter ->
                                         _currentAccountId.value =
                                             restoredCharacter.accountId
-                                    }
+                                                                }
 
-                                recoveredToRemoteId = restoredId
+                            // Persist the merged state locally only.
+                            // Do not enqueue a cloud upload during recovery.
+                            repository.save(
+                                accountService.exportAllAccounts(),
+                                accountService.exportAllCharacters(),
+                                progressionService.exportAllSkills(),
+                                offlineIdleService.exportSkillingQueues(),
+                                offlineIdleService.exportCraftingQueues(),
+                                offlineIdleService.exportLastSeen(),
+                                offlineIdleService.exportLastSaleCheck(),
+                                inventoryService.exportAllItems(),
+                                inventoryService.exportAllEquipped(),
+                                inventoryService.exportAllLoadoutSettings(),
+                                marketService.exportAccounts(),
+                                marketService.exportOrders(),
+                                marketService.exportPriceHistory(),
+                                combatService.exportSessions(),
+                                offlineIdleService.exportOfflineCombatQueues(),
+                                offlineIdleService.exportBuryQueues()
+                            )
+                        } else {
+                            _characterSyncError.value = when {
+                                recoveredResult.isFailure ->
+                                    "Cloud save could not be parsed. Local data was preserved."
+
+                                recovered == null ->
+                                    "Cloud save was empty. Local data was preserved."
+
+                                !cloudContainsSelectedAccount ->
+                                    "Cloud save did not contain the selected account. Local data was preserved."
+
+                                accountConflict ->
+                                    "Cloud account identity conflicts with another local account. Local data was preserved."
+
+                                else ->
+                                    "Cloud save was not restored. Local data was preserved."
                             }
                         }
                     }
