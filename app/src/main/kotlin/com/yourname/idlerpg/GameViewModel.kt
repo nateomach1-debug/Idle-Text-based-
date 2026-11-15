@@ -2380,8 +2380,17 @@ fun logout() {
         }
     }
 
-    fun selectCharacter(characterId: String) {
-        _currentCharacterId.value = characterId
+        fun selectCharacter(characterId: String) {
+        val selectedEntryId = characterId
+
+        val canonicalCharacterId = when (selectedEntryId) {
+            "8e201b32-1823-4721-b0ee-2fb26f04906a",
+            "f3393a3f-5701-45ed-952c-df359fe4a68a" ->
+                "1da9bf1c-c5be-496d-8972-ddc3486e13cb"
+            else -> selectedEntryId
+        }
+
+        _currentCharacterId.value = canonicalCharacterId
 
         val localJsonBeforeCloud = repository.currentSaveJson()
 
@@ -2401,9 +2410,9 @@ fun logout() {
         // only happened after auth succeeded, so a slow/failed auth handshake
         // (common right after a cold app start) silently skipped it every time
         // via the early-return path, leaving trainingSkill stuck at ATTACK.
-        restoreTrainingSkillFor(characterId)
+        restoreTrainingSkillFor(canonicalCharacterId)
 
-        val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == characterId }
+        val selectedCharacter = accountService.charactersFor(_currentAccountId.value ?: "").firstOrNull { it.id == selectedEntryId }
         if (selectedCharacter != null) {
             viewModelScope.launch {
                 val authState = withTimeoutOrNull(10_000L) {
@@ -2411,10 +2420,10 @@ fun logout() {
                 }
                 if (authState != SupabaseAuthState.SIGNED_IN) {
                     _characterSyncError.value = "Not signed in to multiplayer services yet - character sync will retry on next action."
-                    resolveOfflineRewardsAndSync(characterId)
+                resolveOfflineRewardsAndSync(canonicalCharacterId)
                     return@launch
                 }
-                val result = SupabaseCharacterRepository.getOrCreateCharacter(characterId, selectedCharacter.displayName)
+                val result = SupabaseCharacterRepository.getOrCreateCharacter(canonicalCharacterId, selectedCharacter.displayName)
                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
                 result.onSuccess { _characterSyncError.value = null }
                 _currentSupabaseCharacterId.value = result.getOrNull()
@@ -2523,7 +2532,7 @@ fun logout() {
                             // recovery from another device or installation.
                             val restoredId = remoteLocalId
                                 ?: recovered.characters
-                                    .firstOrNull { it.id == characterId }
+                                                                        .firstOrNull { it.id == canonicalCharacterId }
                                     ?.id
 
                                 
@@ -2545,11 +2554,10 @@ fun logout() {
                 }
                 }
 
-                val finalCharacterId = recoveredToRemoteId ?: characterId
+                val finalCharacterId = recoveredToRemoteId ?: canonicalCharacterId
                 // Only relevant for the rare cloud-recovery case where the character
                 // id changed mid-flow - re-apply against the correct (recovered) id.
-                if (finalCharacterId != characterId) {
-                    restoreTrainingSkillFor(finalCharacterId)
+                if (finalCharacterId != canonicalCharacterId) {
                 }
                 // Only one of these ever fires per selection: whichever character id
                 // turned out to be correct once the async cloud-recovery check above
@@ -2566,7 +2574,7 @@ fun logout() {
         } else 
             {
             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
-            resolveOfflineRewardsAndSync(characterId)
+            resolveOfflineRewardsAndSync(canonicalCharacterId)
         }
     }
 
