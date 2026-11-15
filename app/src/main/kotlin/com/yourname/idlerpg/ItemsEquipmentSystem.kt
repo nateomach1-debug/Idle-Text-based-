@@ -2280,7 +2280,9 @@ class InventoryService {
     fun exportAllEquipped(): List<EquippedSlotExport> = inventories.flatMap { (characterId, inv) ->
         inv.allEquipped().map { (slot, itemId) -> EquippedSlotExport(characterId, slot.name, itemId) }
     }
-
+    fun clearCharacterData(characterId: String) {
+        inventories.remove(characterId)
+    }
     fun restoreItem(export: InventorySlotExport) {
         inventoryFor(export.characterId).restoreItem(export.itemId, export.quantity, export.lastAcquiredAtMillis)
     }
