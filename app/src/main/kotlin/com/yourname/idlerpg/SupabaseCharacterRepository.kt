@@ -20,7 +20,13 @@ object SupabaseCharacterRepository {
             put("p_display_name", displayName)
         }).decodeAs<String>()
     }
-
+    // Finds the only cloud save belonging to the authenticated profile.
+    // The database refuses to return an ID if the profile has zero or
+    // multiple saved characters.
+    suspend fun getUniqueCharacterSaveId(): Result<String> = runCatching {
+        client.postgrest.rpc("get_unique_character_save_id")
+            .decodeAs<String>()
+    }
     // Lets the caller detect a local_character_id mismatch after
     // getOrCreateCharacter - a mismatch means an EXISTING character (from a
     // different device/install) was returned, not a fresh one.
