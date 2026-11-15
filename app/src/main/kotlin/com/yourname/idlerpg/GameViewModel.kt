@@ -2350,7 +2350,8 @@ fun logout() {
                         }
                     }
                 }
-                    
+                }
+
                 val finalCharacterId = recoveredToRemoteId ?: characterId
                 // Only relevant for the rare cloud-recovery case where the character
                 // id changed mid-flow - re-apply against the correct (recovered) id.
