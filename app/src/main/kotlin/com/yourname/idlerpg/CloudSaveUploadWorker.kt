@@ -71,8 +71,12 @@ class CloudSaveUploadWorker(
                             .optString("characterId") == mappedLocalId
                     }
 
-                hasCharacterRecord ||
-                    (hasCompleteSkillRecord && hasInventoryRecord)
+                    hasCharacterRecord ||
+                    (
+                        mappedLocalId == "1da9bf1c-c5be-496d-8972-ddc3486e13cb" &&
+                        hasCompleteSkillRecord &&
+                        hasInventoryRecord
+                    )
             }.getOrDefault(false)
 
             if (!containsMappedCharacter) {
