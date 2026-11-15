@@ -345,7 +345,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _combatQueueDiagnostic = MutableStateFlow("Not refreshed")
     val combatQueueDiagnostic: StateFlow<String> =
         _combatQueueDiagnostic.asStateFlow()
-
+        
+    private val _boozisDataDiagnostic = MutableStateFlow("Not inspected")
+    val boozisDataDiagnostic: StateFlow<String> =
+        _boozisDataDiagnostic.asStateFlow()
     private fun summarizeOfflineCombatQueues(json: String?): String {
         if (json == null) return "Save unavailable"
 
@@ -559,6 +562,104 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             Last offline combat queue stop:
             ${offlineIdleService.offlineCombatQueueStopDiagnostic()}
         """.trimIndent()
+    }
+    
+    fun refreshBooziCharacterDataDiagnostic() {
+        val localIds = listOf(
+            "8e201b32-1823-4721-b0ee-2fb26f04906a",
+            "f3393a3f-5701-45ed-952c-df359fe4a68a"
+        )
+
+        val saveJson = repository.currentSaveJson()
+        if (saveJson == null) {
+            _boozisDataDiagnostic.value = "No local save file is available."
+            return
+        }
+
+        _boozisDataDiagnostic.value = try {
+            val root = org.json.JSONObject(saveJson)
+            val characters = root.optJSONArray("characters")
+                ?: org.json.JSONArray()
+
+            fun recordsFor(key: String, characterId: String): List<org.json.JSONObject> {
+                val array = root.optJSONArray(key) ?: return emptyList()
+                return (0 until array.length()).mapNotNull { index ->
+                    array.optJSONObject(index)?.takeIf {
+                        it.optString("characterId") == characterId
+                    }
+                }
+            }
+
+            localIds.joinToString("\n\n") { id ->
+                val character = (0 until characters.length())
+                    .mapNotNull { characters.optJSONObject(it) }
+                    .firstOrNull { it.optString("id") == id }
+
+                val categories = listOf(
+                    "skills",
+                    "skillingQueues",
+                    "craftingQueues",
+                    "offlineCombatQueues",
+                    "buryQueues",
+                    "inventoryItems",
+                    "equippedSlots",
+                    "loadoutSettings",
+                    "marketAccounts",
+                    "marketOrders",
+                    "combatSessions",
+                    "lastSeen",
+                    "lastSaleCheck"
+                )
+
+                val counts = categories.joinToString("\n") { key ->
+                    "$key: ${recordsFor(key, id).size}"
+                }
+
+                val skills = recordsFor("skills", id).joinToString(", ") {
+                    "${it.optString("skillId")}=${it.optLong("xp")}"
+                }.ifBlank { "None" }
+
+                val inventory = recordsFor("inventoryItems", id).joinToString(", ") {
+                    "${it.optString("itemId")} x${it.optInt("quantity")}"
+                }.ifBlank { "None" }
+
+                val queues = listOf(
+                    "skillingQueues",
+                    "craftingQueues",
+                    "offlineCombatQueues",
+                    "buryQueues"
+                ).flatMap { key ->
+                    recordsFor(key, id).map { "$key: ${it}" }
+                }.joinToString("\n").ifBlank { "None" }
+
+                """
+                Character ID: $id
+                Character record: ${character != null}
+                Display name: ${character?.optString("displayName") ?: "Missing"}
+                Main character: ${character?.optBoolean("isMainCharacter") ?: false}
+
+                Record counts:
+                $counts
+
+                Skill XP:
+                $skills
+
+                Inventory:
+                $inventory
+
+                Active queues:
+                $queues
+
+                Equipped slots:
+                ${recordsFor("equippedSlots", id).joinToString(", ") { it.toString() }.ifBlank { "None" }}
+
+                Loadout settings:
+                ${recordsFor("loadoutSettings", id).joinToString(", ") { it.toString() }.ifBlank { "None" }}
+                """.trimIndent()
+            }
+        } catch (e: Exception) {
+            "Diagnostic failed: ${e.message ?: e.toString()}"
+        }
     }
     fun refreshGuildHome() {
         val characterId = _currentSupabaseCharacterId.value ?: return
@@ -3895,4 +3996,5 @@ fun maxCraftableQuantity(itemId: String): Int {
         }
     }
 }
+
 
