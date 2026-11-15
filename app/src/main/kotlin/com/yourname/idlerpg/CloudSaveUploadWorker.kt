@@ -135,6 +135,21 @@ class CloudSaveUploadWorker(
             }
         }
             
+        fun hasPendingUploadFor(
+            context: Context,
+            characterId: String
+        ): Boolean {
+            val prefs = context.applicationContext.getSharedPreferences(
+                PREFS_NAME,
+                Context.MODE_PRIVATE
+            )
+
+            return synchronized(lock) {
+                prefs.getString(KEY_CHARACTER_ID, null) == characterId &&
+                    prefs.getString(KEY_SAVE_JSON, null) != null
+            }
+        
+        }
         fun storeAndEnqueue(
             context: Context,
             characterId: String,
