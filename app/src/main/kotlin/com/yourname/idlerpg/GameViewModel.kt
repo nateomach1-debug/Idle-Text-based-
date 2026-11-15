@@ -406,12 +406,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     "item=${queue.optString("itemId")}"
             }
 
-            if (sections.isEmpty()) {
+        if (sections.isEmpty()) {
                 "None"
             } else {
                 sections.joinToString("\n")
             }
-                } catch (e: Exception) {
+        } catch (e: Exception) {
             "Could not read queue data: ${e.message ?: "unknown error"}"
         }
     }
