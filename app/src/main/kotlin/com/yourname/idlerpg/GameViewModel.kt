@@ -336,6 +336,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private var allQueuesLocalBeforeCloud = "Not captured"
     private var allQueuesCloudSave = "Not downloaded"
+
+    private val _cloudSaveInspection =
+        MutableStateFlow("Cloud save has not been inspected yet.")
+    val cloudSaveInspection: StateFlow<String> =
+        _cloudSaveInspection.asStateFlow()
+
     private val _combatQueueDiagnostic = MutableStateFlow("Not refreshed")
     val combatQueueDiagnostic: StateFlow<String> =
         _combatQueueDiagnostic.asStateFlow()
@@ -405,8 +411,94 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 sections.joinToString("\n")
             }
-        } catch (e: Exception) {
+                } catch (e: Exception) {
             "Could not read queue data: ${e.message ?: "unknown error"}"
+        }
+    }
+
+    fun inspectActualSupabaseSave() {
+        val supabaseCharacterId = _currentSupabaseCharacterId.value
+
+        if (supabaseCharacterId == null) {
+            _cloudSaveInspection.value =
+                "Cannot inspect cloud save: no Supabase character ID is currently loaded."
+            return
+        }
+
+        _cloudSaveInspection.value = "Downloading Supabase save for inspection..."
+
+        viewModelScope.launch {
+            try {
+                val result =
+                    SupabaseCharacterRepository.downloadCharacterSave(
+                        supabaseCharacterId
+                    )
+
+                val cloudJson = result.getOrElse { error ->
+                    _cloudSaveInspection.value =
+                        "Cloud download failed: " +
+                            (error.message ?: error.toString())
+                    return@launch
+                }
+
+                if (cloudJson == null) {
+                    _cloudSaveInspection.value =
+                        "Supabase returned no save for character:\n" +
+                            supabaseCharacterId
+                    return@launch
+                }
+
+                val root = org.json.JSONObject(cloudJson)
+
+                fun count(name: String): Int =
+                    root.optJSONArray(name)?.length() ?: 0
+
+                fun characterIds(): String {
+                    val characters = root.optJSONArray("characters")
+                        ?: return "None"
+
+                    if (characters.length() == 0) return "None"
+
+                    return (0 until characters.length()).joinToString("; ") { index ->
+                        val character = characters.getJSONObject(index)
+                        "id=${character.optString("id")}, " +
+                            "account=${character.optString("accountId")}, " +
+                            "name=${character.optString("displayName")}"
+                    }
+                }
+
+                val cloudQueues = summarizeAllOfflineQueues(cloudJson)
+
+                _cloudSaveInspection.value = """
+                    READ-ONLY SUPABASE SAVE INSPECTION
+
+                    Supabase character ID requested:
+                    $supabaseCharacterId
+
+                    Cloud save status:
+                    Downloaded successfully
+
+                    Cloud characters:
+                    ${characterIds()}
+
+                    Save contents:
+                    accounts=${count("accounts")}
+                    characters=${count("characters")}
+                    skills=${count("skills")}
+                    inventoryItems=${count("inventoryItems")}
+                    skillingQueues=${count("skillingQueues")}
+                    craftingQueues=${count("craftingQueues")}
+                    offlineCombatQueues=${count("offlineCombatQueues")}
+                    buryQueues=${count("buryQueues")}
+
+                    All activity queues in actual cloud save:
+                    $cloudQueues
+                """.trimIndent()
+            } catch (e: Exception) {
+                _cloudSaveInspection.value =
+                    "Could not inspect cloud save: " +
+                        (e.message ?: e.toString())
+            }
         }
     }
 
