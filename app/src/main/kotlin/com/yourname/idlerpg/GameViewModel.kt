@@ -2675,15 +2675,14 @@ fun logout() {
                                 offlineIdleService.restoreBuryQueue(it)
                             }
 
-                            // Prefer the character ID stored in the cloud save.
+                                                        // Prefer the character ID stored in the cloud save.
                             // Normally this is the same ID, but this also handles
                             // recovery from another device or installation.
                             val restoredId = remoteLocalId
                                 ?: recovered.characters
-                                                                        .firstOrNull { it.id == canonicalCharacterId }
+                                    .firstOrNull { it.id == canonicalCharacterId }
                                     ?.id
 
-                                
                             if (restoredId != null) {
                                 _currentCharacterId.value = restoredId
                                 refreshCombatQueueDiagnostic()
@@ -2693,7 +2692,10 @@ fun logout() {
                                     ?.let { restoredCharacter ->
                                         _currentAccountId.value =
                                             restoredCharacter.accountId
-                                                                }
+                                    }
+
+                                recoveredToRemoteId = restoredId
+                            }
 
                             // Persist the merged state locally only.
                             // Do not enqueue a cloud upload during recovery.
