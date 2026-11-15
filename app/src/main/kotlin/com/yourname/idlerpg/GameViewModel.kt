@@ -2369,7 +2369,8 @@ fun logout() {
                 refreshGuildHome()
                 loadInitialChatState()
             }
-        } else {
+        } else 
+            {
             _characterSyncError.value = "selectedCharacter was null - accountId=${_currentAccountId.value}, characterId=$characterId"
             resolveOfflineRewardsAndSync(characterId)
         }
