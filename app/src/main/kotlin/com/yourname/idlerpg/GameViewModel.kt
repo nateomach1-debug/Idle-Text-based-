@@ -2234,6 +2234,23 @@ fun logout() {
                         .getOrNull()
                         combatQueueRemoteLocalId = remoteLocalId ?: "Not returned"
 
+                    val hasPendingLocalUpload =
+                        CloudSaveUploadWorker.hasPendingUploadFor(
+                            getApplication(),
+                            supabaseCharacterId
+                        )
+
+                    if (hasPendingLocalUpload) {
+                        // Preserve the newer local save until its pending
+                        // upload has been processed.
+                        CloudSaveUploadWorker.enqueuePending(getApplication())
+
+                        combatQueueCloudSave =
+                            "Cloud download skipped: matching local upload is pending"
+
+                        allQueuesCloudSave =
+                            "Local save preserved: matching cloud upload is pending"
+                    } else {
                     // Always restore the latest cloud save before resolving
                     // offline progress. This is especially important after a
                     // full app close on another device, where local data may
