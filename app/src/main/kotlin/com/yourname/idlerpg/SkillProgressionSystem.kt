@@ -296,9 +296,20 @@ class ProgressionService {
         book.all().map { skill -> SkillExport(characterId, skill.type.name, skill.xp) }
     }
 
-    fun restoreSkill(export: SkillExport) {
+        fun restoreSkill(export: SkillExport) {
         val book = skillBookFor(export.characterId)
         val skillType = SkillType.valueOf(export.skillId)
         book.get(skillType).xp = export.xp
+    }
+
+    fun replaceCharacterSkills(
+        characterId: String,
+        exports: List<SkillExport>
+    ) {
+        skillBooks.remove(characterId)
+
+        exports
+            .filter { it.characterId == characterId }
+            .forEach { restoreSkill(it) }
     }
 }
