@@ -33,13 +33,41 @@ class CloudSaveUploadWorker(
                 }
             } ?: return Result.success()
 
+            
             val characterId = pending.first
             val saveJson = pending.second
+
+            // Never upload a save unless it contains the local character
+            // currently mapped to this Supabase character.
+            val mappedLocalId = SupabaseCharacterRepository
+                .getCharacterLocalId(characterId)
+                .getOrElse { return Result.retry() }
+
+            if (mappedLocalId.isNullOrBlank()) {
+                return Result.failure()
+            }
+
+            val containsMappedCharacter = runCatching {
+                val characters = org.json.JSONObject(saveJson)
+                    .optJSONArray("characters")
+                    ?: return@runCatching false
+
+                (0 until characters.length()).any { index ->
+                    characters.getJSONObject(index)
+                        .optString("id") == mappedLocalId
+                }
+            }.getOrDefault(false)
+
+            if (!containsMappedCharacter) {
+                // Keep the pending JSON intact for recovery.
+                return Result.failure()
+            }
 
             val upload = SupabaseCharacterRepository.uploadCharacterSave(
                 characterId,
                 saveJson
             )
+
 
             if (upload.isFailure) {
                 return Result.retry()
