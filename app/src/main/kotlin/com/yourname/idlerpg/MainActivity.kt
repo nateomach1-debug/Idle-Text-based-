@@ -1189,7 +1189,8 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                 val debugCharSyncError by gameViewModel.characterSyncError.collectAsState()
                                 val debugCombatQueueDiagnostic by
                                     gameViewModel.combatQueueDiagnostic.collectAsState()
-
+                                val debugBoozisDataDiagnostic by
+                                    gameViewModel.boozisDataDiagnostic.collectAsState()
                                 val debugCloudSaveInspection by
                                     gameViewModel.cloudSaveInspection.collectAsState()
 
@@ -1304,6 +1305,28 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                                 }
                                             ) {
                                                 androidx.compose.material3.Text("OK")
+                                                
+                                                androidx.compose.material3.Divider()
+
+                                                androidx.compose.material3.Text(
+                                                    "Boozi Character Data Comparison",
+                                                    fontWeight =
+                                                        androidx.compose.ui.text.font.FontWeight.Bold
+                                                )
+
+                                                androidx.compose.material3.TextButton(
+                                                    onClick = {
+                                                        gameViewModel.refreshBooziCharacterDataDiagnostic()
+                                                    }
+                                                ) {
+                                                    androidx.compose.material3.Text(
+                                                        "Inspect Both Boozi Characters"
+                                                    )
+                                                }
+
+                                                androidx.compose.material3.Text(
+                                                    debugBoozisDataDiagnostic
+                                                )
                                             }
                                         }
                                     )
