@@ -365,7 +365,11 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
             createdAt = it.createdAt.toString()
         )
     }
-
+    fun clearCharacterData(characterId: String) {
+        accounts.remove(characterId)
+        buyOrders.removeAll { it.characterId == characterId }
+        sellOrders.removeAll { it.characterId == characterId }
+    }
     fun restoreOrder(export: MarketOrderExport) {
         val order = MarketOrder(
             id = export.id,
