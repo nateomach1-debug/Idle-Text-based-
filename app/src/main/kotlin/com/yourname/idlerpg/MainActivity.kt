@@ -1293,19 +1293,11 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                                     )
                                                 }
 
+                                                
                                                 androidx.compose.material3.Text(
                                                     debugCloudSaveInspection
                                                 )
-                                            }
-                                        },
-                                        confirmButton = {
-                                            androidx.compose.material3.TextButton(
-                                                onClick = {
-                                                    showDebugDialog = false
-                                                }
-                                            ) {
-                                                androidx.compose.material3.Text("OK")
-                                                
+
                                                 androidx.compose.material3.Divider()
 
                                                 androidx.compose.material3.Text(
@@ -1327,6 +1319,15 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                                 androidx.compose.material3.Text(
                                                     debugBoozisDataDiagnostic
                                                 )
+                                            }
+                                        },
+                                        confirmButton = {
+                                            androidx.compose.material3.TextButton(
+                                                onClick = {
+                                                    showDebugDialog = false
+                                                }
+                                            ) {
+                                                androidx.compose.material3.Text("OK")
                                             }
                                         }
                                     )
