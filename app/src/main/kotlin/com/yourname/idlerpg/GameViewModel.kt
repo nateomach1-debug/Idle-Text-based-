@@ -2788,10 +2788,6 @@ fun logout() {
                 }
 
                 val finalCharacterId = recoveredToRemoteId ?: canonicalCharacterId
-                // Only relevant for the rare cloud-recovery case where the character
-                // id changed mid-flow - re-apply against the correct (recovered) id.
-                if (finalCharacterId != canonicalCharacterId) {
-                }
                 // Only one of these ever fires per selection: whichever character id
                 // turned out to be correct once the async cloud-recovery check above
                 // finished. Previously an immediate, unconditional call fired outside
