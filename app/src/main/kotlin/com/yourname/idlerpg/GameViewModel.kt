@@ -330,8 +330,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     // A recovered orphan ID has no verified Supabase characters.id mapping.
     // Keep that character local-only until a separate, safe mapping repair.
-    private var cloudRecoveryPausedCharacterId: String? = null
-    private var cloudRecoveryBlockedAccountId: String? = null
+    private val cloudRecoveryPrefs = application.getSharedPreferences(
+        "cloud_recovery_safety",
+        android.content.Context.MODE_PRIVATE
+    )
+    private var cloudRecoveryPausedCharacterId: String? =
+        cloudRecoveryPrefs.getString("paused_character_id", null)
+    private var cloudRecoveryBlockedAccountId: String? =
+        cloudRecoveryPrefs.getString("blocked_account_id", null)
 
     private val _characterSyncError = MutableStateFlow<String?>(null)
     val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
@@ -2224,6 +2230,9 @@ suspend fun login(email: String, password: String): ServiceResult<Account> {
         // or bind a new remote row to an unverified local character.
         if (_supabaseAuthState.value == SupabaseAuthState.SIGNED_IN) {
             cloudRecoveryBlockedAccountId = result.value.id
+            cloudRecoveryPrefs.edit()
+                .putString("blocked_account_id", result.value.id)
+                .apply()
             _currentSupabaseCharacterId.value = null
             _characterSyncError.value =
                 "Cloud sign-in succeeded, but no save passed recovery validation. Cloud character sync is paused."
@@ -2631,6 +2640,10 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     _currentSupabaseCharacterId.value = null
     cloudRecoveryPausedCharacterId = selected.characterId
     cloudRecoveryBlockedAccountId = null
+    cloudRecoveryPrefs.edit()
+        .putString("paused_character_id", selected.characterId)
+        .remove("blocked_account_id")
+        .apply()
     _characterSyncError.value =
         "Recovered locally from the verified cloud snapshot. Cloud uploads are paused until character mapping is repaired."
     refreshCurrency()
