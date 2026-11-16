@@ -3,6 +3,7 @@ package com.yourname.idlerpg
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -20,6 +21,14 @@ object SupabaseCharacterRepository {
             put("p_display_name", displayName)
         }).decodeAs<String>()
     }
+    // Lists every registered character/save for the authenticated profile.
+    // The server derives ownership from auth.uid(); no profile ID is accepted.
+    // This is metadata-only and is intended for explicit recovery diagnostics.
+    suspend fun listMyCharacterSaves(): Result<List<JsonObject>> = runCatching {
+        client.postgrest.rpc("list_my_character_saves")
+            .decodeAs<List<JsonObject>>()
+    }
+
     // Finds the only cloud save belonging to the authenticated profile.
     // The database refuses to return an ID if the profile has zero or
     // multiple saved characters.
