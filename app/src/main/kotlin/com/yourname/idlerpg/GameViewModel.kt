@@ -328,6 +328,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentSupabaseCharacterId = MutableStateFlow<String?>(null)
     val currentSupabaseCharacterId: StateFlow<String?> = _currentSupabaseCharacterId.asStateFlow()
 
+    // A recovered orphan ID has no verified Supabase characters.id mapping.
+    // Keep that character local-only until a separate, safe mapping repair.
+    private var cloudRecoveryPausedCharacterId: String? = null
+    private var cloudRecoveryBlockedAccountId: String? = null
+
     private val _characterSyncError = MutableStateFlow<String?>(null)
     val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
     private var combatQueueLocalBeforeCloud = "Not captured"
@@ -2202,9 +2207,32 @@ suspend fun login(email: String, password: String): ServiceResult<Account> {
     val result = accountService.login(email, password)
     if (result is ServiceResult.Success) {
         sessionManager.saveSession(result.value.id)
-            _currentAccountId.value = result.value.id
-            refreshCurrency()
-            syncSupabaseAuth(email, password, isNewAccount = false)
+        _currentAccountId.value = result.value.id
+
+        // A local account may exist even when its cloud save contains the
+        // recovered main character under an orphaned local ID. Check the
+        // authenticated cloud snapshots before allowing normal character
+        // selection to trust the registered character row.
+        val recoveryResult = attemptCloudRecoveryLogin(email, password)
+        if (recoveryResult is ServiceResult.Success) {
+            return recoveryResult
+        }
+
+        // If cloud authentication succeeded but no snapshot passed strict
+        // recovery validation, keep cloud character operations disabled.
+        // Never fall through to getOrCreateCharacter(), which could create
+        // or bind a new remote row to an unverified local character.
+        if (_supabaseAuthState.value == SupabaseAuthState.SIGNED_IN) {
+            cloudRecoveryBlockedAccountId = result.value.id
+            _currentSupabaseCharacterId.value = null
+            _characterSyncError.value =
+                "Cloud sign-in succeeded, but no save passed recovery validation. Cloud character sync is paused."
+            return result
+        }
+
+        // No existing Supabase account/session was available; preserve the
+        // original lazy account-creation behavior for local-only accounts.
+        syncSupabaseAuth(email, password, isNewAccount = false)
         return result
     }
     return attemptCloudRecoveryLogin(email, password)
@@ -2400,12 +2428,17 @@ private fun restoreScopedCloudData(
 }
 
 private suspend fun attemptCloudRecoveryLogin(email: String, password: String): ServiceResult<Account> {
+    _supabaseAuthState.value = SupabaseAuthState.SIGNING_IN
     try {
         SupabaseClientProvider.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
             this.email = email
             this.password = password
         }
+        _supabaseAuthState.value = SupabaseAuthState.SIGNED_IN
+        _supabaseAuthError.value = null
     } catch (e: Exception) {
+        _supabaseAuthState.value = SupabaseAuthState.ERROR
+        _supabaseAuthError.value = e.message ?: e.toString()
         return ServiceResult.Failure(
             "No local account found, and no matching cloud account either. (${e.message})"
         )
@@ -2596,6 +2629,8 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     // Supabase character mapping is established. The original cloud snapshot
     // remains untouched; local saves continue normally.
     _currentSupabaseCharacterId.value = null
+    cloudRecoveryPausedCharacterId = selected.characterId
+    cloudRecoveryBlockedAccountId = null
     _characterSyncError.value =
         "Recovered locally from the verified cloud snapshot. Cloud uploads are paused until character mapping is repaired."
     refreshCurrency()
@@ -2767,9 +2802,26 @@ fun logout() {
                 }
                 if (authState != SupabaseAuthState.SIGNED_IN) {
                     _characterSyncError.value = "Not signed in to multiplayer services yet - character sync will retry on next action."
-                resolveOfflineRewardsAndSync(canonicalCharacterId)
+                    resolveOfflineRewardsAndSync(canonicalCharacterId)
                     return@launch
                 }
+
+                val accountIdForSelection = _currentAccountId.value
+                if (
+                    cloudRecoveryBlockedAccountId == accountIdForSelection ||
+                    cloudRecoveryPausedCharacterId == canonicalCharacterId
+                ) {
+                    _currentSupabaseCharacterId.value = null
+                    // The recovered character has no verified registry mapping.
+                    // Do not call getOrCreateCharacter or download/upload against
+                    // the unrelated registered character ID.
+                    resolveOfflineRewardsAndSync(canonicalCharacterId)
+                    refreshCombatQueueDiagnostic()
+                    refreshGuildHome()
+                    loadInitialChatState()
+                    return@launch
+                }
+
                 val result = SupabaseCharacterRepository.getOrCreateCharacter(canonicalCharacterId, selectedCharacter.displayName)
                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
                 result.onSuccess { _characterSyncError.value = null }
