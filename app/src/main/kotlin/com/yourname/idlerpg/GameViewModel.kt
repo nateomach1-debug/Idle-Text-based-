@@ -2245,27 +2245,37 @@ private fun restoreScopedCloudData(
         it.accountId == accountId
     }
 
-    val isBoozi = expectedUsername.equals("Boozi", ignoreCase = true)
+    // Every character cloud restore must contain one unambiguous character
+    // record and a complete 16-skill snapshot. A partial/old cloud payload
+    // must never clear a more complete local character.
+    if (accountCharacters.count { it.id == characterId } != 1) return false
 
+    val skills = recovered.skills.filter {
+        it.characterId == characterId
+    }
+    if (
+        skills.size != 16 ||
+        skills.map { it.skillId }.distinct().size != 16 ||
+        skills.any { it.xp < 0L }
+    ) return false
+
+    // Refuse a cloud rollback. Local progress wins whenever its total XP is
+    // greater than the downloaded snapshot; the caller leaves local data
+    // untouched when this function returns false.
+    val localTotalXp = progressionService.skillBookFor(characterId)
+        .all()
+        .sumOf { it.xp }
+    val cloudTotalXp = skills.sumOf { it.xp }
+    if (cloudTotalXp < localTotalXp) return false
+
+    val isBoozi = expectedUsername.equals("Boozi", ignoreCase = true)
     if (isBoozi) {
         if (accountCharacters.none { it.isMainCharacter }) return false
 
-        val skills = recovered.skills.filter {
-            it.characterId == characterId
-        }
         val inventory = recovered.inventoryItems.filter {
             it.characterId == characterId
         }
-
-        if (
-            skills.size != 16 ||
-            skills.map { it.skillId }.distinct().size != 16 ||
-            skills.any { it.xp < 0L } ||
-            skills.sumOf { it.xp } <= 0L ||
-            inventory.isEmpty()
-        ) return false
-    } else if (accountCharacters.none { it.id == characterId }) {
-        return false
+        if (inventory.isEmpty()) return false
     }
 
     accountService.restoreAccount(cloudAccount)
