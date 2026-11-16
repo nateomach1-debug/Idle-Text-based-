@@ -19,6 +19,28 @@ class GameStateRepository(private val context: Context) {
         return runCatching {
             val root = JSONObject(raw)
 
+            // Never upload a partial character snapshot while the local save
+            // still contains XP for an ID that has no registered character.
+            // Those orphaned records may be the only surviving copy of a
+            // player's progression; filtering them out would permanently
+            // overwrite the cloud copy with an incomplete save.
+            val registeredCharacterIds = mutableSetOf<String>()
+            val allCharacters = root.optJSONArray("characters") ?: JSONArray()
+            for (index in 0 until allCharacters.length()) {
+                val id = allCharacters.optJSONObject(index)?.optString("id").orEmpty()
+                if (id.isNotBlank()) registeredCharacterIds += id
+            }
+            val allSkills = root.optJSONArray("skills") ?: JSONArray()
+            for (index in 0 until allSkills.length()) {
+                val skill = allSkills.optJSONObject(index) ?: continue
+                val characterId = skill.optString("characterId")
+                val xp = skill.optLong("xp", -1L)
+                if (xp < 0L) return@runCatching null
+                if (xp > 0L && characterId !in registeredCharacterIds) {
+                    return@runCatching null
+                }
+            }
+
             fun filterArray(
                 name: String,
                 keep: (JSONObject) -> Boolean
