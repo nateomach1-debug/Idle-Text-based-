@@ -2242,16 +2242,23 @@ private fun restoreScopedCloudData(
                 it.username.equals(expectedUsername, ignoreCase = true))
     } ?: return false
 
-    val accountCharacters = recovered.characters.filter {
+    val originalAccountCharacters = recovered.characters.filter {
         it.accountId == accountId
+    }
+    if (originalAccountCharacters.count { it.id == characterId } > 1) return false
+
+    // The independently verified marketAccounts main-character flag is
+    // authoritative for this recovery. Keep every sibling character, but
+    // normalize the main flag so the restored account has one main character.
+    val accountCharacters = originalAccountCharacters.map {
+        it.copy(isMainCharacter = it.id == characterId)
     }.toMutableList()
 
     // Some older full-device snapshots kept the main character's progression
     // and ownership in marketAccounts but omitted its CharacterExport row.
     // Only synthesize that one profile after the caller independently verifies
     // the account ID, main-character flag, and complete skill snapshot.
-    val existingTarget = accountCharacters.singleOrNull { it.id == characterId }
-    if (existingTarget == null) {
+    if (accountCharacters.none { it.id == characterId }) {
         val synthetic = recoveredMainCharacter ?: return false
         if (
             synthetic.id != characterId ||
@@ -2260,9 +2267,8 @@ private fun restoreScopedCloudData(
             !AvatarCatalog.isValid(synthetic.avatarId)
         ) return false
         accountCharacters += synthetic
-    } else if (accountCharacters.count { it.id == characterId } != 1) {
-        return false
     }
+    if (accountCharacters.count { it.id == characterId } != 1) return false
 
     // Other orphan records may belong to unrelated characters in this
     // full-device snapshot. Preserve the cloud snapshot and restore only the
