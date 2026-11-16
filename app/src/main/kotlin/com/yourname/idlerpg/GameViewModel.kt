@@ -2785,7 +2785,6 @@ fun logout() {
                         }
                     }
                 }
-                }
 
                 val finalCharacterId = recoveredToRemoteId ?: canonicalCharacterId
                 // Only one of these ever fires per selection: whichever character id
