@@ -2233,7 +2233,8 @@ private fun restoreScopedCloudData(
     recovered: SavedGameState,
     accountId: String,
     characterId: String,
-    expectedUsername: String? = null
+    expectedUsername: String? = null,
+    recoveredMainCharacter: CharacterExport? = null
 ): Boolean {
     val cloudAccount = recovered.accounts.singleOrNull {
         it.id == accountId &&
@@ -2243,25 +2244,34 @@ private fun restoreScopedCloudData(
 
     val accountCharacters = recovered.characters.filter {
         it.accountId == accountId
+    }.toMutableList()
+
+    // Some older full-device snapshots kept the main character's progression
+    // and ownership in marketAccounts but omitted its CharacterExport row.
+    // Only synthesize that one profile after the caller independently verifies
+    // the account ID, main-character flag, and complete skill snapshot.
+    val existingTarget = accountCharacters.singleOrNull { it.id == characterId }
+    if (existingTarget == null) {
+        val synthetic = recoveredMainCharacter ?: return false
+        if (
+            synthetic.id != characterId ||
+            synthetic.accountId != accountId ||
+            !synthetic.isMainCharacter ||
+            !AvatarCatalog.isValid(synthetic.avatarId)
+        ) return false
+        accountCharacters += synthetic
+    } else if (accountCharacters.count { it.id == characterId } != 1) {
+        return false
     }
 
-    // A cloud snapshot with positive XP attached to an unregistered character
-    // is incomplete or mid-migration. Refuse the entire restore rather than
-    // loading the visible character and silently abandoning the orphaned XP.
-    val registeredCharacterIds = recovered.characters.map { it.id }.toSet()
-    if (recovered.skills.any {
-            it.xp > 0L && it.characterId !in registeredCharacterIds
-        }
-    ) return false
-
-    // Every character cloud restore must contain one unambiguous character
-    // record and a complete 16-skill snapshot. A partial/old cloud payload
-    // must never clear a more complete local character.
-    if (accountCharacters.count { it.id == characterId } != 1) return false
-
+    // Other orphan records may belong to unrelated characters in this
+    // full-device snapshot. Preserve the cloud snapshot and restore only the
+    // independently verified target character instead of rejecting or
+    // discarding its valid progression.
     val skills = recovered.skills.filter {
         it.characterId == characterId
     }
+
     if (
         skills.size != 16 ||
         skills.map { it.skillId }.distinct().size != 16 ||
@@ -2395,146 +2405,170 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
         )
     }
 
-    // This legacy RPC is intentionally allowed to succeed only when the
-    // authenticated profile has exactly one cloud save. Multiple saves are
-    // ambiguous and must be resolved by an explicit profile/character lookup.
-    val supabaseCharacterId = SupabaseCharacterRepository
-        .getUniqueCharacterSaveId()
+    // Do not assume the profile has only one registered save. Inspect each
+    // save owned by the authenticated profile and identify the real main
+    // character from its account-scoped market ownership metadata.
+    val saveRows = SupabaseCharacterRepository.listMyCharacterSaves()
         .getOrElse {
             return ServiceResult.Failure(
-                "Could not safely identify the cloud save. Multiple or missing saves require an explicit character mapping: ${it.message}"
+                "Could not list the cloud saves for this account. Local data was not changed. (${it.message})"
             )
         }
+    if (saveRows.isEmpty()) {
+        return ServiceResult.Failure("No cloud saves were found for this account.")
+    }
 
-    val cloudJson = SupabaseCharacterRepository
-        .downloadCharacterSave(supabaseCharacterId)
-        .getOrNull()
-        ?: return ServiceResult.Failure(
-            "The identified cloud save could not be downloaded."
-        )
+    data class RecoveryCandidate(
+        val supabaseCharacterId: String,
+        val cloudJson: String,
+        val accountId: String,
+        val characterId: String,
+        val username: String,
+        val totalXp: Long,
+        val saveUpdatedAt: String
+    )
 
-    // Validate account identity and character ownership before parsing or
-    // restoring anything. Do not assume a particular username or character ID.
-    val selectedIdentity = try {
-        val root = org.json.JSONObject(cloudJson)
-        val accounts = root.optJSONArray("accounts")
-            ?: return ServiceResult.Failure("Cloud save has no accounts.")
+    val candidates = mutableListOf<RecoveryCandidate>()
+    for (row in saveRows) {
+        val supabaseCharacterId = row["supabase_character_id"]
+            ?.toString()?.trim('"').orEmpty()
+        if (supabaseCharacterId.isBlank()) continue
 
-        val matchingAccounts = (0 until accounts.length())
-            .mapNotNull { accounts.optJSONObject(it) }
-            .filter {
-                it.optString("email").equals(email, ignoreCase = true)
-            }
+        val cloudJson = SupabaseCharacterRepository
+            .downloadCharacterSave(supabaseCharacterId)
+            .getOrNull() ?: continue
 
-        if (matchingAccounts.size != 1) {
-            return ServiceResult.Failure(
-                "Cloud save did not contain exactly one account matching this email. Local data was not changed."
+        val candidate = runCatching {
+            val root = org.json.JSONObject(cloudJson)
+            val accounts = root.optJSONArray("accounts") ?: return@runCatching null
+            val matchingAccounts = (0 until accounts.length())
+                .mapNotNull { accounts.optJSONObject(it) }
+                .filter { it.optString("email").equals(email, ignoreCase = true) }
+            if (matchingAccounts.size != 1) return@runCatching null
+
+            val account = matchingAccounts.single()
+            val accountId = account.optString("id")
+            val username = account.optString("username")
+            if (accountId.isBlank() || username.isBlank()) return@runCatching null
+
+            val marketAccounts = root.optJSONArray("marketAccounts")
+                ?: return@runCatching null
+            val verifiedMainIds = (0 until marketAccounts.length())
+                .mapNotNull { marketAccounts.optJSONObject(it) }
+                .filter {
+                    it.optString("accountId") == accountId &&
+                        it.optBoolean("isMainCharacter", false)
+                }
+                .map { it.optString("characterId") }
+                .filter { it.isNotBlank() }
+                .distinct()
+            if (verifiedMainIds.size != 1) return@runCatching null
+            val characterId = verifiedMainIds.single()
+
+            val skillsArray = root.optJSONArray("skills") ?: return@runCatching null
+            val characterSkills = (0 until skillsArray.length())
+                .mapNotNull { skillsArray.optJSONObject(it) }
+                .filter { it.optString("characterId") == characterId }
+            if (
+                characterSkills.size != 16 ||
+                characterSkills.map { it.optString("skillId") }.distinct().size != 16 ||
+                characterSkills.any { it.optLong("xp", -1L) < 0L }
+            ) return@runCatching null
+
+            val totalXp = characterSkills.sumOf { it.optLong("xp") }
+            if (totalXp <= 0L) return@runCatching null
+
+            val inventory = root.optJSONArray("inventoryItems")
+                ?: return@runCatching null
+            if ((0 until inventory.length()).none {
+                    inventory.optJSONObject(it)?.optString("characterId") == characterId
+                }
+            ) return@runCatching null
+
+            RecoveryCandidate(
+                supabaseCharacterId = supabaseCharacterId,
+                cloudJson = cloudJson,
+                accountId = accountId,
+                characterId = characterId,
+                username = username,
+                totalXp = totalXp,
+                saveUpdatedAt = row["save_updated_at"]?.toString()?.trim('"').orEmpty()
             )
-        }
+        }.getOrNull()
+        if (candidate != null) candidates += candidate
+    }
 
-        val cloudAccountId = matchingAccounts.single().optString("id")
-        if (cloudAccountId.isBlank()) {
-            return ServiceResult.Failure(
-                "The matching cloud account has no valid account ID. Local data was not changed."
-            )
-        }
-
-        val characters = root.optJSONArray("characters")
-            ?: return ServiceResult.Failure("Cloud save has no character list.")
-        val accountCharacters = (0 until characters.length())
-            .mapNotNull { characters.optJSONObject(it) }
-            .filter { it.optString("accountId") == cloudAccountId }
-        val mainCharacters = accountCharacters.filter {
-            it.optBoolean("isMainCharacter", false)
-        }
-
-        if (mainCharacters.size != 1) {
-            return ServiceResult.Failure(
-                "Cloud account does not have exactly one main character. Local data was not changed."
-            )
-        }
-
-        val characterId = mainCharacters.single().optString("id")
-        if (characterId.isBlank()) {
-            return ServiceResult.Failure(
-                "The main cloud character has no valid ID. Local data was not changed."
-            )
-        }
-
-        val skills = root.optJSONArray("skills")
-            ?: return ServiceResult.Failure("Cloud save has no skills.")
-        val characterSkills = (0 until skills.length())
-            .mapNotNull { skills.optJSONObject(it) }
-            .filter { it.optString("characterId") == characterId }
-
-        if (
-            characterSkills.size != 16 ||
-            characterSkills.map { it.optString("skillId") }.distinct().size != 16 ||
-            characterSkills.any { it.optLong("xp", -1L) < 0L }
-        ) {
-            return ServiceResult.Failure(
-                "The main cloud character does not have a complete 16-skill snapshot. Local data was not changed."
-            )
-        }
-
-        // Reject any positive XP orphan, including data belonging to another
-        // character in a contaminated full-device snapshot. Until ownership is
-        // mapped explicitly, restoring this payload could discard real progress.
-        val registeredIds = (0 until characters.length())
-            .mapNotNull { characters.optJSONObject(it)?.optString("id") }
-            .toSet()
-        val hasOrphanedProgression = (0 until skills.length())
-            .mapNotNull { skills.optJSONObject(it) }
-            .any {
-                it.optLong("xp", 0L) > 0L &&
-                    it.optString("characterId") !in registeredIds
-            }
-        if (hasOrphanedProgression) {
-            return ServiceResult.Failure(
-                "Cloud save contains progression for an unregistered character. Recovery was stopped to protect that data."
-            )
-        }
-
-        cloudAccountId to characterId
-    } catch (e: Exception) {
+    if (candidates.isEmpty()) {
         return ServiceResult.Failure(
-            "Cloud save validation failed. Local data was not changed. (${e.message})"
+            "No cloud snapshot passed account ownership, main-character, inventory, and 16-skill validation. Local data was not changed."
         )
     }
 
-    // Parse without permanently replacing the local save.
+    // Duplicate snapshots are expected during the old migration. Prefer the
+    // highest verified progression; use the server save timestamp only as a
+    // deterministic tie-breaker. Never combine snapshots.
+    val distinctCharacters = candidates.map { it.accountId to it.characterId }.distinct()
+    if (distinctCharacters.size != 1) {
+        return ServiceResult.Failure(
+            "The cloud profile contains multiple different verified main characters. Recovery stopped rather than guessing."
+        )
+    }
+    val selected = candidates.maxWithOrNull(
+        compareBy<RecoveryCandidate> { it.totalXp }
+            .thenBy { it.saveUpdatedAt }
+    ) ?: return ServiceResult.Failure("No safe cloud snapshot could be selected.")
+
     val recovered = try {
-        repository.loadRawJson(cloudJson)
+        repository.loadRawJson(selected.cloudJson)
     } catch (e: Exception) {
         return ServiceResult.Failure(
-            "Cloud save could not be loaded. The original local save was preserved. (${e.message})"
+            "Cloud save could not be parsed. The original local save was preserved. (${e.message})"
         )
     } ?: return ServiceResult.Failure(
         "Cloud save was empty or invalid. The original local save was preserved."
     )
 
     val recoveredAccountExport = recovered.accounts.singleOrNull {
-        it.id == selectedIdentity.first &&
-            it.email.equals(email, ignoreCase = true)
+        it.id == selected.accountId &&
+            it.email.equals(email, ignoreCase = true) &&
+            it.username.equals(selected.username, ignoreCase = true)
     } ?: return ServiceResult.Failure(
         "Parsed cloud account did not match the authenticated account. Local data was not changed."
     )
 
-    // Never let recovery take over another local account's email or username.
-    val accountConflict = hasAccountIdentityConflict(
-        accountService.exportAllAccounts(),
-        recoveredAccountExport
-    )
-    if (accountConflict) {
+    if (hasAccountIdentityConflict(
+            accountService.exportAllAccounts(),
+            recoveredAccountExport
+        )
+    ) {
         return ServiceResult.Failure(
             "Cloud account identity conflicts with another local account. No account data was changed."
         )
     }
 
+    val characterCreatedAt = runCatching {
+        Instant.parse(recoveredAccountExport.createdAt).toString()
+    }.getOrElse {
+        return ServiceResult.Failure(
+            "The cloud account creation timestamp is invalid. Local data was not changed."
+        )
+    }
+    val syntheticMainCharacter = CharacterExport(
+        id = selected.characterId,
+        accountId = selected.accountId,
+        displayName = selected.username,
+        avatarId = "knight",
+        createdAt = characterCreatedAt,
+        displayNameLastChangedAt = characterCreatedAt,
+        isMainCharacter = true
+    )
+
     if (!restoreScopedCloudData(
             recovered = recovered,
             accountId = recoveredAccountExport.id,
-            characterId = selectedIdentity.second
+            characterId = selected.characterId,
+            expectedUsername = selected.username,
+            recoveredMainCharacter = syntheticMainCharacter
         )
     ) {
         return ServiceResult.Failure(
@@ -2549,14 +2583,19 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
 
     sessionManager.saveSession(recoveredAccount.id)
     _currentAccountId.value = recoveredAccount.id
-    _currentCharacterId.value = selectedIdentity.second
-    _currentSupabaseCharacterId.value = supabaseCharacterId
-    _characterSyncError.value = null
+    _currentCharacterId.value = selected.characterId
+
+    // The registry row ID does not map to this orphaned local character ID.
+    // Keep cloud upload and leaderboard reporting disabled until a verified
+    // Supabase character mapping is established. The original cloud snapshot
+    // remains untouched; local saves continue normally.
+    _currentSupabaseCharacterId.value = null
+    _characterSyncError.value =
+        "Recovered locally from the verified cloud snapshot. Cloud uploads are paused until character mapping is repaired."
     refreshCurrency()
 
     return ServiceResult.Success(recoveredAccount)
 }
-
   fun createAccount(email: String, username: String, password: String): ServiceResult<Account> {
     val result = accountService.createAccount(email, username, password, AgeBracket.ADULT_18_PLUS, "US")
     if (result is ServiceResult.Success) {
