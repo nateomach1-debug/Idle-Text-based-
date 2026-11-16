@@ -2211,6 +2211,24 @@ suspend fun login(email: String, password: String): ServiceResult<Account> {
 }
 
 
+private fun hasAccountIdentityConflict(
+    localAccounts: List<AccountExport>,
+    cloudAccount: AccountExport
+): Boolean {
+    return localAccounts.any { existing ->
+        val sameId = existing.id == cloudAccount.id
+        val sameEmail = existing.email.equals(cloudAccount.email, ignoreCase = true)
+        val sameUsername = existing.username.equals(cloudAccount.username, ignoreCase = true)
+
+        when {
+            sameId -> !sameEmail || !sameUsername
+            sameEmail && sameUsername -> false
+            sameEmail || sameUsername -> true
+            else -> false
+        }
+    }
+}
+
 private fun restoreScopedCloudData(
     recovered: SavedGameState,
     accountId: String,
@@ -2322,6 +2340,7 @@ private fun restoreScopedCloudData(
 
     _currentCharacterId.value = characterId
     _currentAccountId.value = cloudAccount.id
+    sessionManager.saveSession(cloudAccount.id)
 
     repository.save(
         accountService.exportAllAccounts(),
@@ -2455,15 +2474,10 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     )
 
     // Never let recovery take over another local account's email or username.
-    val accountConflict = accountService.exportAllAccounts().any { existing ->
-        if (existing.id == recoveredAccountExport.id) {
-            !existing.email.equals(recoveredAccountExport.email, ignoreCase = true) ||
-                !existing.username.equals(recoveredAccountExport.username, ignoreCase = true)
-        } else {
-            existing.email.equals(recoveredAccountExport.email, ignoreCase = true) ||
-                existing.username.equals(recoveredAccountExport.username, ignoreCase = true)
-        }
-    }
+    val accountConflict = hasAccountIdentityConflict(
+        accountService.exportAllAccounts(),
+        recoveredAccountExport
+    )
 
     if (accountConflict) {
         return ServiceResult.Failure(
@@ -2725,23 +2739,21 @@ fun logout() {
                             if (isBooziSelection) "Boozi" else null
 
                         val selectedAccountId = _currentAccountId.value
+                        val localAccounts = accountService.exportAllAccounts()
+                        val selectedLocalAccount = localAccounts.singleOrNull {
+                            it.id == selectedAccountId
+                        }
 
-                        val cloudAccount = recovered?.accounts?.singleOrNull {
-                            it.id == selectedAccountId &&
+                        val cloudAccount = recovered?.accounts?.singleOrNull { cloud ->
+                            selectedLocalAccount != null &&
+                                cloud.email.equals(selectedLocalAccount.email, ignoreCase = true) &&
+                                cloud.username.equals(selectedLocalAccount.username, ignoreCase = true) &&
                                 (expectedUsername == null ||
-                                    it.username.equals(expectedUsername, ignoreCase = true))
+                                    cloud.username.equals(expectedUsername, ignoreCase = true))
                         }
 
                         val accountConflict = cloudAccount?.let { cloud ->
-                            accountService.exportAllAccounts().any { existing ->
-                                if (existing.id == cloud.id) {
-                                    !existing.email.equals(cloud.email, ignoreCase = true) ||
-                                        !existing.username.equals(cloud.username, ignoreCase = true)
-                                } else {
-                                    existing.email.equals(cloud.email, ignoreCase = true) ||
-                                        existing.username.equals(cloud.username, ignoreCase = true)
-                                }
-                            }
+                            hasAccountIdentityConflict(localAccounts, cloud)
                         } ?: false
 
                         val cloudRestored =
