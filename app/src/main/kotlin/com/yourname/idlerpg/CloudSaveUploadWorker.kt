@@ -81,18 +81,58 @@ class CloudSaveUploadWorker(
 
                 val skills = root.optJSONArray("skills")
                 val skillIds = mutableSetOf<String>()
+                var validSkills = skills != null && skills.length() == 16
 
                 if (skills != null) {
                     for (index in 0 until skills.length()) {
-                        val skill = skills.getJSONObject(index)
-                        if (skill.optString("characterId") == mappedLocalId) {
-                            val skillId = skill.optString("skillId")
-                            if (skillId.isNotBlank()) skillIds += skillId
+                        val skill = skills.optJSONObject(index)
+                        if (skill == null) {
+                            validSkills = false
+                            continue
+                        }
+                        val skillId = skill.optString("skillId")
+                        val skillCharacterId = skill.optString("characterId")
+                        val xp = skill.optLong("xp", -1L)
+                        if (
+                            skillCharacterId != mappedLocalId ||
+                            skillId.isBlank() ||
+                            xp < 0L ||
+                            !skillIds.add(skillId)
+                        ) {
+                            validSkills = false
                         }
                     }
                 }
 
-                hasSingleScopedIdentity && skillIds.size == 16
+                // Every character-owned array in a cloud payload must belong
+                // to this one mapped character. This also rejects old queued
+                // full-device snapshots and orphaned progression records.
+                val characterScopedArrays = listOf(
+                    "skillingQueues",
+                    "craftingQueues",
+                    "lastSeen",
+                    "lastSaleCheck",
+                    "inventoryItems",
+                    "equippedSlots",
+                    "loadoutSettings",
+                    "marketAccounts",
+                    "marketOrders",
+                    "combatSessions",
+                    "offlineCombatQueues",
+                    "buryQueues"
+                )
+                val validScopedData = characterScopedArrays.all { name ->
+                    val entries = root.optJSONArray(name)
+                    entries == null || (0 until entries.length()).all { index ->
+                        entries.optJSONObject(index)
+                            ?.optString("characterId") == mappedLocalId
+                    }
+                }
+
+                hasSingleScopedIdentity &&
+                    validSkills &&
+                    skillIds.size == 16 &&
+                    validScopedData
             }.getOrDefault(false)
 
             if (!containsMappedCharacter) {
