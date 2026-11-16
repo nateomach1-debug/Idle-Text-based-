@@ -21,7 +21,7 @@ class CloudSaveUploadWorker(
             Context.MODE_PRIVATE
         )
 
-        repeat(5) {
+        repeat(100) {
             val pending = synchronized(lock) {
                 val pendingKey = prefs.all.keys
                     .filter { it.startsWith(KEY_CHARACTER_ID_PREFIX) }
@@ -112,16 +112,14 @@ class CloudSaveUploadWorker(
                     prefs.edit()
                         .remove(KEY_CHARACTER_ID_PREFIX + characterId)
                         .remove(KEY_SAVE_JSON_PREFIX + characterId)
-                        .remove(KEY_CHARACTER_ID)
-                        .remove(KEY_SAVE_JSON)
                         .commit()
                 } else {
                     false
                 }
             }
 
-            if (finished) {
-                return Result.success()
+            if (!finished) {
+                return Result.retry()
             }
         }
 
