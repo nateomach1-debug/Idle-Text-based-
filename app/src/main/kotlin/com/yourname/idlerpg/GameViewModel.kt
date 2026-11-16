@@ -2690,6 +2690,9 @@ fun logout() {
         }
 
         _currentCharacterId.value = canonicalCharacterId
+        // Do not let background syncs use the previously selected character's
+        // Supabase ID while this character's cloud mapping is being verified.
+        _currentSupabaseCharacterId.value = null
 
         val localJsonBeforeCloud = repository.currentSaveJson()
 
@@ -2725,7 +2728,6 @@ fun logout() {
                 val result = SupabaseCharacterRepository.getOrCreateCharacter(canonicalCharacterId, selectedCharacter.displayName)
                 result.onFailure { _characterSyncError.value = it.message ?: it.toString() }
                 result.onSuccess { _characterSyncError.value = null }
-                _currentSupabaseCharacterId.value = result.getOrNull()
                 val supabaseCharacterId = result.getOrNull()
                 var recoveredToRemoteId: String? = null
 
@@ -2741,10 +2743,19 @@ fun logout() {
                             supabaseCharacterId
                         )
 
+                    if (remoteLocalId == canonicalCharacterId) {
+                        // Only expose this cloud ID to background operations after
+                        // its owner mapping has been verified against the selected
+                        // local character.
+                        _currentSupabaseCharacterId.value = supabaseCharacterId
+                    } else {
+                        _currentSupabaseCharacterId.value = null
+                    }
+
                     if (remoteLocalId != canonicalCharacterId) {
-    _characterSyncError.value =
-        "Cloud character mapping does not match the selected character. Local data was preserved."
-} else if (hasPendingLocalUpload) {
+                        _characterSyncError.value =
+                            "Cloud character mapping does not match the selected character. Local data was preserved."
+                    } else if (hasPendingLocalUpload) {
                         // Preserve the newer local save until its pending
                         // upload has been processed.
                         CloudSaveUploadWorker.enqueuePending(getApplication())
