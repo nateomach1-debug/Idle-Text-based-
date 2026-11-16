@@ -2613,7 +2613,13 @@ fun logout() {
             offlineIdleService.exportBuryQueues()
         )
         val supabaseCharacterId = _currentSupabaseCharacterId.value
-        val json = repository.currentSaveJson()
+        val accountIdForCloud = _currentAccountId.value
+        val characterIdForCloud = _currentCharacterId.value
+        val json = if (accountIdForCloud != null && characterIdForCloud != null) {
+            repository.characterSaveJson(accountIdForCloud, characterIdForCloud)
+        } else {
+            null
+        }
 
         if (supabaseCharacterId != null && json != null) {
             val queued = CloudSaveUploadWorker.storeAndEnqueue(
@@ -2626,6 +2632,9 @@ fun logout() {
                 _characterSyncError.value =
                     "Could not save the pending cloud upload locally."
             }
+        } else if (supabaseCharacterId != null) {
+            _characterSyncError.value =
+                "Cloud upload blocked: the selected character save was incomplete."
         }
         val localCharacterIdForSkills = _currentCharacterId.value
         if (supabaseCharacterId != null && localCharacterIdForSkills != null) {
