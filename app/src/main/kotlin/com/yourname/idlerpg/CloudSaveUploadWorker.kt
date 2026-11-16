@@ -66,12 +66,16 @@ class CloudSaveUploadWorker(
             val containsMappedCharacter = runCatching {
                 val root = org.json.JSONObject(saveJson)
 
+                val accounts = root.optJSONArray("accounts")
                 val characters = root.optJSONArray("characters")
-                val hasCharacterRecord = characters != null &&
-                    (0 until characters.length()).any { index ->
-                        characters.getJSONObject(index)
-                            .optString("id") == mappedLocalId
-                    }
+                val hasSingleScopedIdentity = accounts != null &&
+                    accounts.length() == 1 &&
+                    characters != null &&
+                    characters.length() == 1 &&
+                    characters.getJSONObject(0).optString("id") == mappedLocalId &&
+                    characters.getJSONObject(0).optString("accountId").isNotBlank() &&
+                    accounts.getJSONObject(0).optString("id") ==
+                        characters.getJSONObject(0).optString("accountId")
 
                 val skills = root.optJSONArray("skills")
                 val skillIds = mutableSetOf<String>()
@@ -84,7 +88,7 @@ class CloudSaveUploadWorker(
                     }
                 }
 
-                hasCharacterRecord && skillIds.size == 16
+                hasSingleScopedIdentity && skillIds.size == 16
             }.getOrDefault(false)
 
             if (!containsMappedCharacter) {
