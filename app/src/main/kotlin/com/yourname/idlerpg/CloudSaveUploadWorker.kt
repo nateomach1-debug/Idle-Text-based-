@@ -1,14 +1,12 @@
-
 package com.yourname.idlerpg
 
 import android.content.Context
-import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
-import androidx.work.WorkManager
 import androidx.work.Constraints
+import androidx.work.CoroutineWorker
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.ExistingWorkPolicy
+import androidx.work.WorkManager
 
 class CloudSaveUploadWorker(
     context: Context,
@@ -36,6 +34,7 @@ class CloudSaveUploadWorker(
                     // Migrate the old single pending slot without discarding it.
                     val id = prefs.getString(KEY_CHARACTER_ID, null)
                     val json = prefs.getString(KEY_SAVE_JSON, null)
+
                     if (id == null || json == null) {
                         null
                     } else {
@@ -45,16 +44,17 @@ class CloudSaveUploadWorker(
                             .remove(KEY_CHARACTER_ID)
                             .remove(KEY_SAVE_JSON)
                             .commit()
+
                         if (migrated) id to json else null
                     }
+                }
             } ?: return Result.success()
 
-            
             val characterId = pending.first
             val saveJson = pending.second
 
-            // Never upload a save unless it contains the local character
-            // currently mapped to this Supabase character.
+            // Never upload unless the save contains exactly the local character
+            // mapped to this Supabase character.
             val mappedLocalId = SupabaseCharacterRepository
                 .getCharacterLocalId(characterId)
                 .getOrElse { return Result.retry() }
@@ -65,10 +65,11 @@ class CloudSaveUploadWorker(
 
             val containsMappedCharacter = runCatching {
                 val root = org.json.JSONObject(saveJson)
-
                 val accounts = root.optJSONArray("accounts")
                 val characters = root.optJSONArray("characters")
-                val hasSingleScopedIdentity = accounts != null &&
+
+                val hasSingleScopedIdentity =
+                    accounts != null &&
                     accounts.length() == 1 &&
                     characters != null &&
                     characters.length() == 1 &&
@@ -79,11 +80,13 @@ class CloudSaveUploadWorker(
 
                 val skills = root.optJSONArray("skills")
                 val skillIds = mutableSetOf<String>()
+
                 if (skills != null) {
                     for (index in 0 until skills.length()) {
                         val skill = skills.getJSONObject(index)
                         if (skill.optString("characterId") == mappedLocalId) {
-                            skillIds += skill.optString("skillId")
+                            val skillId = skill.optString("skillId")
+                            if (skillId.isNotBlank()) skillIds += skillId
                         }
                     }
                 }
@@ -92,15 +95,15 @@ class CloudSaveUploadWorker(
             }.getOrDefault(false)
 
             if (!containsMappedCharacter) {
-                // Keep the pending JSON intact for recovery.
+                // Keep invalid pending JSON intact for manual recovery.
                 return Result.failure()
             }
 
+            // Network operation must remain outside synchronized(lock).
             val upload = SupabaseCharacterRepository.uploadCharacterSave(
                 characterId,
                 saveJson
             )
-
 
             if (upload.isFailure) {
                 return Result.retry()
@@ -127,11 +130,13 @@ class CloudSaveUploadWorker(
             }
         }
 
+        // More than 100 saves were queued; continue draining on the next run.
         return Result.retry()
     }
 
     companion object {
         private const val PREFS_NAME = "pending_cloud_save"
+
         // Each character has its own pending slot so switching characters
         // cannot overwrite another character's unsent save.
         private const val KEY_CHARACTER_ID_PREFIX = "character_id_"
@@ -143,7 +148,7 @@ class CloudSaveUploadWorker(
         private const val UNIQUE_WORK_NAME = "idlerpg_cloud_save_upload"
 
         private val lock = Any()
-        
+
         fun pendingCombatQueueDiagnostic(context: Context): String {
             val prefs = context.applicationContext.getSharedPreferences(
                 PREFS_NAME,
@@ -163,63 +168,66 @@ class CloudSaveUploadWorker(
 
                 val legacyId = prefs.getString(KEY_CHARACTER_ID, null)
                 val legacyJson = prefs.getString(KEY_SAVE_JSON, null)
+
                 if (legacyId != null && legacyJson != null) {
                     entries += legacyId to legacyJson
                 }
+
                 entries
             }
+
             if (pendingSaves.isEmpty()) return "Pending upload: none"
 
             return try {
-            pendingSaves.joinToString("\n\n") { pending ->
-                val root = org.json.JSONObject(pending.second)
-                val sections = mutableListOf<String>()
+                pendingSaves.joinToString("\n\n") { pending ->
+                    val root = org.json.JSONObject(pending.second)
+                    val sections = mutableListOf<String>()
 
-                fun summarizeArray(
-                    name: String,
-                    description: (org.json.JSONObject) -> String
-                ) {
-                    val queues = root.optJSONArray(name)
-                    if (queues != null && queues.length() > 0) {
-                        val entries = (0 until queues.length()).joinToString("; ") { index ->
-                            description(queues.getJSONObject(index))
+                    fun summarizeArray(
+                        name: String,
+                        description: (org.json.JSONObject) -> String
+                    ) {
+                        val queues = root.optJSONArray(name)
+                        if (queues != null && queues.length() > 0) {
+                            val entries = (0 until queues.length()).joinToString("; ") { index ->
+                                description(queues.getJSONObject(index))
+                            }
+                            sections += "$name: $entries"
+                        } else {
+                            sections += "$name: none"
                         }
-                        sections += "$name: $entries"
-                    } else {
-                        sections += "$name: none"
                     }
-                }
 
-                summarizeArray("skillingQueues") { queue ->
-                    "character=${queue.optString("characterId")}, " +
-                        "skill=${queue.optString("skillId")}, " +
-                        "item=${queue.optString("itemId")}"
-                }
+                    summarizeArray("skillingQueues") { queue ->
+                        "character=${queue.optString("characterId")}, " +
+                            "skill=${queue.optString("skillId")}, " +
+                            "item=${queue.optString("itemId")}"
+                    }
 
-                summarizeArray("craftingQueues") { queue ->
-                    "character=${queue.optString("characterId")}, " +
-                        "recipe=${queue.optString("recipeId")}"
-                }
+                    summarizeArray("craftingQueues") { queue ->
+                        "character=${queue.optString("characterId")}, " +
+                            "recipe=${queue.optString("recipeId")}"
+                    }
 
-                summarizeArray("offlineCombatQueues") { queue ->
-                    "character=${queue.optString("characterId")}, " +
-                        "zone=${queue.optString("zoneId")}"
-                }
+                    summarizeArray("offlineCombatQueues") { queue ->
+                        "character=${queue.optString("characterId")}, " +
+                            "zone=${queue.optString("zoneId")}"
+                    }
 
-                summarizeArray("buryQueues") { queue ->
-                    "character=${queue.optString("characterId")}, " +
-                        "item=${queue.optString("itemId")}"
-                }
+                    summarizeArray("buryQueues") { queue ->
+                        "character=${queue.optString("characterId")}, " +
+                            "item=${queue.optString("itemId")}"
+                    }
 
-                "Pending upload character=${pending.first}\n" +
-                    sections.joinToString("\n")
+                    "Pending upload character=${pending.first}\n" +
+                        sections.joinToString("\n")
                 }
             } catch (e: Exception) {
                 "Pending upload exists, but its queue data could not be read: " +
                     (e.message ?: "unknown error")
             }
         }
-            
+
         fun hasPendingUploadFor(
             context: Context,
             characterId: String
@@ -236,8 +244,8 @@ class CloudSaveUploadWorker(
                             prefs.getString(KEY_SAVE_JSON, null) != null
                     )
             }
-        
         }
+
         fun storeAndEnqueue(
             context: Context,
             characterId: String,
@@ -268,11 +276,15 @@ class CloudSaveUploadWorker(
                 Context.MODE_PRIVATE
             )
 
-            if (
+            val hasLegacyPending =
                 prefs.getString(KEY_CHARACTER_ID, null) != null &&
-                prefs.getString(KEY_SAVE_JSON, null) != null ||
-                prefs.all.keys.any { it.startsWith(KEY_CHARACTER_ID_PREFIX) }
-            ) {
+                    prefs.getString(KEY_SAVE_JSON, null) != null
+
+            val hasScopedPending = prefs.all.keys.any {
+                it.startsWith(KEY_CHARACTER_ID_PREFIX)
+            }
+
+            if (hasLegacyPending || hasScopedPending) {
                 enqueue(appContext)
             }
         }
@@ -287,13 +299,11 @@ class CloudSaveUploadWorker(
                     .setConstraints(constraints)
                     .build()
 
-            
             WorkManager.getInstance(context).enqueueUniqueWork(
                 UNIQUE_WORK_NAME,
                 ExistingWorkPolicy.APPEND_OR_REPLACE,
                 request
             )
-
         }
     }
 }
