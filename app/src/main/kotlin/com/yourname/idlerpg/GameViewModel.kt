@@ -2210,7 +2210,133 @@ suspend fun login(email: String, password: String): ServiceResult<Account> {
     return attemptCloudRecoveryLogin(email, password)
 }
 
+private fun restoreCanonicalBooziCloudData(
+    recovered: SavedGameState,
+    accountId: String
+): Boolean {
+    val canonicalId = "1da9bf1c-c5be-496d-8972-ddc3486e13cb"
 
+    val cloudAccount = recovered.accounts.singleOrNull {
+        it.id == accountId &&
+            it.username.equals("Boozi", ignoreCase = true)
+    } ?: return false
+
+    val booziCharacters = recovered.characters.filter {
+        it.accountId == accountId
+    }
+
+    if (booziCharacters.none { it.isMainCharacter }) {
+        return false
+    }
+
+    val canonicalSkills = recovered.skills.filter {
+        it.characterId == canonicalId
+    }
+
+    val canonicalInventory = recovered.inventoryItems.filter {
+        it.characterId == canonicalId
+    }
+
+    if (
+        canonicalSkills.size != 16 ||
+        canonicalSkills.map { it.skillId }.distinct().size != 16 ||
+        canonicalSkills.any { it.xp < 0L } ||
+        canonicalSkills.sumOf { it.xp } <= 0L ||
+        canonicalInventory.isEmpty()
+    ) {
+        return false
+    }
+
+    // Restore only Boozi's account and selectable character entries.
+    accountService.restoreAccount(cloudAccount)
+    booziCharacters.forEach {
+        accountService.restoreCharacter(it)
+    }
+
+    // Replace only the canonical Boozi progression.
+    progressionService.replaceCharacterSkills(
+        canonicalId,
+        recovered.skills
+    )
+
+    // Replace only the canonical Boozi activity queues.
+    offlineIdleService.clearCharacterData(canonicalId)
+    recovered.skillingQueues
+        .filter { it.characterId == canonicalId }
+        .forEach { offlineIdleService.restoreSkillingQueue(it) }
+    recovered.craftingQueues
+        .filter { it.characterId == canonicalId }
+        .forEach { offlineIdleService.restoreCraftingQueue(it) }
+    recovered.lastSeen
+        .filter { it.characterId == canonicalId }
+        .forEach { offlineIdleService.restoreLastSeen(it) }
+    recovered.lastSaleCheck
+        .filter { it.characterId == canonicalId }
+        .forEach { offlineIdleService.restoreLastSaleCheck(it) }
+    recovered.offlineCombatQueues
+        .filter { it.characterId == canonicalId }
+        .forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
+    recovered.buryQueues
+        .filter { it.characterId == canonicalId }
+        .forEach { offlineIdleService.restoreBuryQueue(it) }
+
+    // Replace only the canonical Boozi inventory and equipment.
+    inventoryService.clearCharacterData(canonicalId)
+    canonicalInventory.forEach {
+        inventoryService.restoreItem(it)
+    }
+    recovered.equippedSlots
+        .filter { it.characterId == canonicalId }
+        .forEach { inventoryService.restoreEquipped(it) }
+    recovered.loadoutSettings
+        .filter { it.characterId == canonicalId }
+        .forEach { inventoryService.restoreLoadoutSettings(it) }
+
+    // Replace only Boozi's market records.
+    marketService.clearCharacterData(canonicalId)
+    recovered.marketAccounts
+        .filter { it.characterId == canonicalId }
+        .forEach { marketService.restoreAccount(it) }
+    recovered.marketOrders
+        .filter { it.characterId == canonicalId }
+        .forEach { marketService.restoreOrder(it) }
+
+    // Price history is shared, so preserve it and use the service's deduplication.
+    recovered.marketPriceHistory.forEach {
+        marketService.restorePriceHistoryEntry(it)
+    }
+
+    // Replace only Boozi's combat session.
+    combatService.clearCharacterData(canonicalId)
+    recovered.combatSessions
+        .filter { it.characterId == canonicalId }
+        .forEach { combatService.restoreSession(it) }
+
+    _currentCharacterId.value = canonicalId
+    _currentAccountId.value = cloudAccount.id
+
+    // Persist locally. Do not upload during recovery.
+    repository.save(
+        accountService.exportAllAccounts(),
+        accountService.exportAllCharacters(),
+        progressionService.exportAllSkills(),
+        offlineIdleService.exportSkillingQueues(),
+        offlineIdleService.exportCraftingQueues(),
+        offlineIdleService.exportLastSeen(),
+        offlineIdleService.exportLastSaleCheck(),
+        inventoryService.exportAllItems(),
+        inventoryService.exportAllEquipped(),
+        inventoryService.exportAllLoadoutSettings(),
+        marketService.exportAccounts(),
+        marketService.exportOrders(),
+        marketService.exportPriceHistory(),
+        combatService.exportSessions(),
+        offlineIdleService.exportOfflineCombatQueues(),
+        offlineIdleService.exportBuryQueues()
+    )
+
+    return true
+}
 private suspend fun attemptCloudRecoveryLogin(email: String, password: String): ServiceResult<Account> {
     try {
         SupabaseClientProvider.client.auth.signInWith(io.github.jan.supabase.auth.providers.builtin.Email) {
@@ -2337,31 +2463,16 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
         )
     }
 
-    // Verify that Boozi still has a real selectable main-character entry.
-    val recoveredMainCharacter = recovered.characters.firstOrNull {
-        it.accountId == recoveredAccountExport.id && it.isMainCharacter
-    } ?: return ServiceResult.Failure(
-        "Boozi's cloud save has no main character entry. No account data was changed."
+    // Validate and restore only Boozi's canonical cloud data.
+if (!restoreCanonicalBooziCloudData(
+        recovered,
+        recoveredAccountExport.id
     )
-
-
-    recovered.accounts.forEach { accountService.restoreAccount(it) }
-    recovered.characters.forEach { accountService.restoreCharacter(it) }
-    recovered.skills.forEach { progressionService.restoreSkill(it) }
-    recovered.skillingQueues.forEach { offlineIdleService.restoreSkillingQueue(it) }
-    recovered.craftingQueues.forEach { offlineIdleService.restoreCraftingQueue(it) }
-    recovered.lastSeen.forEach { offlineIdleService.restoreLastSeen(it) }
-    recovered.lastSaleCheck.forEach { offlineIdleService.restoreLastSaleCheck(it) }
-    recovered.inventoryItems.forEach { inventoryService.restoreItem(it) }
-    recovered.equippedSlots.forEach { inventoryService.restoreEquipped(it) }
-    recovered.loadoutSettings.forEach { inventoryService.restoreLoadoutSettings(it) }
-    recovered.marketAccounts.forEach { marketService.restoreAccount(it) }
-    recovered.marketOrders.forEach { marketService.restoreOrder(it) }
-    recovered.marketPriceHistory.forEach { marketService.restorePriceHistoryEntry(it) }
-    recovered.combatSessions.forEach { combatService.restoreSession(it) }
-    recovered.offlineCombatQueues.forEach { offlineIdleService.restoreOfflineCombatQueue(it) }
-    recovered.buryQueues.forEach { offlineIdleService.restoreBuryQueue(it) }
-
+) {
+    return ServiceResult.Failure(
+        "Boozi's canonical cloud data failed validation. Local data was not changed."
+    )
+}
     val recoveredAccount = accountService.accountById(recoveredAccountExport.id)
         ?: return ServiceResult.Failure(
             "Boozi's save was restored, but the account could not be loaded."
@@ -2553,7 +2664,10 @@ fun logout() {
                             supabaseCharacterId
                         )
 
-                    if (hasPendingLocalUpload) {
+                    if (remoteLocalId != canonicalCharacterId) {
+    _characterSyncError.value =
+        "Cloud character mapping does not match the selected character. Local data was preserved."
+} else if (hasPendingLocalUpload) {
                         // Preserve the newer local save until its pending
                         // upload has been processed.
                         CloudSaveUploadWorker.enqueuePending(getApplication())
@@ -2592,33 +2706,48 @@ fun logout() {
 
                         val selectedAccountId = _currentAccountId.value
 
-                        val cloudContainsSelectedAccount =
-                            recovered?.accounts?.any {
-                                it.id == selectedAccountId
-                            } == true
+val cloudAccount = recovered?.accounts?.singleOrNull {
+    it.id == selectedAccountId &&
+        it.username.equals("Boozi", ignoreCase = true)
+}
 
-                        // Reject identity collisions before restoring any cloud records.
-                        val accountConflict = recovered?.accounts?.any { cloudAccount ->
-                            accountService.exportAllAccounts().any { existing ->
-                                if (existing.id == cloudAccount.id) {
-                                    !existing.email.equals(
-                                        cloudAccount.email,
-                                        ignoreCase = true
-                                    ) ||
-                                        !existing.username.equals(
-                                            cloudAccount.username,
-                                            ignoreCase = true
-                                        )
-                                } else {
-                                    existing.email.equals(
-                                        cloudAccount.email,
-                                        ignoreCase = true
-                                    ) ||
-                                        existing.username.equals(
-                                            cloudAccount.username,
-                                            ignoreCase = true
-                                        )
-                                }
+val accountConflict = cloudAccount?.let { cloud ->
+    accountService.exportAllAccounts().any { existing ->
+        if (existing.id == cloud.id) {
+            !existing.email.equals(cloud.email, ignoreCase = true) ||
+                !existing.username.equals(cloud.username, ignoreCase = true)
+        } else {
+            existing.email.equals(cloud.email, ignoreCase = true) ||
+                existing.username.equals(cloud.username, ignoreCase = true)
+        }
+    }
+} ?: false
+
+if (
+    recovered != null &&
+    cloudAccount != null &&
+    !accountConflict &&
+    restoreCanonicalBooziCloudData(recovered, cloudAccount.id)
+) {
+    _characterSyncError.value = null
+} else {
+    _characterSyncError.value = when {
+        recoveredResult.isFailure ->
+            "Cloud save could not be parsed. Local data was preserved."
+
+        recovered == null ->
+            "Cloud save was empty. Local data was preserved."
+
+        cloudAccount == null ->
+            "Cloud save did not contain the selected Boozi account. Local data was preserved."
+
+        accountConflict ->
+            "Cloud account identity conflicts with another local account. Local data was preserved."
+
+        else ->
+            "Canonical Boozi cloud data failed validation. Local data was preserved."
+    }
+}
                             }
                         } == true
 
