@@ -2562,7 +2562,7 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
                     candidateInventoryRows > 0
             }
 
-            if (completeMainIds.size != 1) {
+            if (completeMainIds.isEmpty()) {
                 val details = verifiedMainIds.joinToString("; ") { candidateId ->
                     val candidateSkills = (0 until skillsArray.length())
                         .mapNotNull { skillsArray.optJSONObject(it) }
@@ -2573,14 +2573,43 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
                         .count { inventory.optJSONObject(it)?.optString("characterId") == candidateId }
                     "$candidateId: skills=${candidateSkills.size}/${candidateSkillIds.size}, xp=$candidateXp, inventory=$candidateInventoryRows"
                 }
-                rejectionReason = if (completeMainIds.isEmpty()) {
+                rejectionReason =
                     "no main character ID has a complete 16-skill and inventory set (account rows=${accountRows.size}); $details"
-                } else {
-                    "multiple main character IDs have complete data; refusing to guess (account rows=${accountRows.size}); $details"
-                }
                 return@runCatching null
             }
-            val characterId = completeMainIds.single()
+
+            // Some legacy snapshots have multiple main flags because an old local
+            // character was registered alongside the real character. When several
+            // IDs have complete records, use the uniquely highest verified XP total.
+            // This keeps the established progression and rejects ambiguous ties.
+            val completeMainXp = completeMainIds.associateWith { candidateId ->
+                (0 until skillsArray.length())
+                    .mapNotNull { skillsArray.optJSONObject(it) }
+                    .filter { it.optString("characterId") == candidateId }
+                    .sumOf { it.optLong("xp", -1L) }
+            }
+            val highestMainXp = completeMainXp.values.maxOrNull() ?: 0L
+            val highestMainIds = completeMainXp
+                .filterValues { it == highestMainXp }
+                .keys
+
+            if (highestMainIds.size != 1) {
+                val details = verifiedMainIds.joinToString("; ") { candidateId ->
+                    val candidateSkills = (0 until skillsArray.length())
+                        .mapNotNull { skillsArray.optJSONObject(it) }
+                        .filter { it.optString("characterId") == candidateId }
+                    val candidateSkillIds = candidateSkills.map { it.optString("skillId") }.distinct()
+                    val candidateXp = candidateSkills.sumOf { it.optLong("xp", -1L) }
+                    val candidateInventoryRows = (0 until inventory.length())
+                        .count { inventory.optJSONObject(it)?.optString("characterId") == candidateId }
+                    "$candidateId: skills=${candidateSkills.size}/${candidateSkillIds.size}, xp=$candidateXp, inventory=$candidateInventoryRows"
+                }
+                rejectionReason =
+                    "multiple complete main character IDs are tied for highest XP; refusing to guess (account rows=${accountRows.size}); $details"
+                return@runCatching null
+            }
+
+            val characterId = highestMainIds.single()
 
             val characterSkills = (0 until skillsArray.length())
                 .mapNotNull { skillsArray.optJSONObject(it) }
