@@ -2669,7 +2669,7 @@ fun logout() {
                 "Cloud upload blocked: the selected character save was incomplete."
         }
         val localCharacterIdForSkills = _currentCharacterId.value
-        if (supabaseCharacterId != null && localCharacterIdForSkills != null) {
+        if (supabaseCharacterId != null && localCharacterIdForSkills != null && json != null) {
             viewModelScope.launch {
                 SupabaseCharacterRepository.reportSkillLevels(
                     supabaseCharacterId,
