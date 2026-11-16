@@ -2477,61 +2477,100 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     )
 
     val candidates = mutableListOf<RecoveryCandidate>()
+    val rejectionReasons = mutableListOf<String>()
     for (row in saveRows) {
         val supabaseCharacterId = row["supabase_character_id"]
             ?.toString()?.trim('"').orEmpty()
-        if (supabaseCharacterId.isBlank()) continue
+        if (supabaseCharacterId.isBlank()) {
+            rejectionReasons += "A save registry row had no Supabase character ID."
+            continue
+        }
 
-        val cloudJson = SupabaseCharacterRepository
-            .downloadCharacterSave(supabaseCharacterId)
-            .getOrNull() ?: continue
+        val downloadResult = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId)
+        val cloudJson = downloadResult.getOrNull()
+        if (cloudJson.isNullOrBlank()) {
+            rejectionReasons += "${supabaseCharacterId.take(8)}: download failed or returned an empty save (${downloadResult.exceptionOrNull()?.message ?: "empty response"})."
+            continue
+        }
 
+        var rejectionReason = "Unexpected validation failure."
         val candidate = runCatching {
             val root = org.json.JSONObject(cloudJson)
-            val accounts = root.optJSONArray("accounts") ?: return@runCatching null
+            val accounts = root.optJSONArray("accounts")
+            if (accounts == null) {
+                rejectionReason = "missing accounts array"
+                return@runCatching null
+            }
             val matchingAccounts = (0 until accounts.length())
                 .mapNotNull { accounts.optJSONObject(it) }
                 .filter { it.optString("email").equals(email, ignoreCase = true) }
-            if (matchingAccounts.size != 1) return@runCatching null
+            if (matchingAccounts.size != 1) {
+                rejectionReason = "expected one account matching the signed-in email; found ${matchingAccounts.size}"
+                return@runCatching null
+            }
 
             val account = matchingAccounts.single()
             val accountId = account.optString("id")
             val username = account.optString("username")
-            if (accountId.isBlank() || username.isBlank()) return@runCatching null
+            if (accountId.isBlank() || username.isBlank()) {
+                rejectionReason = "matching account has a blank account ID or username"
+                return@runCatching null
+            }
 
             val marketAccounts = root.optJSONArray("marketAccounts")
-                ?: return@runCatching null
-            val verifiedMainIds = (0 until marketAccounts.length())
+            if (marketAccounts == null) {
+                rejectionReason = "missing marketAccounts array"
+                return@runCatching null
+            }
+            val accountRows = (0 until marketAccounts.length())
                 .mapNotNull { marketAccounts.optJSONObject(it) }
-                .filter {
-                    it.optString("accountId") == accountId &&
-                        it.optBoolean("isMainCharacter", false)
-                }
+                .filter { it.optString("accountId") == accountId }
+            val verifiedMainIds = accountRows
+                .filter { it.optBoolean("isMainCharacter", false) }
                 .map { it.optString("characterId") }
                 .filter { it.isNotBlank() }
                 .distinct()
-            if (verifiedMainIds.size != 1) return@runCatching null
+            if (verifiedMainIds.size != 1) {
+                rejectionReason = "expected one main character in market ownership rows; found ${verifiedMainIds.size} (account rows=${accountRows.size})"
+                return@runCatching null
+            }
             val characterId = verifiedMainIds.single()
 
-            val skillsArray = root.optJSONArray("skills") ?: return@runCatching null
+            val skillsArray = root.optJSONArray("skills")
+            if (skillsArray == null) {
+                rejectionReason = "missing skills array"
+                return@runCatching null
+            }
             val characterSkills = (0 until skillsArray.length())
                 .mapNotNull { skillsArray.optJSONObject(it) }
                 .filter { it.optString("characterId") == characterId }
+            val distinctSkillIds = characterSkills.map { it.optString("skillId") }.distinct()
             if (
                 characterSkills.size != 16 ||
-                characterSkills.map { it.optString("skillId") }.distinct().size != 16 ||
+                distinctSkillIds.size != 16 ||
                 characterSkills.any { it.optLong("xp", -1L) < 0L }
-            ) return@runCatching null
+            ) {
+                rejectionReason = "main character has ${characterSkills.size} skill rows and ${distinctSkillIds.size} distinct skills; expected 16 of each"
+                return@runCatching null
+            }
 
             val totalXp = characterSkills.sumOf { it.optLong("xp") }
-            if (totalXp <= 0L) return@runCatching null
+            if (totalXp <= 0L) {
+                rejectionReason = "main character total XP is not positive"
+                return@runCatching null
+            }
 
             val inventory = root.optJSONArray("inventoryItems")
-                ?: return@runCatching null
-            if ((0 until inventory.length()).none {
-                    inventory.optJSONObject(it)?.optString("characterId") == characterId
-                }
-            ) return@runCatching null
+            if (inventory == null) {
+                rejectionReason = "missing inventoryItems array"
+                return@runCatching null
+            }
+            val inventoryRows = (0 until inventory.length())
+                .count { inventory.optJSONObject(it)?.optString("characterId") == characterId }
+            if (inventoryRows == 0) {
+                rejectionReason = "main character has no inventory rows"
+                return@runCatching null
+            }
 
             RecoveryCandidate(
                 supabaseCharacterId = supabaseCharacterId,
@@ -2542,14 +2581,21 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
                 totalXp = totalXp,
                 saveUpdatedAt = row["save_updated_at"]?.toString()?.trim('"').orEmpty()
             )
+        }.onFailure {
+            rejectionReason = "JSON/validation exception: ${it.message ?: it::class.java.simpleName}"
         }.getOrNull()
-        if (candidate != null) candidates += candidate
+        if (candidate != null) {
+            candidates += candidate
+        } else {
+            rejectionReasons += "${supabaseCharacterId.take(8)}: $rejectionReason"
+        }
     }
 
     if (candidates.isEmpty()) {
-        return ServiceResult.Failure(
-            "No cloud snapshot passed account ownership, main-character, inventory, and 16-skill validation. Local data was not changed."
-        )
+        val diagnostic = rejectionReasons.take(6).joinToString(" | ")
+        _characterSyncError.value =
+            "Cloud recovery validation rejected all ${saveRows.size} save(s): $diagnostic. Local data was not changed."
+        return ServiceResult.Failure(_characterSyncError.value!!)
     }
 
     // Duplicate snapshots are expected during the old migration. Prefer the
