@@ -2234,8 +2234,10 @@ suspend fun login(email: String, password: String): ServiceResult<Account> {
                 .putString("blocked_account_id", result.value.id)
                 .apply()
             _currentSupabaseCharacterId.value = null
+            val recoveryFailure = (recoveryResult as? ServiceResult.Failure)?.reason
             _characterSyncError.value =
-                "Cloud sign-in succeeded, but no save passed recovery validation. Cloud character sync is paused."
+                (recoveryFailure ?: "Cloud sign-in succeeded, but no save passed recovery validation.") +
+                    " Cloud character sync is paused."
             return result
         }
 
