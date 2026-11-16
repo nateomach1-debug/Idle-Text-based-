@@ -33,12 +33,20 @@ class CloudSaveUploadWorker(
                     val json = prefs.getString(KEY_SAVE_JSON_PREFIX + characterId, null)
                     if (json == null) null else characterId to json
                 } else {
-                    // Backward compatibility with a pending save written by
-                    // versions that used one shared pending-upload slot.
+                    // Migrate the old single pending slot without discarding it.
                     val id = prefs.getString(KEY_CHARACTER_ID, null)
                     val json = prefs.getString(KEY_SAVE_JSON, null)
-                    if (id == null || json == null) null else id to json
-                }
+                    if (id == null || json == null) {
+                        null
+                    } else {
+                        val migrated = prefs.edit()
+                            .putString(KEY_CHARACTER_ID_PREFIX + id, id)
+                            .putString(KEY_SAVE_JSON_PREFIX + id, json)
+                            .remove(KEY_CHARACTER_ID)
+                            .remove(KEY_SAVE_JSON)
+                            .commit()
+                        if (migrated) id to json else null
+                    }
             } ?: return Result.success()
 
             
@@ -169,7 +177,7 @@ class CloudSaveUploadWorker(
             if (pendingSaves.isEmpty()) return "Pending upload: none"
 
             return try {
-                pendingSaves.joinToString("\\n\\n") { pending ->
+            pendingSaves.joinToString("\n\n") { pending ->
                 val root = org.json.JSONObject(pending.second)
                 val sections = mutableListOf<String>()
 
@@ -211,6 +219,7 @@ class CloudSaveUploadWorker(
 
                 "Pending upload character=${pending.first}\n" +
                     sections.joinToString("\n")
+                }
             } catch (e: Exception) {
                 "Pending upload exists, but its queue data could not be read: " +
                     (e.message ?: "unknown error")
