@@ -2601,11 +2601,6 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
                 return@runCatching null
             }
 
-            val inventory = root.optJSONArray("inventoryItems")
-            if (inventory == null) {
-                rejectionReason = "missing inventoryItems array"
-                return@runCatching null
-            }
             val inventoryRows = (0 until inventory.length())
                 .count { inventory.optJSONObject(it)?.optString("characterId") == characterId }
             if (inventoryRows == 0) {
