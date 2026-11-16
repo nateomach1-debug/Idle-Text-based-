@@ -23,13 +23,21 @@ class CloudSaveUploadWorker(
 
         repeat(5) {
             val pending = synchronized(lock) {
-                val id = prefs.getString(KEY_CHARACTER_ID, null)
-                val json = prefs.getString(KEY_SAVE_JSON, null)
+                val pendingKey = prefs.all.keys
+                    .filter { it.startsWith(KEY_CHARACTER_ID_PREFIX) }
+                    .sorted()
+                    .firstOrNull()
 
-                if (id == null || json == null) {
-                    null
+                if (pendingKey != null) {
+                    val characterId = pendingKey.removePrefix(KEY_CHARACTER_ID_PREFIX)
+                    val json = prefs.getString(KEY_SAVE_JSON_PREFIX + characterId, null)
+                    if (json == null) null else characterId to json
                 } else {
-                    id to json
+                    // Backward compatibility with a pending save written by
+                    // versions that used one shared pending-upload slot.
+                    val id = prefs.getString(KEY_CHARACTER_ID, null)
+                    val json = prefs.getString(KEY_SAVE_JSON, null)
+                    if (id == null || json == null) null else id to json
                 }
             } ?: return Result.success()
 
@@ -95,11 +103,15 @@ class CloudSaveUploadWorker(
             }
 
             val finished = synchronized(lock) {
-                val latestId = prefs.getString(KEY_CHARACTER_ID, null)
-                val latestJson = prefs.getString(KEY_SAVE_JSON, null)
+                val latestJson = prefs.getString(
+                    KEY_SAVE_JSON_PREFIX + characterId,
+                    null
+                )
 
-                if (latestId == characterId && latestJson == saveJson) {
+                if (latestJson == saveJson) {
                     prefs.edit()
+                        .remove(KEY_CHARACTER_ID_PREFIX + characterId)
+                        .remove(KEY_SAVE_JSON_PREFIX + characterId)
                         .remove(KEY_CHARACTER_ID)
                         .remove(KEY_SAVE_JSON)
                         .commit()
@@ -118,6 +130,12 @@ class CloudSaveUploadWorker(
 
     companion object {
         private const val PREFS_NAME = "pending_cloud_save"
+        // Each character has its own pending slot so switching characters
+        // cannot overwrite another character's unsent save.
+        private const val KEY_CHARACTER_ID_PREFIX = "character_id_"
+        private const val KEY_SAVE_JSON_PREFIX = "save_json_"
+
+        // Legacy single-slot keys are read during migration/recovery only.
         private const val KEY_CHARACTER_ID = "character_id"
         private const val KEY_SAVE_JSON = "save_json"
         private const val UNIQUE_WORK_NAME = "idlerpg_cloud_save_upload"
@@ -130,13 +148,28 @@ class CloudSaveUploadWorker(
                 Context.MODE_PRIVATE
             )
 
-            val pending = synchronized(lock) {
-                val id = prefs.getString(KEY_CHARACTER_ID, null)
-                val json = prefs.getString(KEY_SAVE_JSON, null)
-                if (id == null || json == null) null else id to json
-            } ?: return "Pending upload: none"
+            val pendingSaves = synchronized(lock) {
+                val entries = prefs.all.keys
+                    .filter { it.startsWith(KEY_CHARACTER_ID_PREFIX) }
+                    .sorted()
+                    .mapNotNull { key ->
+                        val id = key.removePrefix(KEY_CHARACTER_ID_PREFIX)
+                        val json = prefs.getString(KEY_SAVE_JSON_PREFIX + id, null)
+                        if (json == null) null else id to json
+                    }
+                    .toMutableList()
+
+                val legacyId = prefs.getString(KEY_CHARACTER_ID, null)
+                val legacyJson = prefs.getString(KEY_SAVE_JSON, null)
+                if (legacyId != null && legacyJson != null) {
+                    entries += legacyId to legacyJson
+                }
+                entries
+            }
+            if (pendingSaves.isEmpty()) return "Pending upload: none"
 
             return try {
+                pendingSaves.joinToString("\\n\\n") { pending ->
                 val root = org.json.JSONObject(pending.second)
                 val sections = mutableListOf<String>()
 
@@ -194,8 +227,11 @@ class CloudSaveUploadWorker(
             )
 
             return synchronized(lock) {
-                prefs.getString(KEY_CHARACTER_ID, null) == characterId &&
-                    prefs.getString(KEY_SAVE_JSON, null) != null
+                prefs.getString(KEY_SAVE_JSON_PREFIX + characterId, null) != null ||
+                    (
+                        prefs.getString(KEY_CHARACTER_ID, null) == characterId &&
+                            prefs.getString(KEY_SAVE_JSON, null) != null
+                    )
             }
         
         }
@@ -211,8 +247,8 @@ class CloudSaveUploadWorker(
                     PREFS_NAME,
                     Context.MODE_PRIVATE
                 ).edit()
-                    .putString(KEY_CHARACTER_ID, characterId)
-                    .putString(KEY_SAVE_JSON, saveJson)
+                    .putString(KEY_CHARACTER_ID_PREFIX + characterId, characterId)
+                    .putString(KEY_SAVE_JSON_PREFIX + characterId, saveJson)
                     .commit()
             }
 
@@ -231,7 +267,8 @@ class CloudSaveUploadWorker(
 
             if (
                 prefs.getString(KEY_CHARACTER_ID, null) != null &&
-                prefs.getString(KEY_SAVE_JSON, null) != null
+                prefs.getString(KEY_SAVE_JSON, null) != null ||
+                prefs.all.keys.any { it.startsWith(KEY_CHARACTER_ID_PREFIX) }
             ) {
                 enqueue(appContext)
             }
