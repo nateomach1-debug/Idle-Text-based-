@@ -12,6 +12,76 @@ class GameStateRepository(private val context: Context) {
     // Exposes the exact JSON already written by save() - reused as-is as
     // the cloud upload payload, so no separate serialization format is needed.
     fun currentSaveJson(): String? = if (saveFile.exists()) saveFile.readText() else null
+    // Creates a cloud payload for exactly one account and one character.
+    // Device-local accounts and other characters are never included.
+    fun characterSaveJson(accountId: String, characterId: String): String? {
+        val raw = currentSaveJson() ?: return null
+        return runCatching {
+            val root = JSONObject(raw)
+
+            fun filterArray(
+                name: String,
+                keep: (JSONObject) -> Boolean
+            ): JSONArray {
+                val source = root.optJSONArray(name) ?: JSONArray()
+                val filtered = JSONArray()
+                for (index in 0 until source.length()) {
+                    val item = source.getJSONObject(index)
+                    if (keep(item)) filtered.put(item)
+                }
+                root.put(name, filtered)
+                return filtered
+            }
+
+            val accounts = filterArray("accounts") {
+                it.optString("id") == accountId
+            }
+            val characters = filterArray("characters") {
+                it.optString("id") == characterId &&
+                    it.optString("accountId") == accountId
+            }
+            val skills = filterArray("skills") {
+                it.optString("characterId") == characterId
+            }
+
+            if (accounts.length() != 1 || characters.length() != 1) {
+                return@runCatching null
+            }
+
+            val skillIds = mutableSetOf<String>()
+            for (index in 0 until skills.length()) {
+                val skill = skills.getJSONObject(index)
+                if (skill.optLong("xp", -1L) < 0L) return@runCatching null
+                skillIds += skill.optString("skillId")
+            }
+            if (skills.length() != 16 || skillIds.size != 16) {
+                return@runCatching null
+            }
+
+            val characterScopedArrays = listOf(
+                "skillingQueues",
+                "craftingQueues",
+                "lastSeen",
+                "lastSaleCheck",
+                "inventoryItems",
+                "equippedSlots",
+                "loadoutSettings",
+                "marketAccounts",
+                "marketOrders",
+                "combatSessions",
+                "offlineCombatQueues",
+                "buryQueues"
+            )
+            characterScopedArrays.forEach { name ->
+                filterArray(name) {
+                    it.optString("characterId") == characterId
+                }
+            }
+
+            // marketPriceHistory is global market history and has no owner id.
+            root.toString()
+        }.getOrNull()
+    }
 
     // Used when restoring a character's save downloaded from the cloud -
     // overwrites local state with the recovered JSON before re-loading it.
