@@ -423,6 +423,7 @@ class MarketService(private val monitoring: EconomyMonitoringService) {
             )
         }
     }
+}    
 data class MarketPriceSummary(val itemId: String, val bestBuyPrice: Long?, val bestBuyQuantity: Int?, val bestSellPrice: Long?, val bestSellQuantity: Int?)
 
 data class PlayerEconomyAccountExport(
