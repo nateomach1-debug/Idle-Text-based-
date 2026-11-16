@@ -74,25 +74,17 @@ class CloudSaveUploadWorker(
                     }
 
                 val skills = root.optJSONArray("skills")
-                val hasCompleteSkillRecord = skills != null &&
-                    (0 until skills.length()).count { index ->
-                        skills.getJSONObject(index)
-                            .optString("characterId") == mappedLocalId
-                    } >= 16
-
-                val inventory = root.optJSONArray("inventoryItems")
-                val hasInventoryRecord = inventory != null &&
-                    (0 until inventory.length()).any { index ->
-                        inventory.getJSONObject(index)
-                            .optString("characterId") == mappedLocalId
+                val skillIds = mutableSetOf<String>()
+                if (skills != null) {
+                    for (index in 0 until skills.length()) {
+                        val skill = skills.getJSONObject(index)
+                        if (skill.optString("characterId") == mappedLocalId) {
+                            skillIds += skill.optString("skillId")
+                        }
                     }
+                }
 
-                    hasCharacterRecord ||
-                    (
-                        mappedLocalId == "1da9bf1c-c5be-496d-8972-ddc3486e13cb" &&
-                        hasCompleteSkillRecord &&
-                        hasInventoryRecord
-                    )
+                hasCharacterRecord && skillIds.size == 16
             }.getOrDefault(false)
 
             if (!containsMappedCharacter) {
