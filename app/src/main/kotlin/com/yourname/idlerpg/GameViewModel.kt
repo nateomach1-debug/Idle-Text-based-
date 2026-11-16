@@ -2532,17 +2532,56 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
                 .map { it.optString("characterId") }
                 .filter { it.isNotBlank() }
                 .distinct()
-            if (verifiedMainIds.size != 1) {
-                rejectionReason = "expected one main character in market ownership rows; found ${verifiedMainIds.size} (account rows=${accountRows.size})"
-                return@runCatching null
-            }
-            val characterId = verifiedMainIds.single()
 
             val skillsArray = root.optJSONArray("skills")
             if (skillsArray == null) {
                 rejectionReason = "missing skills array"
                 return@runCatching null
             }
+            val inventory = root.optJSONArray("inventoryItems")
+            if (inventory == null) {
+                rejectionReason = "missing inventoryItems array"
+                return@runCatching null
+            }
+
+            // Legacy saves can contain more than one market row marked as main.
+            // Do not reject the save merely for that duplication, but only accept
+            // an ID when its own progression and inventory are internally complete.
+            val completeMainIds = verifiedMainIds.filter { candidateId ->
+                val candidateSkills = (0 until skillsArray.length())
+                    .mapNotNull { skillsArray.optJSONObject(it) }
+                    .filter { it.optString("characterId") == candidateId }
+                val candidateSkillIds = candidateSkills.map { it.optString("skillId") }.distinct()
+                val candidateXp = candidateSkills.sumOf { it.optLong("xp", -1L) }
+                val candidateInventoryRows = (0 until inventory.length())
+                    .count { inventory.optJSONObject(it)?.optString("characterId") == candidateId }
+                candidateSkills.size == 16 &&
+                    candidateSkillIds.size == 16 &&
+                    candidateSkills.all { it.optLong("xp", -1L) >= 0L } &&
+                    candidateXp > 0L &&
+                    candidateInventoryRows > 0
+            }
+
+            if (completeMainIds.size != 1) {
+                val details = verifiedMainIds.joinToString("; ") { candidateId ->
+                    val candidateSkills = (0 until skillsArray.length())
+                        .mapNotNull { skillsArray.optJSONObject(it) }
+                        .filter { it.optString("characterId") == candidateId }
+                    val candidateSkillIds = candidateSkills.map { it.optString("skillId") }.distinct()
+                    val candidateXp = candidateSkills.sumOf { it.optLong("xp", -1L) }
+                    val candidateInventoryRows = (0 until inventory.length())
+                        .count { inventory.optJSONObject(it)?.optString("characterId") == candidateId }
+                    "$candidateId: skills=${candidateSkills.size}/${candidateSkillIds.size}, xp=$candidateXp, inventory=$candidateInventoryRows"
+                }
+                rejectionReason = if (completeMainIds.isEmpty()) {
+                    "no main character ID has a complete 16-skill and inventory set (account rows=${accountRows.size}); $details"
+                } else {
+                    "multiple main character IDs have complete data; refusing to guess (account rows=${accountRows.size}); $details"
+                }
+                return@runCatching null
+            }
+            val characterId = completeMainIds.single()
+
             val characterSkills = (0 until skillsArray.length())
                 .mapNotNull { skillsArray.optJSONObject(it) }
                 .filter { it.optString("characterId") == characterId }
