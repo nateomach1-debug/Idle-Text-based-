@@ -2279,12 +2279,18 @@ private fun restoreScopedCloudData(
         it.id == accountId &&
             (expectedUsername == null ||
                 it.username.equals(expectedUsername, ignoreCase = true))
-    } ?: return false
+    } ?: run {
+        _characterSyncError.value = "Recovery safety check: selected account was missing or did not match the signed-in profile."
+        return false
+    }
 
     val originalAccountCharacters = recovered.characters.filter {
         it.accountId == accountId
     }
-    if (originalAccountCharacters.count { it.id == characterId } > 1) return false
+    if (originalAccountCharacters.count { it.id == characterId } > 1) {
+        _characterSyncError.value = "Recovery safety check: selected character appears more than once in the account export."
+        return false
+    }
 
     // The independently verified marketAccounts main-character flag is
     // authoritative for this recovery. Keep every sibling character, but
@@ -2298,16 +2304,25 @@ private fun restoreScopedCloudData(
     // Only synthesize that one profile after the caller independently verifies
     // the account ID, main-character flag, and complete skill snapshot.
     if (accountCharacters.none { it.id == characterId }) {
-        val synthetic = recoveredMainCharacter ?: return false
+        val synthetic = recoveredMainCharacter ?: run {
+            _characterSyncError.value = "Recovery safety check: selected character profile is missing and cannot be safely reconstructed."
+            return false
+        }
         if (
             synthetic.id != characterId ||
             synthetic.accountId != accountId ||
             !synthetic.isMainCharacter ||
             !AvatarCatalog.isValid(synthetic.avatarId)
-        ) return false
+        ) {
+            _characterSyncError.value = "Recovery safety check: reconstructed character identity or avatar failed validation."
+            return false
+        }
         accountCharacters += synthetic
     }
-    if (accountCharacters.count { it.id == characterId } != 1) return false
+    if (accountCharacters.count { it.id == characterId } != 1) {
+        _characterSyncError.value = "Recovery safety check: account does not contain exactly one selected character."
+        return false
+    }
 
     // Other orphan records may belong to unrelated characters in this
     // full-device snapshot. Preserve the cloud snapshot and restore only the
@@ -2321,7 +2336,10 @@ private fun restoreScopedCloudData(
         skills.size != 16 ||
         skills.map { it.skillId }.distinct().size != 16 ||
         skills.any { it.xp < 0L }
-    ) return false
+    ) {
+        _characterSyncError.value = "Recovery safety check: selected cloud character does not have exactly 16 unique, nonnegative skill records."
+        return false
+    }
 
     // Refuse a cloud rollback. Local progress wins whenever its total XP is
     // greater than the downloaded snapshot; the caller leaves local data
@@ -2330,16 +2348,25 @@ private fun restoreScopedCloudData(
         .all()
         .sumOf { it.xp }
     val cloudTotalXp = skills.sumOf { it.xp }
-    if (cloudTotalXp < localTotalXp) return false
+    if (cloudTotalXp < localTotalXp) {
+        _characterSyncError.value = "Recovery safety check: cloud snapshot has $cloudTotalXp XP, below this device's preserved $localTotalXp XP. Local progress was protected."
+        return false
+    }
 
     val isBoozi = expectedUsername.equals("Boozi", ignoreCase = true)
     if (isBoozi) {
-        if (accountCharacters.none { it.isMainCharacter }) return false
+        if (accountCharacters.none { it.isMainCharacter }) {
+            _characterSyncError.value = "Recovery safety check: Boozi account has no main character after validation."
+            return false
+        }
 
         val inventory = recovered.inventoryItems.filter {
             it.characterId == characterId
         }
-        if (inventory.isEmpty()) return false
+        if (inventory.isEmpty()) {
+            _characterSyncError.value = "Recovery safety check: Boozi selected character has no inventory records."
+            return false
+        }
     }
 
     accountService.restoreAccount(cloudAccount)
@@ -2749,7 +2776,7 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
         )
     ) {
         return ServiceResult.Failure(
-            "Cloud character data failed safety validation. Local data was not changed."
+            _characterSyncError.value ?: "Cloud character data failed safety validation. Local data was not changed."
         )
     }
 
