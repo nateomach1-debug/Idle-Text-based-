@@ -2904,6 +2904,15 @@ fun logout() {
     sessionManager.clearSession()
     _currentAccountId.value = null
     _currentCharacterId.value = null
+    _currentSupabaseCharacterId.value = null
+}
+
+fun returnToCharacterSelection() {
+    // Persist the active character before leaving gameplay. Keep the account
+    // signed in so the player can choose another character without logging in.
+    saveGame()
+    _currentCharacterId.value = null
+    _currentSupabaseCharacterId.value = null
 }
 
     fun clearOfflineSummary() {
