@@ -51,6 +51,7 @@ fun SettingsScreen(
     onEffectModeChanged: (com.yourname.idlerpg.ui.theme.TextEffectMode) -> Unit = {},
     onSecondaryColorChanged: (Color?) -> Unit = {},
     cosmeticsContent: @Composable () -> Unit = {},
+    onReturnToCharacterSelection: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showGemShop by remember { mutableStateOf(false) }
@@ -172,6 +173,14 @@ fun SettingsScreen(
                 color = outlineColor,
                 onColorChange = { onOutlineColorChanged(it) }
             )
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+        Button(
+            onClick = onReturnToCharacterSelection,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Return to Character Selection")
         }
     }
 
