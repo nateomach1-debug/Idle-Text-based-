@@ -587,18 +587,67 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        val characters = accountService.charactersFor(accountId)
-        _localCharacterIdentityDiagnostic.value = if (characters.isEmpty()) {
-            "No local characters are registered for the current account."
-        } else {
-            characters.joinToString("\n\n") { character ->
-                """
-                ID: ${character.id}
-                Display name: ${character.displayName}
-                Avatar ID: ${character.avatarId}
-                Is main character: ${character.isMainCharacter}
+        val saveJson = repository.currentSaveJson()
+        if (saveJson == null) {
+            _localCharacterIdentityDiagnostic.value = "No local save file is available."
+            return
+        }
+
+        _localCharacterIdentityDiagnostic.value = try {
+            val root = org.json.JSONObject(saveJson)
+            val savedCharacters = root.optJSONArray("characters")
+                ?: org.json.JSONArray()
+            val skills = root.optJSONArray("skills") ?: org.json.JSONArray()
+            val inventory = root.optJSONArray("inventoryItems") ?: org.json.JSONArray()
+            val marketAccounts = root.optJSONArray("marketAccounts") ?: org.json.JSONArray()
+            val characters = accountService.charactersFor(accountId)
+
+            if (characters.isEmpty()) {
+                "No local characters are registered for the current account."
+            } else {
+                characters.joinToString("\n\n") { character ->
+                    val skillRows = (0 until skills.length()).mapNotNull { index ->
+                        skills.optJSONObject(index)?.takeIf {
+                            it.optString("characterId") == character.id
+                        }
+                    }
+                    val distinctSkills = skillRows.map { it.optString("skillId") }.distinct()
+                    val totalXp = skillRows.sumOf { it.optLong("xp", -1L) }
+                    val inventoryRows = (0 until inventory.length()).count { index ->
+                        inventory.optJSONObject(index)?.optString("characterId") == character.id
+                    }
+                    val marketMainRows = (0 until marketAccounts.length()).mapNotNull { index ->
+                        marketAccounts.optJSONObject(index)?.takeIf {
+                            it.optString("characterId") == character.id
+                        }
+                    }
+                    val savedCharacter = (0 until savedCharacters.length()).mapNotNull { index ->
+                        savedCharacters.optJSONObject(index)?.takeIf {
+                            it.optString("id") == character.id
+                        }
+                    }.firstOrNull()
+
+                    """
+                    ID: ${character.id}
+                    Display name: ${character.displayName}
+                    Avatar ID: ${character.avatarId}
+                    Is main character: ${character.isMainCharacter}
+                    Created at: ${savedCharacter?.optString("createdAt") ?: "Not in local character export"}
+                    Local skill records: ${skillRows.size}/${distinctSkills.size} distinct
+                    Local total XP: $totalXp
+                    Local inventory records: $inventoryRows
+                    Local market main flags: ${if (marketMainRows.isEmpty()) "None" else marketMainRows.joinToString { it.optBoolean("isMainCharacter", false).toString() }}
+                    """.trimIndent()
+                } + """
+
+                Total local characters: ${characters.size}
+                Current selected local ID: ${_currentCharacterId.value ?: "None"}
+                Current Supabase character ID: ${_currentSupabaseCharacterId.value ?: "None"}
+                Cloud uploads paused for ID: ${cloudRecoveryPausedCharacterId ?: "None"}
                 """.trimIndent()
-            } + "\n\nTotal local characters: ${characters.size}"
+            }
+        } catch (e: Exception) {
+            "Could not inspect local character records: ${e.message ?: e::class.java.simpleName}"
         }
     }
 
