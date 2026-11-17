@@ -591,14 +591,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _localCharacterIdentityDiagnostic.value = if (characters.isEmpty()) {
             "No local characters are registered for the current account."
         } else {
-            characters.joinToString("\\n\\n") { character ->
+            characters.joinToString("\n\n") { character ->
                 """
                 ID: ${character.id}
                 Display name: ${character.displayName}
                 Avatar ID: ${character.avatarId}
                 Is main character: ${character.isMainCharacter}
                 """.trimIndent()
-            } + "\\n\\nTotal local characters: ${characters.size}"
+            } + "\n\nTotal local characters: ${characters.size}"
         }
     }
 
