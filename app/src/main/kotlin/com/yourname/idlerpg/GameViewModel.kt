@@ -2663,25 +2663,37 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
         return ServiceResult.Failure(_characterSyncError.value!!)
     }
 
-    // Duplicate snapshots are expected during the old migration. Prefer the
-    // highest verified progression; use the server save timestamp only as a
-    // deterministic tie-breaker. Never combine snapshots.
-    val distinctCharacters = candidates.map { it.accountId to it.characterId }.distinct()
-    if (distinctCharacters.size != 1) {
+    // During legacy migration, separate profile-owned save rows can contain
+    // snapshots of different local character IDs. The account identity must
+    // agree, and the uniquely highest complete progression snapshot wins.
+    // Never let a newer low-progression snapshot override an older verified
+    // save, and never combine data from different snapshots.
+    val distinctAccountIds = candidates.map { it.accountId }.distinct()
+    if (distinctAccountIds.size != 1) {
         val candidateDetails = candidates.joinToString(" | ") { candidate ->
             "${candidate.supabaseCharacterId.take(8)}: account=${candidate.accountId}, character=${candidate.characterId}, xp=${candidate.totalXp}, updated=${candidate.saveUpdatedAt}"
         }
-        val conflictDetails = distinctCharacters.joinToString(" | ") { (accountId, characterId) ->
-            "account=$accountId, character=$characterId"
-        }
         _characterSyncError.value =
-            "Cloud saves resolve to multiple verified identities; recovery stopped rather than guessing. Candidates: $candidateDetails. Distinct identities: $conflictDetails. Local data was not changed."
+            "Cloud saves resolve to multiple account identities; recovery stopped rather than guessing. Candidates: $candidateDetails. Local data was not changed."
         return ServiceResult.Failure(_characterSyncError.value!!)
     }
-    val selected = candidates.maxWithOrNull(
-        compareBy<RecoveryCandidate> { it.totalXp }
-            .thenBy { it.saveUpdatedAt }
-    ) ?: return ServiceResult.Failure("No safe cloud snapshot could be selected.")
+
+    val highestXp = candidates.maxOf { it.totalXp }
+    val highestXpCandidates = candidates.filter { it.totalXp == highestXp }
+    val highestXpIdentities = highestXpCandidates
+        .map { it.accountId to it.characterId }
+        .distinct()
+    if (highestXpIdentities.size != 1) {
+        val candidateDetails = candidates.joinToString(" | ") { candidate ->
+            "${candidate.supabaseCharacterId.take(8)}: account=${candidate.accountId}, character=${candidate.characterId}, xp=${candidate.totalXp}, updated=${candidate.saveUpdatedAt}"
+        }
+        _characterSyncError.value =
+            "Cloud saves have a tie for highest verified progression across different characters; recovery stopped rather than guessing. Candidates: $candidateDetails. Local data was not changed."
+        return ServiceResult.Failure(_characterSyncError.value!!)
+    }
+
+    val selected = highestXpCandidates.maxByOrNull { it.saveUpdatedAt }
+        ?: return ServiceResult.Failure("No safe cloud snapshot could be selected.")
 
     val recovered = try {
         repository.loadRawJson(selected.cloudJson)
