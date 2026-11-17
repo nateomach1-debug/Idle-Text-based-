@@ -1191,6 +1191,8 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                     gameViewModel.combatQueueDiagnostic.collectAsState()
                                 val debugBoozisDataDiagnostic by
                                     gameViewModel.boozisDataDiagnostic.collectAsState()
+                                val debugLocalCharacterIdentityDiagnostic by
+                                    gameViewModel.localCharacterIdentityDiagnostic.collectAsState()
                                 val debugCloudSaveInspection by
                                     gameViewModel.cloudSaveInspection.collectAsState()
 
@@ -1296,6 +1298,28 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                                 
                                                 androidx.compose.material3.Text(
                                                     debugCloudSaveInspection
+                                                )
+
+                                                androidx.compose.material3.Divider()
+
+                                                androidx.compose.material3.Text(
+                                                    "Local Character Identity (Read-Only)",
+                                                    fontWeight =
+                                                        androidx.compose.ui.text.font.FontWeight.Bold
+                                                )
+
+                                                androidx.compose.material3.TextButton(
+                                                    onClick = {
+                                                        gameViewModel.refreshLocalCharacterIdentityDiagnostic()
+                                                    }
+                                                ) {
+                                                    androidx.compose.material3.Text(
+                                                        "List Local Character IDs"
+                                                    )
+                                                }
+
+                                                androidx.compose.material3.Text(
+                                                    debugLocalCharacterIdentityDiagnostic
                                                 )
 
                                                 androidx.compose.material3.Divider()
