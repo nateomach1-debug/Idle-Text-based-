@@ -2668,9 +2668,15 @@ private suspend fun attemptCloudRecoveryLogin(email: String, password: String): 
     // deterministic tie-breaker. Never combine snapshots.
     val distinctCharacters = candidates.map { it.accountId to it.characterId }.distinct()
     if (distinctCharacters.size != 1) {
-        return ServiceResult.Failure(
-            "The cloud profile contains multiple different verified main characters. Recovery stopped rather than guessing."
-        )
+        val candidateDetails = candidates.joinToString(" | ") { candidate ->
+            "${candidate.supabaseCharacterId.take(8)}: account=${candidate.accountId}, character=${candidate.characterId}, xp=${candidate.totalXp}, updated=${candidate.saveUpdatedAt}"
+        }
+        val conflictDetails = distinctCharacters.joinToString(" | ") { (accountId, characterId) ->
+            "account=$accountId, character=$characterId"
+        }
+        _characterSyncError.value =
+            "Cloud saves resolve to multiple verified identities; recovery stopped rather than guessing. Candidates: $candidateDetails. Distinct identities: $conflictDetails. Local data was not changed."
+        return ServiceResult.Failure(_characterSyncError.value!!)
     }
     val selected = candidates.maxWithOrNull(
         compareBy<RecoveryCandidate> { it.totalXp }
