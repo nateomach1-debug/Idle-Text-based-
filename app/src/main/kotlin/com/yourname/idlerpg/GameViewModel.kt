@@ -360,6 +360,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _boozisDataDiagnostic = MutableStateFlow("Not inspected")
     val boozisDataDiagnostic: StateFlow<String> =
         _boozisDataDiagnostic.asStateFlow()
+
+    private val _localCharacterIdentityDiagnostic = MutableStateFlow("Not inspected")
+    val localCharacterIdentityDiagnostic: StateFlow<String> =
+        _localCharacterIdentityDiagnostic.asStateFlow()
     private fun summarizeOfflineCombatQueues(json: String?): String {
         if (json == null) return "Save unavailable"
 
@@ -575,6 +579,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         """.trimIndent()
     }
     
+    fun refreshLocalCharacterIdentityDiagnostic() {
+        val accountId = _currentAccountId.value
+        if (accountId.isNullOrBlank()) {
+            _localCharacterIdentityDiagnostic.value =
+                "No account is currently selected. Log in, then refresh this diagnostic."
+            return
+        }
+
+        val characters = accountService.charactersFor(accountId)
+        _localCharacterIdentityDiagnostic.value = if (characters.isEmpty()) {
+            "No local characters are registered for the current account."
+        } else {
+            characters.joinToString("\\n\\n") { character ->
+                """
+                ID: ${character.id}
+                Display name: ${character.displayName}
+                Avatar ID: ${character.avatarId}
+                Is main character: ${character.isMainCharacter}
+                """.trimIndent()
+            } + "\\n\\nTotal local characters: ${characters.size}"
+        }
+    }
+
     fun refreshBooziCharacterDataDiagnostic() {
         val localIds = listOf(
             "8e201b32-1823-4721-b0ee-2fb26f04906a",
