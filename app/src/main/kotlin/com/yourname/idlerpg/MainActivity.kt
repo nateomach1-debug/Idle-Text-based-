@@ -1464,6 +1464,10 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                     secondaryColor = settingsSecondaryColor,
                                     onEffectModeChanged = { gameViewModel.setTextEffectMode(it) },
                                     onSecondaryColorChanged = { gameViewModel.setTextSecondaryColor(it) },
+                                    onReturnToCharacterSelection = {
+                                        gameViewModel.returnToCharacterSelection()
+                                        flowState = AppFlowState.CharacterSelect
+                                    },
                                     cosmeticsContent = {
                                         CosmeticsEntry(
                                             gems = premiumCurrencyBalance.second,
