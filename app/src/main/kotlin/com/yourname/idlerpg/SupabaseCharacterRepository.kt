@@ -57,6 +57,15 @@ object SupabaseCharacterRepository {
         Unit
     }
 
+    // Deletes one character row owned by the authenticated profile.
+    // The server-side RPC must verify auth.uid() ownership and refuse to
+    // delete the profile's last remaining character.
+    suspend fun deleteMyCharacter(characterId: String): Result<Boolean> = runCatching {
+        client.postgrest.rpc("delete_my_character", buildJsonObject {
+            put("p_character_id", characterId)
+        }).decodeAs<Boolean>()
+    }
+
     // Downloads this character's cloud backup, returned as the same raw
     // JSON string shape GameStateRepository already reads/writes locally.
     suspend fun downloadCharacterSave(characterId: String): Result<String?> = runCatching {
