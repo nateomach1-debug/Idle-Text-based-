@@ -3054,10 +3054,11 @@ fun returnToCharacterSelection() {
                 }
                 safetyEditor.commit()
 
-                if (pendingRemoved) {
-                    androidx.work.WorkManager.getInstance(getApplication())
-                        .let { CloudSaveUploadWorker.enqueuePending(getApplication()) }
-                } else {
+                // Re-enqueue the remaining queue even if this character's old
+                // pending entry could not be removed. The persistent deletion guard
+                // makes the worker skip that exact remote ID while draining others.
+                CloudSaveUploadWorker.enqueuePending(getApplication())
+                if (!pendingRemoved) {
                     _characterDeletionError.value =
                         "The character was deleted, but its old pending upload could not be cleared. It remains blocked from uploading."
                 }
@@ -3076,6 +3077,7 @@ fun returnToCharacterSelection() {
                         .putString("paused_character_id", localCharacterId)
                         .commit()
                     cloudRecoveryPausedCharacterId = localCharacterId
+                    CloudSaveUploadWorker.enqueuePending(getApplication())
                 }
                 _characterDeletionError.value = e.message ?: "Character deletion failed."
             } finally {
