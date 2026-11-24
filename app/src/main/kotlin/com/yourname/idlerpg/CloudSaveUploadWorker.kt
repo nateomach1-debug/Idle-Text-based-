@@ -148,6 +148,13 @@ class CloudSaveUploadWorker(
                 return Result.failure()
             }
 
+            // Recheck the persisted safety flags immediately before the network
+            // call. A character may have entered deletion/recovery pause after
+            // this worker selected its pending entry.
+            if (isRecoveryBlocked(safetyPrefs, characterId, saveJson)) {
+                return@repeat
+            }
+
             // Network operation must remain outside synchronized(lock).
             val upload = SupabaseCharacterRepository.uploadCharacterSave(
                 characterId,
