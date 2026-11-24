@@ -321,16 +321,16 @@ class CloudSaveUploadWorker(
                 Context.MODE_PRIVATE
             )
             return synchronized(lock) {
-                prefs.edit()
+                val editor = prefs.edit()
                     .remove(KEY_CHARACTER_ID_PREFIX + characterId)
                     .remove(KEY_SAVE_JSON_PREFIX + characterId)
-                    .apply {
-                        if (prefs.getString(KEY_CHARACTER_ID, null) == characterId) {
-                            remove(KEY_CHARACTER_ID)
-                            remove(KEY_SAVE_JSON)
-                        }
-                    }
-                    .commit()
+
+                if (prefs.getString(KEY_CHARACTER_ID, null) == characterId) {
+                    editor.remove(KEY_CHARACTER_ID)
+                    editor.remove(KEY_SAVE_JSON)
+                }
+
+                editor.commit()
             }
         }
 
