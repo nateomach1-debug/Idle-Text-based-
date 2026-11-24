@@ -74,7 +74,7 @@ fun CharacterSelectScreen(
                     ) {
                         Text("Delete")
                     }
-                } else {
+                } else if (character.isMainCharacter) {
                     Text(
                         text = "Main",
                         style = MaterialTheme.typography.labelSmall,
