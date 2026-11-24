@@ -2940,6 +2940,10 @@ fun returnToCharacterSelection() {
             _characterDeletionError.value = "No signed-in local account is selected."
             return
         }
+        if (accountId != "13464bb2-5523-4422-baad-b206dd3e8649") {
+            _characterDeletionError.value = "This deletion is restricted to the confirmed Venilla account."
+            return
+        }
 
         val ownedCharacters = accountService.charactersFor(accountId)
         val target = ownedCharacters.singleOrNull { it.id == localCharacterId }
@@ -2967,8 +2971,30 @@ fun returnToCharacterSelection() {
             var deletionGuardSet = false
             var remoteDeletionConfirmed = false
             var deletionOutcomeUncertain = false
+            var localStateBefore: SavedGameState? = null
 
             try {
+                // Persist the current local state without an active cloud target,
+                // then use it as a baseline to verify that only Mage-owned data
+                // changes during the deletion.
+                saveGame()
+                localStateBefore = repository.load()
+                    ?: throw IllegalStateException("The local save could not be verified. No cloud data was changed.")
+                val before = localStateBefore!!
+                if (
+                    before.accounts.none { it.id == accountId } ||
+                    before.characters.count { it.id == localCharacterId && it.accountId == accountId } != 1 ||
+                    before.characters.none {
+                        it.id == "e6bc06bf-75c2-4108-bb13-d84c477520e0" &&
+                            it.accountId == accountId &&
+                            it.isMainCharacter
+                    }
+                ) {
+                    throw IllegalStateException(
+                        "The local save does not contain the expected Mage and original main Knight. No data was changed."
+                    )
+                }
+
                 val rows = SupabaseCharacterRepository.listMyCharacterSaves()
                     .getOrElse { throw IllegalStateException("Could not verify cloud ownership: ${it.message}") }
 
@@ -3105,6 +3131,40 @@ fun returnToCharacterSelection() {
                 // saveGame serializes the remaining characters and preserves the
                 // account and global marketPriceHistory. No cloud ID is active.
                 saveGame()
+
+                val before = localStateBefore
+                    ?: throw IllegalStateException("The pre-deletion save snapshot is unavailable.")
+                val after = repository.load()
+                    ?: throw IllegalStateException("The updated local save could not be read back.")
+
+                val onlyMageRemoved =
+                    after.accounts == before.accounts &&
+                    after.characters == before.characters.filterNot { it.id == localCharacterId } &&
+                    after.skills == before.skills.filterNot { it.characterId == localCharacterId } &&
+                    after.skillingQueues == before.skillingQueues.filterNot { it.characterId == localCharacterId } &&
+                    after.craftingQueues == before.craftingQueues.filterNot { it.characterId == localCharacterId } &&
+                    after.lastSeen == before.lastSeen.filterNot { it.characterId == localCharacterId } &&
+                    after.lastSaleCheck == before.lastSaleCheck.filterNot { it.characterId == localCharacterId } &&
+                    after.inventoryItems == before.inventoryItems.filterNot { it.characterId == localCharacterId } &&
+                    after.equippedSlots == before.equippedSlots.filterNot { it.characterId == localCharacterId } &&
+                    after.loadoutSettings == before.loadoutSettings.filterNot { it.characterId == localCharacterId } &&
+                    after.marketAccounts == before.marketAccounts.filterNot { it.characterId == localCharacterId } &&
+                    after.marketOrders == before.marketOrders.filterNot { it.characterId == localCharacterId } &&
+                    after.combatSessions == before.combatSessions.filterNot { it.characterId == localCharacterId } &&
+                    after.offlineCombatQueues == before.offlineCombatQueues.filterNot { it.characterId == localCharacterId } &&
+                    after.buryQueues == before.buryQueues.filterNot { it.characterId == localCharacterId } &&
+                    after.marketPriceHistory == before.marketPriceHistory &&
+                    after.characters.any {
+                        it.id == "e6bc06bf-75c2-4108-bb13-d84c477520e0" &&
+                            it.accountId == accountId &&
+                            it.isMainCharacter
+                    }
+
+                if (!onlyMageRemoved) {
+                    throw IllegalStateException(
+                        "The saved result did not match the exact Mage-only deletion. Cloud uploads remain paused for safety."
+                    )
+                }
 
                 val safetyEditor = cloudRecoveryPrefs.edit()
                 if (cloudRecoveryPrefs.getString("paused_character_id", null) == localCharacterId) {
