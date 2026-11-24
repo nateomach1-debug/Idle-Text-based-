@@ -19,18 +19,26 @@ class CloudSaveUploadWorker(
             PREFS_NAME,
             Context.MODE_PRIVATE
         )
+        val safetyPrefs = applicationContext.getSharedPreferences(
+            "cloud_recovery_safety",
+            Context.MODE_PRIVATE
+        )
 
         repeat(100) {
             val pending = synchronized(lock) {
-                val pendingKey = prefs.all.keys
+                val scopedEntries = prefs.all.keys
                     .filter { it.startsWith(KEY_CHARACTER_ID_PREFIX) }
                     .sorted()
-                    .firstOrNull()
+                    .mapNotNull { key ->
+                        val id = key.removePrefix(KEY_CHARACTER_ID_PREFIX)
+                        val json = prefs.getString(KEY_SAVE_JSON_PREFIX + id, null)
+                        if (json == null) null else id to json
+                    }
 
-                if (pendingKey != null) {
-                    val characterId = pendingKey.removePrefix(KEY_CHARACTER_ID_PREFIX)
-                    val json = prefs.getString(KEY_SAVE_JSON_PREFIX + characterId, null)
-                    if (json == null) null else characterId to json
+                if (scopedEntries.isNotEmpty()) {
+                    // Leave recovery-paused entries untouched, but allow other
+                    // characters' pending saves to continue through the queue.
+                    scopedEntries.firstOrNull { !isRecoveryBlocked(safetyPrefs, it.second) }
                 } else {
                     // Migrate the old single pending slot without discarding it.
                     val id = prefs.getString(KEY_CHARACTER_ID, null)
@@ -46,7 +54,7 @@ class CloudSaveUploadWorker(
                             .remove(KEY_SAVE_JSON)
                             .commit()
 
-                        if (migrated) id to json else null
+                        if (migrated && !isRecoveryBlocked(safetyPrefs, json)) id to json else null
                     }
                 }
             } ?: return Result.success()
@@ -189,6 +197,35 @@ class CloudSaveUploadWorker(
         private const val UNIQUE_WORK_NAME = "idlerpg_cloud_save_upload"
 
         private val lock = Any()
+
+        private fun isRecoveryBlocked(
+            safetyPrefs: android.content.SharedPreferences,
+            saveJson: String
+        ): Boolean {
+            return try {
+                val root = org.json.JSONObject(saveJson)
+                val pausedCharacterId = safetyPrefs.getString("paused_character_id", null)
+                val blockedAccountId = safetyPrefs.getString("blocked_account_id", null)
+                val characters = root.optJSONArray("characters")
+                val accounts = root.optJSONArray("accounts")
+
+                val matchesPausedCharacter = !pausedCharacterId.isNullOrBlank() &&
+                    characters != null &&
+                    (0 until characters.length()).any { index ->
+                        characters.optJSONObject(index)?.optString("id") == pausedCharacterId
+                    }
+
+                val matchesBlockedAccount = !blockedAccountId.isNullOrBlank() &&
+                    accounts != null &&
+                    (0 until accounts.length()).any { index ->
+                        accounts.optJSONObject(index)?.optString("id") == blockedAccountId
+                    }
+
+                matchesPausedCharacter || matchesBlockedAccount
+            } catch (_: Exception) {
+                false
+            }
+        }
 
         fun pendingCombatQueueDiagnostic(context: Context): String {
             val prefs = context.applicationContext.getSharedPreferences(
