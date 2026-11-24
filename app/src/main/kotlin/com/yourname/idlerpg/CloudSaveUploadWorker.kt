@@ -38,7 +38,7 @@ class CloudSaveUploadWorker(
                 if (scopedEntries.isNotEmpty()) {
                     // Leave recovery-paused entries untouched, but allow other
                     // characters' pending saves to continue through the queue.
-                    scopedEntries.firstOrNull { !isRecoveryBlocked(safetyPrefs, it.second) }
+                    scopedEntries.firstOrNull { !isRecoveryBlocked(safetyPrefs, it.first, it.second) }
                 } else {
                     // Migrate the old single pending slot without discarding it.
                     val id = prefs.getString(KEY_CHARACTER_ID, null)
@@ -54,7 +54,7 @@ class CloudSaveUploadWorker(
                             .remove(KEY_SAVE_JSON)
                             .commit()
 
-                        if (migrated && !isRecoveryBlocked(safetyPrefs, json)) id to json else null
+                        if (migrated && !isRecoveryBlocked(safetyPrefs, id, json)) id to json else null
                     }
                 }
             } ?: return Result.success()
@@ -200,13 +200,15 @@ class CloudSaveUploadWorker(
 
         private fun isRecoveryBlocked(
             safetyPrefs: android.content.SharedPreferences,
+            supabaseCharacterId: String,
             saveJson: String
         ): Boolean {
             return try {
                 val root = org.json.JSONObject(saveJson)
                 val pausedCharacterId = safetyPrefs.getString("paused_character_id", null)
                 val blockedAccountId = safetyPrefs.getString("blocked_account_id", null)
-                val characters = root.optJSONArray("characters")
+                val deletingCharacterId = safetyPrefs.getString("deleting_supabase_character_id", null)
+                val characters = root.optJSONArray("characters)
                 val accounts = root.optJSONArray("accounts")
 
                 val matchesPausedCharacter = !pausedCharacterId.isNullOrBlank() &&
@@ -221,7 +223,9 @@ class CloudSaveUploadWorker(
                         accounts.optJSONObject(index)?.optString("id") == blockedAccountId
                     }
 
-                matchesPausedCharacter || matchesBlockedAccount
+                matchesPausedCharacter ||
+                    matchesBlockedAccount ||
+                    deletingCharacterId == supabaseCharacterId
             } catch (_: Exception) {
                 false
             }
@@ -303,6 +307,30 @@ class CloudSaveUploadWorker(
             } catch (e: Exception) {
                 "Pending upload exists, but its queue data could not be read: " +
                     (e.message ?: "unknown error")
+            }
+        }
+
+        // Removes only the pending entry for the exact remote character ID.
+        // Call this only after the server confirms that character deletion succeeded.
+        fun removePendingFor(
+            context: Context,
+            characterId: String
+        ): Boolean {
+            val prefs = context.applicationContext.getSharedPreferences(
+                PREFS_NAME,
+                Context.MODE_PRIVATE
+            )
+            return synchronized(lock) {
+                prefs.edit()
+                    .remove(KEY_CHARACTER_ID_PREFIX + characterId)
+                    .remove(KEY_SAVE_JSON_PREFIX + characterId)
+                    .apply {
+                        if (prefs.getString(KEY_CHARACTER_ID, null) == characterId) {
+                            remove(KEY_CHARACTER_ID)
+                            remove(KEY_SAVE_JSON)
+                        }
+                    }
+                    .commit()
             }
         }
 
