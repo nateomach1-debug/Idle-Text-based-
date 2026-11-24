@@ -2908,11 +2908,11 @@ fun logout() {
 }
 
 fun returnToCharacterSelection() {
-    // Persist the active character before leaving gameplay. Keep the account
-    // signed in so the player can choose another character without logging in.
+    // Save the active character locally, but do not queue another cloud upload
+    // as the user returns to character selection.
+    _currentSupabaseCharacterId.value = null
     saveGame()
     _currentCharacterId.value = null
-    _currentSupabaseCharacterId.value = null
 }
 
     fun clearOfflineSummary() {
