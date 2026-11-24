@@ -341,6 +341,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _characterSyncError = MutableStateFlow<String?>(null)
     val characterSyncError: StateFlow<String?> = _characterSyncError.asStateFlow()
+
+    private val _characterDeletionInProgress = MutableStateFlow(false)
+    val characterDeletionInProgress: StateFlow<Boolean> =
+        _characterDeletionInProgress.asStateFlow()
+    private val _characterDeletionError = MutableStateFlow<String?>(null)
+    val characterDeletionError: StateFlow<String?> =
+        _characterDeletionError.asStateFlow()
     private var combatQueueLocalBeforeCloud = "Not captured"
     private var combatQueueCloudSave = "Not downloaded"
     private var combatQueueRemoteLocalId = "Not received"
@@ -2914,6 +2921,168 @@ fun returnToCharacterSelection() {
     saveGame()
     _currentCharacterId.value = null
 }
+
+    // Cloud deletion must succeed before any local character data is removed.
+    // This is available only from character selection, never during gameplay.
+    fun deleteCharacter(localCharacterId: String) {
+        if (_currentCharacterId.value != null) {
+            _characterDeletionError.value = "Return to character selection before deleting a character."
+            return
+        }
+        if (_characterDeletionInProgress.value) return
+
+        val accountId = _currentAccountId.value
+        if (accountId.isNullOrBlank()) {
+            _characterDeletionError.value = "No signed-in local account is selected."
+            return
+        }
+
+        val ownedCharacters = accountService.charactersFor(accountId)
+        val target = ownedCharacters.singleOrNull { it.id == localCharacterId }
+        if (target == null) {
+            _characterDeletionError.value = "That character is not registered under the current account."
+            return
+        }
+        if (ownedCharacters.size <= 1 || target.isMainCharacter) {
+            _characterDeletionError.value =
+                "The last character and the account's main character cannot be deleted."
+            return
+        }
+        if (_supabaseAuthState.value != SupabaseAuthState.SIGNED_IN) {
+            _characterDeletionError.value =
+                "Cloud authentication is not ready. No local data was changed."
+            return
+        }
+
+        _characterDeletionError.value = null
+        _characterDeletionInProgress.value = true
+        viewModelScope.launch {
+            var remoteId: String? = null
+            var deletionGuardSet = false
+            var remoteDeletionConfirmed = false
+
+            try {
+                val rows = SupabaseCharacterRepository.listMyCharacterSaves()
+                    .getOrElse { throw IllegalStateException("Could not verify cloud ownership: ${it.message}") }
+
+                val matchingRows = rows.filter {
+                    it["local_character_id"]?.toString()?.trim('"') == localCharacterId
+                }
+                if (matchingRows.size != 1) {
+                    throw IllegalStateException(
+                        "Expected exactly one cloud registration for this local character; found ${matchingRows.size}. No data was changed."
+                    )
+                }
+
+                remoteId = matchingRows.single()["supabase_character_id"]
+                    ?.toString()?.trim('"')
+                    ?.takeIf { it.isNotBlank() }
+                    ?: throw IllegalStateException("The cloud registration did not contain a valid character ID.")
+
+                val verifiedLocalId = SupabaseCharacterRepository
+                    .getCharacterLocalId(remoteId!!)
+                    .getOrElse { throw IllegalStateException("Could not verify the cloud character mapping: ${it.message}") }
+                if (verifiedLocalId != localCharacterId) {
+                    throw IllegalStateException("The cloud character mapping does not match. No data was changed.")
+                }
+
+                // Persist a worker-level block before cancelling queued work. If a
+                // worker is already running, the server-side delete RPC must also
+                // be update-only so it cannot recreate a deleted character row.
+                deletionGuardSet = cloudRecoveryPrefs.edit()
+                    .putString("deleting_supabase_character_id", remoteId!!)
+                    .commit()
+                if (!deletionGuardSet) {
+                    throw IllegalStateException("Could not secure the cloud upload pause. No data was changed.")
+                }
+
+                androidx.work.WorkManager.getInstance(getApplication())
+                    .cancelUniqueWork("idlerpg_cloud_save_upload")
+
+                val deleted = SupabaseCharacterRepository.deleteMyCharacter(remoteId!!)
+                    .getOrElse { throw IllegalStateException("Cloud deletion failed: ${it.message}") }
+                if (!deleted) {
+                    throw IllegalStateException("The server did not confirm deletion. Local data was preserved.")
+                }
+                remoteDeletionConfirmed = true
+
+                // A stale queued upload is harmless while the deletion guard is
+                // present. Remove it only after the server has confirmed deletion.
+                val pendingRemoved = CloudSaveUploadWorker.removePendingFor(
+                    getApplication(),
+                    remoteId!!
+                )
+
+                val localRemoval = accountService.removeCharacter(accountId, localCharacterId)
+                if (localRemoval is ServiceResult.Failure) {
+                    throw IllegalStateException(
+                        "Cloud deletion succeeded, but local character cleanup was blocked: ${localRemoval.reason}. The character remains upload-paused."
+                    )
+                }
+
+                progressionService.clearCharacterData(localCharacterId)
+                inventoryService.clearCharacterData(localCharacterId)
+                offlineIdleService.clearCharacterData(localCharacterId)
+                marketService.clearCharacterData(localCharacterId)
+                combatService.clearCharacterData(localCharacterId)
+                combatLogFor.remove(localCharacterId)
+                sessionDropsFor.remove(localCharacterId)
+                synchronized(cosmeticKillTally) {
+                    cosmeticKillTally.keys.removeAll { it.startsWith(localCharacterId + "|") }
+                }
+                settingsPrefs.edit().remove(combatTargetKey(localCharacterId)).commit()
+
+                _currentSupabaseCharacterId.value = null
+                _combatViewData.value = null
+                _combatHp.value = null
+                lastHitChancePercent = null
+                lastDamageDealt = null
+                combatActionProgressSeconds = 0.0
+                skillActionProgressSeconds = 0.0
+
+                // saveGame serializes the remaining characters and preserves the
+                // account and global marketPriceHistory. No cloud ID is active.
+                saveGame()
+
+                val safetyEditor = cloudRecoveryPrefs.edit()
+                if (cloudRecoveryPrefs.getString("paused_character_id", null) == localCharacterId) {
+                    safetyEditor.remove("paused_character_id")
+                    cloudRecoveryPausedCharacterId = null
+                }
+                if (pendingRemoved) {
+                    safetyEditor.remove("deleting_supabase_character_id")
+                }
+                safetyEditor.commit()
+
+                if (pendingRemoved) {
+                    androidx.work.WorkManager.getInstance(getApplication())
+                        .let { CloudSaveUploadWorker.enqueuePending(getApplication()) }
+                } else {
+                    _characterDeletionError.value =
+                        "The character was deleted, but its old pending upload could not be cleared. It remains blocked from uploading."
+                }
+            } catch (e: Exception) {
+                if (!remoteDeletionConfirmed) {
+                    if (deletionGuardSet && remoteId != null) {
+                        cloudRecoveryPrefs.edit()
+                            .remove("deleting_supabase_character_id")
+                            .commit()
+                    }
+                    CloudSaveUploadWorker.enqueuePending(getApplication())
+                } else {
+                    // Do not let a stale local copy recreate the deleted cloud
+                    // registration if local persistence failed after remote deletion.
+                    cloudRecoveryPrefs.edit()
+                        .putString("paused_character_id", localCharacterId)
+                        .commit()
+                    cloudRecoveryPausedCharacterId = localCharacterId
+                }
+                _characterDeletionError.value = e.message ?: "Character deletion failed."
+            } finally {
+                _characterDeletionInProgress.value = false
+            }
+        }
+    }
 
     fun clearOfflineSummary() {
         _offlineSummary.value = null
