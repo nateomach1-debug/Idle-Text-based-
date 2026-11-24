@@ -529,6 +529,8 @@ private sealed class InventoryScreenState {
 fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
     val currentAccountId by gameViewModel.currentAccountId.collectAsState()
     val currentCharacterId by gameViewModel.currentCharacterId.collectAsState()
+    val characterDeletionInProgress by gameViewModel.characterDeletionInProgress.collectAsState()
+    val characterDeletionError by gameViewModel.characterDeletionError.collectAsState()
     var isCreatingAccount by remember { mutableStateOf(false) }
     var loginError by remember { mutableStateOf<String?>(null) }
     var flowState by remember {
@@ -822,15 +824,18 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
             val accountId = currentAccountId
             if (accountId != null) {
                 val chars = gameViewModel.accountService.charactersFor(accountId).map {
-                    CharacterSummaryUi(it.id, it.displayName, it.avatarId)
+                    CharacterSummaryUi(it.id, it.displayName, it.avatarId, it.isMainCharacter)
                 }
                 CharacterSelectScreen(
                     characters = chars,
                     onCharacterSelected = {
-    gameViewModel.selectCharacter(it)
-    flowState = AppFlowState.InGame
-},
-                    onCreateNew = { flowState = AppFlowState.CharacterCreate }
+                        gameViewModel.selectCharacter(it)
+                        flowState = AppFlowState.InGame
+                    },
+                    onCreateNew = { flowState = AppFlowState.CharacterCreate },
+                    onDeleteCharacter = { gameViewModel.deleteCharacter(it) },
+                    deletionInProgress = characterDeletionInProgress,
+                    deletionError = characterDeletionError
                 )
             }
         }
