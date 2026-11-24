@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 // Creation: shown if account has none, or player taps "New".
 // =========================================================
 
-data class CharacterSummaryUi(val characterId: String, val displayName: String, val avatarId: String, val isMainCharacter: Boolean = false)
+data class CharacterSummaryUi(val characterId: String, val displayName: String, val avatarId: String, val isMainCharacter: Boolean = false, val canDelete: Boolean = false)
 
 @Composable
 fun CharacterSelectScreen(
@@ -67,7 +67,7 @@ fun CharacterSelectScreen(
                     Text(text = "(" + character.avatarId + ")", style = MaterialTheme.typography.labelSmall)
                 }
 
-                if (!character.isMainCharacter) {
+                if (character.canDelete) {
                     TextButton(
                         onClick = { characterPendingDeletion = character },
                         enabled = !deletionInProgress
