@@ -2980,11 +2980,11 @@ fun returnToCharacterSelection() {
                 saveGame()
                 localStateBefore = repository.load()
                     ?: throw IllegalStateException("The local save could not be verified. No cloud data was changed.")
-                val before = localStateBefore!!
+                val initialState = localStateBefore!!
                 if (
-                    before.accounts.none { it.id == accountId } ||
-                    before.characters.count { it.id == localCharacterId && it.accountId == accountId } != 1 ||
-                    before.characters.none {
+                    initialState.accounts.none { it.id == accountId } ||
+                    initialState.characters.count { it.id == localCharacterId && it.accountId == accountId } != 1 ||
+                    initialState.characters.none {
                         it.id == "e6bc06bf-75c2-4108-bb13-d84c477520e0" &&
                             it.accountId == accountId &&
                             it.isMainCharacter
