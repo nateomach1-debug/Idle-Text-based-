@@ -2958,6 +2958,8 @@ fun returnToCharacterSelection() {
             return
         }
 
+        // Character selection must never carry an active cloud-save target.
+        _currentSupabaseCharacterId.value = null
         _characterDeletionError.value = null
         _characterDeletionInProgress.value = true
         viewModelScope.launch {
