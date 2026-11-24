@@ -3082,6 +3082,16 @@ fun returnToCharacterSelection() {
                 synchronized(cosmeticKillTally) {
                     cosmeticKillTally.keys.removeAll { it.startsWith(localCharacterId + "|") }
                 }
+                if (cosmeticsLoadedFor == remoteId) {
+                    cosmeticsLoadedFor = null
+                    cosmeticServerKills = emptyMap()
+                    _ownedCosmetics.value = emptySet()
+                    _equippedTitleId.value = null
+                    _equippedBadgeId.value = null
+                    _monsterKillTotals.value = emptyMap()
+                    _cosmeticSkillLevels.value = emptyMap()
+                    _cosmeticActionError.value = null
+                }
                 settingsPrefs.edit().remove(combatTargetKey(localCharacterId)).commit()
 
                 _currentSupabaseCharacterId.value = null
