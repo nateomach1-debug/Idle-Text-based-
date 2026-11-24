@@ -21,15 +21,20 @@ import androidx.compose.ui.unit.dp
 // Creation: shown if account has none, or player taps "New".
 // =========================================================
 
-data class CharacterSummaryUi(val characterId: String, val displayName: String, val avatarId: String)
+data class CharacterSummaryUi(val characterId: String, val displayName: String, val avatarId: String, val isMainCharacter: Boolean = false)
 
 @Composable
 fun CharacterSelectScreen(
     characters: List<CharacterSummaryUi>,
     onCharacterSelected: (String) -> Unit,
     onCreateNew: () -> Unit,
+    onDeleteCharacter: (String) -> Unit = {},
+    deletionInProgress: Boolean = false,
+    deletionError: String? = null,
     modifier: Modifier = Modifier
 ) {
+    var characterPendingDeletion by remember { mutableStateOf<CharacterSummaryUi?>(null) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -46,21 +51,88 @@ fun CharacterSelectScreen(
                     .padding(vertical = 4.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surface)
-                    .clickable { onCharacterSelected(character.characterId) }
-                    .padding(16.dp),
+                    .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = character.displayName, style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "(" + character.avatarId + ")", style = MaterialTheme.typography.labelSmall)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = !deletionInProgress) {
+                            onCharacterSelected(character.characterId)
+                        }
+                        .padding(4.dp)
+                ) {
+                    Text(text = character.displayName, style = MaterialTheme.typography.titleMedium)
+                    Text(text = "(" + character.avatarId + ")", style = MaterialTheme.typography.labelSmall)
+                }
+
+                if (!character.isMainCharacter) {
+                    TextButton(
+                        onClick = { characterPendingDeletion = character },
+                        enabled = !deletionInProgress
+                    ) {
+                        Text("Delete")
+                    }
+                } else {
+                    Text(
+                        text = "Main",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
+        }
+
+        if (deletionInProgress) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Deleting character…", style = MaterialTheme.typography.bodyMedium)
+        }
+        deletionError?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedButton(onClick = onCreateNew, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(
+            onClick = onCreateNew,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !deletionInProgress
+        ) {
             Text(text = "Create New Character")
         }
+    }
+
+    characterPendingDeletion?.let { character ->
+        AlertDialog(
+            onDismissRequest = { if (!deletionInProgress) characterPendingDeletion = null },
+            title = { Text("Delete ${character.displayName}?") },
+            text = {
+                Text(
+                    "This permanently deletes this character and its cloud save, skills, inventory, queues, market account, and market orders. Your account, main character, and global market history will be kept. This cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteCharacter(character.characterId)
+                        characterPendingDeletion = null
+                    },
+                    enabled = !deletionInProgress
+                ) {
+                    Text("Delete permanently")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { characterPendingDeletion = null },
+                    enabled = !deletionInProgress
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
