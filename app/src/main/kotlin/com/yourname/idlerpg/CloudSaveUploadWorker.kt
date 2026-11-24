@@ -368,6 +368,13 @@ class CloudSaveUploadWorker(
             saveJson: String
         ): Boolean {
             val appContext = context.applicationContext
+            val safetyPrefs = appContext.getSharedPreferences(
+                "cloud_recovery_safety",
+                Context.MODE_PRIVATE
+            )
+            if (safetyPrefs.getString("deleting_supabase_character_id", null) == characterId) {
+                return false
+            }
 
             val saved = synchronized(lock) {
                 appContext.getSharedPreferences(
