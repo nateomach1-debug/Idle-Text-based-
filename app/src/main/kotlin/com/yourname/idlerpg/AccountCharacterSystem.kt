@@ -255,6 +255,29 @@ class AccountService {
 
     fun accountById(accountId: String): Account? = accountsById[accountId]
 
+    // Removes only a non-main character owned by this local account.
+    // The account and its account-level purchases/currency remain untouched.
+    fun removeCharacter(accountId: String, characterId: String): ServiceResult<Unit> {
+        val accountCharacters = charactersByAccountId[accountId]
+            ?: return ServiceResult.Failure("Account has no characters.")
+        val character = charactersById[characterId]
+            ?: return ServiceResult.Failure("Character not found.")
+
+        if (character.accountId != accountId || characterId !in accountCharacters) {
+            return ServiceResult.Failure("Character does not belong to this account.")
+        }
+        if (accountCharacters.size <= 1) {
+            return ServiceResult.Failure("The last character cannot be deleted.")
+        }
+        if (character.isMainCharacter) {
+            return ServiceResult.Failure("The main character cannot be deleted.")
+        }
+
+        accountCharacters.remove(characterId)
+        charactersById.remove(characterId)
+        return ServiceResult.Success(Unit)
+    }
+
     private fun containsBannedWord(text: String): Boolean = bannedWords.any { text.contains(it) }
 
     private fun hashPassword(password: String, salt: ByteArray): String {
