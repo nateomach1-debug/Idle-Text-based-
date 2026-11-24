@@ -824,7 +824,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
             val accountId = currentAccountId
             if (accountId != null) {
                 val chars = gameViewModel.accountService.charactersFor(accountId).map {
-                    CharacterSummaryUi(it.id, it.displayName, it.avatarId, it.isMainCharacter, it.id == "90b7b7c3-ecaa-463d-9f12-ac87bd9fc375")
+                    CharacterSummaryUi(it.id, it.displayName, it.avatarId, it.isMainCharacter, !it.isMainCharacter && it.id == "90b7b7c3-ecaa-463d-9f12-ac87bd9fc375")
                 }
                 CharacterSelectScreen(
                     characters = chars,
