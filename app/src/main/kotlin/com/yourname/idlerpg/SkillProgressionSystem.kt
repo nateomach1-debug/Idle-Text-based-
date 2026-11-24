@@ -302,6 +302,11 @@ class ProgressionService {
         book.get(skillType).xp = export.xp
     }
 
+    fun clearCharacterData(characterId: String) {
+        skillBooks.remove(characterId)
+        resetStates.remove(characterId)
+    }
+
     fun replaceCharacterSkills(
         characterId: String,
         exports: List<SkillExport>
