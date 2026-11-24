@@ -2925,6 +2925,10 @@ fun returnToCharacterSelection() {
     // Cloud deletion must succeed before any local character data is removed.
     // This is available only from character selection, never during gameplay.
     fun deleteCharacter(localCharacterId: String) {
+        if (localCharacterId != "90b7b7c3-ecaa-463d-9f12-ac87bd9fc375") {
+            _characterDeletionError.value = "This delete action is restricted to the confirmed incorrect Mage."
+            return
+        }
         if (_currentCharacterId.value != null) {
             _characterDeletionError.value = "Return to character selection before deleting a character."
             return
@@ -2960,6 +2964,7 @@ fun returnToCharacterSelection() {
             var remoteId: String? = null
             var deletionGuardSet = false
             var remoteDeletionConfirmed = false
+            var deletionOutcomeUncertain = false
 
             try {
                 val rows = SupabaseCharacterRepository.listMyCharacterSaves()
@@ -2968,43 +2973,84 @@ fun returnToCharacterSelection() {
                 val matchingRows = rows.filter {
                     it["local_character_id"]?.toString()?.trim('"') == localCharacterId
                 }
-                if (matchingRows.size != 1) {
+                if (matchingRows.size > 1) {
                     throw IllegalStateException(
-                        "Expected exactly one cloud registration for this local character; found ${matchingRows.size}. No data was changed."
+                        "More than one cloud registration matches this local character. No data was changed."
                     )
                 }
 
-                remoteId = matchingRows.single()["supabase_character_id"]
-                    ?.toString()?.trim('"')
-                    ?.takeIf { it.isNotBlank() }
-                    ?: throw IllegalStateException("The cloud registration did not contain a valid character ID.")
+                if (matchingRows.isEmpty()) {
+                    // Recover safely if the app stopped after the server deletion
+                    // but before local cleanup. Only the exact persisted Mage
+                    // deletion guard can authorize this already-deleted path.
+                    val guardedRemoteId = cloudRecoveryPrefs.getString(
+                        "deleting_supabase_character_id",
+                        null
+                    )
+                    if (guardedRemoteId != "3b39b880-cf5d-418f-af1e-c22fd6e9995b") {
+                        throw IllegalStateException(
+                            "No cloud registration was found for this character. No local data was changed."
+                        )
+                    }
+                    val stillMapped = SupabaseCharacterRepository
+                        .getCharacterLocalId(guardedRemoteId)
+                        .getOrElse { throw IllegalStateException("Could not verify the previous cloud deletion: ${it.message}") }
+                    if (stillMapped != null) {
+                        throw IllegalStateException("The guarded cloud character still exists. No local data was changed.")
+                    }
+                    remoteId = guardedRemoteId
+                    deletionGuardSet = true
+                    remoteDeletionConfirmed = true
+                } else {
+                    remoteId = matchingRows.single()["supabase_character_id"]
+                        ?.toString()?.trim('"')
+                        ?.takeIf { it.isNotBlank() }
+                        ?: throw IllegalStateException("The cloud registration did not contain a valid character ID.")
 
-                val verifiedLocalId = SupabaseCharacterRepository
-                    .getCharacterLocalId(remoteId!!)
-                    .getOrElse { throw IllegalStateException("Could not verify the cloud character mapping: ${it.message}") }
-                if (verifiedLocalId != localCharacterId) {
-                    throw IllegalStateException("The cloud character mapping does not match. No data was changed.")
+                    if (remoteId != "3b39b880-cf5d-418f-af1e-c22fd6e9995b") {
+                        throw IllegalStateException("The cloud registration is not the confirmed Mage. No data was changed.")
+                    }
+
+                    val verifiedLocalId = SupabaseCharacterRepository
+                        .getCharacterLocalId(remoteId!!)
+                        .getOrElse { throw IllegalStateException("Could not verify the cloud character mapping: ${it.message}") }
+                    if (verifiedLocalId != localCharacterId) {
+                        throw IllegalStateException("The cloud character mapping does not match. No data was changed.")
+                    }
+
+                    // Persist a worker-level block before cancelling queued work.
+                    deletionGuardSet = cloudRecoveryPrefs.edit()
+                        .putString("deleting_supabase_character_id", remoteId!!)
+                        .commit()
+                    if (!deletionGuardSet) {
+                        throw IllegalStateException("Could not secure the cloud upload pause. No data was changed.")
+                    }
+
+                    androidx.work.WorkManager.getInstance(getApplication())
+                        .cancelUniqueWork("idlerpg_cloud_save_upload")
+
+                    val deleteResult = SupabaseCharacterRepository.deleteMyCharacter(remoteId!!)
+                    if (deleteResult.getOrNull() != true) {
+                        // A network error can occur after the server committed. Verify
+                        // ownership-scoped absence before deciding whether to unblock.
+                        val verificationRows = SupabaseCharacterRepository.listMyCharacterSaves()
+                            .getOrElse {
+                                deletionOutcomeUncertain = true
+                                throw IllegalStateException(
+                                    "The deletion response was uncertain and cloud status could not be verified. Uploads remain paused. (${it.message})"
+                                )
+                            }
+                        val stillExists = verificationRows.any {
+                            it["supabase_character_id"]?.toString()?.trim('"') == remoteId
+                        }
+                        if (stillExists) {
+                            throw IllegalStateException(
+                                "The server did not confirm deletion. The cloud character still exists; local data was preserved."
+                            )
+                        }
+                    }
+                    remoteDeletionConfirmed = true
                 }
-
-                // Persist a worker-level block before cancelling queued work. If a
-                // worker is already running, the server-side upload RPC must not create
-                // or recreate the parent characters row.
-                deletionGuardSet = cloudRecoveryPrefs.edit()
-                    .putString("deleting_supabase_character_id", remoteId!!)
-                    .commit()
-                if (!deletionGuardSet) {
-                    throw IllegalStateException("Could not secure the cloud upload pause. No data was changed.")
-                }
-
-                androidx.work.WorkManager.getInstance(getApplication())
-                    .cancelUniqueWork("idlerpg_cloud_save_upload")
-
-                val deleted = SupabaseCharacterRepository.deleteMyCharacter(remoteId!!)
-                    .getOrElse { throw IllegalStateException("Cloud deletion failed: ${it.message}") }
-                if (!deleted) {
-                    throw IllegalStateException("The server did not confirm deletion. Local data was preserved.")
-                }
-                remoteDeletionConfirmed = true
 
                 // A stale queued upload is harmless while the deletion guard is
                 // present. Remove it only after the server has confirmed deletion.
@@ -3063,7 +3109,7 @@ fun returnToCharacterSelection() {
                         "The character was deleted, but its old pending upload could not be cleared. It remains blocked from uploading."
                 }
             } catch (e: Exception) {
-                if (!remoteDeletionConfirmed) {
+                if (!remoteDeletionConfirmed && !deletionOutcomeUncertain) {
                     if (deletionGuardSet && remoteId != null) {
                         cloudRecoveryPrefs.edit()
                             .remove("deleting_supabase_character_id")
@@ -3072,7 +3118,7 @@ fun returnToCharacterSelection() {
                     CloudSaveUploadWorker.enqueuePending(getApplication())
                 } else {
                     // Do not let a stale local copy recreate the deleted cloud
-                    // registration if local persistence failed after remote deletion.
+                    // registration if the outcome or local persistence is uncertain.
                     cloudRecoveryPrefs.edit()
                         .putString("paused_character_id", localCharacterId)
                         .commit()
