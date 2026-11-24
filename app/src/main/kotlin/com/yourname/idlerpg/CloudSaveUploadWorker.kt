@@ -210,11 +210,16 @@ class CloudSaveUploadWorker(
             supabaseCharacterId: String,
             saveJson: String
         ): Boolean {
+            // This exact remote-ID block does not depend on parsing the queued
+            // JSON, so even malformed stale payloads cannot bypass deletion.
+            if (safetyPrefs.getString("deleting_supabase_character_id", null) == supabaseCharacterId) {
+                return true
+            }
+
             return try {
                 val root = org.json.JSONObject(saveJson)
                 val pausedCharacterId = safetyPrefs.getString("paused_character_id", null)
                 val blockedAccountId = safetyPrefs.getString("blocked_account_id", null)
-                val deletingCharacterId = safetyPrefs.getString("deleting_supabase_character_id", null)
                 val characters = root.optJSONArray("characters")
                 val accounts = root.optJSONArray("accounts")
 
@@ -230,9 +235,7 @@ class CloudSaveUploadWorker(
                         accounts.optJSONObject(index)?.optString("id") == blockedAccountId
                     }
 
-                matchesPausedCharacter ||
-                    matchesBlockedAccount ||
-                    deletingCharacterId == supabaseCharacterId
+                matchesPausedCharacter || matchesBlockedAccount
             } catch (_: Exception) {
                 false
             }
