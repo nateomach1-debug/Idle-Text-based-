@@ -208,7 +208,7 @@ class CloudSaveUploadWorker(
                 val pausedCharacterId = safetyPrefs.getString("paused_character_id", null)
                 val blockedAccountId = safetyPrefs.getString("blocked_account_id", null)
                 val deletingCharacterId = safetyPrefs.getString("deleting_supabase_character_id", null)
-                val characters = root.optJSONArray("characters)
+                val characters = root.optJSONArray("characters")
                 val accounts = root.optJSONArray("accounts")
 
                 val matchesPausedCharacter = !pausedCharacterId.isNullOrBlank() &&
