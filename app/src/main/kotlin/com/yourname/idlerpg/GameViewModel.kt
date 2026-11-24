@@ -2987,7 +2987,10 @@ fun returnToCharacterSelection() {
                         "deleting_supabase_character_id",
                         null
                     )
-                    if (guardedRemoteId != "3b39b880-cf5d-418f-af1e-c22fd6e9995b") {
+                    if (
+                        guardedRemoteId != "3b39b880-cf5d-418f-af1e-c22fd6e9995b" ||
+                        cloudRecoveryPrefs.getString("deleting_local_account_id", null) != accountId
+                    ) {
                         throw IllegalStateException(
                             "No cloud registration was found for this character. No local data was changed."
                         )
@@ -3021,6 +3024,7 @@ fun returnToCharacterSelection() {
                     // Persist a worker-level block before cancelling queued work.
                     deletionGuardSet = cloudRecoveryPrefs.edit()
                         .putString("deleting_supabase_character_id", remoteId!!)
+                        .putString("deleting_local_account_id", accountId)
                         .commit()
                     if (!deletionGuardSet) {
                         throw IllegalStateException("Could not secure the cloud upload pause. No data was changed.")
@@ -3097,6 +3101,7 @@ fun returnToCharacterSelection() {
                 }
                 if (pendingRemoved) {
                     safetyEditor.remove("deleting_supabase_character_id")
+                    safetyEditor.remove("deleting_local_account_id")
                 }
                 safetyEditor.commit()
 
@@ -3113,6 +3118,7 @@ fun returnToCharacterSelection() {
                     if (deletionGuardSet && remoteId != null) {
                         cloudRecoveryPrefs.edit()
                             .remove("deleting_supabase_character_id")
+                            .remove("deleting_local_account_id")
                             .commit()
                     }
                     CloudSaveUploadWorker.enqueuePending(getApplication())
