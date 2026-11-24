@@ -2987,8 +2987,8 @@ fun returnToCharacterSelection() {
                 }
 
                 // Persist a worker-level block before cancelling queued work. If a
-                // worker is already running, the server-side delete RPC must also
-                // be update-only so it cannot recreate a deleted character row.
+                // worker is already running, the server-side upload RPC must not create
+                // or recreate the parent characters row.
                 deletionGuardSet = cloudRecoveryPrefs.edit()
                     .putString("deleting_supabase_character_id", remoteId!!)
                     .commit()
