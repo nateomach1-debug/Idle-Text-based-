@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION public.delete_my_character(p_character_id uuid)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = pg_catalog, public
 AS $function$
 DECLARE
     v_profile_id uuid;
