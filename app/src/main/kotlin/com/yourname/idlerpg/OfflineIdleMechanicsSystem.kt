@@ -467,6 +467,7 @@ is ActiveQueue.BuryQueue -> {
         activeQueues.remove(characterId)
         lastSeenAt.remove(characterId)
         lastSaleCheckAt.remove(characterId)
+        flaggedAccounts.removeAll { it.characterId == characterId }
     }
     fun restoreSkillingQueue(export: SkillingQueueExport) {
         activeQueues[export.characterId] = ActiveQueue.SkillingQueue(
