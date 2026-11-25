@@ -360,6 +360,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val cloudSaveInspection: StateFlow<String> =
         _cloudSaveInspection.asStateFlow()
 
+    private val _offlineReconciliationDiagnostic =
+        MutableStateFlow("Offline reconciliation has not been inspected yet.")
+    val offlineReconciliationDiagnostic: StateFlow<String> =
+        _offlineReconciliationDiagnostic.asStateFlow()
+
     private val _combatQueueDiagnostic = MutableStateFlow("Not refreshed")
     val combatQueueDiagnostic: StateFlow<String> =
         _combatQueueDiagnostic.asStateFlow()
@@ -586,6 +591,141 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         """.trimIndent()
     }
     
+    fun inspectOfflineReconciliation() {
+        val characterId = _currentCharacterId.value
+        if (characterId.isNullOrBlank()) {
+            _offlineReconciliationDiagnostic.value =
+                "Select a character before running this read-only diagnostic."
+            return
+        }
+
+        val localJson = repository.currentSaveJson()
+        if (localJson.isNullOrBlank()) {
+            _offlineReconciliationDiagnostic.value =
+                "No local save file is available. No data was changed."
+            return
+        }
+
+        val supabaseCharacterId = _currentSupabaseCharacterId.value
+        val hasPendingUpload = supabaseCharacterId?.let {
+            CloudSaveUploadWorker.hasPendingUploadFor(getApplication(), it)
+        } ?: false
+
+        fun snapshot(label: String, json: String): String {
+            val root = org.json.JSONObject(json)
+            val skills = root.optJSONArray("skills") ?: org.json.JSONArray()
+            val skillRows = (0 until skills.length()).mapNotNull { index ->
+                skills.optJSONObject(index)?.takeIf {
+                    it.optString("characterId") == characterId
+                }
+            }.sortedBy { it.optString("skillId") }
+            val totalXp = skillRows.sumOf { it.optLong("xp", 0L) }
+
+            fun timestamp(name: String, field: String): String {
+                val rows = root.optJSONArray(name) ?: return "None"
+                val matching = (0 until rows.length()).mapNotNull { index ->
+                    rows.optJSONObject(index)?.takeIf {
+                        it.optString("characterId") == characterId
+                    }?.optString(field)?.takeIf { it.isNotBlank() }
+                }
+                return matching.joinToString().ifBlank { "None" }
+            }
+
+            fun queues(name: String): String {
+                val rows = root.optJSONArray(name) ?: return "None"
+                val matching = (0 until rows.length()).mapNotNull { index ->
+                    rows.optJSONObject(index)?.takeIf {
+                        it.optString("characterId") == characterId
+                    }
+                }
+                if (matching.isEmpty()) return "None"
+                return matching.joinToString("; ") { row ->
+                    when (name) {
+                        "skillingQueues" ->
+                            "skill=${row.optString("skillId")}, item=${row.optString("itemId")}, started=${row.optString("startedAt")}"
+                        "craftingQueues" ->
+                            "item=${row.optString("itemId")}, completed=${row.optInt("quantityCompleted")}/${row.optInt("targetQuantity")}, started=${row.optString("startedAt")}"
+                        "offlineCombatQueues" ->
+                            "zone=${row.optString("zoneId")}, started=${row.optString("startedAt")}"
+                        "buryQueues" ->
+                            "item=${row.optString("itemId")}, completed=${row.optInt("quantityCompleted")}/${row.optInt("targetQuantity")}, started=${row.optString("startedAt")}"
+                        else -> "Record present"
+                    }
+                }
+            }
+
+            return """
+                ${label}
+                Skill records: ${skillRows.size}/16
+                Total XP (informational only): ${totalXp}
+                Per-skill XP: ${skillRows.joinToString("; ") { "${it.optString("skillId")}=${it.optLong("xp", -1L)}" }.ifBlank { "None" }}
+                Last seen: ${timestamp("lastSeen", "lastSeenAt")}
+                Skilling queue: ${queues("skillingQueues")}
+                Crafting queue: ${queues("craftingQueues")}
+                Offline combat queue: ${queues("offlineCombatQueues")}
+                Bury queue: ${queues("buryQueues")}
+            """.trimIndent()
+        }
+
+        val localSnapshot = runCatching {
+            snapshot("LOCAL DEVICE SNAPSHOT", localJson)
+        }.getOrElse {
+            "Local snapshot could not be parsed: ${it.message ?: it.toString()}"
+        }
+
+        _offlineReconciliationDiagnostic.value =
+            "Reading local and cloud state. No rewards, saves, or uploads will be changed.\n\n" +
+                localSnapshot +
+                "\n\nPending upload for this cloud character: " +
+                if (hasPendingUpload) "YES (cloud may be older than this device)" else "No"
+
+        if (supabaseCharacterId.isNullOrBlank()) {
+            _offlineReconciliationDiagnostic.value +=
+                "\n\nCloud snapshot: unavailable because this character has no verified active Supabase mapping."
+            return
+        }
+
+        viewModelScope.launch {
+            val mappedLocalId = SupabaseCharacterRepository
+                .getCharacterLocalId(supabaseCharacterId)
+                .getOrElse { error ->
+                    _offlineReconciliationDiagnostic.value +=
+                        "\n\nCloud mapping check failed: ${error.message ?: error.toString()}"
+                    return@launch
+                }
+
+            if (mappedLocalId != characterId) {
+                _offlineReconciliationDiagnostic.value +=
+                    "\n\nCloud snapshot not downloaded: remote mapping does not match the selected local character."
+                return@launch
+            }
+
+            val result = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId)
+            val cloudJson = result.getOrElse { error ->
+                _offlineReconciliationDiagnostic.value +=
+                    "\n\nCloud download failed: ${error.message ?: error.toString()}"
+                return@launch
+            }
+
+            if (cloudJson.isNullOrBlank()) {
+                _offlineReconciliationDiagnostic.value +=
+                    "\n\nCloud snapshot: no save exists for this mapped character."
+                return@launch
+            }
+
+            val cloudSnapshot = runCatching {
+                snapshot("READ-ONLY SUPABASE SNAPSHOT", cloudJson)
+            }.getOrElse {
+                "Cloud snapshot could not be parsed: ${it.message ?: it.toString()}"
+            }
+
+            _offlineReconciliationDiagnostic.value +=
+                "\n\n${cloudSnapshot}\n\n" +
+                    "Important: XP totals are shown for inspection only. A higher local XP total is not, by itself, evidence of corruption; offline progression can legitimately explain the difference. " +
+                    "This diagnostic did not restore, resolve, overwrite, or upload anything."
+        }
+    }
+
     fun refreshLocalCharacterIdentityDiagnostic() {
         val accountId = _currentAccountId.value
         if (accountId.isNullOrBlank()) {
