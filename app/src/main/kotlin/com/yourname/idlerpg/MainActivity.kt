@@ -1200,6 +1200,8 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                     gameViewModel.localCharacterIdentityDiagnostic.collectAsState()
                                 val debugCloudSaveInspection by
                                     gameViewModel.cloudSaveInspection.collectAsState()
+                                val debugOfflineReconciliationDiagnostic by
+                                    gameViewModel.offlineReconciliationDiagnostic.collectAsState()
 
                                 LaunchedEffect(Unit) {
                                     gameViewModel.refreshCombatQueueDiagnostic()
@@ -1303,6 +1305,28 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                                 
                                                 androidx.compose.material3.Text(
                                                     debugCloudSaveInspection
+                                                )
+
+                                                androidx.compose.material3.Divider()
+
+                                                androidx.compose.material3.Text(
+                                                    "Offline Reconciliation Diagnostic (Read-Only)",
+                                                    fontWeight =
+                                                        androidx.compose.ui.text.font.FontWeight.Bold
+                                                )
+
+                                                androidx.compose.material3.TextButton(
+                                                    onClick = {
+                                                        gameViewModel.inspectOfflineReconciliation()
+                                                    }
+                                                ) {
+                                                    androidx.compose.material3.Text(
+                                                        "Compare Local and Cloud Offline State"
+                                                    )
+                                                }
+
+                                                androidx.compose.material3.Text(
+                                                    debugOfflineReconciliationDiagnostic
                                                 )
 
                                                 androidx.compose.material3.Divider()
