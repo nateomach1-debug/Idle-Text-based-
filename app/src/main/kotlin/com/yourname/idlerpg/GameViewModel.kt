@@ -621,6 +621,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }.sortedBy { it.optString("skillId") }
             val totalXp = skillRows.sumOf { it.optLong("xp", 0L) }
 
+            val loadouts = root.optJSONArray("loadoutSettings") ?: org.json.JSONArray()
+            val savedTrainingSkill = (0 until loadouts.length())
+                .mapNotNull { index -> loadouts.optJSONObject(index) }
+                .filter { it.optString("characterId") == characterId }
+                .joinToString("; ") { row ->
+                    if (row.isNull("trainingSkillId")) {
+                        "None"
+                    } else {
+                        row.optString("trainingSkillId").ifBlank { "None" }
+                    }
+                }.ifBlank { "None" }
+
             fun timestamp(name: String, field: String): String {
                 val rows = root.optJSONArray(name) ?: return "None"
                 val matching = (0 until rows.length()).mapNotNull { index ->
@@ -658,6 +670,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 ${label}
                 Skill records: ${skillRows.size}/16
                 Total XP (informational only): ${totalXp}
+                Saved training skill: ${savedTrainingSkill}
                 Per-skill XP: ${skillRows.joinToString("; ") { "${it.optString("skillId")}=${it.optLong("xp", -1L)}" }.ifBlank { "None" }}
                 Last seen: ${timestamp("lastSeen", "lastSeenAt")}
                 Skilling queue: ${queues("skillingQueues")}
