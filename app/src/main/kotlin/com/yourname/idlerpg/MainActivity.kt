@@ -1343,7 +1343,7 @@ fun AppRoot(gameViewModel: GameViewModel, onLaunchPurchase: (String) -> Unit) {
                                                     }
                                                 ) {
                                                     androidx.compose.material3.Text(
-                                                        "List Local Character IDs"
+                                                        "Inspect Local IDs + Cloud Registry"
                                                     )
                                                 }
 
