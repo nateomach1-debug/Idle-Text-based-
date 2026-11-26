@@ -691,7 +691,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     if (matching.size != 1) {
                         throw IllegalStateException(
-                            "Expected exactly one registry row for this local character; found \${matching.size}."
+                            "Expected exactly one registry row for this local character; found ${matching.size}."
                         )
                     }
                     val row = matching.single()
@@ -708,7 +708,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
             val resolvedRemoteId = remoteIdResult.getOrElse { error ->
                 _offlineReconciliationDiagnostic.value +=
-                    "\n\nCloud snapshot: registry lookup could not verify a remote ID (\${error.message ?: error.toString()}). No cloud save was downloaded."
+                    "\n\nCloud snapshot: registry lookup could not verify a remote ID (${error.message ?: error.toString()}). No cloud save was downloaded."
                 return@launch
             }
 
@@ -716,13 +716,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 .getCharacterLocalId(resolvedRemoteId)
                 .getOrElse { error ->
                     _offlineReconciliationDiagnostic.value +=
-                        "\n\nCloud mapping check failed: \${error.message ?: error.toString()}"
+                        "\n\nCloud mapping check failed: ${error.message ?: error.toString()}"
                     return@launch
                 }
 
             if (mappedLocalId != characterId) {
                 _offlineReconciliationDiagnostic.value +=
-                    "\n\nCloud snapshot not downloaded: remote ID \${resolvedRemoteId} maps to \${mappedLocalId ?: "no local character"}, not the selected local character."
+                    "\n\nCloud snapshot not downloaded: remote ID ${resolvedRemoteId} maps to ${mappedLocalId ?: "no local character"}, not the selected local character."
                 return@launch
             }
 
@@ -731,24 +731,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val result = SupabaseCharacterRepository.downloadCharacterSave(resolvedRemoteId)
             val cloudJson = result.getOrElse { error ->
                 _offlineReconciliationDiagnostic.value +=
-                    "\n\nCloud download failed: \${error.message ?: error.toString()}"
+                    "\n\nCloud download failed: ${error.message ?: error.toString()}"
                 return@launch
             }
 
             if (cloudJson.isNullOrBlank()) {
                 _offlineReconciliationDiagnostic.value +=
-                    "\n\nVerified remote ID: \${resolvedRemoteId}\nPending upload for verified remote ID: \${if (pendingForResolvedId) "YES" else "No"}\nCloud snapshot: no save exists for this mapped character."
+                    "\n\nVerified remote ID: ${resolvedRemoteId}\nPending upload for verified remote ID: ${if (pendingForResolvedId) "YES" else "No"}\nCloud snapshot: no save exists for this mapped character."
                 return@launch
             }
 
             val cloudSnapshot = runCatching {
                 snapshot("READ-ONLY SUPABASE SNAPSHOT", cloudJson)
             }.getOrElse {
-                "Cloud snapshot could not be parsed: \${it.message ?: it.toString()}"
+                "Cloud snapshot could not be parsed: ${it.message ?: it.toString()}"
             }
 
             _offlineReconciliationDiagnostic.value +=
-                "\n\nVerified remote ID: \${resolvedRemoteId}\nPending upload for verified remote ID: \${if (pendingForResolvedId) "YES" else "No"}\n\n\${cloudSnapshot}\n\n" +
+                "\n\nVerified remote ID: ${resolvedRemoteId}\nPending upload for verified remote ID: ${if (pendingForResolvedId) "YES" else "No"}\n\n${cloudSnapshot}\n\n" +
                     "Important: XP totals are shown for inspection only. A higher local XP total is not, by itself, evidence of corruption; offline progression can legitimately explain the difference. " +
                     "This diagnostic did not restore, resolve, overwrite, or upload anything."
         }
