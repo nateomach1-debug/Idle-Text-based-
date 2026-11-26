@@ -679,48 +679,76 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 "\n\nPending upload for this cloud character: " +
                 if (hasPendingUpload) "YES (cloud may be older than this device)" else "No"
 
-        if (supabaseCharacterId.isNullOrBlank()) {
-            _offlineReconciliationDiagnostic.value +=
-                "\n\nCloud snapshot: unavailable because this character has no verified active Supabase mapping."
-            return
-        }
-
         viewModelScope.launch {
+            // Resolve the cloud ID from authenticated registry metadata without
+            // activating it for gameplay, uploads, or background sync.
+            val remoteIdResult = if (!supabaseCharacterId.isNullOrBlank()) {
+                Result.success(supabaseCharacterId)
+            } else {
+                SupabaseCharacterRepository.listMyCharacterSaves().mapCatching { rows ->
+                    val matching = rows.filter {
+                        it["local_character_id"]?.toString()?.trim('"') == characterId
+                    }
+                    if (matching.size != 1) {
+                        throw IllegalStateException(
+                            "Expected exactly one registry row for this local character; found \${matching.size}."
+                        )
+                    }
+                    val row = matching.single()
+                    val remoteId = sequenceOf(
+                        "supabase_character_id", "character_id", "id"
+                    ).mapNotNull { key ->
+                        row[key]?.toString()?.trim('"')?.takeIf { it.isNotBlank() && it != "null" }
+                    }.firstOrNull()
+                    remoteId ?: throw IllegalStateException(
+                        "Registry row matched the local ID but contained no recognized Supabase character ID."
+                    )
+                }
+            }
+
+            val resolvedRemoteId = remoteIdResult.getOrElse { error ->
+                _offlineReconciliationDiagnostic.value +=
+                    "\n\nCloud snapshot: registry lookup could not verify a remote ID (\${error.message ?: error.toString()}). No cloud save was downloaded."
+                return@launch
+            }
+
             val mappedLocalId = SupabaseCharacterRepository
-                .getCharacterLocalId(supabaseCharacterId)
+                .getCharacterLocalId(resolvedRemoteId)
                 .getOrElse { error ->
                     _offlineReconciliationDiagnostic.value +=
-                        "\n\nCloud mapping check failed: ${error.message ?: error.toString()}"
+                        "\n\nCloud mapping check failed: \${error.message ?: error.toString()}"
                     return@launch
                 }
 
             if (mappedLocalId != characterId) {
                 _offlineReconciliationDiagnostic.value +=
-                    "\n\nCloud snapshot not downloaded: remote mapping does not match the selected local character."
+                    "\n\nCloud snapshot not downloaded: remote ID \${resolvedRemoteId} maps to \${mappedLocalId ?: "no local character"}, not the selected local character."
                 return@launch
             }
 
-            val result = SupabaseCharacterRepository.downloadCharacterSave(supabaseCharacterId)
+            val pendingForResolvedId =
+                CloudSaveUploadWorker.hasPendingUploadFor(getApplication(), resolvedRemoteId)
+            val result = SupabaseCharacterRepository.downloadCharacterSave(resolvedRemoteId)
             val cloudJson = result.getOrElse { error ->
                 _offlineReconciliationDiagnostic.value +=
-                    "\n\nCloud download failed: ${error.message ?: error.toString()}"
+                    "\n\nCloud download failed: \${error.message ?: error.toString()}"
                 return@launch
             }
 
             if (cloudJson.isNullOrBlank()) {
                 _offlineReconciliationDiagnostic.value +=
-                    "\n\nCloud snapshot: no save exists for this mapped character."
+                    "\n\nVerified remote ID: \${resolvedRemoteId}\nPending upload for verified remote ID: \${if (pendingForResolvedId) "YES" else "No"}\nCloud snapshot: no save exists for this mapped character."
                 return@launch
             }
 
             val cloudSnapshot = runCatching {
                 snapshot("READ-ONLY SUPABASE SNAPSHOT", cloudJson)
             }.getOrElse {
-                "Cloud snapshot could not be parsed: ${it.message ?: it.toString()}"
+                "Cloud snapshot could not be parsed: \${it.message ?: it.toString()}"
             }
 
             _offlineReconciliationDiagnostic.value +=
-                "\n\n${cloudSnapshot}\n\n" +
+                "\n\nVerified remote ID: \${resolvedRemoteId}\nPending upload for verified remote ID: \${if (pendingForResolvedId) "YES" else "No"}\n\n\${cloudSnapshot}\n\n" +
                     "Important: XP totals are shown for inspection only. A higher local XP total is not, by itself, evidence of corruption; offline progression can legitimately explain the difference. " +
                     "This diagnostic did not restore, resolve, overwrite, or upload anything."
         }
