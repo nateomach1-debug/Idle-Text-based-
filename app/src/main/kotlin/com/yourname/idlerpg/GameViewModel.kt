@@ -3661,12 +3661,9 @@ fun returnToCharacterSelection() {
         fun selectCharacter(characterId: String) {
         val selectedEntryId = characterId
 
-        val canonicalCharacterId = when (selectedEntryId) {
-            "8e201b32-1823-4721-b0ee-2fb26f04906a",
-            "f3393a3f-5701-45ed-952c-df359fe4a68a" ->
-                "1da9bf1c-c5be-496d-8972-ddc3486e13cb"
-            else -> selectedEntryId
-        }
+        // A selected local character keeps its own verified identity.
+        // Cloud registry lookup below must confirm the matching remote mapping.
+        val canonicalCharacterId = selectedEntryId
 
         _currentCharacterId.value = canonicalCharacterId
         // Do not let background syncs use the previously selected character's
@@ -3789,18 +3786,12 @@ fun returnToCharacterSelection() {
                         }
                         val recovered = recoveredResult.getOrNull()
 
-                        val isBooziSelection =
-                            selectedEntryId == "8e201b32-1823-4721-b0ee-2fb26f04906a" ||
-                            selectedEntryId == "f3393a3f-5701-45ed-952c-df359fe4a68a"
-
-                        val expectedUsername =
-                            if (isBooziSelection) "Boozi" else null
-
                         val selectedAccountId = _currentAccountId.value
                         val localAccounts = accountService.exportAllAccounts()
                         val selectedLocalAccount = localAccounts.singleOrNull {
                             it.id == selectedAccountId
                         }
+                        val expectedUsername = selectedLocalAccount?.username
 
                         val cloudAccount = recovered?.accounts?.singleOrNull { cloud ->
                             selectedLocalAccount != null &&
