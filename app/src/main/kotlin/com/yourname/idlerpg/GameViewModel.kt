@@ -867,14 +867,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 """.trimIndent()
             }.joinToString("\n\n").ifBlank { "No registry rows returned." }
 
-            val cloudReports = characters.joinToString("\n\n") { character ->
+            val cloudReportParts = mutableListOf<String>()
+            for (character in characters) {
                 val matches = rows.filter { field(it, "local_character_id") == character.id }
                 if (matches.size != 1) {
-                    return@joinToString """
+                    cloudReportParts += """
                         Local character: ${character.displayName} (${character.id})
                         Registry matches: ${matches.size}
                         Cloud save not downloaded because exactly one mapping is required.
                     """.trimIndent()
+                    continue
                 }
 
                 val row = matches.single()
@@ -882,47 +884,52 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     .mapNotNull { field(row, it) }
                     .firstOrNull()
                 if (remoteId.isNullOrBlank()) {
-                    return@joinToString """
+                    cloudReportParts += """
                         Local character: ${character.displayName} (${character.id})
                         Registry row exists but contains no recognized remote character ID.
                         Cloud save not downloaded.
                     """.trimIndent()
+                    continue
                 }
 
                 val mappedLocalId = SupabaseCharacterRepository.getCharacterLocalId(remoteId)
                     .getOrElse { error ->
-                        return@joinToString """
+                        cloudReportParts += """
                             Local character: ${character.displayName} (${character.id})
                             Remote ID: $remoteId
                             Mapping verification failed: ${error.message ?: error.toString()}
                             Cloud save not downloaded.
                         """.trimIndent()
+                    continue
                     }
                 if (mappedLocalId != character.id) {
-                    return@joinToString """
+                    cloudReportParts += """
                         Local character: ${character.displayName} (${character.id})
                         Remote ID: $remoteId
                         Verified remote mapping: ${mappedLocalId ?: "None"}
                         Mapping mismatch. Cloud save not downloaded.
                     """.trimIndent()
+                    continue
                 }
 
                 val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(remoteId)
                     .getOrElse { error ->
-                        return@joinToString """
+                        cloudReportParts += """
                             Local character: ${character.displayName} (${character.id})
                             Remote ID: $remoteId
                             Mapping verified.
                             Cloud save download failed: ${error.message ?: error.toString()}
                         """.trimIndent()
+                    continue
                     }
                 if (cloudJson.isNullOrBlank()) {
-                    return@joinToString """
+                    cloudReportParts += """
                         Local character: ${character.displayName} (${character.id})
                         Remote ID: $remoteId
                         Mapping verified.
                         No cloud save JSON was returned.
                     """.trimIndent()
+                    continue
                 }
 
                 val cloudRoot = org.json.JSONObject(cloudJson)
@@ -957,7 +964,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     it.optBoolean("isMainCharacter", false).toString()
                 }.ifBlank { "None" }
 
-                """
+                cloudReportParts += """
                 Local character: ${character.displayName} (${character.id})
                 Registry matches: 1
                 Remote character ID: $remoteId
@@ -982,6 +989,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 $marketFlags
                 """.trimIndent()
             }
+            val cloudReports = cloudReportParts.joinToString("\n\n")
 
             _localCharacterIdentityDiagnostic.value +=
                 "\n\nREAD-ONLY CLOUD REGISTRY AND CHARACTER SAVE INSPECTION\n" +
