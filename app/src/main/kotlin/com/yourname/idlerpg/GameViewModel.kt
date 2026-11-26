@@ -3421,9 +3421,6 @@ fun returnToCharacterSelection() {
         _currentCharacterId.value?.let { characterId ->
             inventoryService.inventoryFor(characterId).trainingSkillId = _trainingSkill.value.name
         }
-        _currentCharacterId.value?.let { characterId ->
-            inventoryService.inventoryFor(characterId).trainingSkillId = _trainingSkill.value.name
-        }
         repository.save(
             accountService.exportAllAccounts(),
             accountService.exportAllCharacters(),
