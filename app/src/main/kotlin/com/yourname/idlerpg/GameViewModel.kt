@@ -676,8 +676,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _offlineReconciliationDiagnostic.value =
             "Reading local and cloud state. No rewards, saves, or uploads will be changed.\n\n" +
                 localSnapshot +
-                "\n\nPending upload for this cloud character: " +
-                if (hasPendingUpload) "YES (cloud may be older than this device)" else "No"
+                "\n\nPending upload check: " +
+                if (supabaseCharacterId.isNullOrBlank()) "deferred until the read-only registry mapping is verified" else if (hasPendingUpload) "YES (cloud may be older than this device)" else "No"
 
         viewModelScope.launch {
             // Resolve the cloud ID from authenticated registry metadata without
