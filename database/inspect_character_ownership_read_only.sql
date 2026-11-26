@@ -93,6 +93,7 @@ FROM pg_constraint AS con
 JOIN pg_class AS child ON child.oid = con.conrelid
 JOIN pg_namespace AS child_ns ON child_ns.oid = child.relnamespace
 JOIN pg_class AS parent ON parent.oid = con.confrelid
+JOIN pg_namespace AS parent_ns ON parent_ns.oid = parent.relnamespace
 JOIN LATERAL unnest(con.conkey) WITH ORDINALITY AS child_key(attnum, ord) ON true
 JOIN LATERAL unnest(con.confkey) WITH ORDINALITY AS parent_key(attnum, ord)
     ON parent_key.ord = child_key.ord
