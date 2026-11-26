@@ -781,10 +781,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        _localCharacterIdentityDiagnostic.value = try {
+        val localReport = try {
             val root = org.json.JSONObject(saveJson)
-            val savedCharacters = root.optJSONArray("characters")
-                ?: org.json.JSONArray()
+            val savedCharacters = root.optJSONArray("characters") ?: org.json.JSONArray()
             val skills = root.optJSONArray("skills") ?: org.json.JSONArray()
             val inventory = root.optJSONArray("inventoryItems") ?: org.json.JSONArray()
             val marketAccounts = root.optJSONArray("marketAccounts") ?: org.json.JSONArray()
@@ -837,8 +836,143 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         } catch (e: Exception) {
             "Could not inspect local character records: ${e.message ?: e::class.java.simpleName}"
         }
-    }
 
+        _localCharacterIdentityDiagnostic.value =
+            localReport + "\n\nCloud registry inspection: reading authenticated registry metadata only. No saves, rewards, or uploads will be changed."
+
+        viewModelScope.launch {
+            val characters = accountService.charactersFor(accountId)
+            val rows = SupabaseCharacterRepository.listMyCharacterSaves().getOrElse { error ->
+                _localCharacterIdentityDiagnostic.value +=
+                    "\n\nCloud registry lookup failed: ${error.message ?: error.toString()}"
+                return@launch
+            }
+
+            fun field(row: kotlinx.serialization.json.JsonObject, key: String): String? =
+                row[key]?.toString()?.trim('"')?.takeIf { it.isNotBlank() && it != "null" }
+
+            val cloudReports = characters.joinToString("\n\n") { character ->
+                val matches = rows.filter { field(it, "local_character_id") == character.id }
+                if (matches.size != 1) {
+                    return@joinToString """
+                        Local character: ${character.displayName} (${character.id})
+                        Registry matches: ${matches.size}
+                        Cloud save not downloaded because exactly one mapping is required.
+                    """.trimIndent()
+                }
+
+                val row = matches.single()
+                val remoteId = sequenceOf("supabase_character_id", "character_id", "id")
+                    .mapNotNull { field(row, it) }
+                    .firstOrNull()
+                if (remoteId.isNullOrBlank()) {
+                    return@joinToString """
+                        Local character: ${character.displayName} (${character.id})
+                        Registry row exists but contains no recognized remote character ID.
+                        Cloud save not downloaded.
+                    """.trimIndent()
+                }
+
+                val mappedLocalId = SupabaseCharacterRepository.getCharacterLocalId(remoteId)
+                    .getOrElse { error ->
+                        return@joinToString """
+                            Local character: ${character.displayName} (${character.id})
+                            Remote ID: $remoteId
+                            Mapping verification failed: ${error.message ?: error.toString()}
+                            Cloud save not downloaded.
+                        """.trimIndent()
+                    }
+                if (mappedLocalId != character.id) {
+                    return@joinToString """
+                        Local character: ${character.displayName} (${character.id})
+                        Remote ID: $remoteId
+                        Verified remote mapping: ${mappedLocalId ?: "None"}
+                        Mapping mismatch. Cloud save not downloaded.
+                    """.trimIndent()
+                }
+
+                val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(remoteId)
+                    .getOrElse { error ->
+                        return@joinToString """
+                            Local character: ${character.displayName} (${character.id})
+                            Remote ID: $remoteId
+                            Mapping verified.
+                            Cloud save download failed: ${error.message ?: error.toString()}
+                        """.trimIndent()
+                    }
+                if (cloudJson.isNullOrBlank()) {
+                    return@joinToString """
+                        Local character: ${character.displayName} (${character.id})
+                        Remote ID: $remoteId
+                        Mapping verified.
+                        No cloud save JSON was returned.
+                    """.trimIndent()
+                }
+
+                val cloudRoot = org.json.JSONObject(cloudJson)
+                fun recordsFor(key: String): List<org.json.JSONObject> {
+                    val array = cloudRoot.optJSONArray(key) ?: return emptyList()
+                    return (0 until array.length()).mapNotNull { index ->
+                        array.optJSONObject(index)?.takeIf {
+                            it.optString("characterId") == character.id
+                        }
+                    }
+                }
+
+                val cloudCharacterRows = cloudRoot.optJSONArray("characters") ?: org.json.JSONArray()
+                val cloudCharacter = (0 until cloudCharacterRows.length())
+                    .mapNotNull { index -> cloudCharacterRows.optJSONObject(index) }
+                    .firstOrNull { it.optString("id") == character.id }
+                val categories = listOf(
+                    "skills", "skillingQueues", "craftingQueues", "offlineCombatQueues",
+                    "buryQueues", "inventoryItems", "equippedSlots", "loadoutSettings",
+                    "marketAccounts", "marketOrders", "combatSessions", "lastSeen", "lastSaleCheck"
+                )
+                val counts = categories.joinToString("\n") { key ->
+                    "$key: ${recordsFor(key).size}"
+                }
+                val skillSummary = recordsFor("skills").joinToString(", ") {
+                    "${it.optString("skillId")}=${it.optLong("xp", -1L)}"
+                }.ifBlank { "None" }
+                val inventorySummary = recordsFor("inventoryItems").joinToString(", ") {
+                    "${it.optString("itemId")} x${it.optInt("quantity")}"
+                }.ifBlank { "None" }
+                val marketFlags = recordsFor("marketAccounts").joinToString(", ") {
+                    it.optBoolean("isMainCharacter", false).toString()
+                }.ifBlank { "None" }
+
+                """
+                Local character: ${character.displayName} (${character.id})
+                Registry matches: 1
+                Remote character ID: $remoteId
+                Verified remote-to-local mapping: $mappedLocalId
+                Registry save records: ${field(row, "save_records") ?: "Not supplied"}
+                Registry skill records: ${field(row, "skill_records") ?: "Not supplied"}
+                Registry save updated at: ${field(row, "save_updated_at") ?: "Not supplied"}
+                Cloud character entry exists: ${cloudCharacter != null}
+                Cloud display name: ${cloudCharacter?.optString("displayName") ?: "Missing"}
+                Cloud isMainCharacter: ${cloudCharacter?.optBoolean("isMainCharacter") ?: false}
+
+                Cloud record counts:
+                $counts
+
+                Cloud skill XP:
+                $skillSummary
+
+                Cloud inventory:
+                $inventorySummary
+
+                Cloud market main flags:
+                $marketFlags
+                """.trimIndent()
+            }
+
+            _localCharacterIdentityDiagnostic.value +=
+                "\n\nREAD-ONLY CLOUD REGISTRY AND CHARACTER SAVE INSPECTION\n" +
+                    cloudReports +
+                    "\n\nGlobal marketPriceHistory is intentionally excluded from character-owned records. No cloud records were changed."
+        }
+    }
     fun refreshBooziCharacterDataDiagnostic() {
         val localIds = listOf(
             "8e201b32-1823-4721-b0ee-2fb26f04906a",
