@@ -3414,11 +3414,12 @@ fun returnToCharacterSelection() {
             }
         }
     }
-    private var offlineResolvedThisSession = false
+    private var offlineResolutionFailed = false
+    private val offlineResolvedCharacterIds = mutableSetOf<String>()
 
-    fun saveGame() {
-        if (offlineResolvedThisSession) {
-            _currentCharacterId.value?.let { offlineIdleService.recordLastSeen(it) }
+    private fun persistLocalGame() {
+        _currentCharacterId.value?.let { characterId ->
+            inventoryService.inventoryFor(characterId).trainingSkillId = _trainingSkill.value.name
         }
         _currentCharacterId.value?.let { characterId ->
             inventoryService.inventoryFor(characterId).trainingSkillId = _trainingSkill.value.name
@@ -3441,6 +3442,15 @@ fun returnToCharacterSelection() {
             offlineIdleService.exportOfflineCombatQueues(),
             offlineIdleService.exportBuryQueues()
         )
+    }
+
+    fun saveGame() {
+        if (offlineResolutionFailed) {
+            _characterSyncError.value =
+                "Saving is paused because offline progress could not be committed safely. Restart the app before continuing."
+            return
+        }
+        persistLocalGame()
         val supabaseCharacterId = _currentSupabaseCharacterId.value
         val accountIdForCloud = _currentAccountId.value
         val characterIdForCloud = _currentCharacterId.value
@@ -3721,6 +3731,22 @@ fun returnToCharacterSelection() {
 
 
     private fun resolveOfflineRewardsAndSync(characterId: String) {
+        if (offlineResolutionFailed || characterId in offlineResolvedCharacterIds) return
+
+        try {
+            resolveOfflineRewardsAndSyncInternal(characterId)
+            offlineResolvedCharacterIds += characterId
+        } catch (error: Exception) {
+            // A partially applied reward calculation must never be written later
+            // with an old checkpoint. Keep the last durable snapshot untouched.
+            offlineResolutionFailed = true
+            _characterSyncError.value =
+                "Offline progress could not be committed safely. The previous on-device save was preserved. Restart the app before continuing. " +
+                    (error.message ?: error::class.simpleName.orEmpty())
+        }
+    }
+
+    private fun resolveOfflineRewardsAndSyncInternal(characterId: String) {
         val queue = offlineIdleService.activeQueueFor(characterId) as? ActiveQueue.SkillingQueue
         if (queue != null) {
             val inventory = inventoryService.inventoryFor(characterId)
@@ -4304,7 +4330,6 @@ if (buryQueue != null) {
         refreshActiveQueue()
         refreshCombatHp()
 
-        offlineResolvedThisSession = true
         if (marketService.accountFor(characterId) == null) {
             val character = accountService.charactersFor(_currentAccountId.value ?: "")
                 .find { it.id == characterId }
@@ -4320,6 +4345,10 @@ if (buryQueue != null) {
         refreshCurrency()
         refreshMarketListings()
         refreshMyOrders()
+
+        // Commit rewards and their advanced lastSeen checkpoint together.
+        // This is local-only: recovery must not enqueue a cloud upload.
+        persistLocalGame()
     }
 
     fun startSkillAction(skillType: SkillType, itemId: String) {
