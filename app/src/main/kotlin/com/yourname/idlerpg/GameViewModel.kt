@@ -3415,7 +3415,6 @@ fun returnToCharacterSelection() {
         }
     }
     private var offlineResolutionFailed = false
-    private val offlineResolvedCharacterIds = mutableSetOf<String>()
 
     private fun persistLocalGame() {
         _currentCharacterId.value?.let { characterId ->
@@ -3728,11 +3727,10 @@ fun returnToCharacterSelection() {
 
 
     private fun resolveOfflineRewardsAndSync(characterId: String) {
-        if (offlineResolutionFailed || characterId in offlineResolvedCharacterIds) return
+        if (offlineResolutionFailed) return
 
         try {
             resolveOfflineRewardsAndSyncInternal(characterId)
-            offlineResolvedCharacterIds += characterId
         } catch (error: Exception) {
             // A partially applied reward calculation must never be written later
             // with an old checkpoint. Keep the last durable snapshot untouched.
@@ -3764,6 +3762,9 @@ fun returnToCharacterSelection() {
                 skillingSpeedBonusPercent = skillingSpeedBonus,
                 skillingSpeedDurationSeconds = potionDurationSeconds
             )
+            if (result is ServiceResult.Failure) {
+                throw IllegalStateException(result.reason)
+            }
 
             if (result is ServiceResult.Success && activePotionId != null) {
                 inventory.potionTimerRemainingSeconds = (
@@ -3913,6 +3914,9 @@ if (requiredSeedId != null && effectiveActions < requestedActions) {
                 skillingSpeedBonusPercent = skillingSpeedBonus,
                 skillingSpeedDurationSeconds = potionDurationSeconds
             )
+            if (craftResult is ServiceResult.Failure) {
+                throw IllegalStateException(craftResult.reason)
+            }
 
             if (craftResult is ServiceResult.Success && activePotionId != null) {
                 inventory.potionTimerRemainingSeconds = (
@@ -3993,6 +3997,9 @@ if (buryQueue != null) {
         characterId,
         premiumMembershipActive = hasMembershipForOfflineProgress(characterId)
     )
+    if (buryResult is ServiceResult.Failure) {
+        throw IllegalStateException(buryResult.reason)
+    }
 
     if (buryResult is ServiceResult.Success &&
         buryResult.value.actionsCompleted > 0
@@ -4068,6 +4075,9 @@ if (buryQueue != null) {
                 characterId,
                 premiumMembershipActive = hasMembershipForOfflineProgress(characterId)
             )
+            if (combatResult is ServiceResult.Failure) {
+                throw IllegalStateException(combatResult.reason)
+            }
 
             if (combatResult is ServiceResult.Success) {
                 val elapsedSeconds = combatResult.value.effectiveElapsed.seconds
@@ -4236,7 +4246,10 @@ if (buryQueue != null) {
                         potionDurationSeconds = inventory.potionTimerRemainingSeconds.toLong(),
                         now = offlineStartTime
                     )
-                    
+                    if (outcome is ServiceResult.Failure) {
+                        throw IllegalStateException(outcome.reason)
+                    }
+
                     if (outcome is ServiceResult.Success) {
                         // Deduct the time spent offline from the active potion.
                         // The offline combat calculation already limits its effects
