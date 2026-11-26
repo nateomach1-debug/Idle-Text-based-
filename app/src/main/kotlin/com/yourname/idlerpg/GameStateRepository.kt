@@ -1,6 +1,7 @@
 package com.yourname.idlerpg.data
 
 import android.content.Context
+import android.util.AtomicFile
 import com.yourname.idlerpg.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -8,10 +9,28 @@ import java.io.File
 
 class GameStateRepository(private val context: Context) {
     private val saveFile: File get() = File(context.filesDir, "game_state.json")
+    private val atomicSaveFile: AtomicFile get() = AtomicFile(saveFile)
+
+    private fun writeSaveAtomically(contents: String) {
+        val atomicFile = atomicSaveFile
+        val output = atomicFile.startWrite()
+        try {
+            output.write(contents.toByteArray(Charsets.UTF_8))
+            atomicFile.finishWrite(output)
+        } catch (error: Throwable) {
+            runCatching { atomicFile.failWrite(output) }
+            throw error
+        }
+    }
 
     // Exposes the exact JSON already written by save() - reused as-is as
     // the cloud upload payload, so no separate serialization format is needed.
-    fun currentSaveJson(): String? = if (saveFile.exists()) saveFile.readText() else null
+    fun currentSaveJson(): String? {
+        if (!saveFile.exists() && !File(saveFile.path + ".bak").exists()) {
+            return null
+        }
+        return atomicSaveFile.openRead().bufferedReader().use { it.readText() }
+    }
     // Creates a cloud payload for exactly one account and one character.
     // Device-local accounts and other characters are never included.
     fun characterSaveJson(accountId: String, characterId: String): String? {
@@ -108,26 +127,14 @@ class GameStateRepository(private val context: Context) {
     // Used when restoring a character's save downloaded from the cloud -
     // overwrites local state with the recovered JSON before re-loading it.
     fun overwriteRawJson(json: String) {
-        saveFile.writeText(json)
+        writeSaveAtomically(json)
     }
 
-    // Parses cloud JSON without permanently replacing the device's save.
-    // The original file is restored even if parsing fails.
-    fun loadRawJson(json: String): SavedGameState? {
-        val previousLocalJson = currentSaveJson()
-
-        return try {
-            saveFile.writeText(json)
-            load()
-        } finally {
-            if (previousLocalJson == null) {
-                saveFile.delete()
-            } else {
-                saveFile.writeText(previousLocalJson)
-            }
-        }
-   
-    }
+    // Parse a downloaded cloud snapshot directly. Never temporarily replace
+    // the device's durable save just to inspect or validate remote data.
+    fun loadRawJson(json: String): SavedGameState? = runCatching {
+        loadJson(json)
+    }.getOrNull()
     fun save(
         accounts: List<AccountExport>,
         characters: List<CharacterExport>,
@@ -356,13 +363,16 @@ class GameStateRepository(private val context: Context) {
         }
         root.put("buryQueues", buryQueuesArray)
 
-        saveFile.writeText(root.toString())
+        writeSaveAtomically(root.toString())
     }
 
     fun load(): SavedGameState? {
-        if (!saveFile.exists()) return null
+        val json = currentSaveJson() ?: return null
+        return loadJson(json)
+    }
 
-        val root = JSONObject(saveFile.readText())
+    private fun loadJson(json: String): SavedGameState {
+        val root = JSONObject(json)
 
         val accounts = mutableListOf<AccountExport>()
         val accountsArray = root.optJSONArray("accounts") ?: JSONArray()
