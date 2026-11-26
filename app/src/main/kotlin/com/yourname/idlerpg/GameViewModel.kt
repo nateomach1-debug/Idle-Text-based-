@@ -892,16 +892,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     continue
                 }
 
-                val mappedLocalId = SupabaseCharacterRepository.getCharacterLocalId(remoteId)
-                    .getOrElse { error ->
-                        cloudReportParts += """
-                            Local character: ${character.displayName} (${character.id})
-                            Remote ID: $remoteId
-                            Mapping verification failed: ${error.message ?: error.toString()}
-                            Cloud save not downloaded.
-                        """.trimIndent()
+                val mappingResult = SupabaseCharacterRepository.getCharacterLocalId(remoteId)
+                if (mappingResult.isFailure) {
+                    val error = mappingResult.exceptionOrNull()
+                    cloudReportParts += """
+                        Local character: ${character.displayName} (${character.id})
+                        Remote ID: $remoteId
+                        Mapping verification failed: ${error?.message ?: error.toString()}
+                        Cloud save not downloaded.
+                    """.trimIndent()
                     continue
-                    }
+                }
+                val mappedLocalId = mappingResult.getOrNull()
                 if (mappedLocalId != character.id) {
                     cloudReportParts += """
                         Local character: ${character.displayName} (${character.id})
@@ -912,16 +914,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     continue
                 }
 
-                val cloudJson = SupabaseCharacterRepository.downloadCharacterSave(remoteId)
-                    .getOrElse { error ->
-                        cloudReportParts += """
-                            Local character: ${character.displayName} (${character.id})
-                            Remote ID: $remoteId
-                            Mapping verified.
-                            Cloud save download failed: ${error.message ?: error.toString()}
-                        """.trimIndent()
+                val downloadResult = SupabaseCharacterRepository.downloadCharacterSave(remoteId)
+                if (downloadResult.isFailure) {
+                    val error = downloadResult.exceptionOrNull()
+                    cloudReportParts += """
+                        Local character: ${character.displayName} (${character.id})
+                        Remote ID: $remoteId
+                        Mapping verified.
+                        Cloud save download failed: ${error?.message ?: error.toString()}
+                    """.trimIndent()
                     continue
-                    }
+                }
+                val cloudJson = downloadResult.getOrNull()
                 if (cloudJson.isNullOrBlank()) {
                     cloudReportParts += """
                         Local character: ${character.displayName} (${character.id})
