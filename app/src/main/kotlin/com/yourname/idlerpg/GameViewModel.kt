@@ -851,6 +851,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             fun field(row: kotlinx.serialization.json.JsonObject, key: String): String? =
                 row[key]?.toString()?.trim('"')?.takeIf { it.isNotBlank() && it != "null" }
 
+            val registrySummary = rows.mapIndexed { index, row ->
+                val localId = field(row, "local_character_id") ?: "Missing"
+                val remoteId = sequenceOf("supabase_character_id", "character_id", "id")
+                    .mapNotNull { field(row, it) }
+                    .firstOrNull() ?: "Missing"
+                """
+                Registry row ${index + 1}:
+                Local character ID: $localId
+                Remote character ID: $remoteId
+                Display name: ${field(row, "display_name") ?: "Not supplied"}
+                Save records: ${field(row, "save_records") ?: "Not supplied"}
+                Skill records: ${field(row, "skill_records") ?: "Not supplied"}
+                Save updated at: ${field(row, "save_updated_at") ?: "Not supplied"}
+                """.trimIndent()
+            }.joinToString("\n\n").ifBlank { "No registry rows returned." }
+
             val cloudReports = characters.joinToString("\n\n") { character ->
                 val matches = rows.filter { field(it, "local_character_id") == character.id }
                 if (matches.size != 1) {
@@ -969,7 +985,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
             _localCharacterIdentityDiagnostic.value +=
                 "\n\nREAD-ONLY CLOUD REGISTRY AND CHARACTER SAVE INSPECTION\n" +
-                    cloudReports +
+                    "Authenticated registry rows returned: ${rows.size}\n\n" +
+                    registrySummary + "\n\n" + cloudReports +
                     "\n\nGlobal marketPriceHistory is intentionally excluded from character-owned records. No cloud records were changed."
         }
     }
