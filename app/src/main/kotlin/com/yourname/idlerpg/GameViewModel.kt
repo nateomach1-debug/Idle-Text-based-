@@ -2639,40 +2639,16 @@ init {
 suspend fun login(email: String, password: String): ServiceResult<Account> {
     val result = accountService.login(email, password)
     if (result is ServiceResult.Success) {
+        // A valid local login is authoritative. Do not replace its account ID
+        // or local character data with a cloud snapshot during normal login.
         sessionManager.saveSession(result.value.id)
         _currentAccountId.value = result.value.id
-
-        // A local account may exist even when its cloud save contains the
-        // recovered main character under an orphaned local ID. Check the
-        // authenticated cloud snapshots before allowing normal character
-        // selection to trust the registered character row.
-        val recoveryResult = attemptCloudRecoveryLogin(email, password)
-        if (recoveryResult is ServiceResult.Success) {
-            return recoveryResult
-        }
-
-        // If cloud authentication succeeded but no snapshot passed strict
-        // recovery validation, keep cloud character operations disabled.
-        // Never fall through to getOrCreateCharacter(), which could create
-        // or bind a new remote row to an unverified local character.
-        if (_supabaseAuthState.value == SupabaseAuthState.SIGNED_IN) {
-            cloudRecoveryBlockedAccountId = result.value.id
-            cloudRecoveryPrefs.edit()
-                .putString("blocked_account_id", result.value.id)
-                .apply()
-            _currentSupabaseCharacterId.value = null
-            val recoveryFailure = (recoveryResult as? ServiceResult.Failure)?.reason
-            _characterSyncError.value =
-                (recoveryFailure ?: "Cloud sign-in succeeded, but no save passed recovery validation.") +
-                    " Cloud character sync is paused."
-            return result
-        }
-
-        // No existing Supabase account/session was available; preserve the
-        // original lazy account-creation behavior for local-only accounts.
+        refreshCurrency()
         syncSupabaseAuth(email, password, isNewAccount = false)
         return result
     }
+
+    // Cloud recovery is reserved for accounts that do not exist locally.
     return attemptCloudRecoveryLogin(email, password)
 }
 
@@ -3793,12 +3769,12 @@ fun returnToCharacterSelection() {
                         }
                         val expectedUsername = selectedLocalAccount?.username
 
-                        val cloudAccount = recovered?.accounts?.singleOrNull { cloud ->
-                            selectedLocalAccount != null &&
-                                cloud.email.equals(selectedLocalAccount.email, ignoreCase = true) &&
-                                cloud.username.equals(selectedLocalAccount.username, ignoreCase = true) &&
+                        val cloudAccount = recovered?.accounts?.singleOrNull {
+                            // A local account must never be rebound to a different
+                            // cloud account merely because email/username match.
+                            it.id == selectedAccountId &&
                                 (expectedUsername == null ||
-                                    cloud.username.equals(expectedUsername, ignoreCase = true))
+                                    it.username.equals(expectedUsername, ignoreCase = true))
                         }
 
                         val accountConflict = cloudAccount?.let { cloud ->
